@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>계측장비 사용 가이드</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f3f4f6;
+      color: #111;
+    }
+
+    .wrap {
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+    }
+
+    h1, h2 {
+      margin-top: 0;
+    }
+
+    img {
+      width: 100%;
+      border-radius: 10px;
+      margin-top: 12px;
+    }
+
+    .btn {
+      display: block;
+      text-align: center;
+      background: #111827;
+      color: white;
+      text-decoration: none;
+      padding: 14px;
+      border-radius: 10px;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+
+    .btn:hover {
+      background: #000;
+    }
+
+    ul, ol {
+      padding-left: 20px;
+      line-height: 1.7;
+    }
+
+    .video {
+      position: relative;
+      width: 100%;
+      padding-top: 56.25%;
+      overflow: hidden;
+      border-radius: 10px;
+      background: black;
+    }
+
+    .video iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+    }
+
+    .sub {
+      color: #6b7280;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>내/외측 캘리퍼스 사용 가이드</h1>
+      <p class="sub">장비번호: Q-GH-032 / 위치: QM 계측기실 </p>
+      <p>이 페이지는 계측장비 사용 방법을 휴대폰으로 쉽게 확인하기 위한 샘플 웹페이지입니다.</p>
+      <img src="Q-GH-032.jpg" alt="장비 사진">
+    </div>
+
+    <div class="card">
+      <h2>사용 전 주의사항</h2>
+      <ul>
+        <li>측정 전 캘리퍼스의 측정면에 이물질이나 먼지가 없는지 확인합니다.</li>
+        <li>영점(0점)이 정확히 맞는지 확인한 후 측정을 시작합니다.</li>
+        <li>측정물을 너무 강하게 조이지 말고, 가볍게 밀착시켜 측정합니다.</li>
+        <li>측정 중에는 캘리퍼스를 비틀거나 기울이지 않도록 주의합니다.</li>
+        <li>사용 후에는 측정면을 닦고 충격이나 습기가 없는 곳에 보관합니다.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>사용 순서</h2>
+      <ol>
+        <li>측정 전 외측/내측 측정면과 본체 상태를 확인합니다.</li>
+        <li>캘리퍼스를 닫아 영점(0점)이 맞는지 확인합니다.</li>
+        <li>측정하려는 대상에 맞게 외측 또는 내측 측정면을 위치시킵니다.</li>
+        <li>측정면이 대상물에 가볍게 닿도록 조절한 뒤 눈금을 읽습니다.</li>
+        <li>측정값을 기록하고, 사용 후 캘리퍼스를 닫아 정리합니다.</li>
+      </ol>
+    </div>
+
+    <div class="card">
+      <h2>PDF 매뉴얼</h2>
+      <p>아래 버튼을 누르면 매뉴얼 PDF를 확인할 수 있습니다.</p>
+      <a class="btn" href="manual.pdf" target="_blank">PDF 열기</a>
+    </div>
+
+    <div class="card">
+      <h2>사용 영상</h2>
+      <p>장비 사용 영상을 아래에서 확인하세요.</p>
+      <div class="video">
+        <iframe
+          src="https://www.youtube.com/embed/VIDEO_ID"
+          title="장비 사용 영상"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowfullscreen>
+        </iframe>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
