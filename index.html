@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HAK 계측기 사용 방법</title>
+  <style>
+    :root {
+      --primary: #1f3a5f;
+      --primary-dark: #13263f;
+      --accent: #d38b2c;
+      --bg: #f4f7fb;
+      --card: #ffffff;
+      --text: #1b2430;
+      --subtext: #5b6573;
+      --line: #dbe3ec;
+      --shadow: 0 10px 24px rgba(19, 38, 63, 0.10);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(180deg, #eef3f9 0%, #f8fafc 100%);
+      color: var(--text);
+    }
+
+    .hero {
+      background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+      color: white;
+      padding: 42px 20px 34px;
+    }
+
+    .hero-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .company {
+      display: inline-block;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 1.2px;
+      padding: 8px 12px;
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 999px;
+      background: rgba(255,255,255,0.08);
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 32px;
+      line-height: 1.3;
+    }
+
+    .hero p {
+      margin: 14px 0 0;
+      color: rgba(255,255,255,0.88);
+      font-size: 16px;
+      line-height: 1.7;
+      max-width: 760px;
+    }
+
+    .wrap {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 28px 20px 60px;
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 8px 0 18px;
+      flex-wrap: wrap;
+    }
+
+    .section-title h2 {
+      margin: 0;
+      font-size: 24px;
+      color: var(--primary-dark);
+    }
+
+    .section-title span {
+      color: var(--subtext);
+      font-size: 14px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 18px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 22px;
+      box-shadow: var(--shadow);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 14px 28px rgba(19, 38, 63, 0.14);
+    }
+
+    .badge {
+      display: inline-block;
+      margin-bottom: 12px;
+      padding: 7px 11px;
+      border-radius: 999px;
+      background: #eef4ff;
+      color: var(--primary);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .card h3 {
+      margin: 0 0 10px;
+      font-size: 21px;
+      color: var(--primary-dark);
+    }
+
+    .card p {
+      margin: 0 0 16px;
+      color: var(--subtext);
+      line-height: 1.7;
+      font-size: 15px;
+      min-height: 74px;
+    }
+
+    .meta {
+      margin-bottom: 18px;
+      padding: 12px 14px;
+      background: #f8fafc;
+      border-radius: 12px;
+      border: 1px solid #edf2f7;
+      font-size: 14px;
+      color: #4b5563;
+      line-height: 1.7;
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      display: inline-block;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 14px;
+      padding: 12px 16px;
+      border-radius: 12px;
+      transition: 0.2s ease;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-dark);
+    }
+
+    .btn-secondary {
+      background: #fff7e9;
+      color: #8a5a12;
+      border: 1px solid #f0d8aa;
+    }
+
+    .btn-secondary:hover {
+      background: #ffefcf;
+    }
+
+    .future-box {
+      margin-top: 28px;
+      background: white;
+      border: 1px dashed #bfd0e3;
+      border-radius: 18px;
+      padding: 20px 22px;
+      color: var(--subtext);
+      line-height: 1.8;
+    }
+
+    footer {
+      margin-top: 40px;
+      padding-top: 24px;
+      border-top: 1px solid #dce5ef;
+      color: #6b7280;
+      font-size: 14px;
+      line-height: 1.8;
+    }
+
+    .footer-brand {
+      color: var(--primary-dark);
+      font-weight: 700;
+    }
+
+    @media (max-width: 640px) {
+      h1 {
+        font-size: 26px;
+      }
+
+      .hero {
+        padding: 34px 16px 28px;
+      }
+
+      .wrap {
+        padding: 22px 16px 50px;
+      }
+
+      .card p {
+        min-height: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="hero-inner">
+      <div class="company">HI AI KOREA</div>
+      <h1>HAK 계측기 사용 방법</h1>
+      <p>
+        계측기 종류별 사용 방법, 주의사항, 매뉴얼 및 교육 자료를 한 곳에서 확인할 수 있는 안내 페이지입니다.
+        향후 새로운 계측장비가 추가되더라도 같은 구조로 쉽게 확장할 수 있도록 구성했습니다.
+      </p>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="section-title">
+      <h2>계측장비 목록</h2>
+      <span>장비 종류를 선택하면 상세 사용 페이지로 이동합니다.</span>
+    </div>
+
+    <section class="grid">
+      <article class="card">
+        <div class="badge">측정 장비</div>
+        <h3>버니어 캘리퍼스</h3>
+        <p>
+          외측, 내측, 깊이 등의 기본 치수를 측정할 때 사용하는 대표 계측기입니다.
+          현재 운영 중인 버니어 사용 가이드 페이지로 이동합니다.
+        </p>
+        <div class="meta">
+          적용 방식: 동일 종류 장비는 하나의 공통 페이지 사용<br>
+          연결 페이지: <strong>vernier.html</strong>
+        </div>
+        <div class="btn-row">
+          <a class="btn btn-primary" href="vernier.html">사용 방법 보기</a>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="badge">정밀 측정 장비</div>
+        <h3>마이크로미터</h3>
+        <p>
+          보다 정밀한 외경 측정이 필요한 경우 사용하는 계측기입니다.
+          향후 마이크로미터 전용 사용 설명 페이지와 연결됩니다.
+        </p>
+        <div class="meta">
+          적용 방식: 동일 종류 장비는 하나의 공통 페이지 사용<br>
+          연결 페이지: <strong>micrometer.html</strong>
+        </div>
+        <div class="btn-row">
+          <a class="btn btn-primary" href="micrometer.html">사용 방법 보기</a>
+        </div>
+      </article>
+    </section>
+
+    <section class="future-box">
+      <strong>향후 확장 예시</strong><br>
+      높이 게이지, 다이얼 게이지, 블록 게이지 등 다른 계측장비가 추가되면
+      동일한 카드 형식으로 항목만 추가하고, 각 장비 종류별 상세 페이지를 연결하면 됩니다.
+    </section>
+
+    <footer>
+      <div class="footer-brand">HI AI KOREA</div>
+      <div>HAK 계측기 사용 방법 안내 시스템</div>
+      <div>Copyright © 2026 HI AI KOREA. All Rights Reserved.</div>
+    </footer>
+  </main>
+</body>
+</html>
