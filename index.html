@@ -91,6 +91,85 @@
       font-size: 14px;
     }
 
+    .search-box {
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 18px;
+      margin-bottom: 22px;
+      box-shadow: var(--shadow);
+    }
+
+    .search-box label {
+      display: block;
+      margin-bottom: 10px;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--primary-dark);
+    }
+
+    .search-input-wrap {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .search-input-area {
+      position: relative;
+      width: 100%;
+      max-width: 420px;
+    }
+
+    .search-box input {
+      width: 100%;
+      min-width: 240px;
+      padding: 13px 42px 13px 15px;
+      border: 1px solid #cfd9e5;
+      border-radius: 12px;
+      font-size: 15px;
+      outline: none;
+    }
+
+    .search-box input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(31, 58, 95, 0.08);
+    }
+
+    .clear-btn {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 26px;
+      height: 26px;
+      border: none;
+      border-radius: 50%;
+      background: #dfe7f1;
+      color: #334155;
+      font-size: 18px;
+      line-height: 1;
+      cursor: pointer;
+      display: none;
+    }
+
+    .clear-btn:hover {
+      background: #cfd9e5;
+    }
+
+    .search-hint {
+      margin-top: 10px;
+      font-size: 13px;
+      color: var(--subtext);
+      line-height: 1.6;
+    }
+
+    .search-result {
+      margin: 14px 0 20px;
+      font-size: 14px;
+      color: var(--subtext);
+    }
+
     .grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -111,9 +190,27 @@
       box-shadow: 0 14px 28px rgba(19, 38, 63, 0.14);
     }
 
+    .card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .no-badge {
+      display: inline-block;
+      padding: 7px 11px;
+      border-radius: 999px;
+      background: var(--primary-dark);
+      color: #ffffff;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
     .badge {
       display: inline-block;
-      margin-bottom: 12px;
       padding: 7px 11px;
       border-radius: 999px;
       background: #eef4ff;
@@ -134,17 +231,6 @@
       line-height: 1.7;
       font-size: 15px;
       min-height: 74px;
-    }
-
-    .meta {
-      margin-bottom: 18px;
-      padding: 12px 14px;
-      background: #f8fafc;
-      border-radius: 12px;
-      border: 1px solid #edf2f7;
-      font-size: 14px;
-      color: #4b5563;
-      line-height: 1.7;
     }
 
     .btn-row {
@@ -172,24 +258,8 @@
       background: var(--primary-dark);
     }
 
-    .btn-secondary {
-      background: #fff7e9;
-      color: #8a5a12;
-      border: 1px solid #f0d8aa;
-    }
-
-    .btn-secondary:hover {
-      background: #ffefcf;
-    }
-
-    .future-box {
-      margin-top: 28px;
-      background: white;
-      border: 1px dashed #bfd0e3;
-      border-radius: 18px;
-      padding: 20px 22px;
-      color: var(--subtext);
-      line-height: 1.8;
+    .hidden {
+      display: none !important;
     }
 
     footer {
@@ -222,6 +292,15 @@
       .card p {
         min-height: auto;
       }
+
+      .search-input-wrap {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .search-input-area {
+        max-width: 100%;
+      }
     }
   </style>
 </head>
@@ -231,8 +310,7 @@
       <div class="company">HI AIR KOREA</div>
       <h1>HAK 계측기 사용 방법</h1>
       <p>
-        계측기 종류별 사용 방법, 주의사항, 매뉴얼 및 교육 자료를 한 곳에서 확인할 수 있는 안내 페이지입니다.
-        향후 새로운 계측장비가 추가되더라도 같은 구조로 쉽게 확장할 수 있도록 구성했습니다.
+        계측기 종류별 사용 방법과 주의사항을 한 곳에서 확인할 수 있는 안내 페이지입니다.
       </p>
     </div>
   </header>
@@ -240,47 +318,57 @@
   <main class="wrap">
     <div class="section-title">
       <h2>계측장비 목록</h2>
-      <span>장비 종류를 선택하면 상세 사용 페이지로 이동합니다.</span>
+      <span>원하는 장비를 선택하면 사용 방법 페이지로 이동합니다.</span>
     </div>
 
-    <section class="grid">
-      <article class="card">
-        <div class="badge">측정 장비</div>
+    <section class="search-box">
+      <label for="equipmentSearch">장비 찾기</label>
+      <div class="search-input-wrap">
+        <div class="search-input-area">
+          <input
+            type="text"
+            id="equipmentSearch"
+            placeholder="예: 캘리퍼, 마이크로, 게이지"
+          />
+          <button type="button" id="clearSearch" class="clear-btn" aria-label="검색 초기화">×</button>
+        </div>
+      </div>
+      <div class="search-hint">
+        장비명 또는 설명에 포함된 단어를 입력하면 관련 장비가 모두 표시됩니다.
+      </div>
+    </section>
+
+    <div id="searchResult" class="search-result">전체 장비 2개 표시 중</div>
+
+    <section class="grid" id="equipmentList">
+      <article class="card equipment-card" data-name="버니어 캘리퍼스" data-desc="외측, 내측, 깊이 등을 측정할 때 사용하는 기본 계측기입니다. 사용 방법과 측정 요령을 확인할 수 있습니다.">
+        <div class="card-top">
+          <div class="no-badge">No. 01</div>
+          <div class="badge">측정 장비</div>
+        </div>
         <h3>버니어 캘리퍼스</h3>
         <p>
-          외측, 내측, 깊이 등의 기본 치수를 측정할 때 사용하는 대표 계측기입니다.
-          현재 운영 중인 버니어 사용 가이드 페이지로 이동합니다.
+          외측, 내측, 깊이 등을 측정할 때 사용하는 기본 계측기입니다.
+          사용 방법과 측정 요령을 확인할 수 있습니다.
         </p>
-        <div class="meta">
-          적용 방식: 동일 종류 장비는 하나의 공통 페이지 사용<br>
-          연결 페이지: <strong>vernier.html</strong>
-        </div>
         <div class="btn-row">
           <a class="btn btn-primary" href="vernier.html">사용 방법 보기</a>
         </div>
       </article>
 
-      <article class="card">
-        <div class="badge">정밀 측정 장비</div>
+      <article class="card equipment-card" data-name="마이크로미터" data-desc="정밀한 치수 측정이 필요한 경우 사용하는 계측기입니다.">
+        <div class="card-top">
+          <div class="no-badge">No. 02</div>
+          <div class="badge">정밀 측정 장비</div>
+        </div>
         <h3>마이크로미터</h3>
         <p>
-          보다 정밀한 외경 측정이 필요한 경우 사용하는 계측기입니다.
-          향후 마이크로미터 전용 사용 설명 페이지와 연결됩니다.
+          정밀한 치수 측정이 필요한 경우 사용하는 계측기입니다.
         </p>
-        <div class="meta">
-          적용 방식: 동일 종류 장비는 하나의 공통 페이지 사용<br>
-          연결 페이지: <strong>micrometer.html</strong>
-        </div>
         <div class="btn-row">
           <a class="btn btn-primary" href="micrometer.html">사용 방법 보기</a>
         </div>
       </article>
-    </section>
-
-    <section class="future-box">
-      <strong>향후 확장 예시</strong><br>
-      높이 게이지, 다이얼 게이지, 블록 게이지 등 다른 계측장비가 추가되면
-      동일한 카드 형식으로 항목만 추가하고, 각 장비 종류별 상세 페이지를 연결하면 됩니다.
     </section>
 
     <footer>
@@ -289,5 +377,50 @@
       <div>Copyright © 2026 HI AIR KOREA Co.,Ltd. All Rights Reserved.</div>
     </footer>
   </main>
+
+  <script>
+    const searchInput = document.getElementById("equipmentSearch");
+    const clearSearch = document.getElementById("clearSearch");
+    const equipmentCards = document.querySelectorAll(".equipment-card");
+    const searchResult = document.getElementById("searchResult");
+
+    function normalizeText(text) {
+      return text.toLowerCase().replace(/\s+/g, "");
+    }
+
+    function filterEquipment() {
+      const keyword = normalizeText(searchInput.value);
+      let visibleCount = 0;
+
+      equipmentCards.forEach((card) => {
+        const name = normalizeText(card.dataset.name || "");
+        const desc = normalizeText(card.dataset.desc || "");
+        const combinedText = name + " " + desc;
+
+        if (keyword === "" || combinedText.includes(keyword)) {
+          card.classList.remove("hidden");
+          visibleCount++;
+        } else {
+          card.classList.add("hidden");
+        }
+      });
+
+      clearSearch.style.display = searchInput.value ? "block" : "none";
+
+      if (keyword === "") {
+        searchResult.textContent = `전체 장비 ${visibleCount}개 표시 중`;
+      } else {
+        searchResult.textContent = `검색 결과 ${visibleCount}개 표시 중`;
+      }
+    }
+
+    clearSearch.addEventListener("click", () => {
+      searchInput.value = "";
+      filterEquipment();
+      searchInput.focus();
+    });
+
+    searchInput.addEventListener("input", filterEquipment);
+  </script>
 </body>
 </html>
