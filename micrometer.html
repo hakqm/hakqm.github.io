@@ -4,6 +4,20 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>마이크로미터 사용 가이드</title>
+
+  <!--
+    ============================================
+    [수정용 메모]
+    아래 파일명만 확인하면 수정이 쉬움
+    --------------------------------------------
+    장비 사진 : Q-GH-micrometer.jpg
+    매뉴얼 PDF : manual.pdf
+    검교정 성적서 PDF : CC_Q-GJ-016.pdf
+    사용 영상 : https://www.youtube.com/embed/UQFwWVx3D8g
+    메인 페이지 : index.html
+    ============================================
+  -->
+
   <style>
     :root {
       --primary: #1f3a5f;
@@ -90,16 +104,6 @@
       background: #edf3fb;
     }
 
-    .top-btn-pdf {
-      background: rgba(255,255,255,0.12);
-      color: white;
-      border: 1px solid rgba(255,255,255,0.18);
-    }
-
-    .top-btn-pdf:hover {
-      background: rgba(255,255,255,0.2);
-    }
-
     .wrap {
       max-width: 720px;
       margin: 0 auto;
@@ -173,16 +177,6 @@
       background: var(--primary-dark);
     }
 
-    .btn-secondary {
-      background: #fff6e8;
-      color: #8a5a12;
-      border: 1px solid #f0d7aa;
-    }
-
-    .btn-secondary:hover {
-      background: #ffedc8;
-    }
-
     .video {
       position: relative;
       width: 100%;
@@ -231,75 +225,132 @@
   </style>
 </head>
 <body>
+
+  <!-- ===== 상단 제목 영역 시작 ===== -->
   <header class="hero">
     <div class="hero-inner">
-      <div class="company">HI AIR KOREA</div>
+      <div class="company">HI AI KOREA</div>
       <h1>마이크로미터 사용 가이드</h1>
       <p>
-        현장에서 휴대폰 및 테블릿으로 빠르게 확인할 수 있도록 제작한 계측기 안내 페이지입니다.
+        현장에서 휴대폰 및 태블릿으로 빠르게 확인할 수 있도록 제작한 계측기 안내 페이지입니다.
       </p>
+
+      <!-- ===== 상단 버튼 영역 : 메인으로 이동 ===== -->
       <div class="top-actions">
         <a class="top-btn top-btn-main" href="index.html">메인으로 돌아가기</a>
+      </div>
     </div>
   </header>
+  <!-- ===== 상단 제목 영역 끝 ===== -->
 
   <main class="wrap">
+
+    <!-- ===== 장비 정보 시작 ===== -->
     <section class="card">
       <h2 class="section-title">장비 정보</h2>
       <p class="sub">장비명: 마이크로미터 / 위치: QM 계측기실</p>
+
       <div class="summary-box">
-        외측, 내측, 깊이 등을 측정할 수 있는 대표적인 계측기입니다.
-        사용 전 영점 확인과 측정면 청결 상태 확인이 중요합니다.
+        정밀한 외경 측정에 사용하는 대표적인 계측기입니다.
+        사용 전 영점 확인과 측정면 상태 확인이 중요합니다.
       </div>
+
+      <!--
+        [수정 위치]
+        장비 사진 파일명을 바꾸려면 아래 src만 수정
+        예: Q-GH-micrometer.jpg → 다른 사진 파일명
+      -->
       <img src="Q-GH-micrometer.jpg" alt="마이크로미터 사진" />
     </section>
+    <!-- ===== 장비 정보 끝 ===== -->
 
+    <!-- ===== 사용 전 주의사항 시작 ===== -->
     <section class="card">
       <h2 class="section-title">사용 전 주의사항</h2>
       <ul>
-        <li>측정 전 캘리퍼스의 측정면에 이물질이나 먼지가 없는지 확인합니다.</li>
-        <li>영점(0점)이 정확히 맞는지 확인한 후 측정을 시작합니다.</li>
-        <li>측정물을 너무 강하게 조이지 말고, 가볍게 밀착시켜 측정합니다.</li>
-        <li>측정 중에는 캘리퍼스를 비틀거나 기울이지 않도록 주의합니다.</li>
-        <li>사용 후에는 측정면을 닦고 충격이나 습기가 없는 곳에 보관합니다.</li>
+        <li>측정 전 앤빌과 스핀들의 측정면에 먼지나 이물질이 없는지 확인합니다.</li>
+        <li>사용 전에 영점(0점)이 정확한지 확인합니다.</li>
+        <li>측정물을 너무 강하게 조이지 말고, 래칫 스톱을 이용해 일정한 힘으로 측정합니다.</li>
+        <li>측정 중에는 프레임이나 측정면에 충격이 가해지지 않도록 주의합니다.</li>
+        <li>사용 후에는 측정면을 깨끗이 닦고 습기와 충격이 없는 곳에 보관합니다.</li>
       </ul>
     </section>
+    <!-- ===== 사용 전 주의사항 끝 ===== -->
 
+    <!-- ===== 사용 순서 시작 ===== -->
     <section class="card">
       <h2 class="section-title">사용 순서</h2>
       <ol>
-        <li>측정 전 외측/내측 측정면과 본체 상태를 확인합니다.</li>
-        <li>캘리퍼스를 닫아 영점(0점)이 맞는지 확인합니다.</li>
-        <li>측정하려는 대상에 맞게 외측 또는 내측 측정면을 위치시킵니다.</li>
-        <li>측정면이 대상물에 가볍게 닿도록 조절한 뒤 눈금을 읽습니다.</li>
-        <li>측정값을 기록하고, 사용 후 캘리퍼스를 닫아 정리합니다.</li>
+        <li>측정 전 마이크로미터의 외관과 측정면 상태를 확인합니다.</li>
+        <li>스핀들을 닫아 영점(0점)이 맞는지 확인합니다.</li>
+        <li>측정할 대상물을 앤빌과 스핀들 사이에 위치시킵니다.</li>
+        <li>래칫 스톱을 사용하여 일정한 힘으로 측정물이 가볍게 고정되도록 조절합니다.</li>
+        <li>슬리브와 심블 눈금을 읽어 측정값을 확인한 후 기록합니다.</li>
       </ol>
     </section>
+    <!-- ===== 사용 순서 끝 ===== -->
 
+    <!-- ===== 매뉴얼 PDF 시작 ===== -->
     <section class="card">
       <h2 class="section-title">매뉴얼</h2>
-      <p class="sub">아래 버튼을 누르면 PDF 매뉴얼을 새 창에서 확인할 수 있습니다.</p>
-      <a class="btn" href="manual.pdf" target="_blank">PDF 열기</a>
-    </section>
+      <p class="sub">아래 버튼을 누르면 매뉴얼 PDF를 바로 확인할 수 있습니다.</p>
 
+      <!--
+        [수정 위치]
+        매뉴얼 PDF 파일명을 바꾸려면 아래 href만 수정
+        예: manual.pdf → MANUAL_micrometer.pdf
+      -->
+      <a class="btn" href="manual.pdf">매뉴얼 보기</a>
+    </section>
+    <!-- ===== 매뉴얼 PDF 끝 ===== -->
+
+    <!-- ===== 검교정 성적서 PDF 시작 ===== -->
+    <section class="card">
+      <h2 class="section-title">검교정 성적서</h2>
+      <p class="sub">
+        아래 버튼을 누르면 검교정 성적서를 바로 확인할 수 있습니다.
+        확인 후 브라우저의 뒤로가기를 누르면 이전 페이지로 돌아올 수 있습니다.
+      </p>
+
+      <!--
+        [수정 위치]
+        검교정 성적서 PDF 파일명을 바꾸려면 아래 href만 수정
+        예: CC_Q-GJ-016.pdf → CC_Q-GJ-017.pdf
+      -->
+      <a class="btn" href="CC_Q-GJ-016.pdf">검교정 성적서 보기</a>
+    </section>
+    <!-- ===== 검교정 성적서 PDF 끝 ===== -->
+
+    <!-- ===== 사용 영상 시작 ===== -->
     <section class="card">
       <h2 class="section-title">사용 영상</h2>
       <p class="sub">장비 사용 영상을 아래에서 확인하세요.</p>
+
       <div class="video">
+        <!--
+          [수정 위치]
+          유튜브 영상 링크를 바꾸려면 아래 src만 수정
+          반드시 embed 형태의 주소 사용
+          예: https://www.youtube.com/embed/영상ID
+        -->
         <iframe
           src="https://www.youtube.com/embed/UQFwWVx3D8g"
-          title="버니어 캘리퍼스 사용 영상"
+          title="마이크로미터 사용 영상"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowfullscreen>
         </iframe>
       </div>
     </section>
+    <!-- ===== 사용 영상 끝 ===== -->
 
+    <!-- ===== 하단 푸터 시작 ===== -->
     <div class="footer">
-      <strong>HI AIR KOREA</strong><br>
+      <strong>HI AI KOREA</strong><br>
       HAK 계측기 사용 방법 안내 페이지<br>
-      Copyright © 2026 HI AIR KOREA Co.,Ltd. All Rights Reserved.
+      Copyright © 2026 HI AI KOREA. All Rights Reserved.
     </div>
+    <!-- ===== 하단 푸터 끝 ===== -->
+
   </main>
 </body>
 </html>
