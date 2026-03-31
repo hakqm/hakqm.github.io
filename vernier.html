@@ -12,7 +12,10 @@
     --------------------------------------------
     장비 사진 : Q-GH-vernier.jpg
     매뉴얼 PDF : manual.pdf
-    검교정 성적서 PDF : CC_Q-GJ-016.pdf
+    검교정 성적서 PDF :
+    - CC_Q-GJ-002.pdf
+    - CC_Q-GJ-007.pdf
+    - CC_Q-GJ-016.pdf
     사용 영상 : https://www.youtube.com/embed/UQFwWVx3D8g
     메인 페이지 : index.html
     ============================================
@@ -177,6 +180,100 @@
       background: var(--primary-dark);
     }
 
+    /* ===== 검교정 성적서 영역 ===== */
+    .cert-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+      counter-reset: cert-number;
+    }
+
+    .cert-item {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #f8fbff;
+      overflow: hidden;
+      transition: 0.2s ease;
+    }
+
+    .cert-item:hover {
+      box-shadow: 0 8px 20px rgba(19, 38, 63, 0.08);
+      transform: translateY(-1px);
+    }
+
+    .cert-content {
+      display: block;
+      color: inherit;
+      padding: 12px 14px;
+    }
+
+    .cert-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+    }
+
+    .cert-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--primary-dark);
+    }
+
+    .cert-title::before {
+      counter-increment: cert-number;
+      content: counter(cert-number) ". ";
+    }
+
+    .cert-badge {
+      display: inline-block;
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 700;
+      color: white;
+      background: var(--primary);
+      border: 1px solid var(--primary);
+      border-radius: 999px;
+      padding: 6px 10px;
+      white-space: nowrap;
+      transition: 0.2s ease;
+    }
+
+    .cert-badge:hover {
+      background: var(--primary-dark);
+      border-color: var(--primary-dark);
+    }
+
+    .cert-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px 10px;
+    }
+
+    .cert-field {
+      background: white;
+      border: 1px solid #e3ebf5;
+      border-radius: 10px;
+      padding: 8px 10px;
+    }
+
+    .cert-label {
+      display: block;
+      font-size: 12px;
+      color: var(--subtext);
+      margin-bottom: 4px;
+    }
+
+    .cert-value {
+      display: block;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      word-break: keep-all;
+    }
+
     .video {
       position: relative;
       width: 100%;
@@ -220,6 +317,10 @@
 
       .section-title {
         font-size: 19px;
+      }
+
+      .cert-grid {
+        grid-template-columns: 1fr;
       }
     }
   </style>
@@ -308,16 +409,100 @@
     <section class="card">
       <h2 class="section-title">검교정 성적서</h2>
       <p class="sub">
-        아래 버튼을 누르면 검교정 성적서를 바로 확인할 수 있습니다.
-        확인 후 브라우저의 뒤로가기를 누르면 이전 페이지로 돌아올 수 있습니다.
+        아래 항목에서 해당 설비 정보를 확인한 뒤, <strong>성적서 보기</strong> 버튼을 눌러 검교정 성적서를 확인할 수 있습니다.
       </p>
 
       <!--
         [수정 위치]
-        검교정 성적서 PDF 파일명을 바꾸려면 아래 href만 수정
-        예: CC_Q-GJ-016.pdf → CC_Q-GJ-017.pdf
+        설비가 추가되면 아래 article class="cert-item" 블록을 복사해서 추가
+        번호는 자동으로 1, 2, 3, 4... 붙음
+        검교정 파일명 규칙 : CC_설비번호.pdf
+        예: 설비번호 Q-GJ-020 → CC_Q-GJ-020.pdf
       -->
-      <a class="btn" href="CC_Q-GJ-016.pdf">검교정 성적서 보기</a>
+      <div class="cert-list">
+
+        <article class="cert-item">
+          <div class="cert-content">
+            <div class="cert-head">
+              <div class="cert-title">버니어 캘리퍼스</div>
+              <a class="cert-badge" href="CC_Q-GJ-002.pdf">성적서 보기</a>
+            </div>
+            <div class="cert-grid">
+              <div class="cert-field">
+                <span class="cert-label">규격</span>
+                <span class="cert-value">300mm</span>
+              </div>
+              <div class="cert-field">
+                <span class="cert-label">설비번호</span>
+                <span class="cert-value">Q-GJ-002</span>
+              </div>
+              <div class="cert-field">
+                <span class="cert-label">관리 부서</span>
+                <span class="cert-value">FAN생산팀 FAN 2파트</span>
+              </div>
+              <div class="cert-field">
+                <span class="cert-label">점검 예정일</span>
+                <span class="cert-value">2027-03-12</span>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="cert-item">
+          <div class="cert-content">
+            <div class="cert-head">
+              <div class="cert-title">버니어 캘리퍼스</div>
+              <a class="cert-badge" href="CC_Q-GJ-007.pdf">성적서 보기</a>
+            </div>
+            <div class="cert-grid">
+              <div class="cert-field">
+                <span class="cert-label">규격</span>
+                <span class="cert-value">300mm</span>
+              </div>
+              <div class="cert-field">
+                <span class="cert-label">설비번호</span>
+                <span class="cert-value">Q-GJ-007</span>
+              </div>
+              <div class="cert-field">
+                <span class="cert-label">관리 부서</span>
+                <span class="cert-value">품질경영팀 QM 1파트</span>
+              </div>
+              <div class="cert-field">
+                <span class="cert-label">점검 예정일</span>
+                <span class="cert-value">2026-11-14</span>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="cert-item">
+          <div class="cert-content">
+            <div class="cert-head">
+              <div class="cert-title">버니어 캘리퍼스</div>
+              <a class="cert-badge" href="CC_Q-GJ-016.pdf">성적서 보기</a>
+            </div>
+            <div class="cert-grid">
+              <div class="cert-field">
+                <span class="cert-label">규격</span>
+                <span class="cert-value">600mm</span>
+              </div>
+              <div class="cert-field">
+                <span class="cert-label">설비번호</span>
+                <span class="cert-value">Q-GJ-016</span>
+              </div>
+              <div class="cert-field">
+                <span class="cert-label">관리 부서</span>
+                <span class="cert-value">품질경영팀 QM 1파트</span>
+              </div>
+              <div class="cert-field">
+                <span class="cert-label">점검 예정일</span>
+                <span class="cert-value">2026-12-12</span>
+              </div>
+            </div>
+          </div>
+        </article>
+
+      </div>
     </section>
     <!-- ===== 검교정 성적서 PDF 끝 ===== -->
 
@@ -334,7 +519,7 @@
           예: https://www.youtube.com/embed/영상ID
         -->
         <iframe
-          src="https://www.youtube.com/embed/vNe2fd8O8G0"
+          src="https://www.youtube.com/embed/iTuMsyMcu9c"
           title="버니어 캘리퍼스 사용 영상"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowfullscreen>
