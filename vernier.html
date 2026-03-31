@@ -1,91 +1,498 @@
-<section class="card">
-  <h2 class="section-title">06. 검교정 성적서</h2>
-  <p class="sub">
-    아래 항목에서 해당 설비 정보를 확인한 뒤, <strong>성적서 보기</strong> 버튼을 눌러 검교정 성적서를 확인할 수 있습니다.
-  </p>
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>버니어 캘리퍼스 사용 가이드</title>
 
-  <div class="cert-list">
+  <style>
+    :root {
+      --primary: #1f3a5f;
+      --primary-dark: #13263f;
+      --bg: #eef3f8;
+      --card: #ffffff;
+      --text: #16202b;
+      --subtext: #667085;
+      --line: #d9e2ec;
+      --shadow: 0 10px 24px rgba(19, 38, 63, 0.10);
+    }
 
-    <article class="cert-item">
-      <div class="cert-content">
-        <div class="cert-head">
-          <div class="cert-title">버니어 캘리퍼스</div>
-          <a class="cert-badge" href="CC_Q-GJ-002.pdf">성적서 보기</a>
-        </div>
-        <div class="cert-grid">
-          <div class="cert-field">
-            <span class="cert-label">설비번호</span>
-            <span class="cert-value">Q-GJ-002</span>
-          </div>
-          <div class="cert-field">
-            <span class="cert-label">규격</span>
-            <span class="cert-value">300mm</span>
-          </div>
-          <div class="cert-field">
-            <span class="cert-label">관리 부서</span>
-            <span class="cert-value">FAN생산팀 FAN 2파트</span>
-          </div>
-          <div class="cert-field">
-            <span class="cert-label">점검 예정일</span>
-            <span class="cert-value">2027-03-12</span>
-          </div>
-        </div>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(180deg, #eef3f8 0%, #f7f9fc 100%);
+      color: var(--text);
+    }
+
+    .hero {
+      background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+      color: white;
+      padding: 22px 16px 26px;
+    }
+
+    .hero-inner {
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
+    .company {
+      display: inline-block;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      padding: 7px 11px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.18);
+      margin-bottom: 12px;
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-size: 28px;
+      line-height: 1.35;
+    }
+
+    .hero p {
+      margin: 10px 0 0;
+      color: rgba(255,255,255,0.88);
+      font-size: 15px;
+      line-height: 1.7;
+    }
+
+    .top-actions {
+      margin-top: 16px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .top-btn {
+      display: inline-block;
+      text-decoration: none;
+      padding: 11px 15px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 700;
+      transition: 0.2s ease;
+    }
+
+    .top-btn-main {
+      background: white;
+      color: var(--primary-dark);
+    }
+
+    .top-btn-main:hover {
+      background: #edf3fb;
+    }
+
+    .wrap {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 18px 16px 48px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 18px;
+      margin-bottom: 16px;
+      box-shadow: var(--shadow);
+    }
+
+    .section-title {
+      margin: 0 0 14px;
+      padding-bottom: 10px;
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--primary-dark);
+      border-bottom: 2px solid #d9e2ec;
+    }
+
+    .sub {
+      color: var(--subtext);
+      font-size: 14px;
+      line-height: 1.7;
+      margin: 8px 0 0;
+    }
+
+    .summary-box {
+      margin-top: 14px;
+      padding: 14px;
+      background: #f8fbff;
+      border: 1px solid #dbe7f3;
+      border-radius: 14px;
+      font-size: 14px;
+      line-height: 1.7;
+      color: #475467;
+    }
+
+    .img-wrap {
+      margin-top: 14px;
+      text-align: center;
+    }
+
+    img {
+      width: 100%;
+      max-width: 420px;
+      border-radius: 14px;
+      border: 1px solid #e5e7eb;
+      display: inline-block;
+    }
+
+    ul, ol {
+      padding-left: 20px;
+      line-height: 1.8;
+      margin: 0;
+    }
+
+    li + li {
+      margin-top: 8px;
+    }
+
+    .btn {
+      display: block;
+      text-align: center;
+      background: var(--primary);
+      color: white;
+      text-decoration: none;
+      padding: 14px;
+      border-radius: 12px;
+      margin-top: 12px;
+      font-weight: 700;
+      transition: 0.2s ease;
+    }
+
+    .btn:hover {
+      background: var(--primary-dark);
+    }
+
+    .cert-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+      counter-reset: cert-number;
+    }
+
+    .cert-item {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #f8fbff;
+      overflow: hidden;
+      transition: 0.2s ease;
+    }
+
+    .cert-item:hover {
+      box-shadow: 0 8px 20px rgba(19, 38, 63, 0.08);
+      transform: translateY(-1px);
+    }
+
+    .cert-content {
+      display: block;
+      color: inherit;
+      padding: 12px 14px;
+    }
+
+    .cert-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+    }
+
+    .cert-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--primary-dark);
+    }
+
+    .cert-title::before {
+      counter-increment: cert-number;
+      content: counter(cert-number) ". ";
+    }
+
+    .cert-badge {
+      display: inline-block;
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 700;
+      color: white;
+      background: var(--primary);
+      border: 1px solid var(--primary);
+      border-radius: 999px;
+      padding: 6px 10px;
+      white-space: nowrap;
+      transition: 0.2s ease;
+    }
+
+    .cert-badge:hover {
+      background: var(--primary-dark);
+      border-color: var(--primary-dark);
+    }
+
+    .cert-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px 10px;
+    }
+
+    .cert-field {
+      background: white;
+      border: 1px solid #e3ebf5;
+      border-radius: 10px;
+      padding: 8px 10px;
+    }
+
+    .cert-label {
+      display: block;
+      font-size: 12px;
+      color: var(--subtext);
+      margin-bottom: 4px;
+    }
+
+    .cert-value {
+      display: block;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      word-break: keep-all;
+    }
+
+    .video {
+      position: relative;
+      width: 100%;
+      padding-top: 56.25%;
+      overflow: hidden;
+      border-radius: 14px;
+      background: black;
+      margin-top: 12px;
+      border: 1px solid #d8dee8;
+    }
+
+    .video iframe {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+    }
+
+    .footer {
+      margin-top: 24px;
+      text-align: center;
+      color: #6b7280;
+      font-size: 13px;
+      line-height: 1.8;
+      padding-top: 20px;
+      border-top: 1px solid #dce5ef;
+    }
+
+    .footer strong {
+      color: var(--primary-dark);
+    }
+
+    @media (max-width: 480px) {
+      .hero h1 {
+        font-size: 24px;
+      }
+
+      .card {
+        padding: 16px;
+      }
+
+      .section-title {
+        font-size: 19px;
+      }
+
+      .cert-grid {
+        grid-template-columns: 1fr;
+      }
+
+      img {
+        max-width: 320px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="hero">
+    <div class="hero-inner">
+      <div class="company">HI AI KOREA</div>
+      <h1>버니어 캘리퍼스 사용 가이드</h1>
+      <p>
+        현장에서 휴대폰 및 태블릿으로 빠르게 확인할 수 있도록 제작한 계측기 안내 페이지입니다.
+      </p>
+
+      <div class="top-actions">
+        <a class="top-btn top-btn-main" href="index.html">메인으로 돌아가기</a>
       </div>
-    </article>
+    </div>
+  </header>
 
-    <article class="cert-item">
-      <div class="cert-content">
-        <div class="cert-head">
-          <div class="cert-title">버니어 캘리퍼스</div>
-          <a class="cert-badge" href="CC_Q-GJ-007.pdf">성적서 보기</a>
-        </div>
-        <div class="cert-grid">
-          <div class="cert-field">
-            <span class="cert-label">설비번호</span>
-            <span class="cert-value">Q-GJ-007</span>
-          </div>
-          <div class="cert-field">
-            <span class="cert-label">규격</span>
-            <span class="cert-value">300mm</span>
-          </div>
-          <div class="cert-field">
-            <span class="cert-label">관리 부서</span>
-            <span class="cert-value">품질경영팀 QM 1파트</span>
-          </div>
-          <div class="cert-field">
-            <span class="cert-label">점검 예정일</span>
-            <span class="cert-value">2026-11-14</span>
-          </div>
-        </div>
+  <main class="wrap">
+
+    <section class="card">
+      <h2 class="section-title">01. 장비 정보</h2>
+      <p class="sub">장비명: 버니어 캘리퍼스 / 위치: QM 계측기실</p>
+
+      <div class="summary-box">
+        외측, 내측, 깊이 등을 측정할 수 있는 대표적인 계측기입니다.
+        사용 전 영점 확인과 측정면 청결 상태 확인이 중요합니다.
       </div>
-    </article>
 
-    <article class="cert-item">
-      <div class="cert-content">
-        <div class="cert-head">
-          <div class="cert-title">버니어 캘리퍼스</div>
-          <a class="cert-badge" href="CC_Q-GJ-016.pdf">성적서 보기</a>
-        </div>
-        <div class="cert-grid">
-          <div class="cert-field">
-            <span class="cert-label">설비번호</span>
-            <span class="cert-value">Q-GJ-016</span>
-          </div>
-          <div class="cert-field">
-            <span class="cert-label">규격</span>
-            <span class="cert-value">600mm</span>
-          </div>
-          <div class="cert-field">
-            <span class="cert-label">관리 부서</span>
-            <span class="cert-value">품질경영팀 QM 1파트</span>
-          </div>
-          <div class="cert-field">
-            <span class="cert-label">점검 예정일</span>
-            <span class="cert-value">2026-12-12</span>
-          </div>
-        </div>
+      <div class="img-wrap">
+        <img src="Q-GH-vernier.jpg" alt="버니어 캘리퍼스 사진" />
       </div>
-    </article>
+    </section>
 
-  </div>
-</section>
+    <section class="card">
+      <h2 class="section-title">02. 사용 전 주의사항</h2>
+      <ul>
+        <li>측정 전 캘리퍼스의 측정면에 이물질이나 먼지가 없는지 확인합니다.</li>
+        <li>영점(0점)이 정확히 맞는지 확인한 후 측정을 시작합니다.</li>
+        <li>측정물을 너무 강하게 조이지 말고, 가볍게 밀착시켜 측정합니다.</li>
+        <li>측정 중에는 캘리퍼스를 비틀거나 기울이지 않도록 주의합니다.</li>
+        <li>사용 후에는 측정면을 닦고 충격이나 습기가 없는 곳에 보관합니다.</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2 class="section-title">03. 사용 순서</h2>
+      <ol>
+        <li>측정 전 외측/내측 측정면과 본체 상태를 확인합니다.</li>
+        <li>캘리퍼스를 닫아 영점(0점)이 맞는지 확인합니다.</li>
+        <li>측정하려는 대상에 맞게 외측 또는 내측 측정면을 위치시킵니다.</li>
+        <li>측정면이 대상물에 가볍게 닿도록 조절한 뒤 눈금을 읽습니다.</li>
+        <li>측정값을 기록하고, 사용 후 캘리퍼스를 닫아 정리합니다.</li>
+      </ol>
+    </section>
+
+    <section class="card">
+      <h2 class="section-title">04. 사용 영상</h2>
+      <p class="sub">장비 사용 영상을 아래에서 확인하세요.</p>
+
+      <div class="video">
+        <iframe
+          src="https://www.youtube.com/embed/iTuMsyMcu9c"
+          title="버니어 캘리퍼스 사용 영상"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowfullscreen>
+        </iframe>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2 class="section-title">05. 매뉴얼</h2>
+      <p class="sub">아래 버튼을 누르면 매뉴얼 PDF를 바로 확인할 수 있습니다.</p>
+      <a class="btn" href="manual.pdf">매뉴얼 보기</a>
+    </section>
+
+    <section class="card">
+      <h2 class="section-title">06. 검교정 성적서</h2>
+      <p class="sub">
+        아래 항목에서 해당 설비 정보를 확인한 뒤, <strong>성적서 보기</strong> 버튼을 눌러 검교정 성적서를 확인할 수 있습니다.
+      </p>
+
+      <div class="cert-list">
+
+        <article class="cert-item">
+          <div class="cert-content">
+            <div class="cert-head">
+              <div class="cert-title">버니어 캘리퍼스</div>
+              <a class="cert-badge" href="CC_Q-GJ-002.pdf">성적서 보기</a>
+            </div>
+            <div class="cert-grid">
+              <div class="cert-field">
+                <span class="cert-label">설비번호</span>
+                <span class="cert-value">Q-GJ-002</span>
+              </div>
+              <div class="cert-field">
+                <span class="cert-label">규격</span>
+                <span class="cert-value">300mm</span>
+              </div>
+              <div class="cert-field">
+                <span class="cert-label">관리 부서</span>
+                <span class="cert-value">FAN생산팀 FAN 2파트</span>
+              </div>
+              <div class="cert-field">
+                <span class="cert-label">점검 예정일</span>
+                <span class="cert-value">2027-03-12</span>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="cert-item">
+          <div class="cert-content">
+            <div class="cert-head">
+              <div class="cert-title">버니어 캘리퍼스</div>
+              <a class="cert-badge" href="CC_Q-GJ-007.pdf">성적서 보기</a>
+            </div>
+            <div class="cert-grid">
+              <div class="cert-field">
+                <span class="cert-label">설비번호</span>
+                <span class="cert-value">Q-GJ-007</span>
+              </div>
+              <div class="cert-field">
+                <span class="cert-label">규격</span>
+                <span class="cert-value">300mm</span>
+              </div>
+              <div class="cert-field">
+                <span class="cert-label">관리 부서</span>
+                <span class="cert-value">품질경영팀 QM 1파트</span>
+              </div>
+              <div class="cert-field">
+                <span class="cert-label">점검 예정일</span>
+                <span class="cert-value">2026-11-14</span>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="cert-item">
+          <div class="cert-content">
+            <div class="cert-head">
+              <div class="cert-title">버니어 캘리퍼스</div>
+              <a class="cert-badge" href="CC_Q-GJ-016.pdf">성적서 보기</a>
+            </div>
+            <div class="cert-grid">
+              <div class="cert-field">
+                <span class="cert-label">설비번호</span>
+                <span class="cert-value">Q-GJ-016</span>
+              </div>
+              <div class="cert-field">
+                <span class="cert-label">규격</span>
+                <span class="cert-value">600mm</span>
+              </div>
+              <div class="cert-field">
+                <span class="cert-label">관리 부서</span>
+                <span class="cert-value">품질경영팀 QM 1파트</span>
+              </div>
+              <div class="cert-field">
+                <span class="cert-label">점검 예정일</span>
+                <span class="cert-value">2026-12-12</span>
+              </div>
+            </div>
+          </div>
+        </article>
+
+      </div>
+    </section>
+
+    <div class="footer">
+      <strong>HI AI KOREA</strong><br>
+      HAK 계측기 사용 방법 안내 페이지<br>
+      Copyright © 2026 HI AI KOREA. All Rights Reserved.
+    </div>
+
+  </main>
+</body>
+</html>
