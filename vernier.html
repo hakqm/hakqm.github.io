@@ -23,7 +23,9 @@
       --info-text: #1f3a5f;
     }
 
-    * { box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+    }
 
     body {
       margin: 0;
@@ -84,6 +86,11 @@
       font-weight: 700;
       background: white;
       color: var(--primary-dark);
+      transition: 0.2s ease;
+    }
+
+    .top-btn:hover {
+      background: #edf3fb;
     }
 
     .wrap {
@@ -164,6 +171,11 @@
       border-radius: 12px;
       font-size: 14px;
       outline: none;
+    }
+
+    .login-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(31, 58, 95, 0.08);
     }
 
     .login-row {
@@ -290,6 +302,7 @@
     }
 
     .action-btn {
+      display: inline-block;
       border: none;
       background: var(--primary);
       color: white;
@@ -298,10 +311,31 @@
       font-size: 13px;
       font-weight: 700;
       cursor: pointer;
+      text-decoration: none;
+      text-align: center;
     }
 
     .action-btn-secondary {
       background: #667085;
+    }
+
+    .video {
+      position: relative;
+      width: 100%;
+      padding-top: 56.25%;
+      overflow: hidden;
+      border-radius: 14px;
+      background: black;
+      margin-top: 12px;
+      border: 1px solid #d8dee8;
+    }
+
+    .video iframe {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
     }
 
     .footer {
@@ -319,11 +353,25 @@
     }
 
     @media (max-width: 480px) {
-      .hero h1 { font-size: 24px; }
-      .card { padding: 16px; }
-      .section-title { font-size: 19px; }
-      .compact-grid { grid-template-columns: 1fr; }
-      img { max-width: 320px; }
+      .hero h1 {
+        font-size: 24px;
+      }
+
+      .card {
+        padding: 16px;
+      }
+
+      .section-title {
+        font-size: 19px;
+      }
+
+      .compact-grid {
+        grid-template-columns: 1fr;
+      }
+
+      img {
+        max-width: 320px;
+      }
     }
   </style>
 </head>
@@ -404,6 +452,25 @@
         <li>측정면이 대상물에 가볍게 닿도록 조절한 뒤 눈금을 읽습니다.</li>
         <li>측정값을 기록하고, 사용 후 캘리퍼스를 닫아 정리합니다.</li>
       </ol>
+    </section>
+
+    <section class="card">
+      <h2 class="section-title">06. 매뉴얼</h2>
+      <p class="sub">아래 버튼을 누르면 매뉴얼 PDF를 바로 확인할 수 있습니다.</p>
+      <a class="action-btn" href="manual.pdf">매뉴얼 보기</a>
+    </section>
+
+    <section class="card">
+      <h2 class="section-title">07. 사용 영상</h2>
+      <p class="sub">장비 사용 영상을 아래에서 확인하세요.</p>
+      <div class="video">
+        <iframe
+          src="https://www.youtube.com/embed/iTuMsyMcu9c"
+          title="버니어 캘리퍼스 사용 영상"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowfullscreen>
+        </iframe>
+      </div>
     </section>
 
     <div class="footer">
