@@ -225,6 +225,32 @@
       color: var(--primary-dark);
     }
 
+    .code-line {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0 0 12px;
+      font-size: 13px;
+      color: var(--subtext);
+      font-weight: 700;
+    }
+
+    .code-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #1f3a5f;
+      flex-shrink: 0;
+    }
+
+    .code-dot.vernier {
+      background: #1f3a5f;
+    }
+
+    .code-dot.micro {
+      background: #d38b2c;
+    }
+
     .card p {
       margin: 0 0 16px;
       color: var(--subtext);
@@ -347,6 +373,10 @@
           <div class="badge">측정 장비</div>
         </div>
         <h3>버니어 캘리퍼스</h3>
+        <div class="code-line">
+          <span class="code-dot vernier"></span>
+          <span>Q-GJ-002</span>
+        </div>
         <p>
           외측, 내측, 깊이 등을 측정할 때 사용하는 기본 계측기입니다.
           사용 방법과 측정 요령을 확인할 수 있습니다.
@@ -362,6 +392,10 @@
           <div class="badge">정밀 측정 장비</div>
         </div>
         <h3>마이크로미터</h3>
+        <div class="code-line">
+          <span class="code-dot micro"></span>
+          <span>Q-GM-001</span>
+        </div>
         <p>
           정밀한 치수 측정이 필요한 경우 사용하는 계측기입니다.
         </p>
