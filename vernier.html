@@ -237,6 +237,37 @@
       word-break: keep-all;
     }
 
+    .action-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+    }
+
+    .action-btn {
+      border: none;
+      background: var(--primary);
+      color: white;
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: 0.2s ease;
+    }
+
+    .action-btn:hover {
+      background: var(--primary-dark);
+    }
+
+    .action-btn-secondary {
+      background: #667085;
+    }
+
+    .action-btn-secondary:hover {
+      background: #475467;
+    }
+
     .cert-list {
       display: grid;
       gap: 10px;
@@ -452,6 +483,11 @@
             <span class="status-value" id="checkoutTime">-</span>
           </div>
         </div>
+
+        <div class="action-row">
+          <button type="button" class="action-btn" onclick="checkoutEquipment()">불출하기</button>
+          <button type="button" class="action-btn action-btn-secondary" onclick="returnEquipment()">반납하기</button>
+        </div>
       </div>
     </section>
 
@@ -601,6 +637,12 @@
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwn9I60-14GHDQk_rNF_uJYBpig-Bovl7Qqje_eGGjcFmZJZfqQgtpUg6necytvlQQ-/exec";
     const EQUIPMENT_CODE = "Q-GJ-002";
 
+    const TEST_USER = {
+      user_name: "테스트사용자",
+      user_id: "U001",
+      emp_no: "1001"
+    };
+
     const statusBadge = document.getElementById("statusBadge");
     const eqCode = document.getElementById("eqCode");
     const eqName = document.getElementById("eqName");
@@ -624,15 +666,7 @@
       statusBadge.textContent = text;
     }
 
-    function handleEquipmentStatus(result) {
-      if (!result.success) {
-        setBadge("error", "조회 실패");
-        alert(result.message || "장비 상태를 불러오지 못했습니다.");
-        return;
-      }
-
-      const equipment = result.equipment;
-
+    function renderEquipment(equipment) {
       eqCode.textContent = equipment.eq_code || "-";
       eqName.textContent = equipment.eq_name || "-";
       eqLocation.textContent = equipment.location || "-";
@@ -648,19 +682,92 @@
       }
     }
 
-    function loadEquipmentStatus() {
-      setBadge("loading", "불러오는 중...");
+    function jsonpRequest(url, callbackName) {
+      return new Promise((resolve, reject) => {
+        const script = document.createElement("script");
+        const uniqueCallback = callbackName + "_" + Date.now();
 
-      const script = document.createElement("script");
-      script.src =
-        `${WEB_APP_URL}?action=getEquipmentStatus&eq_code=${encodeURIComponent(EQUIPMENT_CODE)}&callback=handleEquipmentStatus`;
+        window[uniqueCallback] = function (result) {
+          resolve(result);
+          delete window[uniqueCallback];
+          script.remove();
+        };
 
-      script.onerror = function () {
+        script.src = `${url}&callback=${uniqueCallback}`;
+
+        script.onerror = function () {
+          reject(new Error("Apps Script 연결 오류"));
+          delete window[uniqueCallback];
+          script.remove();
+        };
+
+        document.body.appendChild(script);
+      });
+    }
+
+    async function loadEquipmentStatus() {
+      try {
+        setBadge("loading", "불러오는 중...");
+        const url = `${WEB_APP_URL}?action=getEquipmentStatus&eq_code=${encodeURIComponent(EQUIPMENT_CODE)}`;
+        const result = await jsonpRequest(url, "statusCallback");
+
+        if (!result.success) {
+          setBadge("error", "조회 실패");
+          alert(result.message || "장비 상태를 불러오지 못했습니다.");
+          return;
+        }
+
+        renderEquipment(result.equipment);
+      } catch (error) {
+        console.error(error);
         setBadge("error", "연결 오류");
-        alert("Apps Script 연결 중 오류가 발생했습니다.");
-      };
+      }
+    }
 
-      document.body.appendChild(script);
+    async function checkoutEquipment() {
+      try {
+        const url =
+          `${WEB_APP_URL}?action=checkout` +
+          `&eq_code=${encodeURIComponent(EQUIPMENT_CODE)}` +
+          `&user_name=${encodeURIComponent(TEST_USER.user_name)}` +
+          `&user_id=${encodeURIComponent(TEST_USER.user_id)}` +
+          `&emp_no=${encodeURIComponent(TEST_USER.emp_no)}`;
+
+        const result = await jsonpRequest(url, "checkoutCallback");
+
+        if (!result.success) {
+          alert(result.message || "불출 처리에 실패했습니다.");
+          return;
+        }
+
+        alert("불출이 완료되었습니다.");
+        renderEquipment(result.equipment);
+      } catch (error) {
+        console.error(error);
+        alert("불출 처리 중 오류가 발생했습니다.");
+      }
+    }
+
+    async function returnEquipment() {
+      try {
+        const url =
+          `${WEB_APP_URL}?action=return` +
+          `&eq_code=${encodeURIComponent(EQUIPMENT_CODE)}` +
+          `&user_name=${encodeURIComponent(TEST_USER.user_name)}`;
+
+        const result = await jsonpRequest(url, "returnCallback");
+
+        if (!result.success) {
+          alert(result.message || "반납 처리에 실패했습니다.");
+          return;
+        }
+
+        alert("반납이 완료되었습니다.");
+        renderEquipment(result.equipment);
+      } catch (error) {
+        console.error(error);
+        alert("반납 처리 중 오류가 발생했습니다.");
+      }
     }
 
     loadEquipmentStatus();
