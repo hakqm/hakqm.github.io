@@ -268,25 +268,15 @@
       color: var(--primary-dark);
     }
 
-    .mini-status-row {
+    .mini-status-group {
       display: flex;
-      align-items: center;
       gap: 8px;
-      margin: 0 0 12px;
       flex-wrap: wrap;
-    }
-
-    .mini-code {
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--subtext);
-      padding: 6px 10px;
-      border-radius: 999px;
-      background: #f8fafc;
-      border: 1px solid #e5e7eb;
+      margin: 0 0 12px;
     }
 
     .mini-status {
+      display: inline-block;
       font-size: 12px;
       font-weight: 700;
       padding: 6px 10px;
@@ -442,9 +432,10 @@
         </div>
         <h3>버니어 캘리퍼스</h3>
 
-        <div class="mini-status-row">
-          <span class="mini-code">Q-GJ-002</span>
-          <span id="status-Q-GJ-002" class="mini-status status-loading">상태 확인 중...</span>
+        <div class="mini-status-group">
+          <span id="status-Q-GJ-002" class="mini-status status-loading">Q-GJ-002</span>
+          <span id="status-Q-GJ-007" class="mini-status status-loading">Q-GJ-007</span>
+          <span id="status-Q-GJ-016" class="mini-status status-loading">Q-GJ-016</span>
         </div>
 
         <p>
@@ -486,6 +477,8 @@
     const equipmentCards = document.querySelectorAll(".equipment-card");
     const searchResult = document.getElementById("searchResult");
 
+    const equipmentCodes = ["Q-GJ-002", "Q-GJ-007", "Q-GJ-016"];
+
     function normalizeText(text) {
       return text.toLowerCase().replace(/\s+/g, "");
     }
@@ -519,7 +512,7 @@
     function jsonpRequest(url, callbackName) {
       return new Promise((resolve, reject) => {
         const script = document.createElement("script");
-        const uniqueCallback = callbackName + "_" + Date.now();
+        const uniqueCallback = callbackName + "_" + Date.now() + "_" + Math.floor(Math.random() * 1000);
 
         window[uniqueCallback] = function (result) {
           resolve(result);
@@ -539,33 +532,34 @@
       });
     }
 
-    async function loadStatus() {
-      const statusEl = document.getElementById("status-Q-GJ-002");
+    async function loadSingleStatus(eqCode) {
+      const statusEl = document.getElementById(`status-${eqCode}`);
+      if (!statusEl) return;
 
       try {
-        const url = `${WEB_APP_URL}?action=getEquipmentStatus&eq_code=Q-GJ-002`;
+        const url = `${WEB_APP_URL}?action=getEquipmentStatus&eq_code=${encodeURIComponent(eqCode)}`;
         const result = await jsonpRequest(url, "statusCallback");
 
         if (!result.success) {
           statusEl.className = "mini-status status-loading";
-          statusEl.textContent = "상태 확인 필요";
+          statusEl.textContent = eqCode;
           return;
         }
 
         if (result.equipment.status === "available") {
           statusEl.className = "mini-status status-available";
-          statusEl.textContent = "대여 가능";
+          statusEl.textContent = eqCode;
         } else if (result.equipment.status === "checked_out") {
           statusEl.className = "mini-status status-checkedout";
-          statusEl.textContent = "불출 중";
+          statusEl.textContent = eqCode;
         } else {
           statusEl.className = "mini-status status-loading";
-          statusEl.textContent = "상태 확인 필요";
+          statusEl.textContent = eqCode;
         }
       } catch (error) {
         console.error(error);
         statusEl.className = "mini-status status-loading";
-        statusEl.textContent = "상태 확인 필요";
+        statusEl.textContent = eqCode;
       }
     }
 
@@ -577,7 +571,7 @@
 
     searchInput.addEventListener("input", filterEquipment);
 
-    loadStatus();
+    equipmentCodes.forEach(code => loadSingleStatus(code));
   </script>
 </body>
 </html>
