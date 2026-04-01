@@ -15,6 +15,12 @@
       --subtext: #667085;
       --line: #d9e2ec;
       --shadow: 0 10px 24px rgba(19, 38, 63, 0.10);
+      --ok-bg: #ecfdf3;
+      --ok-text: #027a48;
+      --warn-bg: #fff4e5;
+      --warn-text: #b54708;
+      --info-bg: #eef4ff;
+      --info-text: #1f3a5f;
     }
 
     * {
@@ -172,6 +178,65 @@
       background: var(--primary-dark);
     }
 
+    .status-wrap {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .status-available {
+      background: var(--ok-bg);
+      color: var(--ok-text);
+    }
+
+    .status-checkedout {
+      background: var(--warn-bg);
+      color: var(--warn-text);
+    }
+
+    .status-loading,
+    .status-error {
+      background: var(--info-bg);
+      color: var(--info-text);
+    }
+
+    .status-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .status-field {
+      background: #f8fbff;
+      border: 1px solid #dbe7f3;
+      border-radius: 12px;
+      padding: 12px;
+    }
+
+    .status-label {
+      display: block;
+      font-size: 12px;
+      color: var(--subtext);
+      margin-bottom: 6px;
+    }
+
+    .status-value {
+      display: block;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      word-break: keep-all;
+    }
+
     .cert-list {
       display: grid;
       gap: 10px;
@@ -311,7 +376,8 @@
         font-size: 19px;
       }
 
-      .cert-grid {
+      .cert-grid,
+      .status-grid {
         grid-template-columns: 1fr;
       }
 
@@ -354,7 +420,43 @@
     </section>
 
     <section class="card">
-      <h2 class="section-title">02. 사용 전 주의사항</h2>
+      <h2 class="section-title">02. 장비 상태</h2>
+      <p class="sub">구글시트에 저장된 현재 장비 상태를 자동으로 불러옵니다.</p>
+
+      <div class="status-wrap">
+        <div id="statusBadge" class="status-badge status-loading">불러오는 중...</div>
+
+        <div class="status-grid">
+          <div class="status-field">
+            <span class="status-label">설비번호</span>
+            <span class="status-value" id="eqCode">-</span>
+          </div>
+
+          <div class="status-field">
+            <span class="status-label">장비명</span>
+            <span class="status-value" id="eqName">-</span>
+          </div>
+
+          <div class="status-field">
+            <span class="status-label">위치</span>
+            <span class="status-value" id="eqLocation">-</span>
+          </div>
+
+          <div class="status-field">
+            <span class="status-label">현재 사용자</span>
+            <span class="status-value" id="currentUser">-</span>
+          </div>
+
+          <div class="status-field">
+            <span class="status-label">불출 시간</span>
+            <span class="status-value" id="checkoutTime">-</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2 class="section-title">03. 사용 전 주의사항</h2>
       <ul>
         <li>측정 전 캘리퍼스의 측정면에 이물질이나 먼지가 없는지 확인합니다.</li>
         <li>영점(0점)이 정확히 맞는지 확인한 후 측정을 시작합니다.</li>
@@ -365,7 +467,7 @@
     </section>
 
     <section class="card">
-      <h2 class="section-title">03. 사용 순서</h2>
+      <h2 class="section-title">04. 사용 순서</h2>
       <ol>
         <li>측정 전 외측/내측 측정면과 본체 상태를 확인합니다.</li>
         <li>캘리퍼스를 닫아 영점(0점)이 맞는지 확인합니다.</li>
@@ -376,7 +478,7 @@
     </section>
 
     <section class="card">
-      <h2 class="section-title">04. 사용 영상</h2>
+      <h2 class="section-title">05. 사용 영상</h2>
       <p class="sub">장비 사용 영상을 아래에서 확인하세요.</p>
 
       <div class="video">
@@ -390,13 +492,13 @@
     </section>
 
     <section class="card">
-      <h2 class="section-title">05. 매뉴얼</h2>
+      <h2 class="section-title">06. 매뉴얼</h2>
       <p class="sub">아래 버튼을 누르면 매뉴얼 PDF를 바로 확인할 수 있습니다.</p>
       <a class="btn" href="manual.pdf">매뉴얼 보기</a>
     </section>
 
     <section class="card">
-      <h2 class="section-title">06. 검교정 성적서</h2>
+      <h2 class="section-title">07. 검교정 성적서</h2>
       <p class="sub">
         아래 항목에서 해당 설비 정보를 확인한 뒤, <strong>성적서 보기</strong> 버튼을 눌러 검교정 성적서를 확인할 수 있습니다.
       </p>
@@ -494,5 +596,73 @@
     </div>
 
   </main>
+
+  <script>
+    const WEB_APP_URL = "여기에_웹앱_URL_붙여넣기";
+    const EQUIPMENT_CODE = "Q-GJ-002";
+
+    const statusBadge = document.getElementById("statusBadge");
+    const eqCode = document.getElementById("eqCode");
+    const eqName = document.getElementById("eqName");
+    const eqLocation = document.getElementById("eqLocation");
+    const currentUser = document.getElementById("currentUser");
+    const checkoutTime = document.getElementById("checkoutTime");
+
+    function setBadge(type, text) {
+      statusBadge.className = "status-badge";
+
+      if (type === "available") {
+        statusBadge.classList.add("status-available");
+      } else if (type === "checked_out") {
+        statusBadge.classList.add("status-checkedout");
+      } else if (type === "error") {
+        statusBadge.classList.add("status-error");
+      } else {
+        statusBadge.classList.add("status-loading");
+      }
+
+      statusBadge.textContent = text;
+    }
+
+    async function loadEquipmentStatus() {
+      try {
+        setBadge("loading", "불러오는 중...");
+
+        const requestUrl =
+          `${WEB_APP_URL}?action=getEquipmentStatus&eq_code=${encodeURIComponent(EQUIPMENT_CODE)}`;
+
+        const response = await fetch(requestUrl);
+        const result = await response.json();
+
+        if (!result.success) {
+          setBadge("error", "조회 실패");
+          alert(result.message || "장비 상태를 불러오지 못했습니다.");
+          return;
+        }
+
+        const equipment = result.equipment;
+
+        eqCode.textContent = equipment.eq_code || "-";
+        eqName.textContent = equipment.eq_name || "-";
+        eqLocation.textContent = equipment.location || "-";
+        currentUser.textContent = equipment.current_user_name || "-";
+        checkoutTime.textContent = equipment.checkout_time || "-";
+
+        if (equipment.status === "available") {
+          setBadge("available", "사용 가능");
+        } else if (equipment.status === "checked_out") {
+          setBadge("checked_out", "불출 중");
+        } else {
+          setBadge("loading", equipment.status || "상태 확인 필요");
+        }
+      } catch (error) {
+        console.error(error);
+        setBadge("error", "연결 오류");
+        alert("Apps Script 연결 중 오류가 발생했습니다.");
+      }
+    }
+
+    loadEquipmentStatus();
+  </script>
 </body>
 </html>
