@@ -3,24 +3,18 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>버니어 캘리퍼스 사용 가이드</title>
-
+  <title>HAK 계측기 사용 방법</title>
   <style>
     :root {
       --primary: #1f3a5f;
       --primary-dark: #13263f;
-      --bg: #eef3f8;
+      --accent: #d38b2c;
+      --bg: #f4f7fb;
       --card: #ffffff;
-      --text: #16202b;
-      --subtext: #667085;
-      --line: #d9e2ec;
+      --text: #1b2430;
+      --subtext: #5b6573;
+      --line: #dbe3ec;
       --shadow: 0 10px 24px rgba(19, 38, 63, 0.10);
-      --ok-bg: #ecfdf3;
-      --ok-text: #027a48;
-      --warn-bg: #fff4e5;
-      --warn-text: #b54708;
-      --info-bg: #eef4ff;
-      --info-text: #1f3a5f;
     }
 
     * {
@@ -30,639 +24,403 @@
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background: linear-gradient(180deg, #eef3f8 0%, #f7f9fc 100%);
+      background: linear-gradient(180deg, #eef3f9 0%, #f8fafc 100%);
       color: var(--text);
     }
 
     .hero {
       background: linear-gradient(135deg, var(--primary-dark), var(--primary));
       color: white;
-      padding: 22px 16px 26px;
+      padding: 42px 20px 34px;
     }
 
     .hero-inner {
-      max-width: 720px;
+      max-width: 1100px;
       margin: 0 auto;
     }
 
     .company {
       display: inline-block;
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 700;
-      letter-spacing: 1px;
-      padding: 7px 11px;
+      letter-spacing: 1.2px;
+      padding: 8px 12px;
+      border: 1px solid rgba(255,255,255,0.2);
       border-radius: 999px;
-      background: rgba(255,255,255,0.12);
-      border: 1px solid rgba(255,255,255,0.18);
-      margin-bottom: 12px;
+      background: rgba(255,255,255,0.08);
+      margin-bottom: 14px;
     }
 
-    .hero h1 {
+    h1 {
       margin: 0;
-      font-size: 28px;
-      line-height: 1.35;
+      font-size: 32px;
+      line-height: 1.3;
     }
 
     .hero p {
-      margin: 10px 0 0;
+      margin: 14px 0 0;
       color: rgba(255,255,255,0.88);
-      font-size: 15px;
+      font-size: 16px;
       line-height: 1.7;
-    }
-
-    .top-actions {
-      margin-top: 16px;
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .top-btn {
-      display: inline-block;
-      text-decoration: none;
-      padding: 11px 15px;
-      border-radius: 12px;
-      font-size: 14px;
-      font-weight: 700;
-      transition: 0.2s ease;
-    }
-
-    .top-btn-main {
-      background: white;
-      color: var(--primary-dark);
-    }
-
-    .top-btn-main:hover {
-      background: #edf3fb;
+      max-width: 760px;
     }
 
     .wrap {
-      max-width: 720px;
+      max-width: 1100px;
       margin: 0 auto;
-      padding: 18px 16px 48px;
+      padding: 28px 20px 60px;
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 8px 0 18px;
+      flex-wrap: wrap;
+    }
+
+    .section-title h2 {
+      margin: 0;
+      font-size: 24px;
+      color: var(--primary-dark);
+    }
+
+    .section-title span {
+      color: var(--subtext);
+      font-size: 14px;
+    }
+
+    .search-box {
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 18px;
+      margin-bottom: 22px;
+      box-shadow: var(--shadow);
+    }
+
+    .search-box label {
+      display: block;
+      margin-bottom: 10px;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--primary-dark);
+    }
+
+    .search-input-wrap {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .search-input-area {
+      position: relative;
+      width: 100%;
+      max-width: 420px;
+    }
+
+    .search-box input {
+      width: 100%;
+      min-width: 240px;
+      padding: 13px 42px 13px 15px;
+      border: 1px solid #cfd9e5;
+      border-radius: 12px;
+      font-size: 15px;
+      outline: none;
+    }
+
+    .search-box input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(31, 58, 95, 0.08);
+    }
+
+    .clear-btn {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 26px;
+      height: 26px;
+      border: none;
+      border-radius: 50%;
+      background: #dfe7f1;
+      color: #334155;
+      font-size: 18px;
+      line-height: 1;
+      cursor: pointer;
+      display: none;
+    }
+
+    .clear-btn:hover {
+      background: #cfd9e5;
+    }
+
+    .search-hint {
+      margin-top: 10px;
+      font-size: 13px;
+      color: var(--subtext);
+      line-height: 1.6;
+    }
+
+    .search-result {
+      margin: 14px 0 20px;
+      font-size: 14px;
+      color: var(--subtext);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 18px;
     }
 
     .card {
       background: var(--card);
       border: 1px solid var(--line);
       border-radius: 18px;
-      padding: 18px;
-      margin-bottom: 16px;
+      padding: 22px;
       box-shadow: var(--shadow);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
 
-    .section-title {
-      margin: 0 0 14px;
-      padding-bottom: 10px;
-      font-size: 22px;
-      font-weight: 800;
-      color: var(--primary-dark);
-      border-bottom: 2px solid #d9e2ec;
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 14px 28px rgba(19, 38, 63, 0.14);
     }
 
-    .sub {
-      color: var(--subtext);
-      font-size: 14px;
-      line-height: 1.7;
-      margin: 8px 0 0;
-    }
-
-    .summary-box {
-      margin-top: 14px;
-      padding: 14px;
-      background: #f8fbff;
-      border: 1px solid #dbe7f3;
-      border-radius: 14px;
-      font-size: 14px;
-      line-height: 1.7;
-      color: #475467;
-    }
-
-    .img-wrap {
-      margin-top: 14px;
-      text-align: center;
-    }
-
-    img {
-      width: 100%;
-      max-width: 420px;
-      border-radius: 14px;
-      border: 1px solid #e5e7eb;
-      display: inline-block;
-    }
-
-    ul, ol {
-      padding-left: 20px;
-      line-height: 1.8;
-      margin: 0;
-    }
-
-    li + li {
-      margin-top: 8px;
-    }
-
-    .btn {
-      display: block;
-      text-align: center;
-      background: var(--primary);
-      color: white;
-      text-decoration: none;
-      padding: 14px;
-      border-radius: 12px;
-      margin-top: 12px;
-      font-weight: 700;
-      transition: 0.2s ease;
-    }
-
-    .btn:hover {
-      background: var(--primary-dark);
-    }
-
-    .status-wrap {
-      display: grid;
-      gap: 10px;
-      margin-top: 12px;
-    }
-
-    .status-badge {
-      display: inline-block;
-      padding: 8px 12px;
-      border-radius: 999px;
-      font-size: 13px;
-      font-weight: 700;
-    }
-
-    .status-available {
-      background: var(--ok-bg);
-      color: var(--ok-text);
-    }
-
-    .status-checkedout {
-      background: var(--warn-bg);
-      color: var(--warn-text);
-    }
-
-    .status-loading,
-    .status-error {
-      background: var(--info-bg);
-      color: var(--info-text);
-    }
-
-    .status-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
-      margin-top: 12px;
-    }
-
-    .status-field {
-      background: #f8fbff;
-      border: 1px solid #dbe7f3;
-      border-radius: 12px;
-      padding: 12px;
-    }
-
-    .status-label {
-      display: block;
-      font-size: 12px;
-      color: var(--subtext);
-      margin-bottom: 6px;
-    }
-
-    .status-value {
-      display: block;
-      font-size: 15px;
-      font-weight: 700;
-      color: var(--text);
-      word-break: keep-all;
-    }
-
-    .cert-list {
-      display: grid;
-      gap: 10px;
-      margin-top: 12px;
-      counter-reset: cert-number;
-    }
-
-    .cert-item {
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      background: #f8fbff;
-      overflow: hidden;
-      transition: 0.2s ease;
-    }
-
-    .cert-item:hover {
-      box-shadow: 0 8px 20px rgba(19, 38, 63, 0.08);
-      transform: translateY(-1px);
-    }
-
-    .cert-content {
-      display: block;
-      color: inherit;
-      padding: 12px 14px;
-    }
-
-    .cert-head {
+    .card-top {
       display: flex;
-      justify-content: space-between;
-      gap: 12px;
       align-items: center;
-      margin-bottom: 8px;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 12px;
       flex-wrap: wrap;
     }
 
-    .cert-title {
-      font-size: 15px;
+    .no-badge {
+      display: inline-block;
+      padding: 7px 11px;
+      border-radius: 999px;
+      background: var(--primary-dark);
+      color: #ffffff;
+      font-size: 12px;
       font-weight: 700;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 7px 11px;
+      border-radius: 999px;
+      background: #eef4ff;
+      color: var(--primary);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .card h3 {
+      margin: 0 0 10px;
+      font-size: 21px;
       color: var(--primary-dark);
     }
 
-    .cert-title::before {
-      counter-increment: cert-number;
-      content: counter(cert-number) ". ";
+    .card p {
+      margin: 0 0 16px;
+      color: var(--subtext);
+      line-height: 1.7;
+      font-size: 15px;
+      min-height: 74px;
     }
 
-    .cert-badge {
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
       display: inline-block;
       text-decoration: none;
-      font-size: 12px;
       font-weight: 700;
-      color: white;
-      background: var(--primary);
-      border: 1px solid var(--primary);
-      border-radius: 999px;
-      padding: 6px 10px;
-      white-space: nowrap;
+      font-size: 14px;
+      padding: 12px 16px;
+      border-radius: 12px;
       transition: 0.2s ease;
     }
 
-    .cert-badge:hover {
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-primary:hover {
       background: var(--primary-dark);
-      border-color: var(--primary-dark);
     }
 
-    .cert-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 8px 10px;
+    .hidden {
+      display: none !important;
     }
 
-    .cert-field {
-      background: white;
-      border: 1px solid #e3ebf5;
-      border-radius: 10px;
-      padding: 8px 10px;
-    }
-
-    .cert-label {
-      display: block;
-      font-size: 12px;
-      color: var(--subtext);
-      margin-bottom: 4px;
-    }
-
-    .cert-value {
-      display: block;
-      font-size: 14px;
-      font-weight: 700;
-      color: var(--text);
-      word-break: keep-all;
-    }
-
-    .video {
-      position: relative;
-      width: 100%;
-      padding-top: 56.25%;
-      overflow: hidden;
-      border-radius: 14px;
-      background: black;
-      margin-top: 12px;
-      border: 1px solid #d8dee8;
-    }
-
-    .video iframe {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      border: 0;
-    }
-
-    .footer {
-      margin-top: 24px;
-      text-align: center;
-      color: #6b7280;
-      font-size: 13px;
-      line-height: 1.8;
-      padding-top: 20px;
+    footer {
+      margin-top: 40px;
+      padding-top: 24px;
       border-top: 1px solid #dce5ef;
+      color: #6b7280;
+      font-size: 14px;
+      line-height: 1.8;
     }
 
-    .footer strong {
+    .footer-brand {
       color: var(--primary-dark);
+      font-weight: 700;
     }
 
-    @media (max-width: 480px) {
-      .hero h1 {
-        font-size: 24px;
+    @media (max-width: 640px) {
+      h1 {
+        font-size: 26px;
       }
 
-      .card {
-        padding: 16px;
+      .hero {
+        padding: 34px 16px 28px;
       }
 
-      .section-title {
-        font-size: 19px;
+      .wrap {
+        padding: 22px 16px 50px;
       }
 
-      .cert-grid,
-      .status-grid {
-        grid-template-columns: 1fr;
+      .card p {
+        min-height: auto;
       }
 
-      img {
-        max-width: 320px;
+      .search-input-wrap {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .search-input-area {
+        max-width: 100%;
       }
     }
   </style>
 </head>
 <body>
-
   <header class="hero">
     <div class="hero-inner">
       <div class="company">HI AIR KOREA</div>
-      <h1>버니어 캘리퍼스 사용 가이드</h1>
+      <h1>HAK 계측기 사용 방법</h1>
       <p>
-        현장에서 휴대폰 및 태블릿으로 빠르게 확인할 수 있도록 제작한 계측기 안내 페이지입니다.
+        계측기 종류별 사용 방법과 주의사항을 한 곳에서 확인할 수 있는 안내 페이지입니다.
       </p>
-
-      <div class="top-actions">
-        <a class="top-btn top-btn-main" href="index.html">메인으로 돌아가기</a>
-      </div>
     </div>
   </header>
 
   <main class="wrap">
-
-    <section class="card">
-      <h2 class="section-title">01. 장비 정보</h2>
-      <p class="sub">장비명: 버니어 캘리퍼스 / 위치: QM 계측기실</p>
-
-      <div class="summary-box">
-        외측, 내측, 깊이 등을 측정할 수 있는 대표적인 계측기입니다.
-        사용 전 영점 확인과 측정면 청결 상태 확인이 중요합니다.
-      </div>
-
-      <div class="img-wrap">
-        <img src="Q-GH-vernier.jpg" alt="버니어 캘리퍼스 사진" />
-      </div>
-    </section>
-
-    <section class="card">
-      <h2 class="section-title">02. 장비 상태</h2>
-      <p class="sub">구글시트에 저장된 현재 장비 상태를 자동으로 불러옵니다.</p>
-
-      <div class="status-wrap">
-        <div id="statusBadge" class="status-badge status-loading">불러오는 중...</div>
-
-        <div class="status-grid">
-          <div class="status-field">
-            <span class="status-label">설비번호</span>
-            <span class="status-value" id="eqCode">-</span>
-          </div>
-
-          <div class="status-field">
-            <span class="status-label">장비명</span>
-            <span class="status-value" id="eqName">-</span>
-          </div>
-
-          <div class="status-field">
-            <span class="status-label">위치</span>
-            <span class="status-value" id="eqLocation">-</span>
-          </div>
-
-          <div class="status-field">
-            <span class="status-label">현재 사용자</span>
-            <span class="status-value" id="currentUser">-</span>
-          </div>
-
-          <div class="status-field">
-            <span class="status-label">불출 시간</span>
-            <span class="status-value" id="checkoutTime">-</span>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="card">
-      <h2 class="section-title">03. 사용 전 주의사항</h2>
-      <ul>
-        <li>측정 전 캘리퍼스의 측정면에 이물질이나 먼지가 없는지 확인합니다.</li>
-        <li>영점(0점)이 정확히 맞는지 확인한 후 측정을 시작합니다.</li>
-        <li>측정물을 너무 강하게 조이지 말고, 가볍게 밀착시켜 측정합니다.</li>
-        <li>측정 중에는 캘리퍼스를 비틀거나 기울이지 않도록 주의합니다.</li>
-        <li>사용 후에는 측정면을 닦고 충격이나 습기가 없는 곳에 보관합니다.</li>
-      </ul>
-    </section>
-
-    <section class="card">
-      <h2 class="section-title">04. 사용 순서</h2>
-      <ol>
-        <li>측정 전 외측/내측 측정면과 본체 상태를 확인합니다.</li>
-        <li>캘리퍼스를 닫아 영점(0점)이 맞는지 확인합니다.</li>
-        <li>측정하려는 대상에 맞게 외측 또는 내측 측정면을 위치시킵니다.</li>
-        <li>측정면이 대상물에 가볍게 닿도록 조절한 뒤 눈금을 읽습니다.</li>
-        <li>측정값을 기록하고, 사용 후 캘리퍼스를 닫아 정리합니다.</li>
-      </ol>
-    </section>
-
-    <section class="card">
-      <h2 class="section-title">05. 사용 영상</h2>
-      <p class="sub">장비 사용 영상을 아래에서 확인하세요.</p>
-
-      <div class="video">
-        <iframe
-          src="https://www.youtube.com/embed/iTuMsyMcu9c"
-          title="버니어 캘리퍼스 사용 영상"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowfullscreen>
-        </iframe>
-      </div>
-    </section>
-
-    <section class="card">
-      <h2 class="section-title">06. 매뉴얼</h2>
-      <p class="sub">아래 버튼을 누르면 매뉴얼 PDF를 바로 확인할 수 있습니다.</p>
-      <a class="btn" href="manual.pdf">매뉴얼 보기</a>
-    </section>
-
-    <section class="card">
-      <h2 class="section-title">07. 검교정 성적서</h2>
-      <p class="sub">
-        아래 항목에서 해당 설비 정보를 확인한 뒤, <strong>성적서 보기</strong> 버튼을 눌러 검교정 성적서를 확인할 수 있습니다.
-      </p>
-
-      <div class="cert-list">
-
-        <article class="cert-item">
-          <div class="cert-content">
-            <div class="cert-head">
-              <div class="cert-title">버니어 캘리퍼스</div>
-              <a class="cert-badge" href="CC_Q-GJ-002.pdf">성적서 보기</a>
-            </div>
-            <div class="cert-grid">
-              <div class="cert-field">
-                <span class="cert-label">설비번호</span>
-                <span class="cert-value">Q-GJ-002</span>
-              </div>
-              <div class="cert-field">
-                <span class="cert-label">규격</span>
-                <span class="cert-value">300mm</span>
-              </div>
-              <div class="cert-field">
-                <span class="cert-label">관리 부서</span>
-                <span class="cert-value">FAN생산팀 FAN 2파트</span>
-              </div>
-              <div class="cert-field">
-                <span class="cert-label">점검 예정일</span>
-                <span class="cert-value">2027-03-12</span>
-              </div>
-            </div>
-          </div>
-        </article>
-
-        <article class="cert-item">
-          <div class="cert-content">
-            <div class="cert-head">
-              <div class="cert-title">버니어 캘리퍼스</div>
-              <a class="cert-badge" href="CC_Q-GJ-007.pdf">성적서 보기</a>
-            </div>
-            <div class="cert-grid">
-              <div class="cert-field">
-                <span class="cert-label">설비번호</span>
-                <span class="cert-value">Q-GJ-007</span>
-              </div>
-              <div class="cert-field">
-                <span class="cert-label">규격</span>
-                <span class="cert-value">300mm</span>
-              </div>
-              <div class="cert-field">
-                <span class="cert-label">관리 부서</span>
-                <span class="cert-value">품질경영팀 QM 1파트</span>
-              </div>
-              <div class="cert-field">
-                <span class="cert-label">점검 예정일</span>
-                <span class="cert-value">2026-11-14</span>
-              </div>
-            </div>
-          </div>
-        </article>
-
-        <article class="cert-item">
-          <div class="cert-content">
-            <div class="cert-head">
-              <div class="cert-title">버니어 캘리퍼스</div>
-              <a class="cert-badge" href="CC_Q-GJ-016.pdf">성적서 보기</a>
-            </div>
-            <div class="cert-grid">
-              <div class="cert-field">
-                <span class="cert-label">설비번호</span>
-                <span class="cert-value">Q-GJ-016</span>
-              </div>
-              <div class="cert-field">
-                <span class="cert-label">규격</span>
-                <span class="cert-value">600mm</span>
-              </div>
-              <div class="cert-field">
-                <span class="cert-label">관리 부서</span>
-                <span class="cert-value">품질경영팀 QM 1파트</span>
-              </div>
-              <div class="cert-field">
-                <span class="cert-label">점검 예정일</span>
-                <span class="cert-value">2026-12-12</span>
-              </div>
-            </div>
-          </div>
-        </article>
-
-      </div>
-    </section>
-
-    <div class="footer">
-      <strong>HI AIR KOREA</strong><br>
-      HAK 계측기 사용 방법 안내 페이지<br>
-      Copyright © 2026 HI AIR KOREA Co.,Ltd. All Rights Reserved.
+    <div class="section-title">
+      <h2>계측장비 목록</h2>
+      <span>원하는 장비를 선택하면 사용 방법 페이지로 이동합니다.</span>
     </div>
 
+    <section class="search-box">
+      <label for="equipmentSearch">장비 찾기</label>
+      <div class="search-input-wrap">
+        <div class="search-input-area">
+          <input
+            type="text"
+            id="equipmentSearch"
+            placeholder="예: 캘리퍼, 마이크로, 게이지"
+          />
+          <button type="button" id="clearSearch" class="clear-btn" aria-label="검색 초기화">×</button>
+        </div>
+      </div>
+      <div class="search-hint">
+        장비명 또는 설명에 포함된 단어를 입력하면 관련 장비가 모두 표시됩니다.
+      </div>
+    </section>
+
+    <div id="searchResult" class="search-result">전체 장비 2개 표시 중</div>
+
+    <section class="grid" id="equipmentList">
+      <article class="card equipment-card" data-name="버니어 캘리퍼스" data-desc="외측, 내측, 깊이 등을 측정할 때 사용하는 기본 계측기입니다. 사용 방법과 측정 요령을 확인할 수 있습니다.">
+        <div class="card-top">
+          <div class="no-badge">No. 01</div>
+          <div class="badge">측정 장비</div>
+        </div>
+        <h3>버니어 캘리퍼스</h3>
+        <p>
+          외측, 내측, 깊이 등을 측정할 때 사용하는 기본 계측기입니다.
+          사용 방법과 측정 요령을 확인할 수 있습니다.
+        </p>
+        <div class="btn-row">
+          <a class="btn btn-primary" href="vernier.html">사용 방법 보기</a>
+        </div>
+      </article>
+
+      <article class="card equipment-card" data-name="마이크로미터" data-desc="정밀한 치수 측정이 필요한 경우 사용하는 계측기입니다.">
+        <div class="card-top">
+          <div class="no-badge">No. 02</div>
+          <div class="badge">정밀 측정 장비</div>
+        </div>
+        <h3>마이크로미터</h3>
+        <p>
+          정밀한 치수 측정이 필요한 경우 사용하는 계측기입니다.
+        </p>
+        <div class="btn-row">
+          <a class="btn btn-primary" href="micrometer.html">사용 방법 보기</a>
+        </div>
+      </article>
+    </section>
+
+    <footer>
+      <div class="footer-brand">HI AIR KOREA</div>
+      <div>HAK 계측기 사용 방법 안내 시스템</div>
+      <div>Copyright © 2026 HI AIR KOREA Co.,Ltd. All Rights Reserved.</div>
+    </footer>
   </main>
 
   <script>
-    const WEB_APP_URL = "여기에_웹앱_URL_붙여넣기";
-    const EQUIPMENT_CODE = "Q-GJ-002";
+    const searchInput = document.getElementById("equipmentSearch");
+    const clearSearch = document.getElementById("clearSearch");
+    const equipmentCards = document.querySelectorAll(".equipment-card");
+    const searchResult = document.getElementById("searchResult");
 
-    const statusBadge = document.getElementById("statusBadge");
-    const eqCode = document.getElementById("eqCode");
-    const eqName = document.getElementById("eqName");
-    const eqLocation = document.getElementById("eqLocation");
-    const currentUser = document.getElementById("currentUser");
-    const checkoutTime = document.getElementById("checkoutTime");
-
-    function setBadge(type, text) {
-      statusBadge.className = "status-badge";
-
-      if (type === "available") {
-        statusBadge.classList.add("status-available");
-      } else if (type === "checked_out") {
-        statusBadge.classList.add("status-checkedout");
-      } else if (type === "error") {
-        statusBadge.classList.add("status-error");
-      } else {
-        statusBadge.classList.add("status-loading");
-      }
-
-      statusBadge.textContent = text;
+    function normalizeText(text) {
+      return text.toLowerCase().replace(/\s+/g, "");
     }
 
-    async function loadEquipmentStatus() {
-      try {
-        setBadge("loading", "불러오는 중...");
+    function filterEquipment() {
+      const keyword = normalizeText(searchInput.value);
+      let visibleCount = 0;
 
-        const requestUrl =
-          `${WEB_APP_URL}?action=getEquipmentStatus&eq_code=${encodeURIComponent(EQUIPMENT_CODE)}`;
+      equipmentCards.forEach((card) => {
+        const name = normalizeText(card.dataset.name || "");
+        const desc = normalizeText(card.dataset.desc || "");
+        const combinedText = name + " " + desc;
 
-        const response = await fetch(requestUrl);
-        const result = await response.json();
-
-        if (!result.success) {
-          setBadge("error", "조회 실패");
-          alert(result.message || "장비 상태를 불러오지 못했습니다.");
-          return;
-        }
-
-        const equipment = result.equipment;
-
-        eqCode.textContent = equipment.eq_code || "-";
-        eqName.textContent = equipment.eq_name || "-";
-        eqLocation.textContent = equipment.location || "-";
-        currentUser.textContent = equipment.current_user_name || "-";
-        checkoutTime.textContent = equipment.checkout_time || "-";
-
-        if (equipment.status === "available") {
-          setBadge("available", "사용 가능");
-        } else if (equipment.status === "checked_out") {
-          setBadge("checked_out", "불출 중");
+        if (keyword === "" || combinedText.includes(keyword)) {
+          card.classList.remove("hidden");
+          visibleCount++;
         } else {
-          setBadge("loading", equipment.status || "상태 확인 필요");
+          card.classList.add("hidden");
         }
-      } catch (error) {
-        console.error(error);
-        setBadge("error", "연결 오류");
-        alert("Apps Script 연결 중 오류가 발생했습니다.");
+      });
+
+      clearSearch.style.display = searchInput.value ? "block" : "none";
+
+      if (keyword === "") {
+        searchResult.textContent = `전체 장비 ${visibleCount}개 표시 중`;
+      } else {
+        searchResult.textContent = `검색 결과 ${visibleCount}개 표시 중`;
       }
     }
 
-    loadEquipmentStatus();
+    clearSearch.addEventListener("click", () => {
+      searchInput.value = "";
+      filterEquipment();
+      searchInput.focus();
+    });
+
+    searchInput.addEventListener("input", filterEquipment);
   </script>
 </body>
 </html>
