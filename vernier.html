@@ -598,7 +598,7 @@
   </main>
 
   <script>
-    const WEB_APP_URL = "여기에_웹앱_URL_붙여넣기";
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwn9I60-14GHDQk_rNF_uJYBpig-Bovl7Qqje_eGGjcFmZJZfqQgtpUg6necytvlQQ-/exec";
     const EQUIPMENT_CODE = "Q-GJ-002";
 
     const statusBadge = document.getElementById("statusBadge");
@@ -624,42 +624,43 @@
       statusBadge.textContent = text;
     }
 
-    async function loadEquipmentStatus() {
-      try {
-        setBadge("loading", "불러오는 중...");
+    function handleEquipmentStatus(result) {
+      if (!result.success) {
+        setBadge("error", "조회 실패");
+        alert(result.message || "장비 상태를 불러오지 못했습니다.");
+        return;
+      }
 
-        const requestUrl =
-          `${WEB_APP_URL}?action=getEquipmentStatus&eq_code=${encodeURIComponent(EQUIPMENT_CODE)}`;
+      const equipment = result.equipment;
 
-        const response = await fetch(requestUrl);
-        const result = await response.json();
+      eqCode.textContent = equipment.eq_code || "-";
+      eqName.textContent = equipment.eq_name || "-";
+      eqLocation.textContent = equipment.location || "-";
+      currentUser.textContent = equipment.current_user_name || "-";
+      checkoutTime.textContent = equipment.checkout_time || "-";
 
-        if (!result.success) {
-          setBadge("error", "조회 실패");
-          alert(result.message || "장비 상태를 불러오지 못했습니다.");
-          return;
-        }
+      if (equipment.status === "available") {
+        setBadge("available", "사용 가능");
+      } else if (equipment.status === "checked_out") {
+        setBadge("checked_out", "불출 중");
+      } else {
+        setBadge("loading", equipment.status || "상태 확인 필요");
+      }
+    }
 
-        const equipment = result.equipment;
+    function loadEquipmentStatus() {
+      setBadge("loading", "불러오는 중...");
 
-        eqCode.textContent = equipment.eq_code || "-";
-        eqName.textContent = equipment.eq_name || "-";
-        eqLocation.textContent = equipment.location || "-";
-        currentUser.textContent = equipment.current_user_name || "-";
-        checkoutTime.textContent = equipment.checkout_time || "-";
+      const script = document.createElement("script");
+      script.src =
+        `${WEB_APP_URL}?action=getEquipmentStatus&eq_code=${encodeURIComponent(EQUIPMENT_CODE)}&callback=handleEquipmentStatus`;
 
-        if (equipment.status === "available") {
-          setBadge("available", "사용 가능");
-        } else if (equipment.status === "checked_out") {
-          setBadge("checked_out", "불출 중");
-        } else {
-          setBadge("loading", equipment.status || "상태 확인 필요");
-        }
-      } catch (error) {
-        console.error(error);
+      script.onerror = function () {
         setBadge("error", "연결 오류");
         alert("Apps Script 연결 중 오류가 발생했습니다.");
-      }
+      };
+
+      document.body.appendChild(script);
     }
 
     loadEquipmentStatus();
