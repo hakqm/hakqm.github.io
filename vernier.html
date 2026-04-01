@@ -172,6 +172,9 @@
       margin-top: 12px;
       font-weight: 700;
       transition: 0.2s ease;
+      border: none;
+      cursor: pointer;
+      width: 100%;
     }
 
     .btn:hover {
@@ -217,6 +220,10 @@
 
     .logout-btn {
       background: #667085;
+    }
+
+    .hidden {
+      display: none !important;
     }
 
     .user-info {
@@ -378,6 +385,7 @@
       padding: 6px 10px;
       white-space: nowrap;
       transition: 0.2s ease;
+      cursor: pointer;
     }
 
     .cert-badge:hover {
@@ -492,16 +500,19 @@
       <h2 class="section-title">01. 로그인</h2>
       <p class="sub">이름과 사번을 입력한 뒤 로그인하세요.</p>
 
-      <div class="login-box">
+      <div id="loginBox" class="login-box">
         <input type="text" id="loginName" class="login-input" placeholder="이름 입력" />
         <input type="text" id="loginEmpNo" class="login-input" placeholder="사번 입력" />
 
         <div class="login-row">
           <button type="button" class="login-btn" onclick="login()">로그인</button>
-          <button type="button" class="login-btn logout-btn" onclick="logout()">로그아웃</button>
         </div>
+      </div>
 
-        <div id="userInfo" class="user-info">로그인되지 않음</div>
+      <div id="userInfo" class="user-info">로그인되지 않음</div>
+
+      <div id="logoutRow" class="login-row hidden" style="margin-top: 10px;">
+        <button type="button" class="login-btn logout-btn" onclick="logout()">로그아웃</button>
       </div>
     </section>
 
@@ -605,7 +616,7 @@
     <section class="card">
       <h2 class="section-title">08. 검교정 성적서</h2>
       <p class="sub">
-        아래 항목에서 해당 설비 정보를 확인한 뒤, <strong>성적서 보기</strong> 버튼을 눌러 검교정 성적서를 확인할 수 있습니다.
+        로그인한 사용자만 성적서를 열 수 있습니다.
       </p>
 
       <div class="cert-list">
@@ -613,7 +624,7 @@
           <div class="cert-content">
             <div class="cert-head">
               <div class="cert-title">버니어 캘리퍼스</div>
-              <a class="cert-badge" href="CC_Q-GJ-002.pdf">성적서 보기</a>
+              <button class="cert-badge" onclick="openCertificate('CC_Q-GJ-002.pdf')">성적서 보기</button>
             </div>
             <div class="cert-grid">
               <div class="cert-field">
@@ -640,7 +651,7 @@
           <div class="cert-content">
             <div class="cert-head">
               <div class="cert-title">버니어 캘리퍼스</div>
-              <a class="cert-badge" href="CC_Q-GJ-007.pdf">성적서 보기</a>
+              <button class="cert-badge" onclick="openCertificate('CC_Q-GJ-007.pdf')">성적서 보기</button>
             </div>
             <div class="cert-grid">
               <div class="cert-field">
@@ -667,7 +678,7 @@
           <div class="cert-content">
             <div class="cert-head">
               <div class="cert-title">버니어 캘리퍼스</div>
-              <a class="cert-badge" href="CC_Q-GJ-016.pdf">성적서 보기</a>
+              <button class="cert-badge" onclick="openCertificate('CC_Q-GJ-016.pdf')">성적서 보기</button>
             </div>
             <div class="cert-grid">
               <div class="cert-field">
@@ -706,6 +717,8 @@
 
     let currentUserData = null;
 
+    const loginBox = document.getElementById("loginBox");
+    const logoutRow = document.getElementById("logoutRow");
     const loginName = document.getElementById("loginName");
     const loginEmpNo = document.getElementById("loginEmpNo");
     const userInfo = document.getElementById("userInfo");
@@ -733,10 +746,14 @@
       statusBadge.textContent = text;
     }
 
-    function renderUserInfo() {
+    function updateLoginUI() {
       if (currentUserData) {
+        loginBox.classList.add("hidden");
+        logoutRow.classList.remove("hidden");
         userInfo.textContent = `${currentUserData.name} / ${currentUserData.emp_no} 로그인됨`;
       } else {
+        loginBox.classList.remove("hidden");
+        logoutRow.classList.add("hidden");
         userInfo.textContent = "로그인되지 않음";
       }
     }
@@ -744,7 +761,7 @@
     function saveLoginUser(user) {
       currentUserData = user;
       localStorage.setItem("hak_login_user", JSON.stringify(user));
-      renderUserInfo();
+      updateLoginUI();
     }
 
     function loadSavedUser() {
@@ -756,13 +773,15 @@
           currentUserData = null;
         }
       }
-      renderUserInfo();
+      updateLoginUI();
     }
 
     function logout() {
       currentUserData = null;
       localStorage.removeItem("hak_login_user");
-      renderUserInfo();
+      loginName.value = "";
+      loginEmpNo.value = "";
+      updateLoginUI();
       alert("로그아웃되었습니다.");
     }
 
@@ -908,6 +927,15 @@
         console.error(error);
         alert("반납 처리 중 오류가 발생했습니다.");
       }
+    }
+
+    function openCertificate(fileName) {
+      if (!currentUserData) {
+        alert("검교정 성적서는 로그인 후 열람할 수 있습니다.");
+        return;
+      }
+
+      window.open(fileName, "_blank");
     }
 
     loadSavedUser();
