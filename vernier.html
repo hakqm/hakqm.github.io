@@ -178,6 +178,58 @@
       background: var(--primary-dark);
     }
 
+    .login-box {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .login-input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid #cfd9e5;
+      border-radius: 12px;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .login-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(31, 58, 95, 0.08);
+    }
+
+    .login-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .login-btn {
+      border: none;
+      background: var(--primary);
+      color: white;
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .logout-btn {
+      background: #667085;
+    }
+
+    .user-info {
+      margin-top: 10px;
+      padding: 12px;
+      background: #f8fbff;
+      border: 1px solid #dbe7f3;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--primary-dark);
+    }
+
     .status-wrap {
       display: grid;
       gap: 10px;
@@ -437,7 +489,24 @@
   <main class="wrap">
 
     <section class="card">
-      <h2 class="section-title">01. 장비 정보</h2>
+      <h2 class="section-title">01. 로그인</h2>
+      <p class="sub">이름과 사번을 입력한 뒤 로그인하세요.</p>
+
+      <div class="login-box">
+        <input type="text" id="loginName" class="login-input" placeholder="이름 입력" />
+        <input type="text" id="loginEmpNo" class="login-input" placeholder="사번 입력" />
+
+        <div class="login-row">
+          <button type="button" class="login-btn" onclick="login()">로그인</button>
+          <button type="button" class="login-btn logout-btn" onclick="logout()">로그아웃</button>
+        </div>
+
+        <div id="userInfo" class="user-info">로그인되지 않음</div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2 class="section-title">02. 장비 정보</h2>
       <p class="sub">장비명: 버니어 캘리퍼스 / 위치: QM 계측기실</p>
 
       <div class="summary-box">
@@ -451,7 +520,7 @@
     </section>
 
     <section class="card">
-      <h2 class="section-title">02. 장비 상태</h2>
+      <h2 class="section-title">03. 장비 상태</h2>
       <p class="sub">구글시트에 저장된 현재 장비 상태를 자동으로 불러옵니다.</p>
 
       <div class="status-wrap">
@@ -492,7 +561,7 @@
     </section>
 
     <section class="card">
-      <h2 class="section-title">03. 사용 전 주의사항</h2>
+      <h2 class="section-title">04. 사용 전 주의사항</h2>
       <ul>
         <li>측정 전 캘리퍼스의 측정면에 이물질이나 먼지가 없는지 확인합니다.</li>
         <li>영점(0점)이 정확히 맞는지 확인한 후 측정을 시작합니다.</li>
@@ -503,7 +572,7 @@
     </section>
 
     <section class="card">
-      <h2 class="section-title">04. 사용 순서</h2>
+      <h2 class="section-title">05. 사용 순서</h2>
       <ol>
         <li>측정 전 외측/내측 측정면과 본체 상태를 확인합니다.</li>
         <li>캘리퍼스를 닫아 영점(0점)이 맞는지 확인합니다.</li>
@@ -514,7 +583,7 @@
     </section>
 
     <section class="card">
-      <h2 class="section-title">05. 사용 영상</h2>
+      <h2 class="section-title">06. 사용 영상</h2>
       <p class="sub">장비 사용 영상을 아래에서 확인하세요.</p>
 
       <div class="video">
@@ -528,19 +597,18 @@
     </section>
 
     <section class="card">
-      <h2 class="section-title">06. 매뉴얼</h2>
+      <h2 class="section-title">07. 매뉴얼</h2>
       <p class="sub">아래 버튼을 누르면 매뉴얼 PDF를 바로 확인할 수 있습니다.</p>
       <a class="btn" href="manual.pdf">매뉴얼 보기</a>
     </section>
 
     <section class="card">
-      <h2 class="section-title">07. 검교정 성적서</h2>
+      <h2 class="section-title">08. 검교정 성적서</h2>
       <p class="sub">
         아래 항목에서 해당 설비 정보를 확인한 뒤, <strong>성적서 보기</strong> 버튼을 눌러 검교정 성적서를 확인할 수 있습니다.
       </p>
 
       <div class="cert-list">
-
         <article class="cert-item">
           <div class="cert-content">
             <div class="cert-head">
@@ -621,7 +689,6 @@
             </div>
           </div>
         </article>
-
       </div>
     </section>
 
@@ -637,11 +704,11 @@
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwn9I60-14GHDQk_rNF_uJYBpig-Bovl7Qqje_eGGjcFmZJZfqQgtpUg6necytvlQQ-/exec";
     const EQUIPMENT_CODE = "Q-GJ-002";
 
-    const TEST_USER = {
-      user_name: "테스트사용자",
-      user_id: "U001",
-      emp_no: "1001"
-    };
+    let currentUserData = null;
+
+    const loginName = document.getElementById("loginName");
+    const loginEmpNo = document.getElementById("loginEmpNo");
+    const userInfo = document.getElementById("userInfo");
 
     const statusBadge = document.getElementById("statusBadge");
     const eqCode = document.getElementById("eqCode");
@@ -664,6 +731,39 @@
       }
 
       statusBadge.textContent = text;
+    }
+
+    function renderUserInfo() {
+      if (currentUserData) {
+        userInfo.textContent = `${currentUserData.name} / ${currentUserData.emp_no} 로그인됨`;
+      } else {
+        userInfo.textContent = "로그인되지 않음";
+      }
+    }
+
+    function saveLoginUser(user) {
+      currentUserData = user;
+      localStorage.setItem("hak_login_user", JSON.stringify(user));
+      renderUserInfo();
+    }
+
+    function loadSavedUser() {
+      const saved = localStorage.getItem("hak_login_user");
+      if (saved) {
+        try {
+          currentUserData = JSON.parse(saved);
+        } catch (e) {
+          currentUserData = null;
+        }
+      }
+      renderUserInfo();
+    }
+
+    function logout() {
+      currentUserData = null;
+      localStorage.removeItem("hak_login_user");
+      renderUserInfo();
+      alert("로그아웃되었습니다.");
     }
 
     function renderEquipment(equipment) {
@@ -705,6 +805,36 @@
       });
     }
 
+    async function login() {
+      const name = loginName.value.trim();
+      const empNo = loginEmpNo.value.trim();
+
+      if (!name || !empNo) {
+        alert("이름과 사번을 입력해주세요.");
+        return;
+      }
+
+      try {
+        const url =
+          `${WEB_APP_URL}?action=login` +
+          `&name=${encodeURIComponent(name)}` +
+          `&emp_no=${encodeURIComponent(empNo)}`;
+
+        const result = await jsonpRequest(url, "loginCallback");
+
+        if (!result.success) {
+          alert(result.message || "로그인에 실패했습니다.");
+          return;
+        }
+
+        saveLoginUser(result.user);
+        alert("로그인되었습니다.");
+      } catch (error) {
+        console.error(error);
+        alert("로그인 중 오류가 발생했습니다.");
+      }
+    }
+
     async function loadEquipmentStatus() {
       try {
         setBadge("loading", "불러오는 중...");
@@ -725,13 +855,18 @@
     }
 
     async function checkoutEquipment() {
+      if (!currentUserData) {
+        alert("먼저 로그인해주세요.");
+        return;
+      }
+
       try {
         const url =
           `${WEB_APP_URL}?action=checkout` +
           `&eq_code=${encodeURIComponent(EQUIPMENT_CODE)}` +
-          `&user_name=${encodeURIComponent(TEST_USER.user_name)}` +
-          `&user_id=${encodeURIComponent(TEST_USER.user_id)}` +
-          `&emp_no=${encodeURIComponent(TEST_USER.emp_no)}`;
+          `&user_name=${encodeURIComponent(currentUserData.name)}` +
+          `&user_id=${encodeURIComponent(currentUserData.user_id)}` +
+          `&emp_no=${encodeURIComponent(currentUserData.emp_no)}`;
 
         const result = await jsonpRequest(url, "checkoutCallback");
 
@@ -749,11 +884,16 @@
     }
 
     async function returnEquipment() {
+      if (!currentUserData) {
+        alert("먼저 로그인해주세요.");
+        return;
+      }
+
       try {
         const url =
           `${WEB_APP_URL}?action=return` +
           `&eq_code=${encodeURIComponent(EQUIPMENT_CODE)}` +
-          `&user_name=${encodeURIComponent(TEST_USER.user_name)}`;
+          `&user_name=${encodeURIComponent(currentUserData.name)}`;
 
         const result = await jsonpRequest(url, "returnCallback");
 
@@ -770,6 +910,7 @@
       }
     }
 
+    loadSavedUser();
     loadEquipmentStatus();
   </script>
 </body>
