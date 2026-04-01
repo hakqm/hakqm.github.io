@@ -82,9 +82,9 @@
       border-radius: 12px;
       font-size: 14px;
       font-weight: 700;
-      transition: 0.2s ease;
       background: white;
       color: var(--primary-dark);
+      transition: 0.2s ease;
     }
 
     .top-btn:hover {
@@ -212,13 +212,40 @@
       color: var(--primary-dark);
     }
 
+    .equipment-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .equipment-item {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #f8fbff;
+      padding: 12px;
+    }
+
+    .equipment-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+
+    .equipment-code {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--primary-dark);
+    }
+
     .status-badge {
       display: inline-block;
-      padding: 8px 12px;
+      padding: 6px 10px;
       border-radius: 999px;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 700;
-      margin-bottom: 14px;
     }
 
     .status-available {
@@ -236,49 +263,49 @@
       color: var(--info-text);
     }
 
-    .info-grid {
+    .compact-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
-      margin-top: 12px;
+      gap: 8px;
     }
 
-    .info-field {
-      background: #f8fbff;
-      border: 1px solid #dbe7f3;
-      border-radius: 12px;
-      padding: 12px;
+    .compact-field {
+      background: white;
+      border: 1px solid #e3ebf5;
+      border-radius: 10px;
+      padding: 8px 10px;
     }
 
-    .info-label {
+    .compact-label {
       display: block;
-      font-size: 12px;
+      font-size: 11px;
       color: var(--subtext);
-      margin-bottom: 6px;
+      margin-bottom: 4px;
     }
 
-    .info-value {
+    .compact-value {
       display: block;
-      font-size: 15px;
+      font-size: 13px;
       font-weight: 700;
       color: var(--text);
       word-break: keep-all;
+      line-height: 1.4;
     }
 
-    .action-row {
+    .item-actions {
       display: flex;
-      gap: 10px;
+      gap: 8px;
       flex-wrap: wrap;
-      margin-top: 14px;
+      margin-top: 10px;
     }
 
     .action-btn {
       border: none;
       background: var(--primary);
       color: white;
-      padding: 12px 16px;
-      border-radius: 12px;
-      font-size: 14px;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 13px;
       font-weight: 700;
       cursor: pointer;
       transition: 0.2s ease;
@@ -314,7 +341,7 @@
       .hero h1 { font-size: 24px; }
       .card { padding: 16px; }
       .section-title { font-size: 19px; }
-      .info-grid { grid-template-columns: 1fr; }
+      .compact-grid { grid-template-columns: 1fr; }
       img { max-width: 320px; }
     }
   </style>
@@ -358,7 +385,7 @@
 
     <section class="card">
       <h2 class="section-title">02. 장비 정보</h2>
-      <p class="sub" id="equipmentSub">장비 정보를 불러오는 중입니다.</p>
+      <p class="sub">버니어 캘리퍼스 공용 사용 안내입니다.</p>
 
       <div class="summary-box">
         외측, 내측, 깊이 등을 측정할 수 있는 대표적인 계측기입니다.
@@ -371,52 +398,10 @@
     </section>
 
     <section class="card">
-      <h2 class="section-title">03. 장비 상태 / 검교정 성적서</h2>
-      <p class="sub">검교정 성적서 정보와 현재 장비 상태를 함께 표시합니다.</p>
+      <h2 class="section-title">03. 장비 상태</h2>
+      <p class="sub">등록된 버니어 캘리퍼스 장비의 검교정 정보와 현재 사용 상태를 함께 확인합니다.</p>
 
-      <div id="statusBadge" class="status-badge status-loading">불러오는 중...</div>
-
-      <div class="info-grid">
-        <div class="info-field">
-          <span class="info-label">설비번호</span>
-          <span class="info-value" id="eqCode">-</span>
-        </div>
-        <div class="info-field">
-          <span class="info-label">장비명</span>
-          <span class="info-value" id="eqName">-</span>
-        </div>
-        <div class="info-field">
-          <span class="info-label">규격</span>
-          <span class="info-value" id="eqSpec">-</span>
-        </div>
-        <div class="info-field">
-          <span class="info-label">관리 부서</span>
-          <span class="info-value" id="eqDept">-</span>
-        </div>
-        <div class="info-field">
-          <span class="info-label">점검 예정일</span>
-          <span class="info-value" id="eqDue">-</span>
-        </div>
-        <div class="info-field">
-          <span class="info-label">위치</span>
-          <span class="info-value" id="eqLocation">-</span>
-        </div>
-        <div class="info-field">
-          <span class="info-label">현재 사용자</span>
-          <span class="info-value" id="currentUser">-</span>
-        </div>
-        <div class="info-field">
-          <span class="info-label">불출 시간</span>
-          <span class="info-value" id="checkoutTime">-</span>
-        </div>
-      </div>
-
-      <button class="action-btn" style="margin-top:14px;" onclick="openCertificate()">검교정 성적서 보기</button>
-
-      <div class="action-row">
-        <button type="button" class="action-btn" onclick="checkoutEquipment()">불출하기</button>
-        <button type="button" class="action-btn action-btn-secondary" onclick="returnEquipment()">반납하기</button>
-      </div>
+      <div id="equipmentList" class="equipment-list"></div>
     </section>
 
     <section class="card">
@@ -472,32 +457,32 @@
   <script>
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwn9I60-14GHDQk_rNF_uJYBpig-Bovl7Qqje_eGGjcFmZJZfqQgtpUg6necytvlQQ-/exec";
 
-    const CERT_DATA = {
-      "Q-GJ-002": {
+    const EQUIPMENT_LIST = [
+      {
+        eq_code: "Q-GJ-002",
         eq_name: "버니어 캘리퍼스",
         spec: "300mm",
         dept: "FAN생산팀 FAN 2파트",
         due: "2027-03-12",
         file: "CC_Q-GJ-002.pdf"
       },
-      "Q-GJ-007": {
+      {
+        eq_code: "Q-GJ-007",
         eq_name: "버니어 캘리퍼스",
         spec: "300mm",
         dept: "품질경영팀 QM 1파트",
         due: "2026-11-14",
         file: "CC_Q-GJ-007.pdf"
       },
-      "Q-GJ-016": {
+      {
+        eq_code: "Q-GJ-016",
         eq_name: "버니어 캘리퍼스",
         spec: "600mm",
         dept: "품질경영팀 QM 1파트",
         due: "2026-12-12",
         file: "CC_Q-GJ-016.pdf"
       }
-    };
-
-    const params = new URLSearchParams(window.location.search);
-    const EQUIPMENT_CODE = params.get("eq_code") || "Q-GJ-002";
+    ];
 
     let currentUserData = null;
 
@@ -506,31 +491,7 @@
     const loginName = document.getElementById("loginName");
     const loginEmpNo = document.getElementById("loginEmpNo");
     const userInfo = document.getElementById("userInfo");
-
-    const equipmentSub = document.getElementById("equipmentSub");
-    const statusBadge = document.getElementById("statusBadge");
-    const eqCode = document.getElementById("eqCode");
-    const eqName = document.getElementById("eqName");
-    const eqSpec = document.getElementById("eqSpec");
-    const eqDept = document.getElementById("eqDept");
-    const eqDue = document.getElementById("eqDue");
-    const eqLocation = document.getElementById("eqLocation");
-    const currentUser = document.getElementById("currentUser");
-    const checkoutTime = document.getElementById("checkoutTime");
-
-    function setBadge(type, text) {
-      statusBadge.className = "status-badge";
-
-      if (type === "available") {
-        statusBadge.classList.add("status-available");
-      } else if (type === "checked_out") {
-        statusBadge.classList.add("status-checkedout");
-      } else {
-        statusBadge.classList.add("status-loading");
-      }
-
-      statusBadge.textContent = text;
-    }
+    const equipmentListEl = document.getElementById("equipmentList");
 
     function updateLoginUI() {
       if (currentUserData) {
@@ -569,33 +530,6 @@
       loginEmpNo.value = "";
       updateLoginUI();
       alert("로그아웃되었습니다.");
-    }
-
-    function renderStaticInfo() {
-      const cert = CERT_DATA[EQUIPMENT_CODE];
-      if (!cert) return;
-
-      eqCode.textContent = EQUIPMENT_CODE;
-      eqName.textContent = cert.eq_name;
-      eqSpec.textContent = cert.spec;
-      eqDept.textContent = cert.dept;
-      eqDue.textContent = cert.due;
-      equipmentSub.textContent = `장비명: ${cert.eq_name} / 설비번호: ${EQUIPMENT_CODE}`;
-      document.title = `${cert.eq_name} ${EQUIPMENT_CODE} 사용 가이드`;
-    }
-
-    function renderDynamicInfo(equipment) {
-      eqLocation.textContent = equipment.location || "-";
-      currentUser.textContent = equipment.current_user_name || "-";
-      checkoutTime.textContent = equipment.checkout_time || "-";
-
-      if (equipment.status === "available") {
-        setBadge("available", "불출 가능");
-      } else if (equipment.status === "checked_out") {
-        setBadge("checked_out", "불출 중");
-      } else {
-        setBadge("loading", "상태 확인 필요");
-      }
     }
 
     function jsonpRequest(url, callbackName) {
@@ -651,25 +585,96 @@
       }
     }
 
-    async function loadEquipmentStatus() {
-      try {
-        setBadge("loading", "불러오는 중...");
-        const url = `${WEB_APP_URL}?action=getEquipmentStatus&eq_code=${encodeURIComponent(EQUIPMENT_CODE)}`;
-        const result = await jsonpRequest(url, "statusCallback");
+    function renderEquipmentRows(statusMap = {}) {
+      equipmentListEl.innerHTML = "";
 
-        if (!result.success) {
-          setBadge("loading", "상태 확인 필요");
-          return;
+      EQUIPMENT_LIST.forEach((item) => {
+        const statusData = statusMap[item.eq_code] || {};
+        const status = statusData.status || "";
+        const location = statusData.location || "-";
+        const currentUser = statusData.current_user_name || "-";
+        const checkoutTime = statusData.checkout_time || "-";
+
+        let badgeClass = "status-badge status-loading";
+        let badgeText = "상태 확인 중";
+
+        if (status === "available") {
+          badgeClass = "status-badge status-available";
+          badgeText = "대여 가능";
+        } else if (status === "checked_out") {
+          badgeClass = "status-badge status-checkedout";
+          badgeText = "불출 중";
         }
 
-        renderDynamicInfo(result.equipment);
-      } catch (error) {
-        console.error(error);
-        setBadge("loading", "상태 확인 필요");
-      }
+        const article = document.createElement("article");
+        article.className = "equipment-item";
+        article.innerHTML = `
+          <div class="equipment-head">
+            <div class="equipment-code">${item.eq_code}</div>
+            <div class="${badgeClass}">${badgeText}</div>
+          </div>
+
+          <div class="compact-grid">
+            <div class="compact-field">
+              <span class="compact-label">장비명</span>
+              <span class="compact-value">${item.eq_name}</span>
+            </div>
+            <div class="compact-field">
+              <span class="compact-label">규격</span>
+              <span class="compact-value">${item.spec}</span>
+            </div>
+            <div class="compact-field">
+              <span class="compact-label">관리 부서</span>
+              <span class="compact-value">${item.dept}</span>
+            </div>
+            <div class="compact-field">
+              <span class="compact-label">점검 예정일</span>
+              <span class="compact-value">${item.due}</span>
+            </div>
+            <div class="compact-field">
+              <span class="compact-label">위치</span>
+              <span class="compact-value">${location}</span>
+            </div>
+            <div class="compact-field">
+              <span class="compact-label">현재 사용자</span>
+              <span class="compact-value">${currentUser}</span>
+            </div>
+            <div class="compact-field">
+              <span class="compact-label">불출 시간</span>
+              <span class="compact-value">${checkoutTime}</span>
+            </div>
+          </div>
+
+          <div class="item-actions">
+            <button class="action-btn" onclick="openCertificate('${item.file}')">검교정 성적서 보기</button>
+            <button class="action-btn" onclick="checkoutEquipment('${item.eq_code}')">불출하기</button>
+            <button class="action-btn action-btn-secondary" onclick="returnEquipment('${item.eq_code}')">반납하기</button>
+          </div>
+        `;
+        equipmentListEl.appendChild(article);
+      });
     }
 
-    async function checkoutEquipment() {
+    async function loadAllEquipmentStatus() {
+      const statusMap = {};
+
+      for (const item of EQUIPMENT_LIST) {
+        try {
+          const url = `${WEB_APP_URL}?action=getEquipmentStatus&eq_code=${encodeURIComponent(item.eq_code)}`;
+          const result = await jsonpRequest(url, "statusCallback");
+
+          if (result.success) {
+            statusMap[item.eq_code] = result.equipment;
+          }
+        } catch (error) {
+          console.error(item.eq_code, error);
+        }
+      }
+
+      renderEquipmentRows(statusMap);
+    }
+
+    async function checkoutEquipment(eqCode) {
       if (!currentUserData) {
         alert("먼저 로그인해주세요.");
         return;
@@ -678,7 +683,7 @@
       try {
         const url =
           `${WEB_APP_URL}?action=checkout` +
-          `&eq_code=${encodeURIComponent(EQUIPMENT_CODE)}` +
+          `&eq_code=${encodeURIComponent(eqCode)}` +
           `&user_name=${encodeURIComponent(currentUserData.name)}` +
           `&user_id=${encodeURIComponent(currentUserData.user_id)}` +
           `&emp_no=${encodeURIComponent(currentUserData.emp_no)}`;
@@ -690,15 +695,15 @@
           return;
         }
 
-        alert("불출이 완료되었습니다.");
-        renderDynamicInfo(result.equipment);
+        alert(`${eqCode} 불출이 완료되었습니다.`);
+        loadAllEquipmentStatus();
       } catch (error) {
         console.error(error);
         alert("불출 처리 중 오류가 발생했습니다.");
       }
     }
 
-    async function returnEquipment() {
+    async function returnEquipment(eqCode) {
       if (!currentUserData) {
         alert("먼저 로그인해주세요.");
         return;
@@ -707,7 +712,7 @@
       try {
         const url =
           `${WEB_APP_URL}?action=return` +
-          `&eq_code=${encodeURIComponent(EQUIPMENT_CODE)}` +
+          `&eq_code=${encodeURIComponent(eqCode)}` +
           `&user_name=${encodeURIComponent(currentUserData.name)}`;
 
         const result = await jsonpRequest(url, "returnCallback");
@@ -717,32 +722,26 @@
           return;
         }
 
-        alert("반납이 완료되었습니다.");
-        renderDynamicInfo(result.equipment);
+        alert(`${eqCode} 반납이 완료되었습니다.`);
+        loadAllEquipmentStatus();
       } catch (error) {
         console.error(error);
         alert("반납 처리 중 오류가 발생했습니다.");
       }
     }
 
-    function openCertificate() {
+    function openCertificate(fileName) {
       if (!currentUserData) {
         alert("검교정 성적서는 로그인 후 열람할 수 있습니다.");
         return;
       }
 
-      const cert = CERT_DATA[EQUIPMENT_CODE];
-      if (!cert) {
-        alert("성적서 정보를 찾을 수 없습니다.");
-        return;
-      }
-
-      window.open(cert.file, "_blank");
+      window.open(fileName, "_blank");
     }
 
-    renderStaticInfo();
     loadSavedUser();
-    loadEquipmentStatus();
+    renderEquipmentRows();
+    loadAllEquipmentStatus();
   </script>
 </body>
 </html>
