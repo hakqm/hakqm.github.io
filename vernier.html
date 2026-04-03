@@ -212,6 +212,7 @@
       font-size: 14px;
       font-weight: 700;
       color: var(--primary-dark);
+      line-height: 1.6;
     }
 
     .equipment-list {
@@ -540,6 +541,10 @@
 
     let currentUserData = null;
 
+    const LOGIN_STORAGE_KEY = "hak_login_user";
+    const LOGIN_EXPIRE_MINUTES = 30;
+    const LOGIN_EXPIRE_MS = LOGIN_EXPIRE_MINUTES * 60 * 1000;
+
     const loginBox = document.getElementById("loginBox");
     const logoutRow = document.getElementById("logoutRow");
     const loginName = document.getElementById("loginName");
@@ -561,29 +566,132 @@
 
     function saveLoginUser(user) {
       currentUserData = user;
-      localStorage.setItem("hak_login_user", JSON.stringify(user));
+
+      const payload = {
+        user: user,
+        lastActivity: Date.now()
+      };
+
+      localStorage.setItem(LOGIN_STORAGE_KEY, JSON.stringify(payload));
       updateLoginUI();
+    }
+
+    function clearLoginData() {
+      currentUserData = null;
+      localStorage.removeItem(LOGIN_STORAGE_KEY);
+    }
+
+    function touchLoginActivity() {
+      if (!currentUserData) return;
+
+      const saved = localStorage.getItem(LOGIN_STORAGE_KEY);
+      if (!saved) return;
+
+      try {
+        const parsed = JSON.parse(saved);
+        parsed.lastActivity = Date.now();
+        localStorage.setItem(LOGIN_STORAGE_KEY, JSON.stringify(parsed));
+      } catch (e) {
+        clearLoginData();
+      }
+    }
+
+    function getRemainingLoginMinutes() {
+      const saved = localStorage.getItem(LOGIN_STORAGE_KEY);
+      if (!saved) return 0;
+
+      try {
+        const parsed = JSON.parse(saved);
+        const lastActivity = parsed.lastActivity || 0;
+        const remainMs = LOGIN_EXPIRE_MS - (Date.now() - lastActivity);
+        return Math.max(0, Math.ceil(remainMs / 60000));
+      } catch (e) {
+        return 0;
+      }
     }
 
     function loadSavedUser() {
-      const saved = localStorage.getItem("hak_login_user");
-      if (saved) {
-        try {
-          currentUserData = JSON.parse(saved);
-        } catch (e) {
-          currentUserData = null;
-        }
+      const saved = localStorage.getItem(LOGIN_STORAGE_KEY);
+
+      if (!saved) {
+        updateLoginUI();
+        return;
       }
+
+      try {
+        const parsed = JSON.parse(saved);
+        const user = parsed.user;
+        const lastActivity = parsed.lastActivity || 0;
+
+        if (!user || !lastActivity) {
+          clearLoginData();
+          updateLoginUI();
+          return;
+        }
+
+        const isExpired = (Date.now() - lastActivity) > LOGIN_EXPIRE_MS;
+
+        if (isExpired) {
+          clearLoginData();
+          updateLoginUI();
+          alert("로그인 시간이 만료되어 자동 로그아웃되었습니다.");
+          return;
+        }
+
+        currentUserData = user;
+        touchLoginActivity();
+      } catch (e) {
+        clearLoginData();
+      }
+
       updateLoginUI();
     }
 
-    function logout() {
-      currentUserData = null;
-      localStorage.removeItem("hak_login_user");
+    function logout(showMessage = true) {
+      clearLoginData();
       loginName.value = "";
       loginEmpNo.value = "";
       updateLoginUI();
-      alert("로그아웃되었습니다.");
+
+      if (showMessage) {
+        alert("로그아웃되었습니다.");
+      }
+    }
+
+    function autoLogout() {
+      logout(false);
+      alert("오랫동안 사용이 없어 자동 로그아웃되었습니다.");
+    }
+
+    function startAutoLogoutWatcher() {
+      setInterval(() => {
+        if (!currentUserData) return;
+
+        const saved = localStorage.getItem(LOGIN_STORAGE_KEY);
+        if (!saved) {
+          logout(false);
+          return;
+        }
+
+        try {
+          const parsed = JSON.parse(saved);
+          const lastActivity = parsed.lastActivity || 0;
+
+          if ((Date.now() - lastActivity) > LOGIN_EXPIRE_MS) {
+            autoLogout();
+          }
+        } catch (e) {
+          logout(false);
+        }
+      }, 60000);
+    }
+
+    function bindActivityEvents() {
+      ["click", "keydown", "touchstart", "scroll"].forEach((eventName) => {
+        document.addEventListener(eventName, () => {
+          touchLoginActivity();
+        }, { passive: true });
+      });
     }
 
     function jsonpRequest(url, callbackName) {
@@ -712,7 +820,7 @@
     async function loadAllEquipmentStatus() {
       const statusMap = {};
 
-      for (const item of EQUIPMENT_LIST) {
+      const requests = EQUIPMENT_LIST.map(async (item) => {
         try {
           const url = `${WEB_APP_URL}?action=getEquipmentStatus&eq_code=${encodeURIComponent(item.eq_code)}`;
           const result = await jsonpRequest(url, "statusCallback");
@@ -723,8 +831,9 @@
         } catch (error) {
           console.error(item.eq_code, error);
         }
-      }
+      });
 
+      await Promise.all(requests);
       renderEquipmentRows(statusMap);
     }
 
@@ -733,6 +842,8 @@
         alert("먼저 로그인해주세요.");
         return;
       }
+
+      touchLoginActivity();
 
       try {
         const url =
@@ -763,6 +874,8 @@
         return;
       }
 
+      touchLoginActivity();
+
       try {
         const url =
           `${WEB_APP_URL}?action=return` +
@@ -790,10 +903,13 @@
         return;
       }
 
+      touchLoginActivity();
       window.open(fileName, "_blank");
     }
 
     loadSavedUser();
+    bindActivityEvents();
+    startAutoLogoutWatcher();
     renderEquipmentRows();
     loadAllEquipmentStatus();
   </script>
