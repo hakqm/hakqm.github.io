@@ -294,6 +294,7 @@
       color: var(--text);
       line-height: 1.45;
       word-break: keep-all;
+      white-space: pre-line;
     }
 
     .item-actions {
@@ -556,7 +557,7 @@
       if (currentUserData) {
         loginBox.classList.add("hidden");
         logoutRow.classList.remove("hidden");
-        userInfo.textContent = `${currentUserData.name} / ${currentUserData.emp_no} 로그인됨`;
+        userInfo.textContent = `${currentUserData.team} / ${currentUserData.name} / ${currentUserData.emp_no} 로그인됨`;
       } else {
         loginBox.classList.remove("hidden");
         logoutRow.classList.add("hidden");
@@ -733,6 +734,16 @@
       }
     }
 
+    function formatUserDisplay(team, name) {
+      const safeTeam = (team || "").trim();
+      const safeName = (name || "").trim();
+
+      if (safeTeam && safeName) return `${safeTeam} / ${safeName}`;
+      if (safeTeam) return safeTeam;
+      if (safeName) return safeName;
+      return "-";
+    }
+
     function renderEquipmentRows(statusMap = {}) {
       equipmentListEl.innerHTML = "";
 
@@ -740,7 +751,9 @@
         const statusData = statusMap[item.eq_code] || {};
         const status = statusData.status || "";
         const location = statusData.location || item.dept || "-";
-        const currentUser = statusData.current_user_name || "-";
+        const currentUserTeam = statusData.current_user_team || "";
+        const currentUserName = statusData.current_user_name || "";
+        const currentUserDisplay = formatUserDisplay(currentUserTeam, currentUserName);
         const checkoutTime = statusData.checkout_time || "-";
 
         let badgeClass = "status-badge status-loading";
@@ -781,7 +794,7 @@
             </div>
             <div class="compact-field">
               <span class="compact-label">현재 사용자</span>
-              <span class="compact-value">${currentUser}</span>
+              <span class="compact-value">${currentUserDisplay}</span>
             </div>
             <div class="compact-field">
               <span class="compact-label">불출 시간</span>
@@ -829,6 +842,7 @@
           `${WEB_APP_URL}?action=checkout` +
           `&eq_code=${encodeURIComponent(eqCode)}` +
           `&user_name=${encodeURIComponent(currentUserData.name)}` +
+          `&user_team=${encodeURIComponent(currentUserData.team)}` +
           `&user_id=${encodeURIComponent(currentUserData.user_id)}` +
           `&emp_no=${encodeURIComponent(currentUserData.emp_no)}`;
 
