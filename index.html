@@ -514,7 +514,7 @@
         const script = document.createElement("script");
         const uniqueCallback = callbackName + "_" + Date.now() + "_" + Math.floor(Math.random() * 1000);
 
-        window[uniqueCallback] = function (result) {
+        window[uniqueCallback] = function(result) {
           resolve(result);
           delete window[uniqueCallback];
           script.remove();
@@ -522,7 +522,7 @@
 
         script.src = `${url}&callback=${uniqueCallback}`;
 
-        script.onerror = function () {
+        script.onerror = function() {
           reject(new Error("Apps Script 연결 오류"));
           delete window[uniqueCallback];
           script.remove();
@@ -532,34 +532,40 @@
       });
     }
 
-    async function loadSingleStatus(eqCode) {
+    function applyStatusBadge(eqCode, status) {
       const statusEl = document.getElementById(`status-${eqCode}`);
       if (!statusEl) return;
 
-      try {
-        const url = `${WEB_APP_URL}?action=getEquipmentStatus&eq_code=${encodeURIComponent(eqCode)}`;
-        const result = await jsonpRequest(url, "statusCallback");
+      if (status === "available") {
+        statusEl.className = "mini-status status-available";
+        statusEl.textContent = eqCode;
+      } else if (status === "checked_out") {
+        statusEl.className = "mini-status status-checkedout";
+        statusEl.textContent = eqCode;
+      } else {
+        statusEl.className = "mini-status status-loading";
+        statusEl.textContent = eqCode;
+      }
+    }
 
-        if (!result.success) {
-          statusEl.className = "mini-status status-loading";
-          statusEl.textContent = eqCode;
+    async function loadAllEquipmentStatus() {
+      try {
+        const url = `${WEB_APP_URL}?action=getAllEquipmentStatus`;
+        const result = await jsonpRequest(url, "allStatusCallback");
+
+        if (!result.success || !result.equipments) {
+          equipmentCodes.forEach(code => applyStatusBadge(code, ""));
           return;
         }
 
-        if (result.equipment.status === "available") {
-          statusEl.className = "mini-status status-available";
-          statusEl.textContent = eqCode;
-        } else if (result.equipment.status === "checked_out") {
-          statusEl.className = "mini-status status-checkedout";
-          statusEl.textContent = eqCode;
-        } else {
-          statusEl.className = "mini-status status-loading";
-          statusEl.textContent = eqCode;
-        }
+        equipmentCodes.forEach((code) => {
+          const item = result.equipments[code];
+          const status = item ? item.status : "";
+          applyStatusBadge(code, status);
+        });
       } catch (error) {
         console.error(error);
-        statusEl.className = "mini-status status-loading";
-        statusEl.textContent = eqCode;
+        equipmentCodes.forEach(code => applyStatusBadge(code, ""));
       }
     }
 
@@ -571,7 +577,8 @@
 
     searchInput.addEventListener("input", filterEquipment);
 
-    equipmentCodes.forEach(code => loadSingleStatus(code));
+    filterEquipment();
+    loadAllEquipmentStatus();
   </script>
 </body>
 </html>
