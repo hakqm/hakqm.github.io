@@ -515,7 +515,7 @@
         eq_code: "Q-GJ-002",
         eq_name: "버니어 캘리퍼스",
         spec: "300mm",
-        dept: "FAN생산팀 FAN 2파트",
+        dept: "창녕",
         due: "2027-03-12",
         file: "CC_Q-GJ-002.pdf"
       },
@@ -524,7 +524,7 @@
         eq_code: "Q-GJ-007",
         eq_name: "버니어 캘리퍼스",
         spec: "300mm",
-        dept: "품질경영팀 QM 1파트",
+        dept: "QM 계측기실",
         due: "2026-11-14",
         file: "CC_Q-GJ-007.pdf"
       },
@@ -533,7 +533,7 @@
         eq_code: "Q-GJ-016",
         eq_name: "버니어 캘리퍼스",
         spec: "600mm",
-        dept: "품질경영팀 QM 1파트",
+        dept: "QM 계측기실",
         due: "2026-12-12",
         file: "CC_Q-GJ-016.pdf"
       }
@@ -593,20 +593,6 @@
         localStorage.setItem(LOGIN_STORAGE_KEY, JSON.stringify(parsed));
       } catch (e) {
         clearLoginData();
-      }
-    }
-
-    function getRemainingLoginMinutes() {
-      const saved = localStorage.getItem(LOGIN_STORAGE_KEY);
-      if (!saved) return 0;
-
-      try {
-        const parsed = JSON.parse(saved);
-        const lastActivity = parsed.lastActivity || 0;
-        const remainMs = LOGIN_EXPIRE_MS - (Date.now() - lastActivity);
-        return Math.max(0, Math.ceil(remainMs / 60000));
-      } catch (e) {
-        return 0;
       }
     }
 
@@ -699,7 +685,7 @@
         const script = document.createElement("script");
         const uniqueCallback = callbackName + "_" + Date.now() + "_" + Math.floor(Math.random() * 1000);
 
-        window[uniqueCallback] = function (result) {
+        window[uniqueCallback] = function(result) {
           resolve(result);
           delete window[uniqueCallback];
           script.remove();
@@ -707,7 +693,7 @@
 
         script.src = `${url}&callback=${uniqueCallback}`;
 
-        script.onerror = function () {
+        script.onerror = function() {
           reject(new Error("Apps Script 연결 오류"));
           delete window[uniqueCallback];
           script.remove();
@@ -753,7 +739,7 @@
       EQUIPMENT_LIST.forEach((item) => {
         const statusData = statusMap[item.eq_code] || {};
         const status = statusData.status || "";
-        const location = statusData.location || "-";
+        const location = statusData.location || item.dept || "-";
         const currentUser = statusData.current_user_name || "-";
         const checkoutTime = statusData.checkout_time || "-";
 
@@ -786,16 +772,12 @@
               <span class="compact-value">${item.spec}</span>
             </div>
             <div class="compact-field">
-              <span class="compact-label">관리 부서</span>
-              <span class="compact-value">${item.dept}</span>
+              <span class="compact-label">보관 위치</span>
+              <span class="compact-value">${location}</span>
             </div>
             <div class="compact-field">
               <span class="compact-label">점검 예정일</span>
               <span class="compact-value">${item.due}</span>
-            </div>
-            <div class="compact-field">
-              <span class="compact-label">위치</span>
-              <span class="compact-value">${location}</span>
             </div>
             <div class="compact-field">
               <span class="compact-label">현재 사용자</span>
@@ -818,23 +800,20 @@
     }
 
     async function loadAllEquipmentStatus() {
-      const statusMap = {};
+      try {
+        const url = `${WEB_APP_URL}?action=getAllEquipmentStatus`;
+        const result = await jsonpRequest(url, "allStatusCallback");
 
-      const requests = EQUIPMENT_LIST.map(async (item) => {
-        try {
-          const url = `${WEB_APP_URL}?action=getEquipmentStatus&eq_code=${encodeURIComponent(item.eq_code)}`;
-          const result = await jsonpRequest(url, "statusCallback");
-
-          if (result.success) {
-            statusMap[item.eq_code] = result.equipment;
-          }
-        } catch (error) {
-          console.error(item.eq_code, error);
+        if (!result.success) {
+          renderEquipmentRows({});
+          return;
         }
-      });
 
-      await Promise.all(requests);
-      renderEquipmentRows(statusMap);
+        renderEquipmentRows(result.equipments || {});
+      } catch (error) {
+        console.error(error);
+        renderEquipmentRows({});
+      }
     }
 
     async function checkoutEquipment(eqCode) {
