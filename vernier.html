@@ -4,11 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>버니어 캘리퍼스 사용 가이드</title>
-
   <style>
-    /* =========================
-       1. Design Tokens
-    ========================= */
     :root {
       --primary: #1f3a5f;
       --primary-dark: #13263f;
@@ -32,12 +28,7 @@
       --radius-sm: 10px;
     }
 
-    /* =========================
-       2. Base
-    ========================= */
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
@@ -46,39 +37,23 @@
       background: linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
     }
 
-    button,
-    input,
-    a {
-      font: inherit;
-    }
+    button, input, a { font: inherit; }
+    .hidden { display: none !important; }
 
-    .hidden {
-      display: none !important;
-    }
-
-    /* =========================
-       3. Layout
-    ========================= */
     .hero {
       padding: 16px 16px 26px;
       color: #ffffff;
       background: linear-gradient(135deg, var(--primary-dark), var(--primary));
     }
 
-    .hero-inner,
-    .wrap {
+    .hero-inner, .wrap {
       width: 100%;
       max-width: 760px;
       margin: 0 auto;
     }
 
-    .wrap {
-      padding: 18px 16px 48px;
-    }
+    .wrap { padding: 18px 16px 48px; }
 
-    /* =========================
-       4. Hero
-    ========================= */
     .hero-top {
       display: flex;
       align-items: center;
@@ -91,11 +66,10 @@
     .company {
       display: inline-flex;
       align-items: center;
-      gap: 8px;
       padding: 8px 12px;
-      border: 1px solid rgba(255, 255, 255, 0.18);
+      border: 1px solid rgba(255,255,255,0.18);
       border-radius: 999px;
-      background: rgba(255, 255, 255, 0.12);
+      background: rgba(255,255,255,0.12);
       font-size: 12px;
       font-weight: 700;
       letter-spacing: 1px;
@@ -107,6 +81,7 @@
       justify-content: flex-end;
       gap: 10px;
       flex-wrap: wrap;
+      margin-left: auto;
     }
 
     .hero-title {
@@ -117,7 +92,7 @@
 
     .hero-desc {
       margin: 10px 0 0;
-      color: rgba(255, 255, 255, 0.88);
+      color: rgba(255,255,255,0.88);
       font-size: 15px;
       line-height: 1.7;
     }
@@ -129,13 +104,7 @@
       margin-top: 16px;
     }
 
-    /* =========================
-       5. Buttons / Chips
-    ========================= */
-    .hero-btn,
-    .top-btn,
-    .action-btn,
-    .login-btn {
+    .hero-btn, .top-btn, .action-btn, .login-btn {
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -147,80 +116,36 @@
       transition: 0.2s ease;
     }
 
-    .hero-btn,
-    .top-btn {
+    .hero-btn, .top-btn {
       padding: 11px 16px;
       font-size: 14px;
-    }
-
-    .hero-btn,
-    .top-btn {
       background: #ffffff;
       color: var(--primary-dark);
     }
 
-    .hero-btn:hover,
-    .top-btn:hover {
-      background: #edf3fb;
-    }
+    .hero-btn:hover, .top-btn:hover { background: #edf3fb; }
 
     .hero-btn-outline {
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.08);
       color: #ffffff;
     }
 
-    .hero-btn-outline:hover {
-      background: rgba(255, 255, 255, 0.16);
-    }
+    .hero-btn-outline:hover { background: rgba(255,255,255,0.16); }
 
     .user-chip {
       display: inline-flex;
       align-items: center;
-      gap: 8px;
       min-height: 40px;
       padding: 8px 13px;
-      border: 1px solid rgba(255, 255, 255, 0.18);
+      border: 1px solid rgba(255,255,255,0.18);
       border-radius: 999px;
-      background: rgba(255, 255, 255, 0.12);
+      background: rgba(255,255,255,0.12);
       color: #ffffff;
       font-size: 13px;
       font-weight: 700;
     }
 
-    .user-chip-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: #22c55e;
-      flex-shrink: 0;
-    }
-
-    .action-btn {
-      min-width: 120px;
-      padding: 10px 14px;
-      border-radius: var(--radius-sm);
-      background: var(--primary);
-      color: #ffffff;
-      font-size: 13px;
-    }
-
-    .action-btn:hover,
-    .login-btn:hover {
-      background: var(--primary-dark);
-    }
-
-    .action-btn-secondary {
-      background: #667085;
-    }
-
-    .action-btn-secondary:hover {
-      background: #475467;
-    }
-
-    /* =========================
-       6. Cards / Sections
-    ========================= */
     .card {
       margin-bottom: 16px;
       padding: 18px;
@@ -257,10 +182,7 @@
       line-height: 1.7;
     }
 
-    .img-wrap {
-      margin-top: 14px;
-      text-align: center;
-    }
+    .img-wrap { margin-top: 14px; text-align: center; }
 
     .guide-image {
       display: inline-block;
@@ -270,9 +192,6 @@
       border-radius: var(--radius-md);
     }
 
-    /* =========================
-       7. Equipment Status
-    ========================= */
     .equipment-list {
       display: grid;
       gap: 10px;
@@ -309,20 +228,9 @@
       font-weight: 700;
     }
 
-    .status-available {
-      background: var(--ok-bg);
-      color: var(--ok-text);
-    }
-
-    .status-checkedout {
-      background: var(--warn-bg);
-      color: var(--warn-text);
-    }
-
-    .status-loading {
-      background: var(--info-bg);
-      color: var(--info-text);
-    }
+    .status-available { background: var(--ok-bg); color: var(--ok-text); }
+    .status-checkedout { background: var(--warn-bg); color: var(--warn-text); }
+    .status-loading { background: var(--info-bg); color: var(--info-text); }
 
     .compact-grid {
       display: grid;
@@ -362,19 +270,27 @@
       margin-top: 12px;
     }
 
-    /* =========================
-       8. Content Blocks
-    ========================= */
-    ul,
-    ol {
+    .action-btn {
+      min-width: 120px;
+      padding: 10px 14px;
+      border-radius: var(--radius-sm);
+      background: var(--primary);
+      color: #ffffff;
+      font-size: 13px;
+    }
+
+    .action-btn:hover, .login-btn:hover { background: var(--primary-dark); }
+
+    .action-btn-secondary { background: #667085; }
+    .action-btn-secondary:hover { background: #475467; }
+
+    ul, ol {
       margin: 0;
       padding-left: 20px;
       line-height: 1.8;
     }
 
-    li + li {
-      margin-top: 8px;
-    }
+    li + li { margin-top: 8px; }
 
     .video {
       position: relative;
@@ -405,13 +321,8 @@
       line-height: 1.8;
     }
 
-    .footer strong {
-      color: var(--primary-dark);
-    }
+    .footer strong { color: var(--primary-dark); }
 
-    /* =========================
-       9. Login Modal
-    ========================= */
     .modal {
       position: fixed;
       inset: 0;
@@ -442,11 +353,7 @@
       border-bottom: 1px solid #e9eef5;
     }
 
-    .modal-title {
-      margin: 0;
-      color: var(--primary-dark);
-      font-size: 22px;
-    }
+    .modal-title { margin: 0; color: var(--primary-dark); font-size: 22px; }
 
     .modal-desc {
       margin: 8px 0 0;
@@ -467,9 +374,7 @@
       flex-shrink: 0;
     }
 
-    .modal-close:hover {
-      background: #dfe7f1;
-    }
+    .modal-close:hover { background: #dfe7f1; }
 
     .modal-body {
       display: grid;
@@ -520,66 +425,23 @@
       color: #344054;
     }
 
-    .login-btn-secondary:hover {
-      background: #dfe7f1;
-    }
+    .login-btn-secondary:hover { background: #dfe7f1; }
 
-    /* =========================
-       10. Responsive
-    ========================= */
     @media (max-width: 640px) {
-      .hero-top {
-        align-items: stretch;
-      }
-
-      .hero-auth {
-        justify-content: flex-start;
-      }
-
-      .item-actions {
-        flex-direction: column;
-      }
-
-      .action-btn {
-        width: 100%;
-        min-width: auto;
-      }
+      .hero-top { align-items: stretch; }
+      .item-actions { flex-direction: column; }
+      .action-btn { width: 100%; min-width: auto; }
     }
 
     @media (max-width: 480px) {
-      .hero-title {
-        font-size: 24px;
-      }
-
-      .card {
-        padding: 16px;
-      }
-
-      .section-title {
-        font-size: 19px;
-      }
-
-      .compact-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .guide-image {
-        max-width: 320px;
-      }
-
-      .modal-head,
-      .modal-body {
-        padding-left: 16px;
-        padding-right: 16px;
-      }
-
-      .login-row {
-        flex-direction: column;
-      }
-
-      .login-btn {
-        width: 100%;
-      }
+      .hero-title { font-size: 24px; }
+      .card { padding: 16px; }
+      .section-title { font-size: 19px; }
+      .compact-grid { grid-template-columns: 1fr; }
+      .guide-image { max-width: 320px; }
+      .modal-head, .modal-body { padding-left: 16px; padding-right: 16px; }
+      .login-row { flex-direction: column; }
+      .login-btn { width: 100%; }
     }
   </style>
 </head>
@@ -588,10 +450,8 @@
     <div class="hero-inner">
       <div class="hero-top">
         <div class="company">HI AIR KOREA</div>
-
         <div class="hero-auth">
           <div id="userChip" class="user-chip hidden">
-            <span class="user-chip-dot"></span>
             <span id="userChipText">로그인됨</span>
           </div>
           <button type="button" id="openLoginBtn" class="hero-btn">로그인</button>
@@ -600,9 +460,7 @@
       </div>
 
       <h1 class="hero-title">버니어 캘리퍼스 사용 가이드</h1>
-      <p class="hero-desc">
-        현장에서 휴대폰 및 태블릿으로 빠르게 확인할 수 있도록 제작한 계측기 안내 페이지입니다.
-      </p>
+      <p class="hero-desc">현장에서 휴대폰 및 태블릿으로 빠르게 확인할 수 있도록 제작한 계측기 안내 페이지입니다.</p>
 
       <div class="top-actions">
         <a class="top-btn" href="index.html">메인으로 돌아가기</a>
@@ -614,12 +472,10 @@
     <section class="card">
       <h2 class="section-title">01. 장비 정보</h2>
       <p class="sub">버니어 캘리퍼스 공용 사용 안내입니다.</p>
-
       <div class="summary-box">
         외측, 내측, 깊이 등을 측정할 수 있는 대표적인 계측기입니다.
         사용 전 영점 확인과 측정면 청결 상태 확인이 중요합니다.
       </div>
-
       <div class="img-wrap">
         <img src="Q-GH-vernier.jpg" alt="버니어 캘리퍼스 사진" class="guide-image" />
       </div>
@@ -686,65 +542,35 @@
           <h3 id="loginModalTitle" class="modal-title">로그인</h3>
           <p class="modal-desc">이름과 사번을 입력하면 불출 및 반납 기능을 사용할 수 있습니다.</p>
         </div>
-        <button type="button" class="modal-close" aria-label="닫기" id="closeLoginBtn">×</button>
+        <button type="button" id="closeLoginBtn" class="modal-close" aria-label="닫기">×</button>
       </div>
-
       <div class="modal-body">
         <input type="text" id="loginName" class="login-input" placeholder="이름 입력" />
         <input type="text" id="loginEmpNo" class="login-input" placeholder="사번 입력" />
         <div class="login-help">이름과 사번을 정확히 입력해주세요.</div>
         <div class="login-row">
-          <button type="button" class="login-btn" id="submitLoginBtn">로그인</button>
-          <button type="button" class="login-btn login-btn-secondary" id="cancelLoginBtn">닫기</button>
+          <button type="button" id="submitLoginBtn" class="login-btn">로그인</button>
+          <button type="button" id="cancelLoginBtn" class="login-btn login-btn-secondary">닫기</button>
         </div>
       </div>
     </div>
   </div>
 
   <script>
-    /* =========================
-       1. Config / Static Data
-    ========================= */
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwn9I60-14GHDQk_rNF_uJYBpig-Bovl7Qqje_eGGjcFmZJZfqQgtpUg6necytvlQQ-/exec";
 
     const EQUIPMENT_LIST = [
-      {
-        no: 1,
-        eq_code: "Q-GJ-002",
-        eq_name: "버니어 캘리퍼스",
-        spec: "300mm",
-        dept: "창녕",
-        due: "2027-03-12",
-        file: "CC_Q-GJ-002.pdf"
-      },
-      {
-        no: 2,
-        eq_code: "Q-GJ-007",
-        eq_name: "버니어 캘리퍼스",
-        spec: "300mm",
-        dept: "QM 계측기실",
-        due: "2026-11-14",
-        file: "CC_Q-GJ-007.pdf"
-      },
-      {
-        no: 3,
-        eq_code: "Q-GJ-016",
-        eq_name: "버니어 캘리퍼스",
-        spec: "600mm",
-        dept: "QM 계측기실",
-        due: "2026-12-12",
-        file: "CC_Q-GJ-016.pdf"
-      }
+      { no: 1, eq_code: "Q-GJ-002", eq_name: "버니어 캘리퍼스", spec: "300mm", dept: "창녕", due: "2027-03-12", file: "CC_Q-GJ-002.pdf" },
+      { no: 2, eq_code: "Q-GJ-007", eq_name: "버니어 캘리퍼스", spec: "300mm", dept: "QM 계측기실", due: "2026-11-14", file: "CC_Q-GJ-007.pdf" },
+      { no: 3, eq_code: "Q-GJ-016", eq_name: "버니어 캘리퍼스", spec: "600mm", dept: "QM 계측기실", due: "2026-12-12", file: "CC_Q-GJ-016.pdf" }
     ];
 
     const LOGIN_STORAGE_KEY = "hak_login_user";
     const LOGIN_EXPIRE_MINUTES = 30;
     const LOGIN_EXPIRE_MS = LOGIN_EXPIRE_MINUTES * 60 * 1000;
 
-    /* =========================
-       2. State / DOM
-    ========================= */
     let currentUserData = null;
+    let isLoginSubmitting = false;
 
     const loginModal = document.getElementById("loginModal");
     const openLoginBtn = document.getElementById("openLoginBtn");
@@ -758,9 +584,14 @@
     const loginEmpNoInput = document.getElementById("loginEmpNo");
     const equipmentListEl = document.getElementById("equipmentList");
 
-    /* =========================
-       3. UI Helpers
-    ========================= */
+    function setLoginSubmitting(isSubmitting) {
+      isLoginSubmitting = isSubmitting;
+      submitLoginBtn.disabled = isSubmitting;
+      submitLoginBtn.textContent = isSubmitting ? "로그인 중..." : "로그인";
+      loginNameInput.disabled = isSubmitting;
+      loginEmpNoInput.disabled = isSubmitting;
+    }
+
     function openLoginModal() {
       loginModal.classList.remove("hidden");
       loginModal.setAttribute("aria-hidden", "false");
@@ -791,7 +622,6 @@
     function formatUserDisplay(team, name) {
       const safeTeam = (team || "").trim();
       const safeName = (name || "").trim();
-
       if (safeTeam && safeName) return `${safeTeam} / ${safeName}`;
       if (safeTeam) return safeTeam;
       if (safeName) return safeName;
@@ -799,38 +629,14 @@
     }
 
     function getStatusMeta(status) {
-      if (status === "available") {
-        return {
-          badgeClass: "status-badge status-available",
-          badgeText: "대여 가능"
-        };
-      }
-
-      if (status === "checked_out") {
-        return {
-          badgeClass: "status-badge status-checkedout",
-          badgeText: "불출 중"
-        };
-      }
-
-      return {
-        badgeClass: "status-badge status-loading",
-        badgeText: "상태 확인 중"
-      };
+      if (status === "available") return { badgeClass: "status-badge status-available", badgeText: "대여 가능" };
+      if (status === "checked_out") return { badgeClass: "status-badge status-checkedout", badgeText: "불출 중" };
+      return { badgeClass: "status-badge status-loading", badgeText: "상태 확인 중" };
     }
 
-    /* =========================
-       4. Local Storage Session
-    ========================= */
     function saveLoginUser(user) {
       currentUserData = user;
-      localStorage.setItem(
-        LOGIN_STORAGE_KEY,
-        JSON.stringify({
-          user,
-          lastActivity: Date.now()
-        })
-      );
+      localStorage.setItem(LOGIN_STORAGE_KEY, JSON.stringify({ user, lastActivity: Date.now() }));
       updateLoginUI();
     }
 
@@ -841,7 +647,6 @@
 
     function touchLoginActivity() {
       if (!currentUserData) return;
-
       const saved = localStorage.getItem(LOGIN_STORAGE_KEY);
       if (!saved) return;
 
@@ -856,7 +661,6 @@
 
     function loadSavedUser() {
       const saved = localStorage.getItem(LOGIN_STORAGE_KEY);
-
       if (!saved) {
         updateLoginUI();
         return;
@@ -873,9 +677,7 @@
           return;
         }
 
-        const isExpired = Date.now() - lastActivity > LOGIN_EXPIRE_MS;
-
-        if (isExpired) {
+        if (Date.now() - lastActivity > LOGIN_EXPIRE_MS) {
           clearLoginData();
           updateLoginUI();
           alert("로그인 세션이 만료되어 자동으로 로그아웃되었습니다. 다시 로그인해주세요.");
@@ -896,10 +698,7 @@
       loginNameInput.value = "";
       loginEmpNoInput.value = "";
       updateLoginUI();
-
-      if (showMessage) {
-        alert("로그아웃되었습니다.");
-      }
+      if (showMessage) alert("로그아웃되었습니다.");
     }
 
     function autoLogout() {
@@ -910,7 +709,6 @@
     function startAutoLogoutWatcher() {
       setInterval(() => {
         if (!currentUserData) return;
-
         const saved = localStorage.getItem(LOGIN_STORAGE_KEY);
         if (!saved) {
           logout(false);
@@ -920,10 +718,7 @@
         try {
           const parsed = JSON.parse(saved);
           const lastActivity = parsed.lastActivity || 0;
-
-          if (Date.now() - lastActivity > LOGIN_EXPIRE_MS) {
-            autoLogout();
-          }
+          if (Date.now() - lastActivity > LOGIN_EXPIRE_MS) autoLogout();
         } catch (error) {
           logout(false);
         }
@@ -932,19 +727,10 @@
 
     function bindActivityEvents() {
       ["click", "keydown", "touchstart", "scroll"].forEach((eventName) => {
-        document.addEventListener(
-          eventName,
-          () => {
-            touchLoginActivity();
-          },
-          { passive: true }
-        );
+        document.addEventListener(eventName, () => touchLoginActivity(), { passive: true });
       });
     }
 
-    /* =========================
-       5. API Helpers
-    ========================= */
     function jsonpRequest(url, callbackName) {
       return new Promise((resolve, reject) => {
         const script = document.createElement("script");
@@ -957,7 +743,6 @@
         };
 
         script.src = `${url}&callback=${uniqueCallback}`;
-
         script.onerror = function() {
           reject(new Error("Apps Script 연결 오류"));
           delete window[uniqueCallback];
@@ -971,18 +756,15 @@
     async function login() {
       const name = loginNameInput.value.trim();
       const empNo = loginEmpNoInput.value.trim();
-
       if (!name || !empNo) {
         alert("이름과 사번을 입력해주세요.");
         return;
       }
+      if (isLoginSubmitting) return;
 
+      setLoginSubmitting(true);
       try {
-        const url =
-          `${WEB_APP_URL}?action=login` +
-          `&name=${encodeURIComponent(name)}` +
-          `&emp_no=${encodeURIComponent(empNo)}`;
-
+        const url = `${WEB_APP_URL}?action=login&name=${encodeURIComponent(name)}&emp_no=${encodeURIComponent(empNo)}`;
         const result = await jsonpRequest(url, "loginCallback");
 
         if (!result.success) {
@@ -995,19 +777,18 @@
       } catch (error) {
         console.error(error);
         alert("로그인 중 오류가 발생했습니다.");
+      } finally {
+        setLoginSubmitting(false);
       }
     }
 
     async function loadAllEquipmentStatus() {
       try {
-        const url = `${WEB_APP_URL}?action=getAllEquipmentStatus`;
-        const result = await jsonpRequest(url, "allStatusCallback");
-
+        const result = await jsonpRequest(`${WEB_APP_URL}?action=getAllEquipmentStatus`, "allStatusCallback");
         if (!result.success) {
           renderEquipmentRows({});
           return;
         }
-
         renderEquipmentRows(result.equipments || {});
       } catch (error) {
         console.error(error);
@@ -1015,9 +796,6 @@
       }
     }
 
-    /* =========================
-       6. Equipment Rendering
-    ========================= */
     function renderEquipmentRows(statusMap = {}) {
       equipmentListEl.innerHTML = "";
 
@@ -1025,10 +803,7 @@
         const statusData = statusMap[item.eq_code] || {};
         const statusMeta = getStatusMeta(statusData.status || "");
         const location = statusData.location || item.dept || "-";
-        const currentUserDisplay = formatUserDisplay(
-          statusData.current_user_team || "",
-          statusData.current_user_name || ""
-        );
+        const currentUserDisplay = formatUserDisplay(statusData.current_user_team || "", statusData.current_user_name || "");
         const checkoutTime = statusData.checkout_time || "-";
 
         const article = document.createElement("article");
@@ -1038,41 +813,20 @@
             <div class="equipment-title">${item.no}. ${item.eq_code}</div>
             <div class="${statusMeta.badgeClass}">${statusMeta.badgeText}</div>
           </div>
-
           <div class="compact-grid">
-            <div class="compact-field">
-              <span class="compact-label">장비명</span>
-              <span class="compact-value">${item.eq_name}</span>
-            </div>
-            <div class="compact-field">
-              <span class="compact-label">규격</span>
-              <span class="compact-value">${item.spec}</span>
-            </div>
-            <div class="compact-field">
-              <span class="compact-label">보관 위치</span>
-              <span class="compact-value">${location}</span>
-            </div>
-            <div class="compact-field">
-              <span class="compact-label">점검 예정일</span>
-              <span class="compact-value">${item.due}</span>
-            </div>
-            <div class="compact-field">
-              <span class="compact-label">현재 사용자</span>
-              <span class="compact-value">${currentUserDisplay}</span>
-            </div>
-            <div class="compact-field">
-              <span class="compact-label">불출 시간</span>
-              <span class="compact-value">${checkoutTime}</span>
-            </div>
+            <div class="compact-field"><span class="compact-label">장비명</span><span class="compact-value">${item.eq_name}</span></div>
+            <div class="compact-field"><span class="compact-label">규격</span><span class="compact-value">${item.spec}</span></div>
+            <div class="compact-field"><span class="compact-label">보관 위치</span><span class="compact-value">${location}</span></div>
+            <div class="compact-field"><span class="compact-label">점검 예정일</span><span class="compact-value">${item.due}</span></div>
+            <div class="compact-field"><span class="compact-label">현재 사용자</span><span class="compact-value">${currentUserDisplay}</span></div>
+            <div class="compact-field"><span class="compact-label">불출 시간</span><span class="compact-value">${checkoutTime}</span></div>
           </div>
-
           <div class="item-actions">
             <button class="action-btn" data-action="certificate" data-eq-code="${item.eq_code}">검교정 성적서 보기</button>
             <button class="action-btn" data-action="checkout" data-eq-code="${item.eq_code}">불출하기</button>
             <button class="action-btn action-btn-secondary" data-action="return" data-eq-code="${item.eq_code}">반납하기</button>
           </div>
         `;
-
         equipmentListEl.appendChild(article);
       });
     }
@@ -1081,34 +835,21 @@
       return EQUIPMENT_LIST.find((item) => item.eq_code === eqCode) || null;
     }
 
-    /* =========================
-       7. Equipment Actions
-    ========================= */
     async function checkoutEquipment(eqCode) {
       if (!currentUserData) {
         openLoginModal();
         alert("먼저 로그인해주세요.");
         return;
       }
-
       touchLoginActivity();
 
       try {
-        const url =
-          `${WEB_APP_URL}?action=checkout` +
-          `&eq_code=${encodeURIComponent(eqCode)}` +
-          `&user_name=${encodeURIComponent(currentUserData.name)}` +
-          `&user_team=${encodeURIComponent(currentUserData.team)}` +
-          `&user_id=${encodeURIComponent(currentUserData.user_id)}` +
-          `&emp_no=${encodeURIComponent(currentUserData.emp_no)}`;
-
+        const url = `${WEB_APP_URL}?action=checkout&eq_code=${encodeURIComponent(eqCode)}&user_name=${encodeURIComponent(currentUserData.name)}&user_team=${encodeURIComponent(currentUserData.team)}&user_id=${encodeURIComponent(currentUserData.user_id)}&emp_no=${encodeURIComponent(currentUserData.emp_no)}`;
         const result = await jsonpRequest(url, "checkoutCallback");
-
         if (!result.success) {
           alert(result.message || "불출 처리에 실패했습니다.");
           return;
         }
-
         alert(`${eqCode} 불출이 완료되었습니다.`);
         loadAllEquipmentStatus();
       } catch (error) {
@@ -1123,22 +864,15 @@
         alert("먼저 로그인해주세요.");
         return;
       }
-
       touchLoginActivity();
 
       try {
-        const url =
-          `${WEB_APP_URL}?action=return` +
-          `&eq_code=${encodeURIComponent(eqCode)}` +
-          `&user_name=${encodeURIComponent(currentUserData.name)}`;
-
+        const url = `${WEB_APP_URL}?action=return&eq_code=${encodeURIComponent(eqCode)}&user_name=${encodeURIComponent(currentUserData.name)}`;
         const result = await jsonpRequest(url, "returnCallback");
-
         if (!result.success) {
           alert(result.message || "반납 처리에 실패했습니다.");
           return;
         }
-
         alert(`${eqCode} 반납이 완료되었습니다.`);
         loadAllEquipmentStatus();
       } catch (error) {
@@ -1164,9 +898,6 @@
       window.open(equipment.file, "_blank");
     }
 
-    /* =========================
-       8. Event Binding
-    ========================= */
     function bindModalEvents() {
       openLoginBtn.addEventListener("click", openLoginModal);
       logoutBtn.addEventListener("click", () => logout());
@@ -1175,24 +906,18 @@
       submitLoginBtn.addEventListener("click", login);
 
       loginModal.addEventListener("click", (event) => {
-        if (event.target === loginModal) {
-          closeLoginModal();
-        }
+        if (event.target === loginModal) closeLoginModal();
       });
 
       document.addEventListener("keydown", (event) => {
         const modalOpened = !loginModal.classList.contains("hidden");
-
         if (event.key === "Escape" && modalOpened) {
           closeLoginModal();
           return;
         }
-
         if (event.key === "Enter" && modalOpened) {
           const activeElement = document.activeElement;
-          if (activeElement === loginNameInput || activeElement === loginEmpNoInput) {
-            login();
-          }
+          if (activeElement === loginNameInput || activeElement === loginEmpNoInput) login();
         }
       });
     }
@@ -1202,28 +927,13 @@
         const button = event.target.closest("button[data-action]");
         if (!button) return;
 
-        const action = button.dataset.action;
-        const eqCode = button.dataset.eqCode;
-
-        if (action === "certificate") {
-          openCertificate(eqCode);
-          return;
-        }
-
-        if (action === "checkout") {
-          checkoutEquipment(eqCode);
-          return;
-        }
-
-        if (action === "return") {
-          returnEquipment(eqCode);
-        }
+        const { action, eqCode } = button.dataset;
+        if (action === "certificate") return openCertificate(eqCode);
+        if (action === "checkout") return checkoutEquipment(eqCode);
+        if (action === "return") return returnEquipment(eqCode);
       });
     }
 
-    /* =========================
-       9. Initialize
-    ========================= */
     function init() {
       loadSavedUser();
       bindActivityEvents();
