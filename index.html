@@ -4,12 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>HAK 계측기 사용 방법</title>
+
   <style>
     :root {
       --primary: #1f3a5f;
       --primary-dark: #13263f;
       --accent: #d38b2c;
-      --bg: #f4f7fb;
+      --bg-top: #eef3f9;
+      --bg-bottom: #f8fafc;
       --card: #ffffff;
       --text: #1b2430;
       --subtext: #5b6573;
@@ -21,6 +23,10 @@
       --red-text: #b42318;
       --gray-bg: #eef2f6;
       --gray-text: #475467;
+      --overlay: rgba(15, 23, 42, 0.52);
+      --radius-lg: 18px;
+      --radius-md: 16px;
+      --radius-sm: 12px;
     }
 
     * {
@@ -30,50 +36,129 @@
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background: linear-gradient(180deg, #eef3f9 0%, #f8fafc 100%);
       color: var(--text);
+      background: linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
+    }
+
+    button,
+    input,
+    a {
+      font: inherit;
+    }
+
+    .hidden {
+      display: none !important;
     }
 
     .hero {
+      padding: 22px 20px 34px;
+      color: #ffffff;
       background: linear-gradient(135deg, var(--primary-dark), var(--primary));
-      color: white;
-      padding: 42px 20px 34px;
     }
 
-    .hero-inner {
+    .hero-inner,
+    .wrap {
+      width: 100%;
       max-width: 1100px;
       margin: 0 auto;
     }
 
+    .hero-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+
     .company {
-      display: inline-block;
-      font-size: 13px;
-      font-weight: 700;
-      letter-spacing: 1.2px;
+      display: inline-flex;
+      align-items: center;
       padding: 8px 12px;
       border: 1px solid rgba(255,255,255,0.2);
       border-radius: 999px;
       background: rgba(255,255,255,0.08);
-      margin-bottom: 14px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 1.2px;
     }
 
-    h1 {
+    .hero-auth {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-left: auto;
+    }
+
+    .user-chip {
+      display: inline-flex;
+      align-items: center;
+      min-height: 40px;
+      padding: 8px 13px;
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 999px;
+      background: rgba(255,255,255,0.12);
+      color: #ffffff;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .hero-title {
       margin: 0;
       font-size: 32px;
       line-height: 1.3;
     }
 
-    .hero p {
+    .hero-desc {
       margin: 14px 0 0;
+      max-width: 760px;
       color: rgba(255,255,255,0.88);
       font-size: 16px;
       line-height: 1.7;
-      max-width: 760px;
+    }
+
+    .hero-btn,
+    .top-btn,
+    .btn,
+    .login-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      border-radius: 12px;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+      transition: 0.2s ease;
+    }
+
+    .hero-btn,
+    .top-btn {
+      padding: 11px 16px;
+      font-size: 14px;
+      background: #ffffff;
+      color: var(--primary-dark);
+    }
+
+    .hero-btn:hover,
+    .top-btn:hover {
+      background: #edf3fb;
+    }
+
+    .hero-btn-outline {
+      border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.08);
+      color: #ffffff;
+    }
+
+    .hero-btn-outline:hover {
+      background: rgba(255,255,255,0.16);
     }
 
     .wrap {
-      max-width: 1100px;
-      margin: 0 auto;
       padding: 28px 20px 60px;
     }
 
@@ -82,14 +167,14 @@
       align-items: center;
       justify-content: space-between;
       gap: 12px;
-      margin: 8px 0 18px;
       flex-wrap: wrap;
+      margin: 8px 0 18px;
     }
 
     .section-title h2 {
       margin: 0;
-      font-size: 24px;
       color: var(--primary-dark);
+      font-size: 24px;
     }
 
     .section-title span {
@@ -97,33 +182,38 @@
       font-size: 14px;
     }
 
-    .legend-box {
-      background: #ffffff;
+    .legend-box,
+    .search-box,
+    .card {
       border: 1px solid var(--line);
-      border-radius: 16px;
-      padding: 14px 18px;
-      margin-bottom: 18px;
+      background: var(--card);
       box-shadow: var(--shadow);
+    }
+
+    .legend-box {
       display: flex;
+      align-items: center;
       gap: 12px;
       flex-wrap: wrap;
-      align-items: center;
+      margin-bottom: 18px;
+      padding: 14px 18px;
+      border-radius: var(--radius-md);
     }
 
     .legend-item {
       display: inline-flex;
       align-items: center;
       gap: 8px;
+      color: var(--subtext);
       font-size: 13px;
       font-weight: 700;
-      color: var(--subtext);
     }
 
     .legend-dot {
+      display: inline-block;
       width: 12px;
       height: 12px;
       border-radius: 50%;
-      display: inline-block;
     }
 
     .legend-dot.green {
@@ -135,27 +225,24 @@
     }
 
     .search-box {
-      background: #ffffff;
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      padding: 18px;
       margin-bottom: 22px;
-      box-shadow: var(--shadow);
+      padding: 18px;
+      border-radius: var(--radius-md);
     }
 
     .search-box label {
       display: block;
       margin-bottom: 10px;
+      color: var(--primary-dark);
       font-size: 15px;
       font-weight: 700;
-      color: var(--primary-dark);
     }
 
     .search-input-wrap {
       display: flex;
+      align-items: center;
       gap: 10px;
       flex-wrap: wrap;
-      align-items: center;
     }
 
     .search-input-area {
@@ -164,26 +251,28 @@
       max-width: 420px;
     }
 
-    .search-box input {
+    .search-input {
       width: 100%;
       min-width: 240px;
       padding: 13px 42px 13px 15px;
       border: 1px solid #cfd9e5;
       border-radius: 12px;
-      font-size: 15px;
       outline: none;
+      font-size: 15px;
     }
 
-    .search-box input:focus {
+    .search-input:focus,
+    .login-input:focus {
       border-color: var(--primary);
       box-shadow: 0 0 0 4px rgba(31, 58, 95, 0.08);
     }
 
     .clear-btn {
       position: absolute;
-      right: 10px;
       top: 50%;
+      right: 10px;
       transform: translateY(-50%);
+      display: none;
       width: 26px;
       height: 26px;
       border: none;
@@ -193,24 +282,26 @@
       font-size: 18px;
       line-height: 1;
       cursor: pointer;
-      display: none;
     }
 
     .clear-btn:hover {
       background: #cfd9e5;
     }
 
+    .search-hint,
+    .search-result {
+      color: var(--subtext);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
     .search-hint {
       margin-top: 10px;
-      font-size: 13px;
-      color: var(--subtext);
-      line-height: 1.6;
     }
 
     .search-result {
       margin: 14px 0 20px;
       font-size: 14px;
-      color: var(--subtext);
     }
 
     .grid {
@@ -220,11 +311,8 @@
     }
 
     .card {
-      background: var(--card);
-      border: 1px solid var(--line);
-      border-radius: 18px;
       padding: 22px;
-      box-shadow: var(--shadow);
+      border-radius: var(--radius-lg);
       transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
 
@@ -238,34 +326,35 @@
       align-items: center;
       justify-content: space-between;
       gap: 10px;
-      margin-bottom: 12px;
       flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+
+    .no-badge,
+    .badge,
+    .mini-status {
+      display: inline-block;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
     }
 
     .no-badge {
-      display: inline-block;
       padding: 7px 11px;
-      border-radius: 999px;
       background: var(--primary-dark);
       color: #ffffff;
-      font-size: 12px;
-      font-weight: 700;
     }
 
     .badge {
-      display: inline-block;
       padding: 7px 11px;
-      border-radius: 999px;
       background: #eef4ff;
       color: var(--primary);
-      font-size: 12px;
-      font-weight: 700;
     }
 
     .card h3 {
       margin: 0 0 10px;
-      font-size: 21px;
       color: var(--primary-dark);
+      font-size: 21px;
     }
 
     .mini-status-group {
@@ -276,11 +365,7 @@
     }
 
     .mini-status {
-      display: inline-block;
-      font-size: 12px;
-      font-weight: 700;
       padding: 6px 10px;
-      border-radius: 999px;
     }
 
     .status-available {
@@ -299,11 +384,11 @@
     }
 
     .card p {
+      min-height: 74px;
       margin: 0 0 16px;
       color: var(--subtext);
-      line-height: 1.7;
       font-size: 15px;
-      min-height: 74px;
+      line-height: 1.7;
     }
 
     .btn-row {
@@ -313,26 +398,18 @@
     }
 
     .btn {
-      display: inline-block;
-      text-decoration: none;
-      font-weight: 700;
-      font-size: 14px;
       padding: 12px 16px;
-      border-radius: 12px;
-      transition: 0.2s ease;
+      font-size: 14px;
     }
 
     .btn-primary {
       background: var(--primary);
-      color: white;
+      color: #ffffff;
     }
 
-    .btn-primary:hover {
+    .btn-primary:hover,
+    .login-btn:hover {
       background: var(--primary-dark);
-    }
-
-    .hidden {
-      display: none !important;
     }
 
     footer {
@@ -349,13 +426,120 @@
       font-weight: 700;
     }
 
+    .modal {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      background: var(--overlay);
+    }
+
+    .modal-card {
+      width: 100%;
+      max-width: 420px;
+      overflow: hidden;
+      border: 1px solid #e5e7eb;
+      border-radius: 22px;
+      background: #ffffff;
+      box-shadow: 0 24px 50px rgba(15, 23, 42, 0.24);
+    }
+
+    .modal-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 20px 20px 14px;
+      border-bottom: 1px solid #e9eef5;
+    }
+
+    .modal-title {
+      margin: 0;
+      color: var(--primary-dark);
+      font-size: 22px;
+    }
+
+    .modal-desc {
+      margin: 8px 0 0;
+      color: var(--subtext);
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .modal-close {
+      width: 34px;
+      height: 34px;
+      border: none;
+      border-radius: 999px;
+      background: #eef2f6;
+      color: #344054;
+      font-size: 18px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .modal-close:hover {
+      background: #dfe7f1;
+    }
+
+    .modal-body {
+      display: grid;
+      gap: 12px;
+      padding: 18px 20px 22px;
+    }
+
+    .login-input {
+      width: 100%;
+      padding: 14px 15px;
+      border: 1px solid #cfd9e5;
+      border-radius: 14px;
+      outline: none;
+      font-size: 14px;
+      transition: 0.2s ease;
+    }
+
+    .login-help {
+      margin-top: -2px;
+      color: var(--subtext);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .login-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 4px;
+    }
+
+    .login-btn {
+      flex: 1;
+      padding: 13px 16px;
+      border-radius: 14px;
+      background: var(--primary);
+      color: #ffffff;
+      font-size: 14px;
+    }
+
+    .login-btn-secondary {
+      background: #eef2f6;
+      color: #344054;
+    }
+
+    .login-btn-secondary:hover {
+      background: #dfe7f1;
+    }
+
     @media (max-width: 640px) {
-      h1 {
+      .hero-title {
         font-size: 26px;
       }
 
       .hero {
-        padding: 34px 16px 28px;
+        padding: 20px 16px 28px;
       }
 
       .wrap {
@@ -375,14 +559,45 @@
         max-width: 100%;
       }
     }
+
+    @media (max-width: 480px) {
+      .hero-title {
+        font-size: 24px;
+      }
+
+      .modal-head,
+      .modal-body {
+        padding-left: 16px;
+        padding-right: 16px;
+      }
+
+      .login-row {
+        flex-direction: column;
+      }
+
+      .login-btn {
+        width: 100%;
+      }
+    }
   </style>
 </head>
 <body>
   <header class="hero">
     <div class="hero-inner">
-      <div class="company">HI AIR KOREA</div>
-      <h1>HAK 계측기 사용 방법</h1>
-      <p>
+      <div class="hero-top">
+        <div class="company">HI AIR KOREA</div>
+
+        <div class="hero-auth">
+          <div id="userChip" class="user-chip hidden">
+            <span id="userChipText">로그인됨</span>
+          </div>
+          <button type="button" id="openLoginBtn" class="hero-btn">로그인</button>
+          <button type="button" id="logoutBtn" class="hero-btn hero-btn-outline hidden">로그아웃</button>
+        </div>
+      </div>
+
+      <h1 class="hero-title">HAK 계측기 사용 방법</h1>
+      <p class="hero-desc">
         계측기 종류별 사용 방법과 주의사항을 한 곳에서 확인할 수 있는 안내 페이지입니다.
       </p>
     </div>
@@ -412,6 +627,7 @@
           <input
             type="text"
             id="equipmentSearch"
+            class="search-input"
             placeholder="예: 캘리퍼, 마이크로, 게이지"
           />
           <button type="button" id="clearSearch" class="clear-btn" aria-label="검색 초기화">×</button>
@@ -425,7 +641,11 @@
     <div id="searchResult" class="search-result">전체 장비 2개 표시 중</div>
 
     <section class="grid" id="equipmentList">
-      <article class="card equipment-card" data-name="버니어 캘리퍼스" data-desc="외측, 내측, 깊이 등을 측정할 때 사용하는 기본 계측기입니다. 사용 방법과 측정 요령을 확인할 수 있습니다.">
+      <article
+        class="card equipment-card"
+        data-name="버니어 캘리퍼스"
+        data-desc="외측, 내측, 깊이 등을 측정할 때 사용하는 기본 계측기입니다. 사용 방법과 측정 요령을 확인할 수 있습니다."
+      >
         <div class="card-top">
           <div class="no-badge">No. 01</div>
           <div class="badge">측정 장비</div>
@@ -447,15 +667,17 @@
         </div>
       </article>
 
-      <article class="card equipment-card" data-name="마이크로미터" data-desc="정밀한 치수 측정이 필요한 경우 사용하는 계측기입니다.">
+      <article
+        class="card equipment-card"
+        data-name="마이크로미터"
+        data-desc="정밀한 치수 측정이 필요한 경우 사용하는 계측기입니다."
+      >
         <div class="card-top">
           <div class="no-badge">No. 02</div>
           <div class="badge">정밀 측정 장비</div>
         </div>
         <h3>마이크로미터</h3>
-        <p>
-          정밀한 치수 측정이 필요한 경우 사용하는 계측기입니다.
-        </p>
+        <p>정밀한 치수 측정이 필요한 경우 사용하는 계측기입니다.</p>
         <div class="btn-row">
           <a class="btn btn-primary" href="micrometer.html">사용 방법 보기</a>
         </div>
@@ -469,15 +691,239 @@
     </footer>
   </main>
 
+  <div id="loginModal" class="modal hidden" aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="loginModalTitle">
+      <div class="modal-head">
+        <div>
+          <h3 id="loginModalTitle" class="modal-title">로그인</h3>
+          <p class="modal-desc">이름과 사번을 입력하면 장비 상세 페이지에서도 로그인 상태가 유지됩니다.</p>
+        </div>
+        <button type="button" id="closeLoginBtn" class="modal-close" aria-label="닫기">×</button>
+      </div>
+      <div class="modal-body">
+        <input type="text" id="loginName" class="login-input" placeholder="이름 입력" />
+        <input type="text" id="loginEmpNo" class="login-input" placeholder="사번 입력" />
+        <div class="login-help">이름과 사번을 정확히 입력해주세요.</div>
+        <div class="login-row">
+          <button type="button" id="submitLoginBtn" class="login-btn">로그인</button>
+          <button type="button" id="cancelLoginBtn" class="login-btn login-btn-secondary">닫기</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script>
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwn9I60-14GHDQk_rNF_uJYBpig-Bovl7Qqje_eGGjcFmZJZfqQgtpUg6necytvlQQ-/exec";
+    const LOGIN_STORAGE_KEY = "hak_login_user";
+    const LOGIN_EXPIRE_MINUTES = 30;
+    const LOGIN_EXPIRE_MS = LOGIN_EXPIRE_MINUTES * 60 * 1000;
+    const EQUIPMENT_CODES = ["Q-GJ-002", "Q-GJ-007", "Q-GJ-016"];
 
+    let currentUserData = null;
+    let isLoginSubmitting = false;
+
+    const loginModal = document.getElementById("loginModal");
+    const openLoginBtn = document.getElementById("openLoginBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const closeLoginBtn = document.getElementById("closeLoginBtn");
+    const cancelLoginBtn = document.getElementById("cancelLoginBtn");
+    const submitLoginBtn = document.getElementById("submitLoginBtn");
+    const userChip = document.getElementById("userChip");
+    const userChipText = document.getElementById("userChipText");
+    const loginNameInput = document.getElementById("loginName");
+    const loginEmpNoInput = document.getElementById("loginEmpNo");
     const searchInput = document.getElementById("equipmentSearch");
-    const clearSearch = document.getElementById("clearSearch");
+    const clearSearchBtn = document.getElementById("clearSearch");
     const equipmentCards = document.querySelectorAll(".equipment-card");
     const searchResult = document.getElementById("searchResult");
 
-    const equipmentCodes = ["Q-GJ-002", "Q-GJ-007", "Q-GJ-016"];
+    function setLoginSubmitting(isSubmitting) {
+      isLoginSubmitting = isSubmitting;
+      submitLoginBtn.disabled = isSubmitting;
+      submitLoginBtn.textContent = isSubmitting ? "로그인 중..." : "로그인";
+      loginNameInput.disabled = isSubmitting;
+      loginEmpNoInput.disabled = isSubmitting;
+    }
+
+    function openLoginModal() {
+      loginModal.classList.remove("hidden");
+      loginModal.setAttribute("aria-hidden", "false");
+      setTimeout(() => loginNameInput.focus(), 50);
+    }
+
+    function closeLoginModal() {
+      loginModal.classList.add("hidden");
+      loginModal.setAttribute("aria-hidden", "true");
+    }
+
+    function updateLoginUI() {
+      if (currentUserData) {
+        userChip.classList.remove("hidden");
+        logoutBtn.classList.remove("hidden");
+        openLoginBtn.classList.add("hidden");
+        userChipText.textContent = `${currentUserData.team} · ${currentUserData.name}님`;
+        closeLoginModal();
+        return;
+      }
+
+      userChip.classList.add("hidden");
+      logoutBtn.classList.add("hidden");
+      openLoginBtn.classList.remove("hidden");
+      userChipText.textContent = "로그인됨";
+    }
+
+    function saveLoginUser(user) {
+      currentUserData = user;
+      localStorage.setItem(LOGIN_STORAGE_KEY, JSON.stringify({ user, lastActivity: Date.now() }));
+      updateLoginUI();
+    }
+
+    function clearLoginData() {
+      currentUserData = null;
+      localStorage.removeItem(LOGIN_STORAGE_KEY);
+    }
+
+    function touchLoginActivity() {
+      if (!currentUserData) return;
+      const saved = localStorage.getItem(LOGIN_STORAGE_KEY);
+      if (!saved) return;
+
+      try {
+        const parsed = JSON.parse(saved);
+        parsed.lastActivity = Date.now();
+        localStorage.setItem(LOGIN_STORAGE_KEY, JSON.stringify(parsed));
+      } catch (error) {
+        clearLoginData();
+      }
+    }
+
+    function loadSavedUser() {
+      const saved = localStorage.getItem(LOGIN_STORAGE_KEY);
+      if (!saved) {
+        updateLoginUI();
+        return;
+      }
+
+      try {
+        const parsed = JSON.parse(saved);
+        const user = parsed.user;
+        const lastActivity = parsed.lastActivity || 0;
+
+        if (!user || !lastActivity) {
+          clearLoginData();
+          updateLoginUI();
+          return;
+        }
+
+        if (Date.now() - lastActivity > LOGIN_EXPIRE_MS) {
+          clearLoginData();
+          updateLoginUI();
+          alert("로그인 세션이 만료되어 자동으로 로그아웃되었습니다. 다시 로그인해주세요.");
+          return;
+        }
+
+        currentUserData = user;
+        touchLoginActivity();
+      } catch (error) {
+        clearLoginData();
+      }
+
+      updateLoginUI();
+    }
+
+    function logout(showMessage = true) {
+      clearLoginData();
+      loginNameInput.value = "";
+      loginEmpNoInput.value = "";
+      updateLoginUI();
+      if (showMessage) {
+        alert("로그아웃되었습니다.");
+      }
+    }
+
+    function autoLogout() {
+      logout(false);
+      alert("일정 시간 동안 사용 기록이 없어 로그인 세션이 종료되었습니다. 다시 로그인해주세요.");
+    }
+
+    function startAutoLogoutWatcher() {
+      setInterval(() => {
+        if (!currentUserData) return;
+
+        const saved = localStorage.getItem(LOGIN_STORAGE_KEY);
+        if (!saved) {
+          logout(false);
+          return;
+        }
+
+        try {
+          const parsed = JSON.parse(saved);
+          const lastActivity = parsed.lastActivity || 0;
+          if (Date.now() - lastActivity > LOGIN_EXPIRE_MS) {
+            autoLogout();
+          }
+        } catch (error) {
+          logout(false);
+        }
+      }, 60000);
+    }
+
+    function bindActivityEvents() {
+      ["click", "keydown", "touchstart", "scroll"].forEach((eventName) => {
+        document.addEventListener(eventName, () => touchLoginActivity(), { passive: true });
+      });
+    }
+
+    function jsonpRequest(url, callbackName) {
+      return new Promise((resolve, reject) => {
+        const script = document.createElement("script");
+        const uniqueCallback = `${callbackName}_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+
+        window[uniqueCallback] = function(result) {
+          resolve(result);
+          delete window[uniqueCallback];
+          script.remove();
+        };
+
+        script.src = `${url}&callback=${uniqueCallback}`;
+        script.onerror = function() {
+          reject(new Error("Apps Script 연결 오류"));
+          delete window[uniqueCallback];
+          script.remove();
+        };
+
+        document.body.appendChild(script);
+      });
+    }
+
+    async function login() {
+      const name = loginNameInput.value.trim();
+      const empNo = loginEmpNoInput.value.trim();
+      if (!name || !empNo) {
+        alert("이름과 사번을 입력해주세요.");
+        return;
+      }
+      if (isLoginSubmitting) return;
+
+      setLoginSubmitting(true);
+      try {
+        const url = `${WEB_APP_URL}?action=login&name=${encodeURIComponent(name)}&emp_no=${encodeURIComponent(empNo)}`;
+        const result = await jsonpRequest(url, "loginCallback");
+
+        if (!result.success) {
+          alert(result.message || "로그인에 실패했습니다.");
+          return;
+        }
+
+        saveLoginUser(result.user);
+        alert("로그인되었습니다.");
+      } catch (error) {
+        console.error(error);
+        alert("로그인 중 오류가 발생했습니다.");
+      } finally {
+        setLoginSubmitting(false);
+      }
+    }
 
     function normalizeText(text) {
       return text.toLowerCase().replace(/\s+/g, "");
@@ -490,46 +936,20 @@
       equipmentCards.forEach((card) => {
         const name = normalizeText(card.dataset.name || "");
         const desc = normalizeText(card.dataset.desc || "");
-        const combinedText = name + " " + desc;
+        const combinedText = `${name} ${desc}`;
 
         if (keyword === "" || combinedText.includes(keyword)) {
           card.classList.remove("hidden");
-          visibleCount++;
+          visibleCount += 1;
         } else {
           card.classList.add("hidden");
         }
       });
 
-      clearSearch.style.display = searchInput.value ? "block" : "none";
-
-      if (keyword === "") {
-        searchResult.textContent = `전체 장비 ${visibleCount}개 표시 중`;
-      } else {
-        searchResult.textContent = `검색 결과 ${visibleCount}개 표시 중`;
-      }
-    }
-
-    function jsonpRequest(url, callbackName) {
-      return new Promise((resolve, reject) => {
-        const script = document.createElement("script");
-        const uniqueCallback = callbackName + "_" + Date.now() + "_" + Math.floor(Math.random() * 1000);
-
-        window[uniqueCallback] = function(result) {
-          resolve(result);
-          delete window[uniqueCallback];
-          script.remove();
-        };
-
-        script.src = `${url}&callback=${uniqueCallback}`;
-
-        script.onerror = function() {
-          reject(new Error("Apps Script 연결 오류"));
-          delete window[uniqueCallback];
-          script.remove();
-        };
-
-        document.body.appendChild(script);
-      });
+      clearSearchBtn.style.display = searchInput.value ? "block" : "none";
+      searchResult.textContent = keyword === ""
+        ? `전체 장비 ${visibleCount}개 표시 중`
+        : `검색 결과 ${visibleCount}개 표시 중`;
     }
 
     function applyStatusBadge(eqCode, status) {
@@ -538,47 +958,92 @@
 
       if (status === "available") {
         statusEl.className = "mini-status status-available";
-        statusEl.textContent = eqCode;
       } else if (status === "checked_out") {
         statusEl.className = "mini-status status-checkedout";
-        statusEl.textContent = eqCode;
       } else {
         statusEl.className = "mini-status status-loading";
-        statusEl.textContent = eqCode;
       }
+
+      statusEl.textContent = eqCode;
     }
 
     async function loadAllEquipmentStatus() {
       try {
-        const url = `${WEB_APP_URL}?action=getAllEquipmentStatus`;
-        const result = await jsonpRequest(url, "allStatusCallback");
+        const result = await jsonpRequest(`${WEB_APP_URL}?action=getAllEquipmentStatus`, "allStatusCallback");
 
         if (!result.success || !result.equipments) {
-          equipmentCodes.forEach(code => applyStatusBadge(code, ""));
+          EQUIPMENT_CODES.forEach((code) => applyStatusBadge(code, ""));
           return;
         }
 
-        equipmentCodes.forEach((code) => {
+        EQUIPMENT_CODES.forEach((code) => {
           const item = result.equipments[code];
-          const status = item ? item.status : "";
-          applyStatusBadge(code, status);
+          applyStatusBadge(code, item ? item.status : "");
         });
       } catch (error) {
         console.error(error);
-        equipmentCodes.forEach(code => applyStatusBadge(code, ""));
+        EQUIPMENT_CODES.forEach((code) => applyStatusBadge(code, ""));
       }
     }
 
-    clearSearch.addEventListener("click", () => {
-      searchInput.value = "";
+    function bindModalEvents() {
+      openLoginBtn.addEventListener("click", openLoginModal);
+      logoutBtn.addEventListener("click", () => logout());
+      closeLoginBtn.addEventListener("click", closeLoginModal);
+      cancelLoginBtn.addEventListener("click", closeLoginModal);
+      submitLoginBtn.addEventListener("click", login);
+
+      loginModal.addEventListener("click", (event) => {
+        if (event.target === loginModal) {
+          closeLoginModal();
+        }
+      });
+
+      document.addEventListener("keydown", (event) => {
+        const modalOpened = !loginModal.classList.contains("hidden");
+        if (event.key === "Escape" && modalOpened) {
+          closeLoginModal();
+          return;
+        }
+
+        if (event.key === "Enter" && modalOpened) {
+          const activeElement = document.activeElement;
+          if (activeElement === loginNameInput || activeElement === loginEmpNoInput) {
+            login();
+          }
+        }
+      });
+    }
+
+    function bindSearchEvents() {
+      clearSearchBtn.addEventListener("click", () => {
+        searchInput.value = "";
+        filterEquipment();
+        searchInput.focus();
+      });
+
+      searchInput.addEventListener("input", filterEquipment);
+    }
+
+    function syncLoginStateAcrossPages() {
+      window.addEventListener("storage", (event) => {
+        if (event.key !== LOGIN_STORAGE_KEY) return;
+        loadSavedUser();
+      });
+    }
+
+    function init() {
+      loadSavedUser();
+      bindActivityEvents();
+      bindModalEvents();
+      bindSearchEvents();
+      syncLoginStateAcrossPages();
+      startAutoLogoutWatcher();
       filterEquipment();
-      searchInput.focus();
-    });
+      loadAllEquipmentStatus();
+    }
 
-    searchInput.addEventListener("input", filterEquipment);
-
-    filterEquipment();
-    loadAllEquipmentStatus();
+    init();
   </script>
 </body>
 </html>
