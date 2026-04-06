@@ -279,7 +279,16 @@
       font-size: 13px;
     }
 
-    .action-btn:hover, .login-btn:hover { background: var(--primary-dark); }
+    .action-btn:hover,
+    .login-btn:hover {
+      background: var(--primary-dark);
+    }
+
+    .action-btn:disabled,
+    .login-btn:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
 
     .action-btn-secondary { background: #667085; }
     .action-btn-secondary:hover { background: #475467; }
@@ -571,6 +580,8 @@
 
     let currentUserData = null;
     let isLoginSubmitting = false;
+    let pendingAction = null;
+    let actionLoadingMap = {};
 
     const loginModal = document.getElementById("loginModal");
     const openLoginBtn = document.getElementById("openLoginBtn");
@@ -695,6 +706,8 @@
 
     function logout(showMessage = true) {
       clearLoginData();
+      pendingAction = null;
+      actionLoadingMap = {};
       loginNameInput.value = "";
       loginEmpNoInput.value = "";
       updateLoginUI();
@@ -756,13 +769,16 @@
     async function login() {
       const name = loginNameInput.value.trim();
       const empNo = loginEmpNoInput.value.trim();
+
       if (!name || !empNo) {
         alert("이름과 사번을 입력해주세요.");
         return;
       }
+
       if (isLoginSubmitting) return;
 
       setLoginSubmitting(true);
+
       try {
         const url = `${WEB_APP_URL}?action=login&name=${encodeURIComponent(name)}&emp_no=${encodeURIComponent(empNo)}`;
         const result = await jsonpRequest(url, "loginCallback");
@@ -774,6 +790,7 @@
 
         saveLoginUser(result.user);
         alert("로그인되었습니다.");
+        runPendingAction();
       } catch (error) {
         console.error(error);
         alert("로그인 중 오류가 발생했습니다.");
@@ -823,10 +840,26 @@
           </div>
           <div class="item-actions">
             <button class="action-btn" data-action="certificate" data-eq-code="${item.eq_code}">검교정 성적서 보기</button>
-            <button class="action-btn" data-action="checkout" data-eq-code="${item.eq_code}">불출하기</button>
-            <button class="action-btn action-btn-secondary" data-action="return" data-eq-code="${item.eq_code}">반납하기</button>
+            <button class="action-btn" data-action="checkout" data-eq-code="${item.eq_code}">
+              ${actionLoadingMap[`checkout_${item.eq_code}`] ? "불출중..." : "불출하기"}
+            </button>
+            <button class="action-btn action-btn-secondary" data-action="return" data-eq-code="${item.eq_code}">
+              ${actionLoadingMap[`return_${item.eq_code}`] ? "반납중..." : "반납하기"}
+            </button>
           </div>
         `;
+
+        const checkoutBtn = article.querySelector(`button[data-action="checkout"][data-eq-code="${item.eq_code}"]`);
+        const returnBtn = article.querySelector(`button[data-action="return"][data-eq-code="${item.eq_code}"]`);
+
+        if (checkoutBtn && actionLoadingMap[`checkout_${item.eq_code}`]) {
+          checkoutBtn.disabled = true;
+        }
+
+        if (returnBtn && actionLoadingMap[`return_${item.eq_code}`]) {
+          returnBtn.disabled = true;
+        }
+
         equipmentListEl.appendChild(article);
       });
     }
@@ -835,56 +868,131 @@
       return EQUIPMENT_LIST.find((item) => item.eq_code === eqCode) || null;
     }
 
-    async function checkoutEquipment(eqCode) {
-      if (!currentUserData) {
-        openLoginModal();
-        alert("먼저 로그인해주세요.");
+    function getActionButton(action, eqCode) {
+      return equipmentListEl.querySelector(`button[data-action="${action}"][data-eq-code="${eqCode}"]`);
+    }
+
+    function setActionButtonLoading(action, eqCode, isLoading) {
+      const button = getActionButton(action, eqCode);
+      if (!button) return;
+
+      const buttonKey = `${action}_${eqCode}`;
+
+      if (isLoading) {
+        actionLoadingMap[buttonKey] = true;
+        button.disabled = true;
+
+        if (action === "checkout") {
+          button.textContent = "불출중...";
+        } else if (action === "return") {
+          button.textContent = "반납중...";
+        }
         return;
       }
+
+      delete actionLoadingMap[buttonKey];
+      button.disabled = false;
+
+      if (action === "checkout") {
+        button.textContent = "불출하기";
+      } else if (action === "return") {
+        button.textContent = "반납하기";
+      }
+    }
+
+    function runPendingAction() {
+      if (!pendingAction || !currentUserData) return;
+
+      const { action, eqCode } = pendingAction;
+      pendingAction = null;
+
+      if (action === "certificate") {
+        openCertificate(eqCode, true);
+        return;
+      }
+
+      if (action === "checkout") {
+        checkoutEquipment(eqCode, true);
+        return;
+      }
+
+      if (action === "return") {
+        returnEquipment(eqCode, true);
+        return;
+      }
+    }
+
+    async function checkoutEquipment(eqCode, skipLoginCheck = false) {
+      if (!currentUserData && !skipLoginCheck) {
+        pendingAction = { action: "checkout", eqCode };
+        openLoginModal();
+        alert("로그인이 필요합니다. 로그인 후 불출이 자동으로 진행됩니다.");
+        return;
+      }
+
+      const loadingKey = `checkout_${eqCode}`;
+      if (actionLoadingMap[loadingKey]) return;
+
       touchLoginActivity();
+      setActionButtonLoading("checkout", eqCode, true);
 
       try {
         const url = `${WEB_APP_URL}?action=checkout&eq_code=${encodeURIComponent(eqCode)}&user_name=${encodeURIComponent(currentUserData.name)}&user_team=${encodeURIComponent(currentUserData.team)}&user_id=${encodeURIComponent(currentUserData.user_id)}&emp_no=${encodeURIComponent(currentUserData.emp_no)}`;
         const result = await jsonpRequest(url, "checkoutCallback");
+
         if (!result.success) {
           alert(result.message || "불출 처리에 실패했습니다.");
           return;
         }
+
         alert(`${eqCode} 불출이 완료되었습니다.`);
-        loadAllEquipmentStatus();
+        await loadAllEquipmentStatus();
       } catch (error) {
         console.error(error);
         alert("불출 처리 중 오류가 발생했습니다.");
+      } finally {
+        setActionButtonLoading("checkout", eqCode, false);
       }
     }
 
-    async function returnEquipment(eqCode) {
-      if (!currentUserData) {
+    async function returnEquipment(eqCode, skipLoginCheck = false) {
+      if (!currentUserData && !skipLoginCheck) {
+        pendingAction = { action: "return", eqCode };
         openLoginModal();
-        alert("먼저 로그인해주세요.");
+        alert("로그인이 필요합니다. 로그인 후 반납이 자동으로 진행됩니다.");
         return;
       }
+
+      const loadingKey = `return_${eqCode}`;
+      if (actionLoadingMap[loadingKey]) return;
+
       touchLoginActivity();
+      setActionButtonLoading("return", eqCode, true);
 
       try {
         const url = `${WEB_APP_URL}?action=return&eq_code=${encodeURIComponent(eqCode)}&user_name=${encodeURIComponent(currentUserData.name)}`;
         const result = await jsonpRequest(url, "returnCallback");
+
         if (!result.success) {
           alert(result.message || "반납 처리에 실패했습니다.");
           return;
         }
+
         alert(`${eqCode} 반납이 완료되었습니다.`);
-        loadAllEquipmentStatus();
+        await loadAllEquipmentStatus();
       } catch (error) {
         console.error(error);
         alert("반납 처리 중 오류가 발생했습니다.");
+      } finally {
+        setActionButtonLoading("return", eqCode, false);
       }
     }
 
-    function openCertificate(eqCode) {
-      if (!currentUserData) {
+    function openCertificate(eqCode, skipLoginCheck = false) {
+      if (!currentUserData && !skipLoginCheck) {
+        pendingAction = { action: "certificate", eqCode };
         openLoginModal();
-        alert("검교정 성적서는 로그인 후 열람할 수 있습니다.");
+        alert("로그인이 필요합니다. 로그인 후 검교정 성적서를 자동으로 열어드립니다.");
         return;
       }
 
@@ -898,26 +1006,51 @@
       window.open(equipment.file, "_blank");
     }
 
+    function clearPendingAction() {
+      pendingAction = null;
+    }
+
     function bindModalEvents() {
-      openLoginBtn.addEventListener("click", openLoginModal);
+      openLoginBtn.addEventListener("click", () => {
+        clearPendingAction();
+        openLoginModal();
+      });
+
       logoutBtn.addEventListener("click", () => logout());
-      closeLoginBtn.addEventListener("click", closeLoginModal);
-      cancelLoginBtn.addEventListener("click", closeLoginModal);
+
+      closeLoginBtn.addEventListener("click", () => {
+        clearPendingAction();
+        closeLoginModal();
+      });
+
+      cancelLoginBtn.addEventListener("click", () => {
+        clearPendingAction();
+        closeLoginModal();
+      });
+
       submitLoginBtn.addEventListener("click", login);
 
       loginModal.addEventListener("click", (event) => {
-        if (event.target === loginModal) closeLoginModal();
+        if (event.target === loginModal) {
+          clearPendingAction();
+          closeLoginModal();
+        }
       });
 
       document.addEventListener("keydown", (event) => {
         const modalOpened = !loginModal.classList.contains("hidden");
+
         if (event.key === "Escape" && modalOpened) {
+          clearPendingAction();
           closeLoginModal();
           return;
         }
+
         if (event.key === "Enter" && modalOpened) {
           const activeElement = document.activeElement;
-          if (activeElement === loginNameInput || activeElement === loginEmpNoInput) login();
+          if (activeElement === loginNameInput || activeElement === loginEmpNoInput) {
+            login();
+          }
         }
       });
     }
@@ -928,6 +1061,7 @@
         if (!button) return;
 
         const { action, eqCode } = button.dataset;
+
         if (action === "certificate") return openCertificate(eqCode);
         if (action === "checkout") return checkoutEquipment(eqCode);
         if (action === "return") return returnEquipment(eqCode);
