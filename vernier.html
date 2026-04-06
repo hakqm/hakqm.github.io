@@ -6,14 +6,19 @@
   <title>버니어 캘리퍼스 사용 가이드</title>
 
   <style>
+    /* =========================
+       1. Design Tokens
+    ========================= */
     :root {
       --primary: #1f3a5f;
       --primary-dark: #13263f;
-      --bg: #eef3f8;
+      --bg-top: #eef3f8;
+      --bg-bottom: #f7f9fc;
       --card: #ffffff;
       --text: #16202b;
       --subtext: #667085;
       --line: #d9e2ec;
+      --line-soft: #e3ebf5;
       --shadow: 0 10px 24px rgba(19, 38, 63, 0.10);
       --ok-bg: #ecfdf3;
       --ok-text: #027a48;
@@ -21,8 +26,15 @@
       --warn-text: #b42318;
       --info-bg: #eef4ff;
       --info-text: #1f3a5f;
+      --overlay: rgba(15, 23, 42, 0.52);
+      --radius-lg: 18px;
+      --radius-md: 14px;
+      --radius-sm: 10px;
     }
 
+    /* =========================
+       2. Base
+    ========================= */
     * {
       box-sizing: border-box;
     }
@@ -30,109 +42,219 @@
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background: linear-gradient(180deg, #eef3f8 0%, #f7f9fc 100%);
       color: var(--text);
+      background: linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
     }
 
+    button,
+    input,
+    a {
+      font: inherit;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* =========================
+       3. Layout
+    ========================= */
     .hero {
+      padding: 16px 16px 26px;
+      color: #ffffff;
       background: linear-gradient(135deg, var(--primary-dark), var(--primary));
-      color: white;
-      padding: 22px 16px 26px;
     }
 
-    .hero-inner {
+    .hero-inner,
+    .wrap {
+      width: 100%;
       max-width: 760px;
       margin: 0 auto;
     }
 
+    .wrap {
+      padding: 18px 16px 48px;
+    }
+
+    /* =========================
+       4. Hero
+    ========================= */
+    .hero-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+
     .company {
-      display: inline-block;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.12);
       font-size: 12px;
       font-weight: 700;
       letter-spacing: 1px;
-      padding: 7px 11px;
-      border-radius: 999px;
-      background: rgba(255,255,255,0.12);
-      border: 1px solid rgba(255,255,255,0.18);
-      margin-bottom: 12px;
     }
 
-    .hero h1 {
+    .hero-auth {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .hero-title {
       margin: 0;
       font-size: 28px;
       line-height: 1.35;
     }
 
-    .hero p {
+    .hero-desc {
       margin: 10px 0 0;
-      color: rgba(255,255,255,0.88);
+      color: rgba(255, 255, 255, 0.88);
       font-size: 15px;
       line-height: 1.7;
     }
 
     .top-actions {
-      margin-top: 16px;
       display: flex;
       gap: 10px;
       flex-wrap: wrap;
+      margin-top: 16px;
     }
 
-    .top-btn {
-      display: inline-block;
-      text-decoration: none;
-      padding: 11px 15px;
+    /* =========================
+       5. Buttons / Chips
+    ========================= */
+    .hero-btn,
+    .top-btn,
+    .action-btn,
+    .login-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
       border-radius: 12px;
-      font-size: 14px;
       font-weight: 700;
-      background: white;
-      color: var(--primary-dark);
+      text-decoration: none;
+      cursor: pointer;
       transition: 0.2s ease;
     }
 
+    .hero-btn,
+    .top-btn {
+      padding: 11px 16px;
+      font-size: 14px;
+    }
+
+    .hero-btn,
+    .top-btn {
+      background: #ffffff;
+      color: var(--primary-dark);
+    }
+
+    .hero-btn:hover,
     .top-btn:hover {
       background: #edf3fb;
     }
 
-    .wrap {
-      max-width: 760px;
-      margin: 0 auto;
-      padding: 18px 16px 48px;
+    .hero-btn-outline {
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(255, 255, 255, 0.08);
+      color: #ffffff;
     }
 
+    .hero-btn-outline:hover {
+      background: rgba(255, 255, 255, 0.16);
+    }
+
+    .user-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 40px;
+      padding: 8px 13px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.12);
+      color: #ffffff;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .user-chip-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #22c55e;
+      flex-shrink: 0;
+    }
+
+    .action-btn {
+      min-width: 120px;
+      padding: 10px 14px;
+      border-radius: var(--radius-sm);
+      background: var(--primary);
+      color: #ffffff;
+      font-size: 13px;
+    }
+
+    .action-btn:hover,
+    .login-btn:hover {
+      background: var(--primary-dark);
+    }
+
+    .action-btn-secondary {
+      background: #667085;
+    }
+
+    .action-btn-secondary:hover {
+      background: #475467;
+    }
+
+    /* =========================
+       6. Cards / Sections
+    ========================= */
     .card {
-      background: var(--card);
-      border: 1px solid var(--line);
-      border-radius: 18px;
-      padding: 18px;
       margin-bottom: 16px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      background: var(--card);
       box-shadow: var(--shadow);
     }
 
     .section-title {
       margin: 0 0 14px;
       padding-bottom: 10px;
+      border-bottom: 2px solid var(--line);
+      color: var(--primary-dark);
       font-size: 22px;
       font-weight: 800;
-      color: var(--primary-dark);
-      border-bottom: 2px solid #d9e2ec;
     }
 
     .sub {
+      margin: 8px 0 0;
       color: var(--subtext);
       font-size: 14px;
       line-height: 1.7;
-      margin: 8px 0 0;
     }
 
     .summary-box {
       margin-top: 14px;
       padding: 14px;
-      background: #f8fbff;
       border: 1px solid #dbe7f3;
-      border-radius: 14px;
+      border-radius: var(--radius-md);
+      background: #f8fbff;
+      color: #475467;
       font-size: 14px;
       line-height: 1.7;
-      color: #475467;
     }
 
     .img-wrap {
@@ -140,81 +262,17 @@
       text-align: center;
     }
 
-    img {
+    .guide-image {
+      display: inline-block;
       width: 100%;
       max-width: 420px;
-      border-radius: 14px;
       border: 1px solid #e5e7eb;
-      display: inline-block;
+      border-radius: var(--radius-md);
     }
 
-    ul, ol {
-      padding-left: 20px;
-      line-height: 1.8;
-      margin: 0;
-    }
-
-    li + li {
-      margin-top: 8px;
-    }
-
-    .login-box {
-      display: grid;
-      gap: 10px;
-      margin-top: 12px;
-    }
-
-    .login-input {
-      width: 100%;
-      padding: 12px 14px;
-      border: 1px solid #cfd9e5;
-      border-radius: 12px;
-      font-size: 14px;
-      outline: none;
-    }
-
-    .login-input:focus {
-      border-color: var(--primary);
-      box-shadow: 0 0 0 4px rgba(31, 58, 95, 0.08);
-    }
-
-    .login-row {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .login-btn {
-      border: none;
-      background: var(--primary);
-      color: white;
-      padding: 12px 16px;
-      border-radius: 12px;
-      font-size: 14px;
-      font-weight: 700;
-      cursor: pointer;
-    }
-
-    .logout-btn {
-      background: #667085;
-    }
-
-    .hidden {
-      display: none !important;
-    }
-
-    .user-info {
-      margin-top: 10px;
-      padding: 12px;
-      background: #f8fbff;
-      border: 1px solid #dbe7f3;
-      border-radius: 12px;
-      font-size: 14px;
-      font-weight: 700;
-      color: var(--primary-dark);
-      line-height: 1.6;
-    }
-
+    /* =========================
+       7. Equipment Status
+    ========================= */
     .equipment-list {
       display: grid;
       gap: 10px;
@@ -222,10 +280,10 @@
     }
 
     .equipment-item {
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      background: #f8fbff;
       padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      background: #f8fbff;
     }
 
     .equipment-head {
@@ -238,9 +296,9 @@
     }
 
     .equipment-title {
+      color: var(--primary-dark);
       font-size: 14px;
       font-weight: 800;
-      color: var(--primary-dark);
     }
 
     .status-badge {
@@ -273,28 +331,28 @@
     }
 
     .compact-field {
-      background: white;
-      border: 1px solid #e3ebf5;
-      border-radius: 10px;
-      padding: 8px 10px;
       min-height: 58px;
+      padding: 8px 10px;
+      border: 1px solid var(--line-soft);
+      border-radius: var(--radius-sm);
+      background: #ffffff;
     }
 
     .compact-label {
       display: block;
-      font-size: 11px;
-      color: var(--subtext);
       margin-bottom: 4px;
+      color: var(--subtext);
+      font-size: 11px;
     }
 
     .compact-value {
       display: block;
+      color: var(--text);
       font-size: 13px;
       font-weight: 700;
-      color: var(--text);
       line-height: 1.45;
-      word-break: keep-all;
       white-space: pre-line;
+      word-break: keep-all;
     }
 
     .item-actions {
@@ -304,45 +362,29 @@
       margin-top: 12px;
     }
 
-    .action-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-width: 120px;
-      border: none;
-      background: var(--primary);
-      color: white;
-      padding: 10px 14px;
-      border-radius: 10px;
-      font-size: 13px;
-      font-weight: 700;
-      cursor: pointer;
-      text-decoration: none;
-      text-align: center;
-      transition: 0.2s ease;
+    /* =========================
+       8. Content Blocks
+    ========================= */
+    ul,
+    ol {
+      margin: 0;
+      padding-left: 20px;
+      line-height: 1.8;
     }
 
-    .action-btn:hover {
-      background: var(--primary-dark);
-    }
-
-    .action-btn-secondary {
-      background: #667085;
-    }
-
-    .action-btn-secondary:hover {
-      background: #475467;
+    li + li {
+      margin-top: 8px;
     }
 
     .video {
       position: relative;
       width: 100%;
+      margin-top: 12px;
       padding-top: 56.25%;
       overflow: hidden;
-      border-radius: 14px;
-      background: black;
-      margin-top: 12px;
       border: 1px solid #d8dee8;
+      border-radius: var(--radius-md);
+      background: #000000;
     }
 
     .video iframe {
@@ -355,19 +397,145 @@
 
     .footer {
       margin-top: 24px;
-      text-align: center;
-      color: #6b7280;
-      font-size: 13px;
-      line-height: 1.8;
       padding-top: 20px;
       border-top: 1px solid #dce5ef;
+      color: #6b7280;
+      text-align: center;
+      font-size: 13px;
+      line-height: 1.8;
     }
 
     .footer strong {
       color: var(--primary-dark);
     }
 
+    /* =========================
+       9. Login Modal
+    ========================= */
+    .modal {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      background: var(--overlay);
+    }
+
+    .modal-card {
+      width: 100%;
+      max-width: 420px;
+      overflow: hidden;
+      border: 1px solid #e5e7eb;
+      border-radius: 22px;
+      background: #ffffff;
+      box-shadow: 0 24px 50px rgba(15, 23, 42, 0.24);
+    }
+
+    .modal-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 20px 20px 14px;
+      border-bottom: 1px solid #e9eef5;
+    }
+
+    .modal-title {
+      margin: 0;
+      color: var(--primary-dark);
+      font-size: 22px;
+    }
+
+    .modal-desc {
+      margin: 8px 0 0;
+      color: var(--subtext);
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .modal-close {
+      width: 34px;
+      height: 34px;
+      border: none;
+      border-radius: 999px;
+      background: #eef2f6;
+      color: #344054;
+      font-size: 18px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .modal-close:hover {
+      background: #dfe7f1;
+    }
+
+    .modal-body {
+      display: grid;
+      gap: 12px;
+      padding: 18px 20px 22px;
+    }
+
+    .login-input {
+      width: 100%;
+      padding: 14px 15px;
+      border: 1px solid #cfd9e5;
+      border-radius: var(--radius-md);
+      outline: none;
+      font-size: 14px;
+      transition: 0.2s ease;
+    }
+
+    .login-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(31, 58, 95, 0.08);
+    }
+
+    .login-help {
+      margin-top: -2px;
+      color: var(--subtext);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .login-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 4px;
+    }
+
+    .login-btn {
+      flex: 1;
+      padding: 13px 16px;
+      border-radius: var(--radius-md);
+      background: var(--primary);
+      color: #ffffff;
+      font-size: 14px;
+    }
+
+    .login-btn-secondary {
+      background: #eef2f6;
+      color: #344054;
+    }
+
+    .login-btn-secondary:hover {
+      background: #dfe7f1;
+    }
+
+    /* =========================
+       10. Responsive
+    ========================= */
     @media (max-width: 640px) {
+      .hero-top {
+        align-items: stretch;
+      }
+
+      .hero-auth {
+        justify-content: flex-start;
+      }
+
       .item-actions {
         flex-direction: column;
       }
@@ -379,7 +547,7 @@
     }
 
     @media (max-width: 480px) {
-      .hero h1 {
+      .hero-title {
         font-size: 24px;
       }
 
@@ -395,19 +563,44 @@
         grid-template-columns: 1fr;
       }
 
-      img {
+      .guide-image {
         max-width: 320px;
+      }
+
+      .modal-head,
+      .modal-body {
+        padding-left: 16px;
+        padding-right: 16px;
+      }
+
+      .login-row {
+        flex-direction: column;
+      }
+
+      .login-btn {
+        width: 100%;
       }
     }
   </style>
 </head>
 <body>
-
   <header class="hero">
     <div class="hero-inner">
-      <div class="company">HI AIR KOREA</div>
-      <h1>버니어 캘리퍼스 사용 가이드</h1>
-      <p>
+      <div class="hero-top">
+        <div class="company">HI AIR KOREA</div>
+
+        <div class="hero-auth">
+          <div id="userChip" class="user-chip hidden">
+            <span class="user-chip-dot"></span>
+            <span id="userChipText">로그인됨</span>
+          </div>
+          <button type="button" id="openLoginBtn" class="hero-btn">로그인</button>
+          <button type="button" id="logoutBtn" class="hero-btn hero-btn-outline hidden">로그아웃</button>
+        </div>
+      </div>
+
+      <h1 class="hero-title">버니어 캘리퍼스 사용 가이드</h1>
+      <p class="hero-desc">
         현장에서 휴대폰 및 태블릿으로 빠르게 확인할 수 있도록 제작한 계측기 안내 페이지입니다.
       </p>
 
@@ -418,28 +611,8 @@
   </header>
 
   <main class="wrap">
-
     <section class="card">
-      <h2 class="section-title">01. 로그인</h2>
-      <p class="sub">이름과 사번을 입력한 뒤 로그인하세요.</p>
-
-      <div id="loginBox" class="login-box">
-        <input type="text" id="loginName" class="login-input" placeholder="이름 입력" />
-        <input type="text" id="loginEmpNo" class="login-input" placeholder="사번 입력" />
-        <div class="login-row">
-          <button type="button" class="login-btn" onclick="login()">로그인</button>
-        </div>
-      </div>
-
-      <div id="userInfo" class="user-info">로그인되지 않음</div>
-
-      <div id="logoutRow" class="login-row hidden" style="margin-top: 10px;">
-        <button type="button" class="login-btn logout-btn" onclick="logout()">로그아웃</button>
-      </div>
-    </section>
-
-    <section class="card">
-      <h2 class="section-title">02. 장비 정보</h2>
+      <h2 class="section-title">01. 장비 정보</h2>
       <p class="sub">버니어 캘리퍼스 공용 사용 안내입니다.</p>
 
       <div class="summary-box">
@@ -448,18 +621,18 @@
       </div>
 
       <div class="img-wrap">
-        <img src="Q-GH-vernier.jpg" alt="버니어 캘리퍼스 사진" />
+        <img src="Q-GH-vernier.jpg" alt="버니어 캘리퍼스 사진" class="guide-image" />
       </div>
     </section>
 
     <section class="card">
-      <h2 class="section-title">03. 장비 상태</h2>
+      <h2 class="section-title">02. 장비 상태</h2>
       <p class="sub">등록된 버니어 캘리퍼스 장비의 상태와 검교정 정보를 확인합니다.</p>
       <div id="equipmentList" class="equipment-list"></div>
     </section>
 
     <section class="card">
-      <h2 class="section-title">04. 사용 전 주의사항</h2>
+      <h2 class="section-title">03. 사용 전 주의사항</h2>
       <ul>
         <li>측정 전 캘리퍼스의 측정면에 이물질이나 먼지가 없는지 확인합니다.</li>
         <li>영점(0점)이 정확히 맞는지 확인한 후 측정을 시작합니다.</li>
@@ -470,7 +643,7 @@
     </section>
 
     <section class="card">
-      <h2 class="section-title">05. 사용 순서</h2>
+      <h2 class="section-title">04. 사용 순서</h2>
       <ol>
         <li>측정 전 외측/내측 측정면과 본체 상태를 확인합니다.</li>
         <li>캘리퍼스를 닫아 영점(0점)이 맞는지 확인합니다.</li>
@@ -481,13 +654,13 @@
     </section>
 
     <section class="card">
-      <h2 class="section-title">06. 매뉴얼</h2>
+      <h2 class="section-title">05. 매뉴얼</h2>
       <p class="sub">아래 버튼을 누르면 매뉴얼 PDF를 바로 확인할 수 있습니다.</p>
       <a class="action-btn" href="manual.pdf">매뉴얼 보기</a>
     </section>
 
     <section class="card">
-      <h2 class="section-title">07. 사용 영상</h2>
+      <h2 class="section-title">06. 사용 영상</h2>
       <p class="sub">장비 사용 영상을 아래에서 확인하세요.</p>
       <div class="video">
         <iframe
@@ -500,14 +673,38 @@
     </section>
 
     <div class="footer">
-      <strong>HI AIR KOREA</strong><br>
-      HAK 계측기 사용 방법 안내 페이지<br>
+      <strong>HI AIR KOREA</strong><br />
+      HAK 계측기 사용 방법 안내 페이지<br />
       Copyright © 2026 HI AIR KOREA Co.,Ltd. All Rights Reserved.
     </div>
-
   </main>
 
+  <div id="loginModal" class="modal hidden" aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="loginModalTitle">
+      <div class="modal-head">
+        <div>
+          <h3 id="loginModalTitle" class="modal-title">로그인</h3>
+          <p class="modal-desc">이름과 사번을 입력하면 불출 및 반납 기능을 사용할 수 있습니다.</p>
+        </div>
+        <button type="button" class="modal-close" aria-label="닫기" id="closeLoginBtn">×</button>
+      </div>
+
+      <div class="modal-body">
+        <input type="text" id="loginName" class="login-input" placeholder="이름 입력" />
+        <input type="text" id="loginEmpNo" class="login-input" placeholder="사번 입력" />
+        <div class="login-help">이름과 사번을 정확히 입력해주세요.</div>
+        <div class="login-row">
+          <button type="button" class="login-btn" id="submitLoginBtn">로그인</button>
+          <button type="button" class="login-btn login-btn-secondary" id="cancelLoginBtn">닫기</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script>
+    /* =========================
+       1. Config / Static Data
+    ========================= */
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwn9I60-14GHDQk_rNF_uJYBpig-Bovl7Qqje_eGGjcFmZJZfqQgtpUg6necytvlQQ-/exec";
 
     const EQUIPMENT_LIST = [
@@ -540,40 +737,100 @@
       }
     ];
 
-    let currentUserData = null;
-
     const LOGIN_STORAGE_KEY = "hak_login_user";
     const LOGIN_EXPIRE_MINUTES = 30;
     const LOGIN_EXPIRE_MS = LOGIN_EXPIRE_MINUTES * 60 * 1000;
 
-    const loginBox = document.getElementById("loginBox");
-    const logoutRow = document.getElementById("logoutRow");
-    const loginName = document.getElementById("loginName");
-    const loginEmpNo = document.getElementById("loginEmpNo");
-    const userInfo = document.getElementById("userInfo");
+    /* =========================
+       2. State / DOM
+    ========================= */
+    let currentUserData = null;
+
+    const loginModal = document.getElementById("loginModal");
+    const openLoginBtn = document.getElementById("openLoginBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const closeLoginBtn = document.getElementById("closeLoginBtn");
+    const cancelLoginBtn = document.getElementById("cancelLoginBtn");
+    const submitLoginBtn = document.getElementById("submitLoginBtn");
+    const userChip = document.getElementById("userChip");
+    const userChipText = document.getElementById("userChipText");
+    const loginNameInput = document.getElementById("loginName");
+    const loginEmpNoInput = document.getElementById("loginEmpNo");
     const equipmentListEl = document.getElementById("equipmentList");
+
+    /* =========================
+       3. UI Helpers
+    ========================= */
+    function openLoginModal() {
+      loginModal.classList.remove("hidden");
+      loginModal.setAttribute("aria-hidden", "false");
+      setTimeout(() => loginNameInput.focus(), 50);
+    }
+
+    function closeLoginModal() {
+      loginModal.classList.add("hidden");
+      loginModal.setAttribute("aria-hidden", "true");
+    }
 
     function updateLoginUI() {
       if (currentUserData) {
-        loginBox.classList.add("hidden");
-        logoutRow.classList.remove("hidden");
-        userInfo.textContent = `${currentUserData.team} / ${currentUserData.name} / ${currentUserData.emp_no} 로그인됨`;
-      } else {
-        loginBox.classList.remove("hidden");
-        logoutRow.classList.add("hidden");
-        userInfo.textContent = "로그인되지 않음";
+        userChip.classList.remove("hidden");
+        logoutBtn.classList.remove("hidden");
+        openLoginBtn.classList.add("hidden");
+        userChipText.textContent = `${currentUserData.team} · ${currentUserData.name}님`;
+        closeLoginModal();
+        return;
       }
+
+      userChip.classList.add("hidden");
+      logoutBtn.classList.add("hidden");
+      openLoginBtn.classList.remove("hidden");
+      userChipText.textContent = "로그인됨";
     }
 
+    function formatUserDisplay(team, name) {
+      const safeTeam = (team || "").trim();
+      const safeName = (name || "").trim();
+
+      if (safeTeam && safeName) return `${safeTeam} / ${safeName}`;
+      if (safeTeam) return safeTeam;
+      if (safeName) return safeName;
+      return "-";
+    }
+
+    function getStatusMeta(status) {
+      if (status === "available") {
+        return {
+          badgeClass: "status-badge status-available",
+          badgeText: "대여 가능"
+        };
+      }
+
+      if (status === "checked_out") {
+        return {
+          badgeClass: "status-badge status-checkedout",
+          badgeText: "불출 중"
+        };
+      }
+
+      return {
+        badgeClass: "status-badge status-loading",
+        badgeText: "상태 확인 중"
+      };
+    }
+
+    /* =========================
+       4. Local Storage Session
+    ========================= */
     function saveLoginUser(user) {
       currentUserData = user;
-
-      const payload = {
-        user: user,
-        lastActivity: Date.now()
-      };
-
-      localStorage.setItem(LOGIN_STORAGE_KEY, JSON.stringify(payload));
+      localStorage.setItem(
+        LOGIN_STORAGE_KEY,
+        JSON.stringify({
+          user,
+          lastActivity: Date.now()
+        })
+      );
       updateLoginUI();
     }
 
@@ -592,7 +849,7 @@
         const parsed = JSON.parse(saved);
         parsed.lastActivity = Date.now();
         localStorage.setItem(LOGIN_STORAGE_KEY, JSON.stringify(parsed));
-      } catch (e) {
+      } catch (error) {
         clearLoginData();
       }
     }
@@ -616,18 +873,18 @@
           return;
         }
 
-        const isExpired = (Date.now() - lastActivity) > LOGIN_EXPIRE_MS;
+        const isExpired = Date.now() - lastActivity > LOGIN_EXPIRE_MS;
 
         if (isExpired) {
           clearLoginData();
           updateLoginUI();
-          alert("로그인 시간이 만료되어 자동 로그아웃되었습니다.");
+          alert("로그인 세션이 만료되어 자동으로 로그아웃되었습니다. 다시 로그인해주세요.");
           return;
         }
 
         currentUserData = user;
         touchLoginActivity();
-      } catch (e) {
+      } catch (error) {
         clearLoginData();
       }
 
@@ -636,8 +893,8 @@
 
     function logout(showMessage = true) {
       clearLoginData();
-      loginName.value = "";
-      loginEmpNo.value = "";
+      loginNameInput.value = "";
+      loginEmpNoInput.value = "";
       updateLoginUI();
 
       if (showMessage) {
@@ -647,7 +904,7 @@
 
     function autoLogout() {
       logout(false);
-      alert("오랫동안 사용이 없어 자동 로그아웃되었습니다.");
+      alert("일정 시간 동안 사용 기록이 없어 로그인 세션이 종료되었습니다. 다시 로그인해주세요.");
     }
 
     function startAutoLogoutWatcher() {
@@ -664,10 +921,10 @@
           const parsed = JSON.parse(saved);
           const lastActivity = parsed.lastActivity || 0;
 
-          if ((Date.now() - lastActivity) > LOGIN_EXPIRE_MS) {
+          if (Date.now() - lastActivity > LOGIN_EXPIRE_MS) {
             autoLogout();
           }
-        } catch (e) {
+        } catch (error) {
           logout(false);
         }
       }, 60000);
@@ -675,16 +932,23 @@
 
     function bindActivityEvents() {
       ["click", "keydown", "touchstart", "scroll"].forEach((eventName) => {
-        document.addEventListener(eventName, () => {
-          touchLoginActivity();
-        }, { passive: true });
+        document.addEventListener(
+          eventName,
+          () => {
+            touchLoginActivity();
+          },
+          { passive: true }
+        );
       });
     }
 
+    /* =========================
+       5. API Helpers
+    ========================= */
     function jsonpRequest(url, callbackName) {
       return new Promise((resolve, reject) => {
         const script = document.createElement("script");
-        const uniqueCallback = callbackName + "_" + Date.now() + "_" + Math.floor(Math.random() * 1000);
+        const uniqueCallback = `${callbackName}_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
 
         window[uniqueCallback] = function(result) {
           resolve(result);
@@ -705,8 +969,8 @@
     }
 
     async function login() {
-      const name = loginName.value.trim();
-      const empNo = loginEmpNo.value.trim();
+      const name = loginNameInput.value.trim();
+      const empNo = loginEmpNoInput.value.trim();
 
       if (!name || !empNo) {
         alert("이름과 사번을 입력해주세요.");
@@ -734,45 +998,45 @@
       }
     }
 
-    function formatUserDisplay(team, name) {
-      const safeTeam = (team || "").trim();
-      const safeName = (name || "").trim();
+    async function loadAllEquipmentStatus() {
+      try {
+        const url = `${WEB_APP_URL}?action=getAllEquipmentStatus`;
+        const result = await jsonpRequest(url, "allStatusCallback");
 
-      if (safeTeam && safeName) return `${safeTeam} / ${safeName}`;
-      if (safeTeam) return safeTeam;
-      if (safeName) return safeName;
-      return "-";
+        if (!result.success) {
+          renderEquipmentRows({});
+          return;
+        }
+
+        renderEquipmentRows(result.equipments || {});
+      } catch (error) {
+        console.error(error);
+        renderEquipmentRows({});
+      }
     }
 
+    /* =========================
+       6. Equipment Rendering
+    ========================= */
     function renderEquipmentRows(statusMap = {}) {
       equipmentListEl.innerHTML = "";
 
       EQUIPMENT_LIST.forEach((item) => {
         const statusData = statusMap[item.eq_code] || {};
-        const status = statusData.status || "";
+        const statusMeta = getStatusMeta(statusData.status || "");
         const location = statusData.location || item.dept || "-";
-        const currentUserTeam = statusData.current_user_team || "";
-        const currentUserName = statusData.current_user_name || "";
-        const currentUserDisplay = formatUserDisplay(currentUserTeam, currentUserName);
+        const currentUserDisplay = formatUserDisplay(
+          statusData.current_user_team || "",
+          statusData.current_user_name || ""
+        );
         const checkoutTime = statusData.checkout_time || "-";
-
-        let badgeClass = "status-badge status-loading";
-        let badgeText = "상태 확인 중";
-
-        if (status === "available") {
-          badgeClass = "status-badge status-available";
-          badgeText = "대여 가능";
-        } else if (status === "checked_out") {
-          badgeClass = "status-badge status-checkedout";
-          badgeText = "불출 중";
-        }
 
         const article = document.createElement("article");
         article.className = "equipment-item";
         article.innerHTML = `
           <div class="equipment-head">
             <div class="equipment-title">${item.no}. ${item.eq_code}</div>
-            <div class="${badgeClass}">${badgeText}</div>
+            <div class="${statusMeta.badgeClass}">${statusMeta.badgeText}</div>
           </div>
 
           <div class="compact-grid">
@@ -803,34 +1067,26 @@
           </div>
 
           <div class="item-actions">
-            <button class="action-btn" onclick="openCertificate('${item.file}')">검교정 성적서 보기</button>
-            <button class="action-btn" onclick="checkoutEquipment('${item.eq_code}')">불출하기</button>
-            <button class="action-btn action-btn-secondary" onclick="returnEquipment('${item.eq_code}')">반납하기</button>
+            <button class="action-btn" data-action="certificate" data-eq-code="${item.eq_code}">검교정 성적서 보기</button>
+            <button class="action-btn" data-action="checkout" data-eq-code="${item.eq_code}">불출하기</button>
+            <button class="action-btn action-btn-secondary" data-action="return" data-eq-code="${item.eq_code}">반납하기</button>
           </div>
         `;
+
         equipmentListEl.appendChild(article);
       });
     }
 
-    async function loadAllEquipmentStatus() {
-      try {
-        const url = `${WEB_APP_URL}?action=getAllEquipmentStatus`;
-        const result = await jsonpRequest(url, "allStatusCallback");
-
-        if (!result.success) {
-          renderEquipmentRows({});
-          return;
-        }
-
-        renderEquipmentRows(result.equipments || {});
-      } catch (error) {
-        console.error(error);
-        renderEquipmentRows({});
-      }
+    function getEquipmentByCode(eqCode) {
+      return EQUIPMENT_LIST.find((item) => item.eq_code === eqCode) || null;
     }
 
+    /* =========================
+       7. Equipment Actions
+    ========================= */
     async function checkoutEquipment(eqCode) {
       if (!currentUserData) {
+        openLoginModal();
         alert("먼저 로그인해주세요.");
         return;
       }
@@ -863,6 +1119,7 @@
 
     async function returnEquipment(eqCode) {
       if (!currentUserData) {
+        openLoginModal();
         alert("먼저 로그인해주세요.");
         return;
       }
@@ -890,21 +1147,94 @@
       }
     }
 
-    function openCertificate(fileName) {
+    function openCertificate(eqCode) {
       if (!currentUserData) {
+        openLoginModal();
         alert("검교정 성적서는 로그인 후 열람할 수 있습니다.");
         return;
       }
 
+      const equipment = getEquipmentByCode(eqCode);
+      if (!equipment) {
+        alert("해당 장비 정보를 찾을 수 없습니다.");
+        return;
+      }
+
       touchLoginActivity();
-      window.open(fileName, "_blank");
+      window.open(equipment.file, "_blank");
     }
 
-    loadSavedUser();
-    bindActivityEvents();
-    startAutoLogoutWatcher();
-    renderEquipmentRows();
-    loadAllEquipmentStatus();
+    /* =========================
+       8. Event Binding
+    ========================= */
+    function bindModalEvents() {
+      openLoginBtn.addEventListener("click", openLoginModal);
+      logoutBtn.addEventListener("click", () => logout());
+      closeLoginBtn.addEventListener("click", closeLoginModal);
+      cancelLoginBtn.addEventListener("click", closeLoginModal);
+      submitLoginBtn.addEventListener("click", login);
+
+      loginModal.addEventListener("click", (event) => {
+        if (event.target === loginModal) {
+          closeLoginModal();
+        }
+      });
+
+      document.addEventListener("keydown", (event) => {
+        const modalOpened = !loginModal.classList.contains("hidden");
+
+        if (event.key === "Escape" && modalOpened) {
+          closeLoginModal();
+          return;
+        }
+
+        if (event.key === "Enter" && modalOpened) {
+          const activeElement = document.activeElement;
+          if (activeElement === loginNameInput || activeElement === loginEmpNoInput) {
+            login();
+          }
+        }
+      });
+    }
+
+    function bindEquipmentEvents() {
+      equipmentListEl.addEventListener("click", (event) => {
+        const button = event.target.closest("button[data-action]");
+        if (!button) return;
+
+        const action = button.dataset.action;
+        const eqCode = button.dataset.eqCode;
+
+        if (action === "certificate") {
+          openCertificate(eqCode);
+          return;
+        }
+
+        if (action === "checkout") {
+          checkoutEquipment(eqCode);
+          return;
+        }
+
+        if (action === "return") {
+          returnEquipment(eqCode);
+        }
+      });
+    }
+
+    /* =========================
+       9. Initialize
+    ========================= */
+    function init() {
+      loadSavedUser();
+      bindActivityEvents();
+      bindModalEvents();
+      bindEquipmentEvents();
+      startAutoLogoutWatcher();
+      renderEquipmentRows();
+      loadAllEquipmentStatus();
+    }
+
+    init();
   </script>
 </body>
 </html>
