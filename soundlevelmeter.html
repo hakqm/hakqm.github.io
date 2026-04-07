@@ -582,6 +582,7 @@
     let isLoginSubmitting = false;
     let pendingAction = null;
     let actionLoadingMap = {};
+    let equipmentStatusMap = {};
 
     const loginModal = document.getElementById("loginModal");
     const openLoginBtn = document.getElementById("openLoginBtn");
@@ -799,25 +800,11 @@
       }
     }
 
-    async function loadAllEquipmentStatus() {
-      try {
-        const result = await jsonpRequest(`${WEB_APP_URL}?action=getAllEquipmentStatus`, "allStatusCallback");
-        if (!result.success) {
-          renderEquipmentRows({});
-          return;
-        }
-        renderEquipmentRows(result.equipments || {});
-      } catch (error) {
-        console.error(error);
-        renderEquipmentRows({});
-      }
-    }
-
-    function renderEquipmentRows(statusMap = {}) {
+    function renderEquipmentRows() {
       equipmentListEl.innerHTML = "";
 
       EQUIPMENT_LIST.forEach((item) => {
-        const statusData = statusMap[item.eq_code] || {};
+        const statusData = equipmentStatusMap[item.eq_code] || {};
         const statusMeta = getStatusMeta(statusData.status || "");
         const location = statusData.location || item.dept || "-";
         const currentUserDisplay = formatUserDisplay(statusData.current_user_team || "", statusData.current_user_name || "");
@@ -852,16 +839,40 @@
         const checkoutBtn = article.querySelector(`button[data-action="checkout"][data-eq-code="${item.eq_code}"]`);
         const returnBtn = article.querySelector(`button[data-action="return"][data-eq-code="${item.eq_code}"]`);
 
-        if (checkoutBtn && actionLoadingMap[`checkout_${item.eq_code}`]) {
-          checkoutBtn.disabled = true;
-        }
-
-        if (returnBtn && actionLoadingMap[`return_${item.eq_code}`]) {
-          returnBtn.disabled = true;
-        }
+        if (checkoutBtn && actionLoadingMap[`checkout_${item.eq_code}`]) checkoutBtn.disabled = true;
+        if (returnBtn && actionLoadingMap[`return_${item.eq_code}`]) returnBtn.disabled = true;
 
         equipmentListEl.appendChild(article);
       });
+    }
+
+    async function loadSelectedEquipmentStatus() {
+      try {
+        const eqCodes = EQUIPMENT_LIST.map(item => item.eq_code).join(",");
+        const result = await jsonpRequest(
+          `${WEB_APP_URL}?action=getEquipmentStatuses&eq_codes=${encodeURIComponent(eqCodes)}`,
+          "selectedStatusCallback"
+        );
+
+        if (!result.success || !result.equipments) {
+          equipmentStatusMap = {};
+          renderEquipmentRows();
+          return;
+        }
+
+        equipmentStatusMap = result.equipments || {};
+        renderEquipmentRows();
+      } catch (error) {
+        console.error(error);
+        equipmentStatusMap = {};
+        renderEquipmentRows();
+      }
+    }
+
+    function updateSingleEquipmentStatus(eqCode, equipmentData) {
+      if (!eqCode) return;
+      equipmentStatusMap[eqCode] = equipmentData || {};
+      renderEquipmentRows();
     }
 
     function getEquipmentByCode(eqCode) {
@@ -945,8 +956,8 @@
           return;
         }
 
+        updateSingleEquipmentStatus(eqCode, result.equipment);
         alert(`${eqCode} 불출이 완료되었습니다.`);
-        await loadAllEquipmentStatus();
       } catch (error) {
         console.error(error);
         alert("불출 처리 중 오류가 발생했습니다.");
@@ -978,8 +989,8 @@
           return;
         }
 
+        updateSingleEquipmentStatus(eqCode, result.equipment);
         alert(`${eqCode} 반납이 완료되었습니다.`);
-        await loadAllEquipmentStatus();
       } catch (error) {
         console.error(error);
         alert("반납 처리 중 오류가 발생했습니다.");
@@ -1075,7 +1086,7 @@
       bindEquipmentEvents();
       startAutoLogoutWatcher();
       renderEquipmentRows();
-      loadAllEquipmentStatus();
+      loadSelectedEquipmentStatus();
     }
 
     init();
