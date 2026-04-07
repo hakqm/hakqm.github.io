@@ -628,7 +628,7 @@
             type="text"
             id="equipmentSearch"
             class="search-input"
-            placeholder="예: 캘리퍼, 마이크로, 게이지"
+            placeholder="예: 캘리퍼, 소음, 마이크로"
           />
           <button type="button" id="clearSearch" class="clear-btn" aria-label="검색 초기화">×</button>
         </div>
@@ -638,7 +638,7 @@
       </div>
     </section>
 
-    <div id="searchResult" class="search-result">전체 장비 2개 표시 중</div>
+    <div id="searchResult" class="search-result">전체 장비 3개 표시 중</div>
 
     <section class="grid" id="equipmentList">
       <article
@@ -669,11 +669,37 @@
 
       <article
         class="card equipment-card"
+        data-name="소음 계측기 소음진동 계측기 사운드레벨미터 sound level meter"
+        data-desc="작업장 및 시험 환경의 소음 수준을 측정하는 계측기입니다. 사용방법, 상태조회, 검교정 자료 및 불출·반납 기능을 확인할 수 있습니다."
+      >
+        <div class="card-top">
+          <div class="no-badge">No. 02</div>
+          <div class="badge">환경 측정 장비</div>
+        </div>
+        <h3>소음 계측기</h3>
+
+        <div class="mini-status-group">
+          <span id="status-Q-GB-020" class="mini-status status-loading">Q-GB-020</span>
+          <span id="status-Q-GB-021" class="mini-status status-loading">Q-GB-021</span>
+          <span id="status-Q-GB-026" class="mini-status status-loading">Q-GB-026</span>
+        </div>
+
+        <p>
+          작업장 및 시험 환경의 소음 수준을 측정하는 계측기입니다.
+          사용방법, 상태조회, 검교정 자료 및 불출·반납 기능을 확인할 수 있습니다.
+        </p>
+        <div class="btn-row">
+          <a class="btn btn-primary" href="soundlevelmeter.html">상세 보기</a>
+        </div>
+      </article>
+
+      <article
+        class="card equipment-card"
         data-name="마이크로미터"
         data-desc="정밀 치수 측정에 사용하는 계측기입니다. 사용방법과 장비 운영 정보를 확인할 수 있습니다."
       >
         <div class="card-top">
-          <div class="no-badge">No. 02</div>
+          <div class="no-badge">No. 03</div>
           <div class="badge">정밀 측정 장비</div>
         </div>
         <h3>마이크로미터</h3>
@@ -720,7 +746,11 @@
     const LOGIN_STORAGE_KEY = "hak_login_user";
     const LOGIN_EXPIRE_MINUTES = 30;
     const LOGIN_EXPIRE_MS = LOGIN_EXPIRE_MINUTES * 60 * 1000;
-    const EQUIPMENT_CODES = ["Q-GJ-002", "Q-GJ-007", "Q-GJ-016"];
+
+    const EQUIPMENT_CODES = [
+      "Q-GJ-002", "Q-GJ-007", "Q-GJ-016",
+      "Q-GB-020", "Q-GB-021", "Q-GB-026"
+    ];
 
     let currentUserData = null;
     let isLoginSubmitting = false;
