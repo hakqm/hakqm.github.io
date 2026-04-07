@@ -569,9 +569,9 @@
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwn9I60-14GHDQk_rNF_uJYBpig-Bovl7Qqje_eGGjcFmZJZfqQgtpUg6necytvlQQ-/exec";
 
     const EQUIPMENT_LIST = [
-      { no: 1, eq_code: "Q-GJ-002", eq_name: "버니어 캘리퍼스", spec: "300mm", dept: "창녕", due: "2027-03-12", file: "CC_Q-GJ-002.pdf" },
-      { no: 2, eq_code: "Q-GJ-007", eq_name: "버니어 캘리퍼스", spec: "300mm", dept: "QM 계측기실", due: "2026-11-14", file: "CC_Q-GJ-007.pdf" },
-      { no: 3, eq_code: "Q-GJ-016", eq_name: "버니어 캘리퍼스", spec: "600mm", dept: "QM 계측기실", due: "2026-12-12", file: "CC_Q-GJ-016.pdf" }
+      { no: 1, eq_code: "Q-GJ-002", eq_name: "버니어 캘리퍼스", spec: "300mm", due: "2027-03-12", file: "CC_Q-GJ-002.pdf" },
+      { no: 2, eq_code: "Q-GJ-007", eq_name: "버니어 캘리퍼스", spec: "300mm", due: "2026-11-14", file: "CC_Q-GJ-007.pdf" },
+      { no: 3, eq_code: "Q-GJ-016", eq_name: "버니어 캘리퍼스", spec: "600mm", due: "2026-12-12", file: "CC_Q-GJ-016.pdf" }
     ];
 
     const LOGIN_STORAGE_KEY = "hak_login_user";
@@ -806,7 +806,7 @@
       EQUIPMENT_LIST.forEach((item) => {
         const statusData = equipmentStatusMap[item.eq_code] || {};
         const statusMeta = getStatusMeta(statusData.status || "");
-        const location = statusData.location || item.dept || "-";
+        const location = statusData.location || "-";
         const currentUserDisplay = formatUserDisplay(statusData.current_user_team || "", statusData.current_user_name || "");
         const checkoutTime = statusData.checkout_time || "-";
 
