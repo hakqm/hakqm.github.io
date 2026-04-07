@@ -569,9 +569,9 @@
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwn9I60-14GHDQk_rNF_uJYBpig-Bovl7Qqje_eGGjcFmZJZfqQgtpUg6necytvlQQ-/exec";
 
     const EQUIPMENT_LIST = [
-      { no: 1, eq_code: "Q-GB-020", eq_name: "소음/진동 계측기", spec: "130dB", dept: "품질경영팀 QM 1파트", due: "2026-06-24", file: "CC_Q-GB-020.pdf" },
-      { no: 2, eq_code: "Q-GB-021", eq_name: "소음/진동 계측기", spec: "130dB", dept: "품질경영팀 QM 1파트", due: "2026-04-18", file: "CC_Q-GB-021.pdf" },
-      { no: 3, eq_code: "Q-GB-026", eq_name: "소음/진동 계측기", spec: "130dB", dept: "품질경영팀 QM 1파트", due: "2027-07-08", file: "CC_Q-GB-026.pdf" }
+      { no: 1, eq_code: "Q-GB-020", eq_name: "소음/진동 계측기", spec: "130dB", due: "2026-06-24", file: "CC_Q-GB-020.pdf" },
+      { no: 2, eq_code: "Q-GB-021", eq_name: "소음/진동 계측기", spec: "130dB", due: "2026-04-18", file: "CC_Q-GB-021.pdf" },
+      { no: 3, eq_code: "Q-GB-026", eq_name: "소음/진동 계측기", spec: "130dB", due: "2027-07-08", file: "CC_Q-GB-026.pdf" }
     ];
 
     const LOGIN_STORAGE_KEY = "hak_login_user";
@@ -806,7 +806,7 @@
       EQUIPMENT_LIST.forEach((item) => {
         const statusData = equipmentStatusMap[item.eq_code] || {};
         const statusMeta = getStatusMeta(statusData.status || "");
-        const location = statusData.location || item.dept || "-";
+        const location = statusData.location || "-";
         const currentUserDisplay = formatUserDisplay(statusData.current_user_team || "", statusData.current_user_name || "");
         const checkoutTime = statusData.checkout_time || "-";
 
