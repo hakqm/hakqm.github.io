@@ -10,7 +10,6 @@
       --navy-dark: #26386a;
       --line: #d8dce5;
       --bg: #eef1f6;
-      --panel: #f7f8fb;
       --white: #ffffff;
       --text: #1f2937;
       --muted: #6b7280;
@@ -19,7 +18,6 @@
       --orange-soft: #fff4e8;
       --shadow: 0 10px 24px rgba(31, 41, 55, 0.08);
       --overlay: rgba(15, 23, 42, 0.52);
-      --radius: 14px;
     }
 
     * { box-sizing: border-box; }
@@ -143,26 +141,11 @@
     }
 
     .side-title {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
       margin-bottom: 10px;
     }
 
     .side-title strong {
       font-size: 14px;
-    }
-
-    .mobile-side-toggle {
-      display: none;
-      border: 1px solid rgba(255,255,255,.18);
-      background: rgba(255,255,255,.10);
-      color: #fff;
-      border-radius: 10px;
-      padding: 8px 10px;
-      font-weight: 700;
-      cursor: pointer;
     }
 
     .search-box input {
@@ -195,6 +178,7 @@
     }
 
     details { margin-bottom: 4px; border-radius: 8px; }
+
     summary {
       list-style: none;
       cursor: pointer;
@@ -206,6 +190,7 @@
       align-items: center;
       gap: 8px;
     }
+
     summary::-webkit-details-marker { display: none; }
     summary:hover { background: #e6ebf5; }
 
@@ -215,7 +200,9 @@
       color: #55627d;
     }
 
-    details[open] > summary.folder::before { content: "▾"; }
+    details[open] > summary.folder::before {
+      content: "▾";
+    }
 
     .node-icon {
       color: #40598f;
@@ -334,7 +321,9 @@
       line-height: 1.7;
     }
 
-    .screen-body { padding: 20px 22px 24px; }
+    .screen-body {
+      padding: 20px 22px 24px;
+    }
 
     .callout {
       border: 1px solid #cfe0ff;
@@ -590,6 +579,12 @@
       margin-bottom: 8px;
     }
 
+    .empty-note {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.8;
+    }
+
     .modal {
       position: fixed;
       inset: 0;
@@ -710,19 +705,11 @@
       background: #dfe7f1;
     }
 
-    .empty-note {
-      color: var(--muted);
-      font-size: 14px;
-      line-height: 1.8;
-    }
-
     @media (max-width: 1200px) {
       .kpi-grid { grid-template-columns: repeat(2, 1fr); }
       .panel-grid,
       .qa-menu-grid,
-      .part-grid {
-        grid-template-columns: 1fr;
-      }
+      .part-grid { grid-template-columns: 1fr; }
       .flow-box { grid-template-columns: repeat(2, 1fr); }
     }
 
@@ -736,17 +723,8 @@
         border-bottom: 1px solid #cdd5e2;
       }
 
-      .mobile-side-toggle {
-        display: inline-flex;
-      }
-
       .tree-wrap {
-        display: none;
-        max-height: 420px;
-      }
-
-      .sidebar.open .tree-wrap {
-        display: block;
+        max-height: none;
       }
 
       .screen {
@@ -830,25 +808,24 @@
     </div>
 
     <div class="content">
-      <aside class="sidebar" id="sidebar">
+      <aside class="sidebar">
         <div class="side-head">
           <div class="side-title">
             <strong>QM AI AGENT</strong>
-            <button type="button" class="mobile-side-toggle" id="mobileSideToggle">메뉴</button>
           </div>
           <div class="search-box">
             <input type="text" id="menuSearch" placeholder="메뉴 검색..." />
           </div>
         </div>
 
-        <div class="tree-wrap" id="treeWrap">
+        <div class="tree-wrap">
           <div class="tree-section-title">Menu</div>
           <button class="tree-home active" data-screen="home">🏠 Home</button>
 
-          <details open>
+          <details>
             <summary class="folder"><span class="node-icon">📁</span> QA</summary>
             <div class="subtree">
-              <details open>
+              <details>
                 <summary class="folder"><span class="node-icon">📂</span> 수입검사</summary>
                 <div class="subtree">
                   <button class="tree-link" data-screen="qa_001_1">🔗 고객사양 확인</button>
@@ -917,7 +894,6 @@
             <summary class="folder"><span class="node-icon">📁</span> 상선</summary>
             <div class="subtree">
               <button class="tree-link" data-screen="merchant_overview">🔗 상선 업무 FLOW</button>
-              <span class="tree-note">상선 시트 세부 항목은 아래 화면 구조에 추가하면 됩니다.</span>
             </div>
           </details>
 
@@ -925,7 +901,6 @@
             <summary class="folder"><span class="node-icon">📁</span> 해군</summary>
             <div class="subtree">
               <button class="tree-link" data-screen="navy_overview">🔗 해군 업무 FLOW</button>
-              <span class="tree-note">해군 시트 세부 항목은 아래 화면 구조에 추가하면 됩니다.</span>
             </div>
           </details>
 
@@ -975,14 +950,14 @@
       <div class="modal-head">
         <div>
           <h3 id="loginModalTitle" class="modal-title">로그인</h3>
-          <p class="modal-desc">이름과 사번을 입력하면 index 메뉴와 상세 기능을 사용할 수 있습니다.</p>
+          <p class="modal-desc">로그인 정보를 입력해주세요.</p>
         </div>
         <button type="button" id="closeLoginBtn" class="modal-close" aria-label="닫기">×</button>
       </div>
       <div class="modal-body">
         <input type="text" id="loginName" class="login-input" placeholder="이름 입력" />
         <input type="text" id="loginEmpNo" class="login-input" placeholder="사번 입력" />
-        <div class="login-help">Apps Script users 시트의 이름 / 사번과 동일하게 입력해주세요.</div>
+        <div class="login-help">이름과 사번을 입력해주세요.</div>
         <div class="login-row">
           <button type="button" id="submitLoginBtn" class="login-btn">로그인</button>
           <button type="button" id="cancelLoginBtn" class="login-btn login-btn-secondary">닫기</button>
@@ -1003,8 +978,6 @@
 
     const screenEl = document.getElementById("screen");
     const tabTitle = document.getElementById("tabTitle");
-    const sidebar = document.getElementById("sidebar");
-    const mobileSideToggle = document.getElementById("mobileSideToggle");
     const menuSearch = document.getElementById("menuSearch");
 
     const loginModal = document.getElementById("loginModal");
@@ -1261,7 +1234,7 @@
             현재는 로그인 전 상태입니다. 좌측 메뉴 또는 버튼을 누르면 로그인 창이 열립니다.
           </div>
           <div class="login-required-box">
-            <strong>로그인 후 index 기능 사용 가능</strong>
+            <strong>로그인 후 메뉴를 사용할 수 있습니다.</strong>
             <button class="btn primary" onclick="openLoginModalFromHome()">로그인하기</button>
           </div>
         `;
@@ -1269,7 +1242,7 @@
       return `
         <div class="screen-head">
           <h1>QM AI 에이전트</h1>
-          <p>로그인 후 메뉴를 사용할 수 있으며, 계측기 상세 페이지와 로그인 상태를 공유합니다.</p>
+          <p>로그인 후 메뉴를 사용할 수 있습니다.</p>
         </div>
         <div class="screen-body">
           ${loginBox}
@@ -1278,7 +1251,7 @@
             <div class="kpi"><strong>QA</strong><span>상세 메뉴 반영</span></div>
             <div class="kpi"><strong>6+</strong><span>파트 구조 확장</span></div>
             <div class="kpi"><strong>Login</strong><span>이름/사번 인증</span></div>
-            <div class="kpi"><strong>Mobile</strong><span>모바일 대응 레이아웃</span></div>
+            <div class="kpi"><strong>Mobile</strong><span>모바일 대응</span></div>
           </div>
 
           <div class="panel-grid">
@@ -1291,15 +1264,15 @@
                 </div>
                 <div class="mini-card">
                   <strong>2. 좌측 메뉴 선택</strong>
-                  <p>QA, 상선, 해군, FAN 등 원하는 파트를 선택해 업무 FLOW 화면으로 이동합니다.</p>
+                  <p>QA, 상선, 해군, FAN 등 원하는 파트를 선택해 업무 화면으로 이동합니다.</p>
                 </div>
                 <div class="mini-card">
                   <strong>3. 상세 기능 사용</strong>
-                  <p>계측기관리에서 equipment.html로 이동하면 기존 장비 시스템과 로그인 상태가 이어집니다.</p>
+                  <p>계측기관리 메뉴에서 필요한 상세 페이지로 이동할 수 있습니다.</p>
                 </div>
                 <div class="mini-card">
                   <strong>4. 모바일 사용</strong>
-                  <p>휴대폰에서는 메뉴 버튼으로 트리를 열고 닫을 수 있게 구성했습니다.</p>
+                  <p>휴대폰에서도 메뉴와 화면을 확인할 수 있도록 정리했습니다.</p>
                 </div>
               </div>
             </div>
@@ -1402,7 +1375,7 @@
         </div>
         <div class="screen-body">
           <div class="callout">
-            현재 이 화면은 <strong>${partName}</strong> 시트 전체 내용을 넣을 수 있도록 만들어둔 영역입니다.
+            ${partName} 파트 업무를 정리하는 화면입니다.
           </div>
 
           <div class="part-grid">
@@ -1419,8 +1392,7 @@
               <div class="part-card-head">안내</div>
               <div class="part-card-body">
                 <div class="empty-note">
-                  엑셀의 ${partName} 시트 내용을 이 카드 구조로 옮기면 됩니다.<br />
-                  현재는 메뉴 구조와 화면 틀, 로그인 연동, 모바일 대응까지 완료된 상태입니다.
+                  필요한 업무 항목을 이 영역에 추가해서 사용하면 됩니다.
                 </div>
               </div>
             </div>
@@ -1621,7 +1593,7 @@
           task: "심사 신청",
           title: "QA / ISO 인증심사 / 심사 신청",
           desc: "인증심사 신청 화면입니다.",
-          work: "한국선급 Extranet 심사 신청",
+          work: "인증심사 신청",
           inputs: "신청서",
           output: "Application",
           system: "-",
@@ -1721,7 +1693,7 @@
           task: "계측기 검교정",
           title: "QA / 계측기관리 / 계측기 검교정",
           desc: "검교정 대상 확인 화면입니다.",
-          work: "KORAS 기준 검교정",
+          work: "검교정 대상 확인",
           inputs: "-",
           output: "-",
           system: "-",
@@ -1740,15 +1712,15 @@
           process: "계측기관리",
           task: "계측기 등록",
           title: "QA / 계측기관리 / 계측기 등록",
-          desc: "ERP 등록 화면입니다.",
-          work: "ERP 검교정 등록",
+          desc: "등록 화면입니다.",
+          work: "계측기 등록",
           inputs: "-",
-          output: "ERP 설비/금형 등록 완료",
+          output: "등록 완료",
           system: "ERP",
           trigger: "등록 선택",
           collect: "구매/검교정 정보 로드",
-          auto: "ERP 등록 형식 변환",
-          result: "ERP 등록 완료"
+          auto: "등록 형식 변환",
+          result: "등록 완료"
         })
       },
 
@@ -1801,7 +1773,7 @@
           task: "도면승인, TA",
           title: "QA / 선급검사 / 도면승인, TA",
           desc: "도면 승인 및 TA 관련 화면입니다.",
-          work: "도면과 기술자료 선급 제출",
+          work: "도면과 기술자료 검토",
           inputs: "도면, 기술자료, 선급 Rule",
           output: "승인 도면, TA 승인서",
           system: "-",
@@ -1887,8 +1859,8 @@
           system: "-",
           trigger: "업무 선택",
           collect: "신청 자료 수집",
-          auto: "선급별 제출 항목 정리",
-          result: "신청 패키지 구성"
+          auto: "제출 항목 정리",
+          result: "신청 자료 구성"
         })
       },
 
@@ -1921,45 +1893,45 @@
           task: "검사 결과 실적 등록",
           title: "QA / 선급검사 / 검사 결과 실적 등록",
           desc: "검사 결과 등록 화면입니다.",
-          work: "선급별 사이트 등록 및 메일 송부",
+          work: "검사 결과 등록",
           inputs: "검사 결과서, 성적서",
-          output: "선급별 사이트 등록 및 메일 송부",
+          output: "등록 및 송부",
           system: "-",
           trigger: "업무 선택",
           collect: "결과서/성적서 수집",
           auto: "등록 포맷 변환",
-          result: "사이트 등록 / 메일 송부"
+          result: "등록 완료"
         })
       },
 
       merchant_overview: {
         tab: "상선 업무 FLOW",
-        html: () => partOverview("상선", "상선 시트 내용을 이 구조에 넣을 수 있도록 준비된 화면입니다.")
+        html: () => partOverview("상선", "상선 파트 업무 화면입니다.")
       },
 
       navy_overview: {
         tab: "해군 업무 FLOW",
-        html: () => partOverview("해군", "해군 시트 내용을 이 구조에 넣을 수 있도록 준비된 화면입니다.")
+        html: () => partOverview("해군", "해군 파트 업무 화면입니다.")
       },
 
       marine_overview: {
         tab: "해양 업무 FLOW",
-        html: () => partOverview("해양", "해양 시트 내용을 이 구조에 넣을 수 있도록 준비된 화면입니다.")
+        html: () => partOverview("해양", "해양 파트 업무 화면입니다.")
       },
 
       hvac_overview: {
         tab: "산업공조 업무 FLOW",
-        html: () => partOverview("산업공조", "산업공조 시트 내용을 이 구조에 넣을 수 있도록 준비된 화면입니다.")
+        html: () => partOverview("산업공조", "산업공조 파트 업무 화면입니다.")
       },
 
       fan_overview: {
         tab: "FAN 업무 FLOW",
-        html: () => partOverview("FAN", "FAN 시트 내용을 이 구조에 넣을 수 있도록 준비된 화면입니다.")
+        html: () => partOverview("FAN", "FAN 파트 업무 화면입니다.")
       },
 
       fuelcell_overview: {
         tab: "퓨얼셀 업무 FLOW",
-        html: () => partOverview("퓨얼셀", "퓨얼셀 시트 내용을 이 구조에 넣을 수 있도록 준비된 화면입니다.")
+        html: () => partOverview("퓨얼셀", "퓨얼셀 파트 업무 화면입니다.")
       }
     };
 
@@ -1985,10 +1957,6 @@
       screenEl.innerHTML = typeof item.html === "function" ? item.html() : item.html;
       tabTitle.textContent = item.tab;
       setActiveMenu(key);
-
-      if (window.innerWidth <= 900) {
-        sidebar.classList.remove("open");
-      }
     }
 
     function protectedOpenScreen(key) {
@@ -2071,12 +2039,6 @@
       });
     }
 
-    function bindSidebarEvents() {
-      mobileSideToggle.addEventListener("click", () => {
-        sidebar.classList.toggle("open");
-      });
-    }
-
     function filterMenu() {
       const keyword = menuSearch.value.trim().toLowerCase().replace(/\s+/g, "");
       const allLinks = document.querySelectorAll(".tree-link, .tree-home");
@@ -2100,7 +2062,6 @@
       bindActivityEvents();
       bindMenuEvents();
       bindModalEvents();
-      bindSidebarEvents();
       syncLoginStateAcrossPages();
       startAutoLogoutWatcher();
 
