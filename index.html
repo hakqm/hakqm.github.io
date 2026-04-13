@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QM AI 에이전트 포털 Draft</title>
+  <style>
+    :root {
+      --navy: #344a8c;
+      --navy-dark: #26386a;
+      --line: #d8dce5;
+      --bg: #eef1f6;
+      --panel: #f7f8fb;
+      --white: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --blue-soft: #e9f1ff;
+      --green-soft: #eef8ef;
+      --orange-soft: #fff4e8;
+      --shadow: 0 10px 24px rgba(31, 41, 55, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .app {
+      display: grid;
+      grid-template-rows: 54px 1fr;
+      height: 100vh;
+    }
+
+    .topbar {
+      background: var(--navy);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 18px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 15px;
+    }
+
+    .brand .icon {
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      background: rgba(255,255,255,0.18);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+    }
+
+    .top-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+    }
+
+    .user-chip {
+      background: rgba(255,255,255,0.14);
+      padding: 8px 12px;
+      border-radius: 999px;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      min-height: 0;
+    }
+
+    .sidebar {
+      background: #f0f2f7;
+      border-right: 1px solid #cdd5e2;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .side-head {
+      background: var(--navy);
+      color: white;
+      padding: 14px 14px 10px;
+      border-bottom: 1px solid rgba(255,255,255,0.15);
+    }
+
+    .side-head strong {
+      display: block;
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+
+    .search-box input {
+      width: 100%;
+      border: 1px solid #b8c3d9;
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .tree-wrap {
+      padding: 10px 10px 12px;
+      overflow: auto;
+      min-height: 0;
+    }
+
+    .tree-section-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: #5f6b84;
+      text-transform: uppercase;
+      margin: 10px 8px 8px;
+    }
+
+    details { margin-bottom: 4px; border-radius: 8px; }
+    summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 8px 10px;
+      border-radius: 8px;
+      font-size: 14px;
+      color: #24314f;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    summary::-webkit-details-marker { display: none; }
+    summary:hover { background: #e6ebf5; }
+
+    .folder::before { content: "▸"; font-size: 11px; color: #55627d; }
+    details[open] > summary.folder::before { content: "▾"; }
+    .node-icon { color: #40598f; font-size: 15px; width: 18px; text-align: center; }
+
+    .subtree {
+      margin-left: 16px;
+      border-left: 1px dashed #c8d0df;
+      padding-left: 8px;
+      margin-bottom: 6px;
+    }
+
+    .tree-link {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      text-align: left;
+      border: 0;
+      background: transparent;
+      padding: 7px 10px;
+      border-radius: 8px;
+      font-size: 13px;
+      color: #24314f;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .tree-link:hover { background: #e6ebf5; }
+    .tree-link.active { background: #d8e6ff; color: #133f7d; font-weight: 700; }
+    .tree-note {
+      display: block;
+      font-size: 11px;
+      color: #7c879d;
+      padding: 2px 10px 8px 38px;
+    }
+
+    .main {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      min-height: 0;
+    }
+
+    .tabs {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px 0;
+      background: #edf0f5;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .tab {
+      background: white;
+      border: 1px solid var(--line);
+      border-bottom: none;
+      padding: 10px 14px;
+      border-top-left-radius: 10px;
+      border-top-right-radius: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #24314f;
+    }
+
+    .workspace {
+      padding: 16px;
+      overflow: auto;
+      min-height: 0;
+    }
+
+    .screen {
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      min-height: calc(100vh - 130px);
+      overflow: hidden;
+    }
+
+    .screen-head {
+      padding: 18px 22px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(180deg, #f9fbff, #f3f6fb);
+    }
+
+    .screen-head h1 {
+      margin: 0 0 6px;
+      font-size: 26px;
+      color: #22365e;
+    }
+
+    .screen-head p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .screen-body { padding: 20px 22px 24px; }
+
+    .callout {
+      border: 1px solid #cfe0ff;
+      background: #f5f9ff;
+      color: #24436f;
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 14px;
+      font-size: 14px;
+    }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .kpi {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fff;
+      padding: 16px;
+    }
+
+    .kpi strong {
+      display: block;
+      font-size: 28px;
+      color: #233f7a;
+      margin-bottom: 4px;
+    }
+
+    .kpi span { color: var(--muted); font-size: 13px; }
+
+    .panel-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 16px;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fff;
+      padding: 16px;
+    }
+
+    .panel h3 {
+      margin: 0 0 10px;
+      font-size: 18px;
+      color: #22365e;
+    }
+
+    .card-list { display: grid; gap: 12px; }
+    .mini-card {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 14px;
+      background: #fbfcfe;
+    }
+
+    .mini-card strong { display: block; margin-bottom: 4px; color: #22365e; font-size: 15px; }
+    .mini-card p { margin: 0; font-size: 13px; color: var(--muted); }
+
+    .table-wrap { overflow: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { border-bottom: 1px solid #e4e8f0; padding: 10px 8px; text-align: left; vertical-align: top; }
+    th { background: #f6f8fc; color: #33445f; font-size: 12px; text-transform: uppercase; }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .b-blue { background: var(--blue-soft); color: #164886; }
+    .b-green { background: var(--green-soft); color: #2d6b39; }
+    .b-orange { background: var(--orange-soft); color: #8a5317; }
+
+    .action-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+    .btn {
+      border: 1px solid #c6d0e0;
+      background: #fff;
+      color: #24314f;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .btn.primary { background: var(--navy); border-color: var(--navy); color: white; }
+
+    .flow-box {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .flow-step {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fbfcfe;
+      padding: 12px;
+      font-size: 13px;
+    }
+
+    .flow-step strong {
+      display: block;
+      color: #22365e;
+      margin-bottom: 6px;
+      font-size: 14px;
+    }
+
+    .qa-menu-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+    }
+
+    .qa-process {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      overflow: hidden;
+      background: #fff;
+    }
+
+    .qa-process-head {
+      padding: 14px 16px;
+      background: #f5f8ff;
+      border-bottom: 1px solid var(--line);
+      font-weight: 800;
+      color: #24436f;
+    }
+
+    .qa-process-body {
+      padding: 12px 14px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .qa-process-body button,
+    .qa-process-body a {
+      width: 100%;
+      text-align: left;
+      border: 1px solid #d7dfec;
+      background: #fff;
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: 13px;
+      color: #23324e;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .qa-process-body button:hover,
+    .qa-process-body a:hover { background: #eef5ff; }
+
+    @media (max-width: 1200px) {
+      .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+      .panel-grid, .qa-menu-grid { grid-template-columns: 1fr; }
+      .flow-box { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 900px) {
+      .content { grid-template-columns: 1fr; }
+      .sidebar { max-height: 380px; }
+      .flow-box { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div class="brand"><span class="icon">☰</span> HIAIRKOREA PORTAL SYSTEM</div>
+      <div class="top-right">
+        <div class="user-chip">QM AI 에이전트 Draft</div>
+        <div class="user-chip">황지석</div>
+      </div>
+    </div>
+
+    <div class="content">
+      <aside class="sidebar">
+        <div class="side-head">
+          <strong>QM AI AGENT</strong>
+          <div class="search-box"><input type="text" placeholder="Search..." /></div>
+        </div>
+
+        <div class="tree-wrap">
+          <div class="tree-section-title">Menu</div>
+          <button class="tree-link active" data-screen="home">🏠 Home</button>
+
+          <details open>
+            <summary class="folder"><span class="node-icon">📁</span> QA</summary>
+            <div class="subtree">
+              <details open>
+                <summary class="folder"><span class="node-icon">📂</span> 수입검사</summary>
+                <div class="subtree">
+                  <button class="tree-link" data-screen="qa_001_1">🔗 고객사양 확인</button>
+                  <button class="tree-link" data-screen="qa_001_2">🔗 실물검사</button>
+                  <button class="tree-link" data-screen="qa_001_3">🔗 결과등록</button>
+                </div>
+              </details>
+
+              <details>
+                <summary class="folder"><span class="node-icon">📂</span> 협력업체평가</summary>
+                <div class="subtree">
+                  <button class="tree-link" data-screen="qa_002_1">🔗 서류 평가</button>
+                  <button class="tree-link" data-screen="qa_002_2">🔗 협력업체 실사</button>
+                  <button class="tree-link" data-screen="qa_002_3">🔗 정기 평가</button>
+                </div>
+              </details>
+
+              <details>
+                <summary class="folder"><span class="node-icon">📂</span> 내부심사</summary>
+                <div class="subtree">
+                  <button class="tree-link" data-screen="qa_003_1">🔗 내부심사 계획</button>
+                  <button class="tree-link" data-screen="qa_003_2">🔗 내부심사 실시</button>
+                  <button class="tree-link" data-screen="qa_003_3">🔗 내부심사 결과</button>
+                </div>
+              </details>
+
+              <details>
+                <summary class="folder"><span class="node-icon">📂</span> ISO 인증심사</summary>
+                <div class="subtree">
+                  <button class="tree-link" data-screen="qa_004_1">🔗 심사 신청</button>
+                  <button class="tree-link" data-screen="qa_004_2">🔗 심사 확정 및 일정</button>
+                  <button class="tree-link" data-screen="qa_004_3">🔗 심사 진행</button>
+                  <button class="tree-link" data-screen="qa_004_4">🔗 심사 결과</button>
+                </div>
+              </details>
+
+              <details>
+                <summary class="folder"><span class="node-icon">📂</span> 계측기관리</summary>
+                <div class="subtree">
+                  <button class="tree-link" data-screen="qa_005_1">🔗 계측기 구매</button>
+                  <button class="tree-link" data-screen="qa_005_2">🔗 계측기 검교정</button>
+                  <button class="tree-link" data-screen="qa_005_3">🔗 계측기 등록</button>
+                  <a class="tree-link" href="equipment.html">🌐 사용부서 불출</a>
+                  <a class="tree-link" href="equipment.html">🌐 계측기 반납</a>
+                  <button class="tree-link" data-screen="qa_005_6">🔗 정기 검교정</button>
+                  <button class="tree-link" data-screen="qa_005_7">🔗 손망실 처리</button>
+                </div>
+              </details>
+
+              <details>
+                <summary class="folder"><span class="node-icon">📂</span> 선급검사</summary>
+                <div class="subtree">
+                  <button class="tree-link" data-screen="qa_006_1">🔗 도면승인, TA</button>
+                  <button class="tree-link" data-screen="qa_006_2">🔗 Fit-Up 검사</button>
+                  <button class="tree-link" data-screen="qa_006_3">🔗 용접 검사</button>
+                  <button class="tree-link" data-screen="qa_006_4">🔗 압력 검사</button>
+                  <button class="tree-link" data-screen="qa_006_5">🔗 선급검사 검사 신청</button>
+                  <button class="tree-link" data-screen="qa_006_6">🔗 선급 검사</button>
+                  <button class="tree-link" data-screen="qa_006_7">🔗 검사 결과 실적 등록</button>
+                </div>
+              </details>
+            </div>
+          </details>
+
+          <details>
+            <summary class="folder"><span class="node-icon">📁</span> 상선</summary>
+            <div class="subtree"><span class="tree-note">목록만 표시 / 상세 화면은 추후 확장</span></div>
+          </details>
+          <details>
+            <summary class="folder"><span class="node-icon">📁</span> 해군</summary>
+            <div class="subtree"><span class="tree-note">목록만 표시 / 상세 화면은 추후 확장</span></div>
+          </details>
+          <details>
+            <summary class="folder"><span class="node-icon">📁</span> 해양</summary>
+            <div class="subtree"><span class="tree-note">목록만 표시 / 상세 화면은 추후 확장</span></div>
+          </details>
+          <details>
+            <summary class="folder"><span class="node-icon">📁</span> 산업공조</summary>
+            <div class="subtree"><span class="tree-note">목록만 표시 / 상세 화면은 추후 확장</span></div>
+          </details>
+          <details>
+            <summary class="folder"><span class="node-icon">📁</span> FAN</summary>
+            <div class="subtree"><span class="tree-note">목록만 표시 / 상세 화면은 추후 확장</span></div>
+          </details>
+          <details>
+            <summary class="folder"><span class="node-icon">📁</span> 퓨얼셀</summary>
+            <div class="subtree"><span class="tree-note">목록만 표시 / 상세 화면은 추후 확장</span></div>
+          </details>
+        </div>
+      </aside>
+
+      <section class="main">
+        <div class="tabs">
+          <div class="tab" id="tabTitle">Home</div>
+        </div>
+        <div class="workspace">
+          <div class="screen" id="screen"></div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    const screenEl = document.getElementById('screen');
+    const tabTitle = document.getElementById('tabTitle');
+    const links = document.querySelectorAll('.tree-link[data-screen]');
+
+    function homeScreen() {
+      return `
+        <div class="screen-head">
+          <h1>QM AI 에이전트</h1>
+          <p>QA 파트는 전체 세부업무까지 펼쳐서 보여주고, 다른 파트는 현재 목록 수준으로 구성한 실제 사용형 Draft입니다.</p>
+        </div>
+        <div class="screen-body">
+          <div class="callout">
+            이 시안의 핵심은 <strong>직접 입력하는 화면</strong>이 아니라, <strong>다른 시스템에서 데이터를 불러오거나 파일을 업로드하면 자동으로 읽어 처리하는 구조</strong>를 구상하고 있다는 점을 보여주는 것입니다.
+          </div>
+
+          <div class="kpi-grid">
+            <div class="kpi"><strong>QA</strong><span>전체 세부업무 반영</span></div>
+            <div class="kpi"><strong>5+</strong><span>QA 주요 프로세스</span></div>
+            <div class="kpi"><strong>Auto</strong><span>불러오기 / 업로드 / 자동처리</span></div>
+            <div class="kpi"><strong>Link</strong><span>Make 또는 외부 자동화 연결</span></div>
+          </div>
+
+          <div class="panel-grid">
+            <div class="panel">
+              <h3>구상 방향</h3>
+              <div class="card-list">
+                <div class="mini-card"><strong>1. 포털 진입</strong><p>좌측 트리 메뉴에서 QA 파트의 상세 업무를 바로 선택</p></div>
+                <div class="mini-card"><strong>2. 자동화 호출</strong><p>버튼 클릭 시 Make, 외부 사이트, 사내 시스템 등으로 연결</p></div>
+                <div class="mini-card"><strong>3. 입력 최소화</strong><p>직접 값을 치는 방식이 아니라 POS/BOM/도면/결과서를 시스템에서 불러오거나 파일 업로드로 읽어 처리</p></div>
+                <div class="mini-card"><strong>4. Output 자동 생성</strong><p>검사 결과서, 보고서, 신청서, 실적 등록 등 결과물을 자동으로 생성하거나 전송</p></div>
+              </div>
+            </div>
+            <div class="panel">
+              <h3>현재 반영 범위</h3>
+              <div class="table-wrap">
+                <table>
+                  <tr><th>파트</th><th>반영 수준</th></tr>
+                  <tr><td>QA</td><td><span class="badge b-blue">전체 세부업무 반영</span></td></tr>
+                  <tr><td>상선</td><td><span class="badge b-orange">목록만 표시</span></td></tr>
+                  <tr><td>해군</td><td><span class="badge b-orange">목록만 표시</span></td></tr>
+                  <tr><td>해양</td><td><span class="badge b-orange">목록만 표시</span></td></tr>
+                  <tr><td>산업공조</td><td><span class="badge b-orange">목록만 표시</span></td></tr>
+                  <tr><td>FAN</td><td><span class="badge b-orange">목록만 표시</span></td></tr>
+                  <tr><td>퓨얼셀</td><td><span class="badge b-orange">목록만 표시</span></td></tr>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel" style="margin-top:16px;">
+            <h3>QA 프로세스 바로가기</h3>
+            <div class="qa-menu-grid">
+              <div class="qa-process">
+                <div class="qa-process-head">QA-001 수입검사</div>
+                <div class="qa-process-body">
+                  <button onclick="openScreen('qa_001_1')">고객사양 확인</button>
+                  <button onclick="openScreen('qa_001_2')">실물검사</button>
+                  <button onclick="openScreen('qa_001_3')">결과등록</button>
+                </div>
+              </div>
+              <div class="qa-process">
+                <div class="qa-process-head">QA-002 협력업체평가</div>
+                <div class="qa-process-body">
+                  <button onclick="openScreen('qa_002_1')">서류 평가</button>
+                  <button onclick="openScreen('qa_002_2')">협력업체 실사</button>
+                  <button onclick="openScreen('qa_002_3')">정기 평가</button>
+                </div>
+              </div>
+              <div class="qa-process">
+                <div class="qa-process-head">QA-003 내부심사</div>
+                <div class="qa-process-body">
+                  <button onclick="openScreen('qa_003_1')">내부심사 계획</button>
+                  <button onclick="openScreen('qa_003_2')">내부심사 실시</button>
+                  <button onclick="openScreen('qa_003_3')">내부심사 결과</button>
+                </div>
+              </div>
+              <div class="qa-process">
+                <div class="qa-process-head">QA-004 ISO 인증심사</div>
+                <div class="qa-process-body">
+                  <button onclick="openScreen('qa_004_1')">심사 신청</button>
+                  <button onclick="openScreen('qa_004_2')">심사 확정 및 일정</button>
+                  <button onclick="openScreen('qa_004_3')">심사 진행</button>
+                  <button onclick="openScreen('qa_004_4')">심사 결과</button>
+                </div>
+              </div>
+              <div class="qa-process">
+                <div class="qa-process-head">QA-005 계측기관리</div>
+                <div class="qa-process-body">
+                  <button onclick="openScreen('qa_005_1')">계측기 구매</button>
+                  <button onclick="openScreen('qa_005_2')">계측기 검교정</button>
+                  <button onclick="openScreen('qa_005_3')">계측기 등록</button>
+                  <a href="equipment.html">사용부서 불출</a>
+                  <a href="equipment.html">계측기 반납</a>
+                  <button onclick="openScreen('qa_005_6')">정기 검교정</button>
+                  <button onclick="openScreen('qa_005_7')">손망실 처리</button>
+                </div>
+              </div>
+              <div class="qa-process">
+                <div class="qa-process-head">QA-006 선급검사</div>
+                <div class="qa-process-body">
+                  <button onclick="openScreen('qa_006_1')">도면승인, TA</button>
+                  <button onclick="openScreen('qa_006_2')">Fit-Up 검사</button>
+                  <button onclick="openScreen('qa_006_3')">용접 검사</button>
+                  <button onclick="openScreen('qa_006_4')">압력 검사</button>
+                  <button onclick="openScreen('qa_006_5')">선급검사 검사 신청</button>
+                  <button onclick="openScreen('qa_006_6')">선급 검사</button>
+                  <button onclick="openScreen('qa_006_7')">검사 결과 실적 등록</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>`;
+    }
+
+    function automationScreen(cfg) {
+      return `
+        <div class="screen-head">
+          <h1>${cfg.title}</h1>
+          <p>${cfg.desc}</p>
+        </div>
+        <div class="screen-body">
+          <div class="callout">
+            <strong>중요:</strong> 이 화면은 사용자가 값을 직접 입력하는 형태가 아니라,
+            <strong>${cfg.inputs}</strong> 같은 자료를 <strong>사내 시스템에서 자동 조회</strong>하거나,
+            <strong>파일 업로드 후 자동 판독</strong>하거나,
+            <strong>Make 등의 자동화 시나리오로 연결</strong>하는 구조를 구상하고 있다는 점을 보여주기 위한 Draft입니다.
+          </div>
+
+          <div class="panel-grid">
+            <div class="panel">
+              <h3>자동화 실행 방식</h3>
+              <div class="table-wrap">
+                <table>
+                  <tr><th>항목</th><th>내용</th></tr>
+                  <tr><td>프로세스 ID</td><td>${cfg.pid}</td></tr>
+                  <tr><td>파트</td><td>QA파트</td></tr>
+                  <tr><td>프로세스</td><td>${cfg.process}</td></tr>
+                  <tr><td>세부 업무</td><td>${cfg.task}</td></tr>
+                  <tr><td>업무 설명</td><td>${cfg.work}</td></tr>
+                  <tr><td>입력 자료</td><td>${cfg.inputs}</td></tr>
+                  <tr><td>출력물/결과</td><td>${cfg.output}</td></tr>
+                  <tr><td>연관 시스템</td><td>${cfg.system}</td></tr>
+                </table>
+              </div>
+
+              <div class="action-row">
+                <a class="btn primary" href="#">AI 자동화 실행</a>
+                <a class="btn" href="#">사내 시스템에서 불러오기</a>
+                <a class="btn" href="#">파일 업로드 후 자동 읽기</a>
+                <a class="btn" href="#">결과물 미리보기</a>
+              </div>
+            </div>
+
+            <div class="panel">
+              <h3>구상한 처리 흐름</h3>
+              <div class="flow-box">
+                <div class="flow-step"><strong>1. 호출</strong>${cfg.trigger}</div>
+                <div class="flow-step"><strong>2. 수집</strong>${cfg.collect}</div>
+                <div class="flow-step"><strong>3. 자동처리</strong>${cfg.auto}</div>
+                <div class="flow-step"><strong>4. 결과</strong>${cfg.result}</div>
+              </div>
+
+              <div class="action-row">
+                <span class="badge b-blue">자동조회 기반</span>
+                <span class="badge b-green">업로드 판독 기반</span>
+                <span class="badge b-orange">고도화 대상 포함</span>
+              </div>
+            </div>
+          </div>
+        </div>`;
+    }
+
+    const screens = {
+      home: { tab: 'Home', html: homeScreen() },
+
+      qa_001_1: { tab: 'QA > 수입검사 > 고객사양 확인', html: automationScreen({
+        pid:'QA-001', process:'수입검사', task:'고객사양 확인',
+        title:'QA / 수입검사 / 고객사양 확인',
+        desc:'POS, BOM을 직접 입력받는 것이 아니라 시스템에서 불러오거나 업로드 파일을 읽어 사양을 확인하는 구조를 가정합니다.',
+        work:'사양 확인', inputs:'POS, BOM', output:'-', system:'ERP',
+        trigger:'업무 클릭 또는 Make 시나리오 호출',
+        collect:'ERP 또는 파일 업로드 영역에서 POS/BOM 수집',
+        auto:'품목, 사양, 자재 정보 자동 매칭',
+        result:'사양 확인 결과 및 다음 단계 연계'
+      })},
+
+      qa_001_2: { tab: 'QA > 수입검사 > 실물검사', html: automationScreen({
+        pid:'QA-001', process:'수입검사', task:'실물검사',
+        title:'QA / 수입검사 / 실물검사',
+        desc:'도면과 실물 기준 자료를 불러와 검사 포인트를 자동 제시하고, 필요한 경우 사진/파일을 읽는 구조를 가정합니다.',
+        work:'제품 검사', inputs:'도면, 실물', output:'-', system:'-',
+        trigger:'실물검사 메뉴 선택',
+        collect:'도면 파일 불러오기 및 실물 사진 업로드',
+        auto:'검사 항목 추출 및 판정 포인트 자동 생성',
+        result:'검사 체크 결과와 후속 등록 단계 연결'
+      })},
+
+      qa_001_3: { tab: 'QA > 수입검사 > 결과등록', html: automationScreen({
+        pid:'QA-001', process:'수입검사', task:'결과등록',
+        title:'QA / 수입검사 / 결과등록',
+        desc:'검사 신청 및 결과서를 기반으로 ERP 성적서 등록까지 이어지는 자동화 시나리오를 보여주는 화면입니다.',
+        work:'ERP 성적서 등록', inputs:'검사 신청 및 결과서', output:'ERP 수입검사 결과 처리', system:'ERP',
+        trigger:'결과등록 메뉴 또는 자동화 링크 클릭',
+        collect:'검사 신청서/결과서 업로드 또는 ERP 조회',
+        auto:'필요 항목 파싱 후 ERP 등록용 데이터 구성',
+        result:'ERP 수입검사 결과 처리 및 이력 저장'
+      })},
+
+      qa_002_1: { tab: 'QA > 협력업체평가 > 서류 평가', html: automationScreen({
+        pid:'QA-002', process:'협력업체평가', task:'서류 평가',
+        title:'QA / 협력업체평가 / 서류 평가',
+        desc:'협력업체 제출 서류를 업로드하거나 저장소에서 불러와 평가 항목을 자동 분류하는 구조입니다.',
+        work:'협력업체 제출 서류', inputs:'협력업체 서류', output:'-', system:'-',
+        trigger:'서류 평가 메뉴 선택',
+        collect:'협력업체 서류 업로드 또는 문서함 연동',
+        auto:'필수 서류 존재 여부 및 항목 자동 분류',
+        result:'서류 평가 상태와 실사 단계 연계'
+      })},
+
+      qa_002_2: { tab: 'QA > 협력업체평가 > 협력업체 실사', html: automationScreen({
+        pid:'QA-002', process:'협력업체평가', task:'협력업체 실사',
+        title:'QA / 협력업체평가 / 협력업체 실사',
+        desc:'체크리스트와 이전 서류 평가 결과를 불러와 품질관리 수준 점검을 진행하는 구조입니다.',
+        work:'품질관리 수준 점검', inputs:'체크리스트, 서류 평가 결과', output:'-', system:'-',
+        trigger:'실사 메뉴 선택',
+        collect:'체크리스트 템플릿 및 서류 평가 데이터 로드',
+        auto:'실사 항목 자동 배치 및 누락 항목 표시',
+        result:'실사 결과 저장 및 정기 평가 연계'
+      })},
+
+      qa_002_3: { tab: 'QA > 협력업체평가 > 정기 평가', html: automationScreen({
+        pid:'QA-002', process:'협력업체평가', task:'정기 평가',
+        title:'QA / 협력업체평가 / 정기 평가',
+        desc:'납품 실적, 불량률, 클레임 이력을 자동 집계하여 평가서를 만드는 구조를 표현합니다.',
+        work:'납품 품질 및 대응 수준 정기 평가', inputs:'납품 실적, 불량률, 클레임 이력', output:'Quality System Assessment', system:'-',
+        trigger:'정기 평가 메뉴 선택',
+        collect:'ERP/품질 이력 시스템에서 데이터 집계',
+        auto:'평가 기준 반영 및 점수 계산',
+        result:'Quality System Assessment 생성'
+      })},
+
+      qa_003_1: { tab: 'QA > 내부심사 > 내부심사 계획', html: automationScreen({
+        pid:'QA-003', process:'내부심사', task:'내부심사 계획',
+        title:'QA / 내부심사 / 내부심사 계획',
+        desc:'심사 대상 리스트와 계획서를 불러와 내부심사 계획서를 자동 구성하는 구조입니다.',
+        work:'내부심사 일정 계획 수립', inputs:'심사 계획서, 심사 대상 리스트', output:'내부심사 계획서', system:'-',
+        trigger:'내부심사 계획 메뉴 선택',
+        collect:'대상부서, 일정 후보, 기존 계획서 템플릿 로드',
+        auto:'심사 일정/대상 자동 배치',
+        result:'내부심사 계획서 생성'
+      })},
+
+      qa_003_2: { tab: 'QA > 내부심사 > 내부심사 실시', html: automationScreen({
+        pid:'QA-003', process:'내부심사', task:'내부심사 실시',
+        title:'QA / 내부심사 / 내부심사 실시',
+        desc:'체크리스트와 절차서를 불러와 심사 기록을 남기는 자동화 흐름을 보여줍니다.',
+        work:'내부심사 수행', inputs:'내부심사 체크리스트, 절차서', output:'심사 기록(체크리스트)', system:'-',
+        trigger:'내부심사 실시 메뉴 선택',
+        collect:'체크리스트/절차서 자동 호출',
+        auto:'심사 항목 자동 표시 및 기록 템플릿 생성',
+        result:'심사 기록 저장'
+      })},
+
+      qa_003_3: { tab: 'QA > 내부심사 > 내부심사 결과', html: automationScreen({
+        pid:'QA-003', process:'내부심사', task:'내부심사 결과',
+        title:'QA / 내부심사 / 내부심사 결과',
+        desc:'심사 기록과 부적합 사항을 취합하여 부적합 보고서를 자동 정리하는 구조입니다.',
+        work:'내부심사 결과 정리 및 시정조치 확인', inputs:'심사 기록, 부적합 사항', output:'부적합 보고서', system:'-',
+        trigger:'결과 메뉴 선택',
+        collect:'기존 심사 기록 및 부적합 사항 로드',
+        auto:'결과 요약 및 시정조치 항목 정리',
+        result:'부적합 보고서 생성'
+      })},
+
+      qa_004_1: { tab: 'QA > ISO 인증심사 > 심사 신청', html: automationScreen({
+        pid:'QA-004', process:'ISO 인증심사', task:'심사 신청',
+        title:'QA / ISO 인증심사 / 심사 신청',
+        desc:'한국선급 Extranet 신청서를 바탕으로 심사 신청 자동화를 구상한 화면입니다.',
+        work:'한국선급(KR) extranet에서 인증심사 신청', inputs:'한국 선급 Extranet 신청서', output:'Application', system:'-',
+        trigger:'심사 신청 메뉴 선택',
+        collect:'신청서 양식 또는 저장된 문서 로드',
+        auto:'필수 신청 항목 자동 채움',
+        result:'Application 초안 생성 또는 신청 연계'
+      })},
+
+      qa_004_2: { tab: 'QA > ISO 인증심사 > 심사 확정 및 일정', html: automationScreen({
+        pid:'QA-004', process:'ISO 인증심사', task:'심사 확정 및 일정',
+        title:'QA / ISO 인증심사 / 심사 확정 및 일정',
+        desc:'Application 데이터를 기준으로 상세 일정을 정리하는 흐름을 보여줍니다.',
+        work:'심사 확정 후 상세 일정 조정', inputs:'Application', output:'심사계획서', system:'-',
+        trigger:'일정 메뉴 선택',
+        collect:'기신청 데이터 및 일정 후보 조회',
+        auto:'심사일정/대상자 자동 정리',
+        result:'심사계획서 생성'
+      })},
+
+      qa_004_3: { tab: 'QA > ISO 인증심사 > 심사 진행', html: automationScreen({
+        pid:'QA-004', process:'ISO 인증심사', task:'심사 진행',
+        title:'QA / ISO 인증심사 / 심사 진행',
+        desc:'매뉴얼, 프로세스, 지침서, 기록문서를 연결하여 심사 진행 자료를 자동 구성하는 흐름입니다.',
+        work:'심사 실시', inputs:'매뉴얼, 프로세스, 지침서, 기록문서', output:'인증심사 결과서', system:'-',
+        trigger:'심사 진행 메뉴 선택',
+        collect:'문서 서버/폴더에서 관련 문서 불러오기',
+        auto:'심사 대상 문서 분류 및 결과 양식 구성',
+        result:'인증심사 결과서 초안 생성'
+      })},
+
+      qa_004_4: { tab: 'QA > ISO 인증심사 > 심사 결과', html: automationScreen({
+        pid:'QA-004', process:'ISO 인증심사', task:'심사 결과',
+        title:'QA / ISO 인증심사 / 심사 결과',
+        desc:'인증심사 결과서를 기반으로 부적합 조치 흐름까지 연결하는 구조입니다.',
+        work:'인증 심사 결과 확인 및 부적합 조치', inputs:'인증심사 결과서', output:'부적합 보고서', system:'-',
+        trigger:'심사 결과 메뉴 선택',
+        collect:'인증심사 결과서 불러오기',
+        auto:'부적합 항목 식별 및 조치 항목 분리',
+        result:'부적합 보고서 생성 및 추적 연결'
+      })},
+
+      qa_005_1: { tab: 'QA > 계측기관리 > 계측기 구매', html: automationScreen({
+        pid:'QA-005', process:'계측기관리', task:'계측기 구매',
+        title:'QA / 계측기관리 / 계측기 구매',
+        desc:'결재 완료 후 구매 이력을 남기고 후속 등록 단계로 연결하는 구조입니다.',
+        work:'팀장 및 대표이사 결재 후 계측기 구매', inputs:'계측장비 구매', output:'구매 내역서', system:'-',
+        trigger:'계측기 구매 메뉴 선택',
+        collect:'결재 완료 문서 또는 구매 요청 데이터 로드',
+        auto:'구매 이력 정리 및 등록 준비',
+        result:'구매 내역서 생성'
+      })},
+
+      qa_005_2: { tab: 'QA > 계측기관리 > 계측기 검교정', html: automationScreen({
+        pid:'QA-005', process:'계측기관리', task:'계측기 검교정',
+        title:'QA / 계측기관리 / 계측기 검교정',
+        desc:'KORAS 기준에 따른 검교정 대상을 자동 식별하고 일정을 연결하는 구조입니다.',
+        work:'KORAS 기준에 따라 검교정 실시', inputs:'-', output:'-', system:'-',
+        trigger:'검교정 메뉴 선택',
+        collect:'검교정 대상 장비 목록 자동 조회',
+        auto:'주기 도래 장비 추출 및 일정 매칭',
+        result:'검교정 대상 리스트 및 후속 작업 연결'
+      })},
+
+      qa_005_3: { tab: 'QA > 계측기관리 > 계측기 등록', html: automationScreen({
+        pid:'QA-005', process:'계측기관리', task:'계측기 등록',
+        title:'QA / 계측기관리 / 계측기 등록',
+        desc:'검교정 등록 데이터를 ERP 설비/금형 등록 완료 상태로 연결하는 구조입니다.',
+        work:'ERP 검교정 등록', inputs:'-', output:'ERP 설비/금형등록 완료', system:'ERP',
+        trigger:'계측기 등록 메뉴 선택',
+        collect:'구매/검교정 데이터 자동 로드',
+        auto:'ERP 등록 포맷 변환 및 전송 준비',
+        result:'ERP 설비/금형등록 완료'
+      })},
+
+      qa_005_6: { tab: 'QA > 계측기관리 > 정기 검교정', html: automationScreen({
+        pid:'QA-005', process:'계측기관리', task:'정기 검교정',
+        title:'QA / 계측기관리 / 정기 검교정',
+        desc:'검교정 만료 계측장비를 자동 조회하여 정기 검교정 성적서를 연결하는 구조입니다.',
+        work:'교정주기(KORAS 기준)에 따라 검교정 실시', inputs:'검교정 만료 계측장비', output:'검교정 성적서', system:'-',
+        trigger:'정기 검교정 메뉴 선택',
+        collect:'만료 예정/만료 장비 자동 조회',
+        auto:'대상 장비 분류 및 검교정 처리 흐름 호출',
+        result:'검교정 성적서 생성 또는 저장'
+      })},
+
+      qa_005_7: { tab: 'QA > 계측기관리 > 손망실 처리', html: automationScreen({
+        pid:'QA-005', process:'계측기관리', task:'손망실 처리',
+        title:'QA / 계측기관리 / 손망실 처리',
+        desc:'노후 및 훼손 장비의 손망실 처리를 자동 보고 흐름과 연결하는 화면입니다.',
+        work:'노후 및 훼손된 장비 손망실 처리', inputs:'노후 및 훼손된 계측장비', output:'손망실 보고서', system:'-',
+        trigger:'손망실 처리 메뉴 선택',
+        collect:'손상 장비 목록 및 상태 기록 로드',
+        auto:'폐기/수리 분류 및 보고서 구성',
+        result:'손망실 보고서 생성'
+      })},
+
+      qa_006_1: { tab: 'QA > 선급검사 > 도면승인, TA', html: automationScreen({
+        pid:'QA-006', process:'선급검사', task:'도면승인, TA',
+        title:'QA / 선급검사 / 도면승인, TA',
+        desc:'제작 및 검사에 필요한 도면과 기술자료를 선급 제출용으로 구성하는 구조입니다.',
+        work:'도면과 기술자료를 선급에 제출하여 승인 여부 확인', inputs:'도면, 기술자료, 선급 Rule', output:'승인 도면, TA 승인서', system:'-',
+        trigger:'도면승인 메뉴 선택',
+        collect:'도면/기술자료/Rule 자동 수집',
+        auto:'제출용 패키지 정리 및 버전 검토',
+        result:'승인 도면 및 TA 승인서 확보'
+      })},
+
+      qa_006_2: { tab: 'QA > 선급검사 > Fit-Up 검사', html: automationScreen({
+        pid:'QA-006', process:'선급검사', task:'Fit-Up 검사',
+        title:'QA / 선급검사 / Fit-Up 검사',
+        desc:'용접 전 조립상태 및 치수 적합 여부를 기준자료와 함께 자동 점검하는 구조입니다.',
+        work:'용접 전 조립상태 및 치수 적합 여부 확인', inputs:'검사기준', output:'Fit-Up 검사 결과서', system:'-',
+        trigger:'Fit-Up 검사 메뉴 선택',
+        collect:'검사기준 및 대상 품목 정보 로드',
+        auto:'점검 항목 생성 및 판정 시트 구성',
+        result:'Fit-Up 검사 결과서 생성'
+      })},
+
+      qa_006_3: { tab: 'QA > 선급검사 > 용접 검사', html: automationScreen({
+        pid:'QA-006', process:'선급검사', task:'용접 검사',
+        title:'QA / 선급검사 / 용접 검사',
+        desc:'승인도면과 WPS를 불러와 용접부 외관 및 시공상태를 점검하는 흐름입니다.',
+        work:'용접부 외관 및 시공상태 확인', inputs:'승인도면, WPS', output:'용접 검사 결과서', system:'-',
+        trigger:'용접 검사 메뉴 선택',
+        collect:'승인도면 및 WPS 자동 호출',
+        auto:'검사 포인트 표시 및 결과서 구성',
+        result:'용접 검사 결과서 생성'
+      })},
+
+      qa_006_4: { tab: 'QA > 선급검사 > 압력 검사', html: automationScreen({
+        pid:'QA-006', process:'선급검사', task:'압력 검사',
+        title:'QA / 선급검사 / 압력 검사',
+        desc:'시험절차서, 승인도면, 시험장비 정보를 기반으로 압력시험 결과를 정리하는 구조입니다.',
+        work:'압력시험으로 누설 및 이상 유무 확인', inputs:'시험절차서, 승인도면, 시험장비', output:'압력시험 검사 결과서', system:'-',
+        trigger:'압력 검사 메뉴 선택',
+        collect:'시험절차 및 장비 정보 로드',
+        auto:'시험 기준 반영 및 결과서 템플릿 생성',
+        result:'압력시험 검사 결과서 생성'
+      })},
+
+      qa_006_5: { tab: 'QA > 선급검사 > 선급검사 검사 신청', html: automationScreen({
+        pid:'QA-006', process:'선급검사', task:'선급검사 검사 신청',
+        title:'QA / 선급검사 / 선급검사 검사 신청',
+        desc:'선급별 입회검사 신청을 위한 대상 목록과 관련도면을 자동 정리하는 구조입니다.',
+        work:'선급별(KR, BV, DNV, LR, ABS 등) 입회검사 신청', inputs:'검사신청서, 검사대상 목록, 관련도면', output:'-', system:'-',
+        trigger:'검사 신청 메뉴 선택',
+        collect:'대상 목록, 도면, 신청서 양식 수집',
+        auto:'선급별 제출 항목 분류',
+        result:'입회검사 신청 패키지 구성'
+      })},
+
+      qa_006_6: { tab: 'QA > 선급검사 > 선급 검사', html: automationScreen({
+        pid:'QA-006', process:'선급검사', task:'선급 검사',
+        title:'QA / 선급검사 / 선급 검사',
+        desc:'선급 입회 검사 시 필요한 승인도면과 검사기준을 자동으로 준비하는 흐름입니다.',
+        work:'선급 입회 검사', inputs:'검사대상물, 승인도면, 검사기준', output:'선급 검사 결과서', system:'-',
+        trigger:'선급 검사 메뉴 선택',
+        collect:'검사 대상물 및 도면/기준 자동 호출',
+        auto:'검사 준비 자료 정리 및 결과서 틀 생성',
+        result:'선급 검사 결과서 저장'
+      })},
+
+      qa_006_7: { tab: 'QA > 선급검사 > 검사 결과 실적 등록', html: automationScreen({
+        pid:'QA-006', process:'선급검사', task:'검사 결과 실적 등록',
+        title:'QA / 선급검사 / 검사 결과 실적 등록',
+        desc:'검사 결과서와 성적서를 읽어 선급별 사이트 등록 및 메일 송부까지 이어지는 구조를 보여줍니다.',
+        work:'검사 완료 후 결과를 시스템에 등록함', inputs:'검사 결과서, 성적서', output:'선급별 사이트 등록 및 메일 송부', system:'-',
+        trigger:'실적 등록 메뉴 선택',
+        collect:'검사 결과서/성적서 업로드 또는 폴더 연동',
+        auto:'선급별 등록 포맷 변환 및 메일 초안 생성',
+        result:'선급별 사이트 등록 및 메일 송부'
+      })}
+    };
+
+    function openScreen(key) {
+      const item = screens[key];
+      if (!item) return;
+      screenEl.innerHTML = item.html;
+      tabTitle.textContent = item.tab;
+      links.forEach(link => link.classList.toggle('active', link.dataset.screen === key));
+    }
+
+    links.forEach(link => link.addEventListener('click', () => openScreen(link.dataset.screen)));
+    window.openScreen = openScreen;
+    openScreen('home');
+  </script>
+</body>
+</html>
