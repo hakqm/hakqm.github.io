@@ -148,11 +148,15 @@
       font-size: 14px;
     }
 
+    .search-input-wrap {
+      position: relative;
+    }
+
     .search-box input {
       width: 100%;
       border: 1px solid #b8c3d9;
       border-radius: 10px;
-      padding: 10px 12px;
+      padding: 10px 40px 10px 12px;
       font-size: 14px;
       outline: none;
     }
@@ -161,6 +165,27 @@
     .login-input:focus {
       border-color: var(--navy);
       box-shadow: 0 0 0 4px rgba(52,74,140,.08);
+    }
+
+    .search-clear-btn {
+      position: absolute;
+      top: 50%;
+      right: 8px;
+      transform: translateY(-50%);
+      display: none;
+      width: 28px;
+      height: 28px;
+      border: none;
+      border-radius: 999px;
+      background: #dfe7f1;
+      color: #334155;
+      font-size: 18px;
+      line-height: 1;
+      cursor: pointer;
+    }
+
+    .search-clear-btn:hover {
+      background: #cfd9e5;
     }
 
     .tree-wrap {
@@ -794,7 +819,6 @@
   <div class="app">
     <div class="topbar">
       <div class="brand">
-        <span class="icon">☰</span>
         QM AI AGENT
       </div>
 
@@ -811,7 +835,10 @@
       <aside class="sidebar">
         <div class="side-head">
           <div class="search-box">
-            <input type="text" id="menuSearch" placeholder="메뉴 검색..." />
+            <div class="search-input-wrap">
+              <input type="text" id="menuSearch" placeholder="메뉴 검색..." />
+              <button type="button" id="clearMenuSearch" class="search-clear-btn" aria-label="검색 초기화">×</button>
+            </div>
           </div>
         </div>
 
@@ -938,6 +965,7 @@
     const screenEl = document.getElementById("screen");
     const tabTitle = document.getElementById("tabTitle");
     const menuSearch = document.getElementById("menuSearch");
+    const clearMenuSearchBtn = document.getElementById("clearMenuSearch");
 
     const loginModal = document.getElementById("loginModal");
     const openLoginBtn = document.getElementById("openLoginBtn");
@@ -3396,13 +3424,113 @@
       });
     }
 
-    function filterMenu() {
-      const keyword = menuSearch.value.trim().toLowerCase().replace(/\s+/g, "");
-      const allLinks = document.querySelectorAll(".tree-link, .tree-home");
+    function normalizeMenuKeyword(value) {
+      return String(value || "").toLowerCase().replace(/\s+/g, "");
+    }
 
-      allLinks.forEach((item) => {
-        const text = item.textContent.toLowerCase().replace(/\s+/g, "");
-        item.style.display = (!keyword || text.includes(keyword)) ? "" : "none";
+    function showMenuBranch(detailsEl) {
+      detailsEl.style.display = "";
+      detailsEl.open = true;
+
+      const children = Array.from(detailsEl.children);
+      children.forEach((child) => {
+        if (child.classList && child.classList.contains("subtree")) {
+          child.style.display = "";
+        }
+
+        if (child.tagName === "DETAILS") {
+          showMenuBranch(child);
+        }
+
+        if (child.classList && child.classList.contains("tree-link")) {
+          child.style.display = "";
+        }
+      });
+
+      const subtree = Array.from(detailsEl.children).find((child) => child.classList && child.classList.contains("subtree"));
+      if (subtree) {
+        Array.from(subtree.children).forEach((child) => {
+          if (child.tagName === "DETAILS") {
+            showMenuBranch(child);
+          } else if (child.classList && child.classList.contains("tree-link")) {
+            child.style.display = "";
+          }
+        });
+      }
+    }
+
+    function filterMenuDetails(detailsEl, keyword) {
+      const summary = Array.from(detailsEl.children).find((child) => child.tagName === "SUMMARY");
+      const subtree = Array.from(detailsEl.children).find((child) => child.classList && child.classList.contains("subtree"));
+      const selfMatch = summary ? normalizeMenuKeyword(summary.textContent).includes(keyword) : false;
+
+      if (selfMatch) {
+        detailsEl.style.display = "";
+        detailsEl.open = true;
+        if (subtree) subtree.style.display = "";
+        if (subtree) {
+          Array.from(subtree.children).forEach((child) => {
+            if (child.tagName === "DETAILS") {
+              showMenuBranch(child);
+            } else if (child.classList && child.classList.contains("tree-link")) {
+              child.style.display = "";
+            }
+          });
+        }
+        return true;
+      }
+
+      let hasVisibleChild = false;
+
+      if (subtree) {
+        Array.from(subtree.children).forEach((child) => {
+          if (child.tagName === "DETAILS") {
+            const visible = filterMenuDetails(child, keyword);
+            if (visible) hasVisibleChild = true;
+            return;
+          }
+
+          if (child.classList && child.classList.contains("tree-link")) {
+            const linkMatch = normalizeMenuKeyword(child.textContent).includes(keyword);
+            child.style.display = linkMatch ? "" : "none";
+            if (linkMatch) hasVisibleChild = true;
+          }
+        });
+      }
+
+      detailsEl.style.display = hasVisibleChild ? "" : "none";
+      detailsEl.open = hasVisibleChild;
+      if (subtree) subtree.style.display = hasVisibleChild ? "" : "none";
+      return hasVisibleChild;
+    }
+
+    function resetMenuFilter() {
+      document.querySelectorAll(".tree-home, .tree-link, details, .subtree").forEach((el) => {
+        el.style.display = "";
+      });
+
+      document.querySelectorAll("details").forEach((detailsEl) => {
+        detailsEl.open = detailsEl.dataset.originalOpen === "true";
+      });
+    }
+
+    function filterMenu() {
+      const keyword = normalizeMenuKeyword(menuSearch.value);
+      clearMenuSearchBtn.style.display = menuSearch.value ? "block" : "none";
+
+      if (!keyword) {
+        resetMenuFilter();
+        return;
+      }
+
+      const homeBtn = document.querySelector(".tree-home");
+      if (homeBtn) {
+        const homeMatch = normalizeMenuKeyword(homeBtn.textContent).includes(keyword);
+        homeBtn.style.display = homeMatch ? "" : "none";
+      }
+
+      document.querySelectorAll(".tree-wrap > details, #generatedPartMenus > details").forEach((detailsEl) => {
+        filterMenuDetails(detailsEl, keyword);
       });
     }
 
@@ -3424,7 +3552,16 @@
       syncLoginStateAcrossPages();
       startAutoLogoutWatcher();
 
+      document.querySelectorAll("details").forEach((detailsEl) => {
+        detailsEl.dataset.originalOpen = detailsEl.open ? "true" : "false";
+      });
+
       menuSearch.addEventListener("input", filterMenu);
+      clearMenuSearchBtn.addEventListener("click", () => {
+        menuSearch.value = "";
+        filterMenu();
+        menuSearch.focus();
+      });
 
       openScreen("home");
     }
