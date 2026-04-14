@@ -795,7 +795,7 @@
     <div class="topbar">
       <div class="brand">
         <span class="icon">☰</span>
-        HIAIRKOREA PORTAL SYSTEM
+        QM AI AGENT
       </div>
 
       <div class="top-right">
@@ -810,9 +810,6 @@
     <div class="content">
       <aside class="sidebar">
         <div class="side-head">
-          <div class="side-title">
-            <strong>QM AI AGENT</strong>
-          </div>
           <div class="search-box">
             <input type="text" id="menuSearch" placeholder="메뉴 검색..." />
           </div>
@@ -825,6 +822,8 @@
           <details>
             <summary class="folder"><span class="node-icon">📁</span> QA</summary>
             <div class="subtree">
+              <button class="tree-link" data-screen="qa_overview">🔗 QA 업무 FLOW</button>
+
               <details>
                 <summary class="folder"><span class="node-icon">📂</span> 수입검사</summary>
                 <div class="subtree">
@@ -868,7 +867,7 @@
                   <button class="tree-link" data-screen="qa_005_1">🔗 계측기 구매</button>
                   <button class="tree-link" data-screen="qa_005_2">🔗 계측기 검교정</button>
                   <button class="tree-link" data-screen="qa_005_3">🔗 계측기 등록</button>
-                  <button class="tree-link" data-url="equipment.html">🌐 사용부서 불출</button>
+                  <button class="tree-link" data-url="equipment.html">🌐 계측기 불출</button>
                   <button class="tree-link" data-url="equipment.html">🌐 계측기 반납</button>
                   <button class="tree-link" data-screen="qa_005_6">🔗 정기 검교정</button>
                   <button class="tree-link" data-screen="qa_005_7">🔗 손망실 처리</button>
@@ -890,47 +889,7 @@
             </div>
           </details>
 
-          <details>
-            <summary class="folder"><span class="node-icon">📁</span> 상선</summary>
-            <div class="subtree">
-              <button class="tree-link" data-screen="merchant_overview">🔗 상선 업무 FLOW</button>
-            </div>
-          </details>
-
-          <details>
-            <summary class="folder"><span class="node-icon">📁</span> 해군</summary>
-            <div class="subtree">
-              <button class="tree-link" data-screen="navy_overview">🔗 해군 업무 FLOW</button>
-            </div>
-          </details>
-
-          <details>
-            <summary class="folder"><span class="node-icon">📁</span> 해양</summary>
-            <div class="subtree">
-              <button class="tree-link" data-screen="marine_overview">🔗 해양 업무 FLOW</button>
-            </div>
-          </details>
-
-          <details>
-            <summary class="folder"><span class="node-icon">📁</span> 산업공조</summary>
-            <div class="subtree">
-              <button class="tree-link" data-screen="hvac_overview">🔗 산업공조 업무 FLOW</button>
-            </div>
-          </details>
-
-          <details>
-            <summary class="folder"><span class="node-icon">📁</span> FAN</summary>
-            <div class="subtree">
-              <button class="tree-link" data-screen="fan_overview">🔗 FAN 업무 FLOW</button>
-            </div>
-          </details>
-
-          <details>
-            <summary class="folder"><span class="node-icon">📁</span> 퓨얼셀</summary>
-            <div class="subtree">
-              <button class="tree-link" data-screen="fuelcell_overview">🔗 퓨얼셀 업무 FLOW</button>
-            </div>
-          </details>
+          <div id="generatedPartMenus"></div>
         </div>
       </aside>
 
@@ -1283,12 +1242,12 @@
                 <table>
                   <tr><th>파트</th><th>상태</th></tr>
                   <tr><td>QA</td><td><span class="badge b-blue">상세 메뉴 연결</span></td></tr>
-                  <tr><td>상선</td><td><span class="badge b-orange">개요 화면 구성</span></td></tr>
-                  <tr><td>해군</td><td><span class="badge b-orange">개요 화면 구성</span></td></tr>
-                  <tr><td>해양</td><td><span class="badge b-orange">개요 화면 구성</span></td></tr>
-                  <tr><td>산업공조</td><td><span class="badge b-orange">개요 화면 구성</span></td></tr>
-                  <tr><td>FAN</td><td><span class="badge b-orange">개요 화면 구성</span></td></tr>
-                  <tr><td>퓨얼셀</td><td><span class="badge b-orange">개요 화면 구성</span></td></tr>
+                  <tr><td>상선</td><td><span class="badge b-green">세부 메뉴 반영</span></td></tr>
+                  <tr><td>해군</td><td><span class="badge b-green">세부 메뉴 반영</span></td></tr>
+                  <tr><td>해양</td><td><span class="badge b-green">세부 메뉴 반영</span></td></tr>
+                  <tr><td>산업공조</td><td><span class="badge b-green">세부 메뉴 반영</span></td></tr>
+                  <tr><td>FAN</td><td><span class="badge b-green">세부 메뉴 반영</span></td></tr>
+                  <tr><td>퓨얼셀</td><td><span class="badge b-green">세부 메뉴 반영</span></td></tr>
                 </table>
               </div>
             </div>
@@ -1298,20 +1257,135 @@
             <h3>바로가기</h3>
             <div class="qa-menu-grid">
               <div class="qa-process">
-                <div class="qa-process-head">QA</div>
+                <div class="qa-process-head">계측기 바로가기</div>
                 <div class="qa-process-body">
-                  <button onclick="protectedOpenScreen('qa_001_1')">수입검사</button>
-                  <button onclick="protectedOpenScreen('qa_005_1')">계측기관리</button>
-                  <button onclick="protectedGoUrl('equipment.html')">계측기 시스템 바로가기</button>
+                  <button onclick="protectedGoUrl('equipment.html')">계측기 불출</button>
+                  <button onclick="protectedGoUrl('equipment.html')">계측기 반납</button>
                 </div>
               </div>
-              <div class="qa-process">
-                <div class="qa-process-head">기타 파트</div>
-                <div class="qa-process-body">
-                  <button onclick="protectedOpenScreen('merchant_overview')">상선</button>
-                  <button onclick="protectedOpenScreen('navy_overview')">해군</button>
-                  <button onclick="protectedOpenScreen('fan_overview')">FAN</button>
-                </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    const QA_OVERVIEW_GROUPS = [
+      {
+        title: "수입검사",
+        items: [
+          { label: "고객사양 확인", screen: "qa_001_1" },
+          { label: "실물검사", screen: "qa_001_2" },
+          { label: "결과등록", screen: "qa_001_3" }
+        ]
+      },
+      {
+        title: "협력업체평가",
+        items: [
+          { label: "서류 평가", screen: "qa_002_1" },
+          { label: "협력업체 실사", screen: "qa_002_2" },
+          { label: "정기 평가", screen: "qa_002_3" }
+        ]
+      },
+      {
+        title: "내부심사",
+        items: [
+          { label: "내부심사 계획", screen: "qa_003_1" },
+          { label: "내부심사 실시", screen: "qa_003_2" },
+          { label: "내부심사 결과", screen: "qa_003_3" }
+        ]
+      },
+      {
+        title: "ISO 인증심사",
+        items: [
+          { label: "심사 신청", screen: "qa_004_1" },
+          { label: "심사 확정 및 일정", screen: "qa_004_2" },
+          { label: "심사 진행", screen: "qa_004_3" },
+          { label: "심사 결과", screen: "qa_004_4" }
+        ]
+      },
+      {
+        title: "계측기관리",
+        items: [
+          { label: "계측기 구매", screen: "qa_005_1" },
+          { label: "계측기 검교정", screen: "qa_005_2" },
+          { label: "계측기 등록", screen: "qa_005_3" },
+          { label: "계측기 불출", url: "equipment.html" },
+          { label: "계측기 반납", url: "equipment.html" },
+          { label: "정기 검교정", screen: "qa_005_6" },
+          { label: "손망실 처리", screen: "qa_005_7" }
+        ]
+      },
+      {
+        title: "선급검사",
+        items: [
+          { label: "도면승인, TA", screen: "qa_006_1" },
+          { label: "Fit-Up 검사", screen: "qa_006_2" },
+          { label: "용접 검사", screen: "qa_006_3" },
+          { label: "압력 검사", screen: "qa_006_4" },
+          { label: "선급검사 검사 신청", screen: "qa_006_5" },
+          { label: "선급 검사", screen: "qa_006_6" },
+          { label: "검사 결과 실적 등록", screen: "qa_006_7" }
+        ]
+      }
+    ];
+
+    function qaOverviewScreen() {
+      const totalProcesses = QA_OVERVIEW_GROUPS.length;
+      const totalSteps = QA_OVERVIEW_GROUPS.reduce((sum, group) => sum + group.items.length, 0);
+      const groupCards = QA_OVERVIEW_GROUPS.map((group) => `
+        <div class="part-card">
+          <div class="part-card-head">${group.title}</div>
+          <div class="part-card-body">
+            ${group.items.map((item) => {
+              if (item.screen) {
+                return `<button onclick="protectedOpenScreen('${item.screen}')">${item.label}</button>`;
+              }
+              return `<button onclick="protectedGoUrl('${item.url}')">${item.label}</button>`;
+            }).join("")}
+          </div>
+        </div>
+      `).join("");
+
+      const summaryRows = QA_OVERVIEW_GROUPS.map((group) => `
+        <tr>
+          <td>${group.title}</td>
+          <td>${group.items.length}</td>
+          <td>${group.items.map((item) => item.label).join(", ")}</td>
+        </tr>
+      `).join("");
+
+      return `
+        <div class="screen-head">
+          <h1>QA 업무 FLOW</h1>
+          <p>QA 파트의 전체 업무 흐름을 프로세스별로 정리했습니다.</p>
+        </div>
+        <div class="screen-body">
+          <div class="callout">
+            <strong>QA</strong> 파트의 전체 업무 흐름을 한 화면에서 확인할 수 있습니다.
+          </div>
+
+          <div class="kpi-grid">
+            <div class="kpi"><strong>${totalProcesses}</strong><span>프로세스 수</span></div>
+            <div class="kpi"><strong>${totalSteps}</strong><span>세부 단계 수</span></div>
+            <div class="kpi"><strong>QA</strong><span>파트</span></div>
+            <div class="kpi"><strong>ERP / MES</strong><span>주요 연관 시스템</span></div>
+          </div>
+
+          <div class="panel-grid">
+            <div class="panel">
+              <h3>프로세스별 업무</h3>
+              <div class="part-grid">
+                ${groupCards}
+              </div>
+            </div>
+
+            <div class="panel">
+              <h3>프로세스 요약</h3>
+              <div class="table-wrap">
+                <table>
+                  <tr><th>프로세스</th><th>단계 수</th><th>세부 업무</th></tr>
+                  ${summaryRows}
+                </table>
               </div>
             </div>
           </div>
@@ -1367,33 +1441,1240 @@
       `;
     }
 
-    function partOverview(partName, desc) {
+
+    const PART_FLOW_DATA = {
+  "merchant": {
+    "partName": "상선",
+    "partLabel": "QM1파트(상선)",
+    "overviewDesc": "상선 파트의 공정간 검사, 완제품 검사, 고객검사 업무 FLOW입니다.",
+    "processes": [
+      {
+        "pid": "상선-001",
+        "process": "공정간 검사",
+        "items": [
+          {
+            "step": "1",
+            "task": "용접검사",
+            "work": "용접검사(FIT-UP, FINAL WELDING)",
+            "inputs": "도면, WPS",
+            "output": "용접 검사 성적서",
+            "system": "-"
+          },
+          {
+            "step": "2",
+            "task": "압력검사",
+            "work": "내압시험, 기밀시험",
+            "inputs": "검사절차서",
+            "output": "압력 검사 성적서",
+            "system": "MES"
+          },
+          {
+            "step": "3",
+            "task": "도장검사",
+            "work": "FINAL PAINTING INSEPCTION",
+            "inputs": "도면, POS",
+            "output": "도장 검사 성적서",
+            "system": "MES"
+          }
+        ]
+      },
+      {
+        "pid": "상선-002",
+        "process": "완제품 검사",
+        "items": [
+          {
+            "step": "1",
+            "task": "완제품 검사",
+            "work": "조립 완성 검사",
+            "inputs": "도면, POS, 검사절차서",
+            "output": "FAT REPORT",
+            "system": "-"
+          },
+          {
+            "step": "2",
+            "task": "부적합 관리(발생 시)",
+            "work": "부적합 및 시정조치 관리",
+            "inputs": "도면, POS, 검사절차서",
+            "output": "부적합 보고서",
+            "system": "-"
+          }
+        ]
+      },
+      {
+        "pid": "상선-003",
+        "process": "고객검사",
+        "items": [
+          {
+            "step": "1",
+            "task": "문서작성",
+            "work": "ITP 작성",
+            "inputs": "ITP, HAK QS, CLASS REGULATION",
+            "output": "ITP",
+            "system": "-"
+          },
+          {
+            "step": "2",
+            "task": "문서작성",
+            "work": "FAT PROCEDURE 작성",
+            "inputs": "ITP, FAT PROCEDURE, HAK QS, CLASS REGULATION",
+            "output": "FAT PROCEDURE",
+            "system": "-"
+          },
+          {
+            "step": "3",
+            "task": "고객 검사 신청",
+            "work": "고객사별 고객 검사 신청",
+            "inputs": "FAT APPLICATION & 고객사별 전\n산신청",
+            "output": "검사 신청서",
+            "system": "-"
+          },
+          {
+            "step": "4",
+            "task": "고객 입회 검사",
+            "work": "고객 입회 검사",
+            "inputs": "도면, POS, 검사절차서",
+            "output": "고객 검사 결과서",
+            "system": "-"
+          },
+          {
+            "step": "5",
+            "task": "부적합 관리(발생 시)",
+            "work": "고객사 부적합 및 시정조치 관리",
+            "inputs": "도면, POS, 검사절차서",
+            "output": "고객사 부적합 보고서",
+            "system": "-"
+          },
+          {
+            "step": "6",
+            "task": "검사 결과 실적 등록",
+            "work": "고객 검사 결과 전산 등록",
+            "inputs": "고객 검사 결과서",
+            "output": "품질 분석 자료",
+            "system": "ERP"
+          }
+        ]
+      }
+    ]
+  },
+  "navy": {
+    "partName": "해군",
+    "partLabel": "QM1파트(해군)",
+    "overviewDesc": "해군 파트의 공정간 검사, 완제품 검사, 고객검사 업무 FLOW입니다.",
+    "processes": [
+      {
+        "pid": "해군-001",
+        "process": "공정간 검사",
+        "items": [
+          {
+            "step": "1",
+            "task": "용접검사",
+            "work": "용접검사(FIT-UP, FINAL WELDING)",
+            "inputs": "도면, WPS",
+            "output": "용접 검사 성적서",
+            "system": "-"
+          },
+          {
+            "step": "2",
+            "task": "압력검사",
+            "work": "내압시험, 기밀시험",
+            "inputs": "검사절차서",
+            "output": "압력 검사 성적서",
+            "system": "MES"
+          },
+          {
+            "step": "3",
+            "task": "도장검사",
+            "work": "PRE-TREATMENT(Before Painting)",
+            "inputs": "도면, POS",
+            "output": "도장 검사 성적서",
+            "system": "MES"
+          },
+          {
+            "step": "4",
+            "task": "도장검사",
+            "work": "FINAL PAINTING INSEPCTION",
+            "inputs": "도면, POS",
+            "output": "도장 검사 성적서",
+            "system": "MES"
+          }
+        ]
+      },
+      {
+        "pid": "해군-002",
+        "process": "완제품 검사",
+        "items": [
+          {
+            "step": "1",
+            "task": "완제품 검사",
+            "work": "조립 완성 검사",
+            "inputs": "도면, POS, 검사절차서",
+            "output": "FAT REPORT",
+            "system": "-"
+          },
+          {
+            "step": "2",
+            "task": "부적합 관리(발생 시)",
+            "work": "부적합 및 시정조치 관리",
+            "inputs": "도면, POS, 검사절차서",
+            "output": "부적합 보고서",
+            "system": "-"
+          }
+        ]
+      },
+      {
+        "pid": "해군-003",
+        "process": "고객검사",
+        "items": [
+          {
+            "step": "1",
+            "task": "문서작성",
+            "work": "ITP 작성",
+            "inputs": "ITP, CLASS REGULATION, 제작사 규격",
+            "output": "ITP",
+            "system": "-"
+          },
+          {
+            "step": "2",
+            "task": "문서작성",
+            "work": "FAT PROCEDURE 작성",
+            "inputs": "ITP, FAT PROCEDURE, CLASS REGULATION, 제작사 규격",
+            "output": "FAT PROCEDURE",
+            "system": "-"
+          },
+          {
+            "step": "3",
+            "task": "특수성능시험(KOLAS)",
+            "work": "특수성능시험 시험 신청",
+            "inputs": "제작사규격",
+            "output": "특수성능시험 신청서, 기안",
+            "system": "-"
+          },
+          {
+            "step": "4",
+            "task": "특수성능시험(KOLAS)",
+            "work": "특수성능시험 시험",
+            "inputs": "제작사규격, MIL-STD",
+            "output": "특수성능시험 성적서",
+            "system": "-"
+          },
+          {
+            "step": "5",
+            "task": "특수성능시험(KOLAS)",
+            "work": "특수성능시험 비용 처리",
+            "inputs": "세금계산서",
+            "output": "분개점표",
+            "system": "ERP"
+          },
+          {
+            "step": "6",
+            "task": "고객 검사 신청",
+            "work": "고객사별 고객 검사 신청",
+            "inputs": "FAT APPLICATION & 고객사별 전\n산신청",
+            "output": "검사 신청서",
+            "system": "-"
+          },
+          {
+            "step": "7",
+            "task": "고객 입회 검사",
+            "work": "고객 입회 검사",
+            "inputs": "도면, POS, 검사절차서",
+            "output": "고객 검사 결과서",
+            "system": "-"
+          },
+          {
+            "step": "8",
+            "task": "부적합 관리(발생 시)",
+            "work": "고객사 부적합 및 시정조치 관리",
+            "inputs": "도면, POS, 검사절차서",
+            "output": "고객사 부적합 보고서",
+            "system": "-"
+          },
+          {
+            "step": "9",
+            "task": "검사 결과 실적 등록",
+            "work": "고객 검사 결과 전산 등록",
+            "inputs": "고객 검사 결과서",
+            "output": "품질 분석 자료",
+            "system": "ERP"
+          }
+        ]
+      }
+    ]
+  },
+  "marine": {
+    "partName": "해양",
+    "partLabel": "해양파트",
+    "overviewDesc": "해양 파트의 수입검사, 공정간 검사, FAT 사전검사, FAT 고객검사, IRC 검사 업무 FLOW입니다.",
+    "processes": [
+      {
+        "pid": "해양-001",
+        "process": "수입검사",
+        "items": [
+          {
+            "step": "1",
+            "task": "사양 확인",
+            "work": "사양 확인",
+            "inputs": "1. GAD\n2. Wiring",
+            "output": "-",
+            "system": "-"
+          }
+        ]
+      },
+      {
+        "pid": "해양-002",
+        "process": "공정간 검사",
+        "items": [
+          {
+            "step": "1",
+            "task": "용접 검사",
+            "work": "용접검사(FIT-UP, FINAL WELDING)",
+            "inputs": "1. GAD\n2. WPS",
+            "output": "1. Welding Inspection Report",
+            "system": "-"
+          },
+          {
+            "step": "2",
+            "task": "압력 검사",
+            "work": "압력검사 (Design pressure *1.5)",
+            "inputs": "1. Data Sheet\n2. GAD",
+            "output": "1. Pressure & Leakage Test Report",
+            "system": "-"
+          },
+          {
+            "step": "3",
+            "task": "도장 검사",
+            "work": "도료 사양 확인 / 도막 측정",
+            "inputs": "1. GAD",
+            "output": "1. Paniting Inspection Report",
+            "system": "-"
+          }
+        ]
+      },
+      {
+        "pid": "해양-003",
+        "process": "FAT 사전검사",
+        "items": [
+          {
+            "step": "1",
+            "task": "사양 확인",
+            "work": "방폭 사전 검사",
+            "inputs": "1. Ex Register",
+            "output": "1. Ex Check Sheet",
+            "system": "-"
+          },
+          {
+            "step": "2",
+            "task": "사양 확인",
+            "work": "Dimension",
+            "inputs": "1. GAD\n2. Wiring",
+            "output": "1. Dimension Cehck Sheet",
+            "system": "-"
+          },
+          {
+            "step": "3",
+            "task": "사양 확인",
+            "work": "Visual Check",
+            "inputs": "1. GAD\n2. Wiring\n3. Instrument Calibration Cert",
+            "output": "1. Inspection Check Sheet",
+            "system": "-"
+          },
+          {
+            "step": "4",
+            "task": "사양 확인",
+            "work": "Positive Material Check",
+            "inputs": "1. Mill Certificate",
+            "output": "1. PMI Report\n2. Material Traceablity Record",
+            "system": "-"
+          }
+        ]
+      },
+      {
+        "pid": "해양-004",
+        "process": "FAT 고객검사",
+        "items": [
+          {
+            "step": "1",
+            "task": "성능 검사 및 외관 검사",
+            "work": "장비 성능 검사 및 외관 검사",
+            "inputs": "1. GAD\n2. Wiring Drawing.\n3. ITP\n4. FAT proccedure\n5. Data Sheet",
+            "output": "1. Function Test Report including sound & Vibration Check sheet\n2. Welding Inspection Report\n3. Pressure & Leakage Test Report\n4. Ex Check Sheet\n5. Dimension Cehck Sheet\n6. Inspection Check Sheet\n7. PMI Report\n8. Material Traceablity Record\n9. FAT Punch list",
+            "system": "-"
+          }
+        ]
+      },
+      {
+        "pid": "해양-005",
+        "process": "IRC 검사",
+        "items": [
+          {
+            "step": "1",
+            "task": "Punch 검사",
+            "work": "현물조치 확인. 도면 및 서류 수정 확인.",
+            "inputs": "1. FAT Punch List\n2. Drawing.\n3. Ex register",
+            "output": "1. IRC Report.",
+            "system": "-"
+          }
+        ]
+      }
+    ]
+  },
+  "hvac": {
+    "partName": "산업공조",
+    "partLabel": "산공파트",
+    "overviewDesc": "산업공조 파트의 수입검사, 협력업체평가, 심사, 공정간 검사, 완제품 검사, 고객검사 업무 FLOW입니다.",
+    "processes": [
+      {
+        "pid": "산공-001",
+        "process": "수입검사",
+        "items": [
+          {
+            "step": "1",
+            "task": "고객사양 확인",
+            "work": "사양 확인",
+            "inputs": "SPEC, POS, BOM",
+            "output": "확인 완료",
+            "system": "-"
+          },
+          {
+            "step": "2",
+            "task": "실물검사",
+            "work": "제품 검사",
+            "inputs": "도면, 실물",
+            "output": "검사 결과",
+            "system": "ERP"
+          },
+          {
+            "step": "3",
+            "task": "결과등록",
+            "work": "ERP 성적서 등록",
+            "inputs": "검사 신청 및 결과서",
+            "output": "ERP 수입검사 결과 처리",
+            "system": "ERP"
+          }
+        ]
+      },
+      {
+        "pid": "산공-002",
+        "process": "협력업체평가",
+        "items": [
+          {
+            "step": "1",
+            "task": "서류 평가",
+            "work": "협력업체 제출 서류",
+            "inputs": "협력업체 서류",
+            "output": "서류 평가 결과",
+            "system": "-"
+          },
+          {
+            "step": "2",
+            "task": "협력업체 실사",
+            "work": "품질관리 수준 점검",
+            "inputs": "체크리스트, 서류 평가 결과",
+            "output": "실사 결과 보고서, 승인공급자목록",
+            "system": "-"
+          },
+          {
+            "step": "3",
+            "task": "정기 평가",
+            "work": "납품 품질 및 대응 수준 정기 평가",
+            "inputs": "납품 실적, 불량률, 클레임 이력",
+            "output": "협력업체 평가서",
+            "system": "-"
+          }
+        ]
+      },
+      {
+        "pid": "산공-003",
+        "process": "심사",
+        "items": [
+          {
+            "step": "1",
+            "task": "내부심사 계획",
+            "work": "내부심사 일정 계획 수립",
+            "inputs": "심사 계획서, 심사 대상 리스트",
+            "output": "내부심사 계획서",
+            "system": "-"
+          },
+          {
+            "step": "2",
+            "task": "내부심사 실시",
+            "work": "내부심사 수행",
+            "inputs": "내부심사 체크리스트, 절차서",
+            "output": "심사 기록(체크리스트)",
+            "system": "-"
+          },
+          {
+            "step": "3",
+            "task": "내부심사 결과",
+            "work": "내부심사 결과 정리 및 시정조치 확인",
+            "inputs": "심사 기록, 부적합 사항",
+            "output": "내부심사 결과서",
+            "system": "-"
+          },
+          {
+            "step": "4",
+            "task": "외부심사 실시",
+            "work": "외부심사 수행",
+            "inputs": "심사 기록, 부적합 사항",
+            "output": "외부심사 결과서",
+            "system": "-"
+          }
+        ]
+      },
+      {
+        "pid": "산공-004",
+        "process": "공정간 검사",
+        "items": [
+          {
+            "step": "1",
+            "task": "사전검사",
+            "work": "내진,내환경,전자파,CGID 등",
+            "inputs": "SPEC, 도면, PLAN",
+            "output": "REPORT",
+            "system": "-"
+          },
+          {
+            "step": "2",
+            "task": "자재검사",
+            "work": "자재검사, 진위여부",
+            "inputs": "SPEC, 도면",
+            "output": "BOM, CFSI 결과서",
+            "system": "-"
+          },
+          {
+            "step": "3",
+            "task": "용접검사",
+            "work": "용접검사(FIT-UP, WELDING)",
+            "inputs": "도면, WPS",
+            "output": "용접 검사 성적서",
+            "system": "MES"
+          },
+          {
+            "step": "4",
+            "task": "도장검사",
+            "work": "PAINTING INSEPCTION",
+            "inputs": "도면, 절차서",
+            "output": "도장 검사 성적서",
+            "system": "MES"
+          },
+          {
+            "step": "5",
+            "task": "치수검사",
+            "work": "치수검사",
+            "inputs": "도면",
+            "output": "치수 검사 성적서",
+            "system": "MES"
+          },
+          {
+            "step": "6",
+            "task": "성능검사",
+            "work": "성능시험, 누설시험 등등",
+            "inputs": "성능검사절차서",
+            "output": "성능 검사 성적서",
+            "system": "MES"
+          },
+          {
+            "step": "7",
+            "task": "서류검사",
+            "work": "품질증비서류 및 최종검사",
+            "inputs": "SPEC, 도면",
+            "output": "품질증빙서류",
+            "system": "-"
+          },
+          {
+            "step": "8",
+            "task": "출하검사",
+            "work": "포장검사 및 출하검사",
+            "inputs": "SPEC, 도면, 절차서",
+            "output": "출하승인서",
+            "system": "-"
+          }
+        ]
+      },
+      {
+        "pid": "산공-005",
+        "process": "완제품 검사",
+        "items": [
+          {
+            "step": "1",
+            "task": "완제품 검사",
+            "work": "조립 완성 검사",
+            "inputs": "도면, POS, 검사절차서",
+            "output": "FAT REPORT",
+            "system": "-"
+          },
+          {
+            "step": "2",
+            "task": "부적합 관리(발생 시)",
+            "work": "부적합 및 시정조치 관리",
+            "inputs": "도면, POS, 검사절차서",
+            "output": "부적합 보고서",
+            "system": "-"
+          }
+        ]
+      },
+      {
+        "pid": "산공-006",
+        "process": "고객검사",
+        "items": [
+          {
+            "step": "1",
+            "task": "고객 검사 신청",
+            "work": "고객 검사 신청 (한수원,건설사 등등)",
+            "inputs": "FAT APPLICATION & 고객사별 전\n산신청",
+            "output": "검사 신청서",
+            "system": "-"
+          },
+          {
+            "step": "2",
+            "task": "고객 입회 검사",
+            "work": "고객 입회 검사",
+            "inputs": "도면, POS, 검사절차서",
+            "output": "고객 검사 결과서",
+            "system": "-"
+          },
+          {
+            "step": "3",
+            "task": "부적합 관리(발생 시)",
+            "work": "고객사 부적합 및 시정조치 관리",
+            "inputs": "도면, POS, 검사절차서",
+            "output": "고객사 부적합 보고서",
+            "system": "-"
+          },
+          {
+            "step": "4",
+            "task": "검사 결과 실적 등록",
+            "work": "고객 검사 결과 전산 등록",
+            "inputs": "고객 검사 결과서",
+            "output": "품질 분석 자료",
+            "system": "ERP"
+          }
+        ]
+      }
+    ]
+  },
+  "fan": {
+    "partName": "FAN",
+    "partLabel": "FAN파트",
+    "overviewDesc": "FAN 파트의 수입검사, 공정간 검사, 완제품 검사, 고객검사, 선급검사 업무 FLOW입니다.",
+    "processes": [
+      {
+        "pid": "FAN-001",
+        "process": "수입검사",
+        "items": [
+          {
+            "step": "1",
+            "task": "고객사양 확인",
+            "work": "사양 확인",
+            "inputs": "POS, BOM",
+            "output": "-",
+            "system": "ERP"
+          },
+          {
+            "step": "2",
+            "task": "실물검사",
+            "work": "제품 검사",
+            "inputs": "도면, 실물",
+            "output": "-",
+            "system": "-"
+          },
+          {
+            "step": "3",
+            "task": "결과등록",
+            "work": "ERP 성적서 등록",
+            "inputs": "검사 신청 및 결과서",
+            "output": "ERP 수입검사 결과 처리",
+            "system": "ERP"
+          }
+        ]
+      },
+      {
+        "pid": "FAN-002",
+        "process": "공정간 검사",
+        "items": [
+          {
+            "step": "1",
+            "task": "용접검사",
+            "work": "용접검사(FIT-UP, FINAL WELDING)",
+            "inputs": "도면, WPS",
+            "output": "용접 검사 성적서",
+            "system": "MES"
+          },
+          {
+            "step": "2",
+            "task": "치수검사",
+            "work": "주요 치수 검사",
+            "inputs": "도면, POS",
+            "output": "DIM. CHECK SHEET",
+            "system": "ERP,MES"
+          },
+          {
+            "step": "3",
+            "task": "도장검사",
+            "work": "FINAL PAINTING INSEPCTION",
+            "inputs": "도면, POS",
+            "output": "도장 검사 성적서",
+            "system": "ERP,MES"
+          },
+          {
+            "step": "4",
+            "task": "고객검사",
+            "work": "도장 고객검사 (STEP 검사)",
+            "inputs": "도면, POS",
+            "output": "도장 검사 성적서",
+            "system": "ERP,MES"
+          }
+        ]
+      },
+      {
+        "pid": "FAN-003",
+        "process": "완제품 검사",
+        "items": [
+          {
+            "step": "1",
+            "task": "자체 검사",
+            "work": "RUNNING TEST",
+            "inputs": "도면",
+            "output": "FAN TEST REPORT",
+            "system": "ERP"
+          },
+          {
+            "step": "2",
+            "task": "자체 검사",
+            "work": "성능 TEST",
+            "inputs": "도면, POS, 검사절차서",
+            "output": "FAN TEST REPORT",
+            "system": "ERP,MES"
+          },
+          {
+            "step": "3",
+            "task": "자체 검사",
+            "work": "육안검사 (용접불량 등)",
+            "inputs": "-",
+            "output": "-",
+            "system": "-"
+          },
+          {
+            "step": "4",
+            "task": "자체 검사",
+            "work": "치수 검사",
+            "inputs": "도면",
+            "output": "자체 검사 CHECK SHEET",
+            "system": "SERVER"
+          },
+          {
+            "step": "5",
+            "task": "자체 검사",
+            "work": "도장 검사",
+            "inputs": "도면",
+            "output": "자체 검사 CHECK SHEET",
+            "system": "SERVER"
+          },
+          {
+            "step": "6",
+            "task": "부적합 관리(발생 시)",
+            "work": "부적합 및 시정조치 관리",
+            "inputs": "도면, POS, 검사절차서",
+            "output": "부적합 보고서",
+            "system": "SERVER"
+          }
+        ]
+      },
+      {
+        "pid": "FAN-004",
+        "process": "고객검사",
+        "items": [
+          {
+            "step": "1",
+            "task": "고객 검사 신청",
+            "work": "고객사별 고객 검사 신청",
+            "inputs": "FAT APPLICATION & 고객사별 전\n산신청",
+            "output": "검사 신청서",
+            "system": "고객사 프로그램 및 E-MAIL"
+          },
+          {
+            "step": "2",
+            "task": "FAN TEST REPORT",
+            "work": "TEST REPORT",
+            "inputs": "도면, POS, 검사절차서",
+            "output": "TEST REPORT",
+            "system": "ERP,MES"
+          },
+          {
+            "step": "3",
+            "task": "치수검사",
+            "work": "치수검사",
+            "inputs": "도면",
+            "output": "DIM. CHECK SHEET",
+            "system": "ERP,MES"
+          },
+          {
+            "step": "4",
+            "task": "도장검사",
+            "work": "도장검사",
+            "inputs": "도면",
+            "output": "PAINT CHECK SHEET",
+            "system": "ERP,MES"
+          },
+          {
+            "step": "5",
+            "task": "재료 성적서 요청",
+            "work": "주요 항목 재료성적서 요구",
+            "inputs": "도면, POS",
+            "output": "MILL SHEET",
+            "system": "자재팀 E-MAIL 문의"
+          },
+          {
+            "step": "6",
+            "task": "모터 성적서 요청",
+            "work": "모터 성적서 요구",
+            "inputs": "도면",
+            "output": "MOTOR TEST REPORT",
+            "system": "ERP, 납품처 E-MAIL 문의"
+          },
+          {
+            "step": "7",
+            "task": "각 COMPONENT 방폭 인증",
+            "work": "모터 방폭 인증서",
+            "inputs": "도면, DATA SHEET",
+            "output": "모터 방폭 인증서",
+            "system": "SERVER"
+          },
+          {
+            "step": "8",
+            "task": "각 COMPONENT 방폭 인증",
+            "work": "CABLE GLANDS 방폭 인증서",
+            "inputs": "도면",
+            "output": "CABLE GLANDS 방폭 인증서",
+            "system": "SERVER"
+          },
+          {
+            "step": "9",
+            "task": "각 COMPONENT 방폭 인증",
+            "work": "J/BOX 방폭 인증서",
+            "inputs": "도면",
+            "output": "J/BOX 방폭 인증서",
+            "system": "SERVER"
+          },
+          {
+            "step": "10",
+            "task": "부적합 관리(발생 시)",
+            "work": "고객사 부적합 및 시정조치 관리",
+            "inputs": "도면, POS, 검사절차서",
+            "output": "고객사 부적합 보고서",
+            "system": "MES"
+          },
+          {
+            "step": "11",
+            "task": "출하전 검사",
+            "work": "출하전 완제품 조립/포장 검사",
+            "inputs": "도면",
+            "output": "출하전 검사 REPORT",
+            "system": "SERVER"
+          },
+          {
+            "step": "12",
+            "task": "검사 결과 실적 등록",
+            "work": "고객 검사 결과 전산 등록",
+            "inputs": "고객 검사 결과서",
+            "output": "품질 분석 자료",
+            "system": "ERP,MES,고객사 프로그램"
+          }
+        ]
+      },
+      {
+        "pid": "FAN-005",
+        "process": "선급검사",
+        "items": [
+          {
+            "step": "1",
+            "task": "선급 검사 신청",
+            "work": "각 선급 웹페이지 및 FAX 검사 신청",
+            "inputs": "검사신청서",
+            "output": "검사 신청서",
+            "system": "선급 웹페이지 및 E-MAIL/FAX"
+          },
+          {
+            "step": "2",
+            "task": "승인도면",
+            "work": "각 선급별 승인도면",
+            "inputs": "도면",
+            "output": "선급 승인 도면",
+            "system": "기술팀 SERVER"
+          },
+          {
+            "step": "3",
+            "task": "FAN TEST REPORT",
+            "work": "FAN TEST REPORT",
+            "inputs": "도면, POS, 검사절차서",
+            "output": "고객 검사 결과서",
+            "system": "기술팀 SERVER / MES"
+          }
+        ]
+      }
+    ]
+  },
+  "fuelcell": {
+    "partName": "퓨얼셀",
+    "partLabel": "FUELCELL파트",
+    "overviewDesc": "퓨얼셀 파트의 입고 검사, 수입검사, 협력업체평가, 사내검사, 공정간 검사, 완제품 검사, 고객검사, 외주검사 업무 FLOW입니다.",
+    "processes": [
+      {
+        "pid": "퓨얼셀-001",
+        "process": "입고 검사",
+        "items": [
+          {
+            "step": "1",
+            "task": "구매품 내/외자 검사",
+            "work": "구매품 외관, 치수, 성능등 입고검사",
+            "inputs": "검사 신청 및 결과서, 구매품 성적서, 입고검사 Checksheet",
+            "output": "입고검사 Checksheet, 구매품성적서",
+            "system": "MES"
+          }
+        ]
+      },
+      {
+        "pid": "퓨얼셀-002",
+        "process": "수입검사",
+        "items": [
+          {
+            "step": "1",
+            "task": "고객사양 확인",
+            "work": "사양 확인",
+            "inputs": "SPEC, POS, BOM",
+            "output": "확인",
+            "system": "-"
+          },
+          {
+            "step": "2",
+            "task": "실물검사",
+            "work": "제품 검사",
+            "inputs": "도면, 실물",
+            "output": "검사 결과",
+            "system": "ERP"
+          },
+          {
+            "step": "3",
+            "task": "결과등록",
+            "work": "ERP 성적서 등록",
+            "inputs": "검사 신청 및 결과서",
+            "output": "ERP 수입검사 결과 처리",
+            "system": "ERP"
+          }
+        ]
+      },
+      {
+        "pid": "퓨얼셀-003",
+        "process": "협력업체평가",
+        "items": [
+          {
+            "step": "1",
+            "task": "서류 평가",
+            "work": "협력업체 제출 서류",
+            "inputs": "협력업체 서류",
+            "output": "서류 평가 결과",
+            "system": "-"
+          },
+          {
+            "step": "2",
+            "task": "협력업체 실사",
+            "work": "품질관리 수준 점검",
+            "inputs": "체크리스트, 서류 평가 결과",
+            "output": "실사 결과 보고서, 승인공급자목록",
+            "system": "-"
+          },
+          {
+            "step": "3",
+            "task": "정기 평가",
+            "work": "납품 품질 및 대응 수준 정기 평가",
+            "inputs": "납품 실적, 불량률, 클레임 이력",
+            "output": "협력업체 평가서",
+            "system": "-"
+          }
+        ]
+      },
+      {
+        "pid": "퓨얼셀-004",
+        "process": "사내검사",
+        "items": [
+          {
+            "step": "1",
+            "task": "부적합 관리(발생 시)",
+            "work": "제품 부적합(NCR) 및 시정조치 관리",
+            "inputs": "도면, 검사절차서, 성적서",
+            "output": "부적합 보고서",
+            "system": "-"
+          }
+        ]
+      },
+      {
+        "pid": "퓨얼셀-005",
+        "process": "공정간 검사",
+        "items": [
+          {
+            "step": "1",
+            "task": "사전검사",
+            "work": "도면, 절차서등 확인",
+            "inputs": "-",
+            "output": "확인",
+            "system": "-"
+          },
+          {
+            "step": "2",
+            "task": "치수검사",
+            "work": "제작품 치수검사",
+            "inputs": "도면",
+            "output": "치수 검사 성적서",
+            "system": "MES"
+          },
+          {
+            "step": "3",
+            "task": "용접검사",
+            "work": "용접검사(FIT-UP, FINAL WELDING)",
+            "inputs": "도면, WPS, Welding Checksheet",
+            "output": "용접 검사 성적서",
+            "system": "MES"
+          },
+          {
+            "step": "4",
+            "task": "압력검사",
+            "work": "내압시험, 수압시험, 충수(수밀)검사",
+            "inputs": "도면, 검사절차서",
+            "output": "압력 검사 성적서, MC TEST",
+            "system": "MES"
+          },
+          {
+            "step": "5",
+            "task": "도장검사",
+            "work": "도장 검사",
+            "inputs": "도면, 검사절차서",
+            "output": "도장 검사 성적서",
+            "system": "MES"
+          },
+          {
+            "step": "6",
+            "task": "작동검사 EC TEST",
+            "work": "전기검사(저항 절연 내전압등), 작동검사",
+            "inputs": "검사절차서",
+            "output": "EC TEST",
+            "system": "MES"
+          }
+        ]
+      },
+      {
+        "pid": "퓨얼셀-006",
+        "process": "완제품 검사",
+        "items": [
+          {
+            "step": "1",
+            "task": "최종검사",
+            "work": "조립 완성 검사",
+            "inputs": "도면, 검사절차서, final Checksheet",
+            "output": "final Checksheet",
+            "system": "MES"
+          },
+          {
+            "step": "2",
+            "task": "부적합 관리(발생 시)",
+            "work": "부적합 및 시정조치 관리",
+            "inputs": "도면, 검사절차서, final Checksheet",
+            "output": "부적합 보고서",
+            "system": "MES"
+          }
+        ]
+      },
+      {
+        "pid": "퓨얼셀-007",
+        "process": "고객검사",
+        "items": [
+          {
+            "step": "1",
+            "task": "고객 검사 신청",
+            "work": "KESCO, 고객 검사",
+            "inputs": "FAI 검사 & 발전소별 검사 신청",
+            "output": "검사 신청서",
+            "system": "-"
+          },
+          {
+            "step": "2",
+            "task": "고객 입회 검사",
+            "work": "KESCO, 고객 입회검사",
+            "inputs": "검사 성적서, 도면",
+            "output": "고객 검사 결과서",
+            "system": "-"
+          },
+          {
+            "step": "3",
+            "task": "부적합 관리(발생 시)",
+            "work": "고객사 부적합(NCM) 및 시정조치 관리",
+            "inputs": "도면, 검사절차서, 성적서",
+            "output": "고객사 부적합 보고서",
+            "system": "-"
+          },
+          {
+            "step": "4",
+            "task": "검사 제품 성적서 등록",
+            "work": "고객 검사 결과서(QVD) 전산 등록",
+            "inputs": "고객 검사 결과서 (QVD)",
+            "output": "고객 검사 결과서 (QVD)",
+            "system": "고객 MES"
+          }
+        ]
+      },
+      {
+        "pid": "퓨얼셀-008",
+        "process": "외주검사",
+        "items": [
+          {
+            "step": "1",
+            "task": "사외 제작품 검사",
+            "work": "신규개발품, 외주제작품 검사",
+            "inputs": "도면, 검사절차서, 성적서",
+            "output": "외주 검사 결과",
+            "system": "-"
+          }
+        ]
+      }
+    ]
+  }
+};
+    const GENERATED_PART_ORDER = ["merchant", "navy", "marine", "hvac", "fan", "fuelcell"];
+
+    function escapeHtml(value) {
+      return String(value == null ? "" : value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    function formatText(value) {
+      const safe = String(value == null || value === "" ? "-" : value);
+      return escapeHtml(safe).replace(/\n/g, "<br />");
+    }
+
+    function normalizeDash(value) {
+      const text = String(value == null ? "" : value).trim();
+      return text || "-";
+    }
+
+    function makeFlowScreenKey(partKey, pid, step) {
+      const pidSuffix = String(pid || "")
+        .split("-")
+        .slice(1)
+        .join("-")
+        .replace(/[^0-9a-zA-Z가-힣]/g, "_");
+      return `${partKey}_${pidSuffix}_${String(step).replace(/[^0-9a-zA-Z가-힣]/g, "_")}`;
+    }
+
+    function getFlowLabel(items, item) {
+      const taskName = normalizeDash(item.task);
+      const duplicateCount = items.filter((entry) => normalizeDash(entry.task) === taskName).length;
+      const baseText = !item.task || duplicateCount > 1 ? normalizeDash(item.work) : taskName;
+      return `${item.step}. ${baseText}`;
+    }
+
+    function getPartSystemSummary(part) {
+      const systems = [];
+      part.processes.forEach((process) => {
+        process.items.forEach((item) => {
+          const system = normalizeDash(item.system);
+          if (system !== "-" && !systems.includes(system)) systems.push(system);
+        });
+      });
+      return systems.length ? systems.slice(0, 3).join(", ") : "-";
+    }
+
+    function renderGeneratedPartMenus() {
+      const container = document.getElementById("generatedPartMenus");
+      if (!container) return;
+
+      container.innerHTML = GENERATED_PART_ORDER.map((partKey) => {
+        const part = PART_FLOW_DATA[partKey];
+        const processHtml = part.processes.map((process) => `
+          <details>
+            <summary class="folder"><span class="node-icon">📂</span> ${escapeHtml(process.process)}</summary>
+            <div class="subtree">
+              ${process.items.map((item) => `
+                <button class="tree-link" data-screen="${makeFlowScreenKey(partKey, process.pid, item.step)}">🔗 ${escapeHtml(getFlowLabel(process.items, item))}</button>
+              `).join("")}
+            </div>
+          </details>
+        `).join("");
+
+        return `
+          <details>
+            <summary class="folder"><span class="node-icon">📁</span> ${escapeHtml(part.partName)}</summary>
+            <div class="subtree">
+              <button class="tree-link" data-screen="${partKey}_overview">🔗 ${escapeHtml(part.partName)} 업무 FLOW</button>
+              ${processHtml}
+            </div>
+          </details>
+        `;
+      }).join("");
+    }
+
+    function partOverview(partKey) {
+      const part = PART_FLOW_DATA[partKey];
+      if (!part) return "";
+
+      const totalProcesses = part.processes.length;
+      const totalSteps = part.processes.reduce((sum, process) => sum + process.items.length, 0);
+      const systemSummary = getPartSystemSummary(part);
+
+      const processCards = part.processes.map((process) => `
+        <div class="part-card">
+          <div class="part-card-head">${escapeHtml(process.pid)} · ${escapeHtml(process.process)}</div>
+          <div class="part-card-body">
+            ${process.items.map((item) => `
+              <button onclick="protectedOpenScreen('${makeFlowScreenKey(partKey, process.pid, item.step)}')">${escapeHtml(getFlowLabel(process.items, item))}</button>
+            `).join("")}
+          </div>
+        </div>
+      `).join("");
+
+      const summaryRows = part.processes.map((process) => `
+        <tr>
+          <td>${escapeHtml(process.pid)}</td>
+          <td>${escapeHtml(process.process)}</td>
+          <td>${process.items.length}</td>
+          <td>${escapeHtml(process.items.map((item) => getFlowLabel(process.items, item)).join(", "))}</td>
+        </tr>
+      `).join("");
+
       return `
         <div class="screen-head">
-          <h1>${partName} 업무 FLOW</h1>
-          <p>${desc}</p>
+          <h1>${escapeHtml(part.partName)} 업무 FLOW</h1>
+          <p>${escapeHtml(part.overviewDesc)}</p>
         </div>
         <div class="screen-body">
           <div class="callout">
-            ${partName} 파트 업무를 정리하는 화면입니다.
+            <strong>${escapeHtml(part.partName)}</strong> 파트의 전체 업무 흐름을 프로세스별로 정리했습니다.
           </div>
 
-          <div class="part-grid">
-            <div class="part-card">
-              <div class="part-card-head">업무 목록</div>
-              <div class="part-card-body">
-                <button>업무 01</button>
-                <button>업무 02</button>
-                <button>업무 03</button>
+          <div class="kpi-grid">
+            <div class="kpi"><strong>${totalProcesses}</strong><span>프로세스 수</span></div>
+            <div class="kpi"><strong>${totalSteps}</strong><span>세부 단계 수</span></div>
+            <div class="kpi"><strong>${escapeHtml(part.partLabel)}</strong><span>파트 명칭</span></div>
+            <div class="kpi"><strong>${escapeHtml(systemSummary)}</strong><span>주요 연관 시스템</span></div>
+          </div>
+
+          <div class="panel-grid">
+            <div class="panel">
+              <h3>프로세스별 업무</h3>
+              <div class="part-grid">
+                ${processCards}
               </div>
             </div>
 
-            <div class="part-card">
-              <div class="part-card-head">안내</div>
-              <div class="part-card-body">
-                <div class="empty-note">
-                  필요한 업무 항목을 이 영역에 추가해서 사용하면 됩니다.
-                </div>
+            <div class="panel">
+              <h3>프로세스 요약</h3>
+              <div class="table-wrap">
+                <table>
+                  <tr><th>프로세스 ID</th><th>프로세스</th><th>단계 수</th><th>세부 업무</th></tr>
+                  ${summaryRows}
+                </table>
               </div>
             </div>
           </div>
@@ -1401,8 +2682,114 @@
       `;
     }
 
+    function getFlowEntry(partKey, pid, step) {
+      const part = PART_FLOW_DATA[partKey];
+      if (!part) return null;
+
+      for (const process of part.processes) {
+        if (process.pid !== pid) continue;
+        const item = process.items.find((entry) => String(entry.step) === String(step));
+        if (item) return { part, process, item };
+      }
+
+      return null;
+    }
+
+    function partFlowScreen(partKey, pid, step) {
+      const entry = getFlowEntry(partKey, pid, step);
+      if (!entry) return "";
+
+      const { part, process, item } = entry;
+      const label = getFlowLabel(process.items, item);
+      const relatedRows = process.items.map((relatedItem) => {
+        const relatedLabel = getFlowLabel(process.items, relatedItem);
+        const currentCell = String(relatedItem.step) === String(step)
+          ? `<strong>${escapeHtml(relatedLabel)}</strong>`
+          : escapeHtml(relatedLabel);
+
+        return `
+          <tr>
+            <td>${formatText(relatedItem.step)}</td>
+            <td>${currentCell}</td>
+            <td>${formatText(relatedItem.work)}</td>
+          </tr>
+        `;
+      }).join("");
+
+      return `
+        <div class="screen-head">
+          <h1>${escapeHtml(part.partName)} / ${escapeHtml(process.process)} / ${escapeHtml(label)}</h1>
+          <p>${escapeHtml(process.pid)} · ${escapeHtml(item.work)}</p>
+        </div>
+        <div class="screen-body">
+          <div class="callout">
+            <strong>업무 개요:</strong> ${escapeHtml(item.work)}
+          </div>
+
+          <div class="panel-grid">
+            <div class="panel">
+              <h3>업무 정보</h3>
+              <div class="table-wrap">
+                <table>
+                  <tr><th>항목</th><th>내용</th></tr>
+                  <tr><td>프로세스 ID</td><td>${formatText(process.pid)}</td></tr>
+                  <tr><td>파트</td><td>${formatText(part.partLabel)}</td></tr>
+                  <tr><td>프로세스</td><td>${formatText(process.process)}</td></tr>
+                  <tr><td>세부 업무</td><td>${formatText(item.task)}</td></tr>
+                  <tr><td>업무 단계</td><td>${formatText(item.step)}</td></tr>
+                  <tr><td>업무 설명</td><td>${formatText(item.work)}</td></tr>
+                  <tr><td>입력 자료</td><td>${formatText(item.inputs)}</td></tr>
+                  <tr><td>출력물/결과</td><td>${formatText(item.output)}</td></tr>
+                  <tr><td>연관 시스템</td><td>${formatText(item.system)}</td></tr>
+                </table>
+              </div>
+
+              <div class="action-row">
+                <button class="btn primary" onclick="protectedOpenScreen('${partKey}_overview')">${escapeHtml(part.partName)} 전체 FLOW</button>
+              </div>
+            </div>
+
+            <div class="panel">
+              <h3>${escapeHtml(process.process)} 단계</h3>
+              <div class="table-wrap">
+                <table>
+                  <tr><th>단계</th><th>표시명</th><th>업무 설명</th></tr>
+                  ${relatedRows}
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function registerGeneratedScreens() {
+      GENERATED_PART_ORDER.forEach((partKey) => {
+        const part = PART_FLOW_DATA[partKey];
+        screens[`${partKey}_overview`] = {
+          tab: `${part.partName} 업무 FLOW`,
+          html: () => partOverview(partKey)
+        };
+
+        part.processes.forEach((process) => {
+          process.items.forEach((item) => {
+            const screenKey = makeFlowScreenKey(partKey, process.pid, item.step);
+            screens[screenKey] = {
+              tab: `${part.partName} > ${process.process} > ${getFlowLabel(process.items, item)}`,
+              html: () => partFlowScreen(partKey, process.pid, item.step)
+            };
+          });
+        });
+      });
+    }
+
     const screens = {
       home: { tab: "Home", html: () => homeScreen() },
+
+      qa_overview: {
+        tab: "QA 업무 FLOW",
+        html: () => qaOverviewScreen()
+      },
 
       qa_001_1: {
         tab: "QA > 수입검사 > 고객사양 확인",
@@ -1903,36 +3290,6 @@
           result: "등록 완료"
         })
       },
-
-      merchant_overview: {
-        tab: "상선 업무 FLOW",
-        html: () => partOverview("상선", "상선 파트 업무 화면입니다.")
-      },
-
-      navy_overview: {
-        tab: "해군 업무 FLOW",
-        html: () => partOverview("해군", "해군 파트 업무 화면입니다.")
-      },
-
-      marine_overview: {
-        tab: "해양 업무 FLOW",
-        html: () => partOverview("해양", "해양 파트 업무 화면입니다.")
-      },
-
-      hvac_overview: {
-        tab: "산업공조 업무 FLOW",
-        html: () => partOverview("산업공조", "산업공조 파트 업무 화면입니다.")
-      },
-
-      fan_overview: {
-        tab: "FAN 업무 FLOW",
-        html: () => partOverview("FAN", "FAN 파트 업무 화면입니다.")
-      },
-
-      fuelcell_overview: {
-        tab: "퓨얼셀 업무 FLOW",
-        html: () => partOverview("퓨얼셀", "퓨얼셀 파트 업무 화면입니다.")
-      }
     };
 
     function setActiveMenu(screenKey) {
@@ -2058,6 +3415,8 @@
     }
 
     function init() {
+      renderGeneratedPartMenus();
+      registerGeneratedScreens();
       loadSavedUser();
       bindActivityEvents();
       bindMenuEvents();
