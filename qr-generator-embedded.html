@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QR 생성기</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    :root {
+      --navy: #344a8c;
+      --navy-dark: #26386a;
+      --line: #d8dce5;
+      --bg: #f6f8fc;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --shadow: 0 10px 24px rgba(31, 41, 55, 0.08);
+      --warn: #b42318;
+      --warn-bg: #fef3f2;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 20px;
+    }
+
+    .hero {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: linear-gradient(135deg, var(--navy-dark), var(--navy));
+      color: #fff;
+      padding: 22px;
+      margin-bottom: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-size: 28px;
+      line-height: 1.3;
+    }
+
+    .hero p {
+      margin: 12px 0 0;
+      color: rgba(255,255,255,.9);
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: var(--card);
+      box-shadow: var(--shadow);
+      padding: 22px;
+    }
+
+    .tool-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(320px, .9fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .input-group {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .input, .select, .color {
+      width: 100%;
+      border: 1px solid #cfd9e5;
+      border-radius: 12px;
+      font-size: 14px;
+      outline: none;
+      transition: .2s ease;
+      background: #fff;
+    }
+
+    .input {
+      padding: 14px 15px;
+    }
+
+    .select {
+      padding: 11px 12px;
+    }
+
+    .color {
+      min-height: 44px;
+      padding: 4px 8px;
+      cursor: pointer;
+    }
+
+    .input:focus, .select:focus {
+      border-color: var(--navy);
+      box-shadow: 0 0 0 4px rgba(52,74,140,.08);
+    }
+
+    .generate-btn, .download-btn {
+      border: none;
+      border-radius: 12px;
+      padding: 12px 16px;
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: .2s ease;
+    }
+
+    .generate-btn {
+      background: var(--navy);
+      color: #fff;
+      white-space: nowrap;
+    }
+
+    .generate-btn:hover, .download-btn.primary:hover {
+      background: var(--navy-dark);
+    }
+
+    .option-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .option label {
+      display: block;
+      margin-bottom: 6px;
+      color: #5f6b84;
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .6px;
+    }
+
+    .error {
+      display: none;
+      margin-bottom: 14px;
+      color: var(--warn);
+      background: var(--warn-bg);
+      border: 1px solid #fecaca;
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .error.visible { display: block; }
+
+    .help-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .help-card {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fbfcfe;
+      padding: 14px;
+    }
+
+    .help-card strong {
+      display: block;
+      color: #22365e;
+      margin-bottom: 6px;
+    }
+
+    .help-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    .preview-panel {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #fbfcfe;
+      padding: 18px;
+      min-height: 100%;
+    }
+
+    .preview-head {
+      margin-bottom: 14px;
+    }
+
+    .preview-head strong {
+      display: block;
+      color: #22365e;
+      font-size: 16px;
+      margin-bottom: 4px;
+    }
+
+    .preview-head span {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .result-box {
+      min-height: 320px;
+      border: 1px dashed #bfd3f7;
+      border-radius: 16px;
+      background: #f8fbff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      margin-bottom: 14px;
+    }
+
+    .empty-note {
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.8;
+    }
+
+    .qr-wrap {
+      background: #fff;
+      border-radius: 16px;
+      padding: 18px;
+      box-shadow: 0 10px 24px rgba(31, 41, 55, .08);
+    }
+
+    .qr-wrap canvas, .qr-wrap img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+    }
+
+    .url-note {
+      margin-bottom: 14px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.7;
+      word-break: break-all;
+      display: none;
+    }
+
+    .download-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .download-btn {
+      background: #fff;
+      color: #24314f;
+      border: 1px solid #c6d0e0;
+    }
+
+    .download-btn:hover { background: #f5f8ff; }
+
+    .download-btn.primary {
+      background: var(--navy);
+      border-color: var(--navy);
+      color: #fff;
+    }
+
+    @media (max-width: 780px) {
+      body {
+        padding: 12px;
+      }
+
+      .tool-grid, .input-group, .option-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .generate-btn, .download-btn {
+        width: 100%;
+      }
+
+      .hero h1 {
+        font-size: 24px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <section class="hero">
+    <h1>QR 생성기</h1>
+    <p>URL을 입력하면 QR 코드를 생성하고 PNG, JPG, PDF 형식으로 다운로드할 수 있습니다.</p>
+  </section>
+
+  <section class="panel">
+    <div class="tool-grid">
+      <div>
+        <div class="input-group">
+          <input type="url" id="urlInput" class="input" placeholder="https://example.com" autocomplete="off" />
+          <button type="button" class="generate-btn" onclick="generateQR()">QR 생성</button>
+        </div>
+
+        <div id="errorBox" class="error">올바른 URL을 입력해주세요. 예: https://example.com</div>
+
+        <div class="option-grid">
+          <div class="option">
+            <label for="qrSize">QR 크기</label>
+            <select id="qrSize" class="select">
+              <option value="128">소형 (128px)</option>
+              <option value="200" selected>중형 (200px)</option>
+              <option value="300">대형 (300px)</option>
+              <option value="400">초대형 (400px)</option>
+            </select>
+          </div>
+
+          <div class="option">
+            <label for="errorLevel">오류 수정 레벨</label>
+            <select id="errorLevel" class="select">
+              <option value="L">낮음 (L)</option>
+              <option value="M" selected>중간 (M)</option>
+              <option value="Q">높음 (Q)</option>
+              <option value="H">최고 (H)</option>
+            </select>
+          </div>
+
+          <div class="option">
+            <label for="colorDark">QR 색상</label>
+            <input type="color" id="colorDark" class="color" value="#000000" />
+          </div>
+
+          <div class="option">
+            <label for="colorLight">배경 색상</label>
+            <input type="color" id="colorLight" class="color" value="#ffffff" />
+          </div>
+        </div>
+
+        <div class="help-grid">
+          <div class="help-card">
+            <strong>1. URL 입력</strong>
+            <p>회사 홈페이지, 장비 페이지, 문서 링크 등 원하는 주소를 넣습니다.</p>
+          </div>
+          <div class="help-card">
+            <strong>2. QR 생성</strong>
+            <p>크기, 색상, 오류 수정 레벨을 선택한 뒤 QR 생성을 누릅니다.</p>
+          </div>
+          <div class="help-card">
+            <strong>3. 다운로드</strong>
+            <p>생성된 QR 코드를 PNG, JPG, PDF 형식으로 저장할 수 있습니다.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="preview-panel">
+        <div class="preview-head">
+          <strong>미리보기</strong>
+          <span>생성 후 바로 확인할 수 있습니다.</span>
+        </div>
+
+        <div id="resultBox" class="result-box">
+          <div class="empty-note">
+            아직 생성된 QR 코드가 없습니다.<br />
+            URL을 입력하고 QR 생성을 눌러주세요.
+          </div>
+        </div>
+
+        <div id="urlNote" class="url-note"></div>
+
+        <div class="download-row">
+          <button type="button" class="download-btn primary" onclick="downloadAs('png')">PNG 다운로드</button>
+          <button type="button" class="download-btn" onclick="downloadAs('jpg')">JPG 다운로드</button>
+          <button type="button" class="download-btn" onclick="downloadAs('pdf')">PDF 다운로드</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    function notifyParentHeight() {
+      try {
+        const height = Math.max(
+          document.documentElement.scrollHeight,
+          document.body.scrollHeight
+        );
+        window.parent.postMessage({ type: 'qr-generator-height', height: height }, '*');
+      } catch (error) {}
+    }
+
+    document.getElementById('urlInput').addEventListener('keydown', function(event) {
+      if (event.key === 'Enter') generateQR();
+    });
+
+    function isValidUrl(value) {
+      try {
+        new URL(String(value || '').trim());
+        return true;
+      } catch (error) {
+        return false;
+      }
+    }
+
+    function generateQR() {
+      const url = document.getElementById('urlInput').value.trim();
+      const errorBox = document.getElementById('errorBox');
+
+      if (!url || !isValidUrl(url)) {
+        errorBox.classList.add('visible');
+        notifyParentHeight();
+        return;
+      }
+
+      errorBox.classList.remove('visible');
+
+      const size = parseInt(document.getElementById('qrSize').value, 10);
+      const ecLevel = document.getElementById('errorLevel').value;
+      const dark = document.getElementById('colorDark').value;
+      const light = document.getElementById('colorLight').value;
+      const resultBox = document.getElementById('resultBox');
+
+      resultBox.innerHTML = '<div class="qr-wrap"><div id="qrcode"></div></div>';
+
+      const ecMap = {
+        L: QRCode.CorrectLevel.L,
+        M: QRCode.CorrectLevel.M,
+        Q: QRCode.CorrectLevel.Q,
+        H: QRCode.CorrectLevel.H
+      };
+
+      new QRCode(document.getElementById('qrcode'), {
+        text: url,
+        width: size,
+        height: size,
+        colorDark: dark,
+        colorLight: light,
+        correctLevel: ecMap[ecLevel]
+      });
+
+      const urlNote = document.getElementById('urlNote');
+      urlNote.textContent = url;
+      urlNote.style.display = 'block';
+      notifyParentHeight();
+    }
+
+    function getCanvas() {
+      const canvas = document.querySelector('#qrcode canvas');
+      if (canvas) return canvas;
+
+      const img = document.querySelector('#qrcode img');
+      if (!img) return null;
+
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = img.naturalWidth || img.width;
+      tempCanvas.height = img.naturalHeight || img.height;
+      tempCanvas.getContext('2d').drawImage(img, 0, 0);
+      return tempCanvas;
+    }
+
+    function makeFilename() {
+      const now = new Date();
+      const pad = (num) => String(num).padStart(2, '0');
+      return 'qrcode_' +
+        now.getFullYear() +
+        pad(now.getMonth() + 1) +
+        pad(now.getDate()) + '_' +
+        pad(now.getHours()) +
+        pad(now.getMinutes()) +
+        pad(now.getSeconds());
+    }
+
+    function downloadAs(type) {
+      const canvas = getCanvas();
+      if (!canvas) {
+        alert('먼저 QR 코드를 생성해주세요.');
+        return;
+      }
+
+      const filename = makeFilename();
+
+      if (type === 'png') {
+        const link = document.createElement('a');
+        link.href = canvas.toDataURL('image/png');
+        link.download = filename + '.png';
+        link.click();
+        return;
+      }
+
+      if (type === 'jpg') {
+        const jpgCanvas = document.createElement('canvas');
+        jpgCanvas.width = canvas.width;
+        jpgCanvas.height = canvas.height;
+        const ctx = jpgCanvas.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, jpgCanvas.width, jpgCanvas.height);
+        ctx.drawImage(canvas, 0, 0);
+
+        const link = document.createElement('a');
+        link.href = jpgCanvas.toDataURL('image/jpeg', 0.95);
+        link.download = filename + '.jpg';
+        link.click();
+        return;
+      }
+
+      if (type === 'pdf') {
+        const { jsPDF } = window.jspdf;
+        const margin = 20;
+        const imgData = canvas.toDataURL('image/png');
+        const pxToMm = (px) => px * 25.4 / 96;
+        const qrMm = pxToMm(canvas.width);
+        const pageW = qrMm + margin * 2;
+        const textH = 18;
+        const pageH = margin + qrMm + textH + margin;
+        const doc = new jsPDF({ unit: 'mm', format: [pageW, pageH] });
+
+        doc.setFillColor(255, 255, 255);
+        doc.rect(0, 0, pageW, pageH, 'F');
+        doc.addImage(imgData, 'PNG', margin, margin, qrMm, qrMm);
+
+        doc.setFontSize(8);
+        doc.setTextColor(100, 100, 100);
+        const lines = doc.splitTextToSize(document.getElementById('urlInput').value.trim(), qrMm);
+        doc.text(lines, margin, margin + qrMm + 8);
+
+        doc.save(filename + '.pdf');
+      }
+    }
+
+    window.addEventListener('load', notifyParentHeight);
+    window.addEventListener('resize', notifyParentHeight);
+  </script>
+</body>
+</html>
