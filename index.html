@@ -766,6 +766,23 @@
       background: #dfe7f1;
     }
 
+
+    .embedded-page-card {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #fff;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+
+    .embedded-page-frame {
+      display: block;
+      width: 100%;
+      min-height: 1120px;
+      border: 0;
+      background: #fff;
+    }
+
     @media (max-width: 1200px) {
       .kpi-grid { grid-template-columns: repeat(2, 1fr); }
       .panel-grid,
@@ -893,6 +910,13 @@
               <button class="tree-link" data-screen="qa_overview">🔗 QA 업무 FLOW</button>
 
               <details>
+                <summary class="folder"><span class="node-icon">🧪</span> Test</summary>
+                <div class="subtree">
+                  <button class="tree-link" data-screen="qa_test_qr_embed">🌐 QR 생성기</button>
+                </div>
+              </details>
+
+              <details>
                 <summary class="folder"><span class="node-icon">📂</span> 수입검사</summary>
                 <div class="subtree">
                   <button class="tree-link" data-screen="qa_001_1">🔗 고객사양 확인</button>
@@ -935,8 +959,8 @@
                   <button class="tree-link" data-screen="qa_005_1">🔗 계측기 구매</button>
                   <button class="tree-link" data-screen="qa_005_2">🔗 계측기 검교정</button>
                   <button class="tree-link" data-screen="qa_005_3">🔗 계측기 등록</button>
-                  <button class="tree-link" data-url="equipment.html">🌐 계측기 불출</button>
-                  <button class="tree-link" data-url="equipment.html">🌐 계측기 반납</button>
+                  <button class="tree-link" data-screen="qa_equipment_checkout_embed">🌐 계측기 불출</button>
+                  <button class="tree-link" data-screen="qa_equipment_return_embed">🌐 계측기 반납</button>
                   <button class="tree-link" data-screen="qa_005_6">🔗 정기 검교정</button>
                   <button class="tree-link" data-screen="qa_005_7">🔗 손망실 처리</button>
                 </div>
@@ -1333,8 +1357,9 @@
               <div class="qa-process">
                 <div class="qa-process-head">계측기 바로가기</div>
                 <div class="qa-process-body">
-                  <button onclick="protectedGoUrl('equipment.html')">계측기 불출</button>
-                  <button onclick="protectedGoUrl('equipment.html')">계측기 반납</button>
+                  <button onclick="protectedOpenScreen('qa_equipment_checkout_embed')">🌐 계측기 불출</button>
+                  <button onclick="protectedOpenScreen('qa_equipment_return_embed')">🌐 계측기 반납</button>
+                  <button onclick="protectedOpenScreen('qa_test_qr_embed')">🌐 QR 생성기</button>
                 </div>
               </div>
             </div>
@@ -1344,6 +1369,12 @@
     }
 
     const QA_OVERVIEW_GROUPS = [
+      {
+        title: "Test",
+        items: [
+          { label: "🌐 QR 생성기", screen: "qa_test_qr_embed" }
+        ]
+      },
       {
         title: "수입검사",
         items: [
@@ -1383,8 +1414,8 @@
           { label: "계측기 구매", screen: "qa_005_1" },
           { label: "계측기 검교정", screen: "qa_005_2" },
           { label: "계측기 등록", screen: "qa_005_3" },
-          { label: "계측기 불출", url: "equipment.html" },
-          { label: "계측기 반납", url: "equipment.html" },
+          { label: "🌐 계측기 불출", screen: "qa_equipment_checkout_embed" },
+          { label: "🌐 계측기 반납", screen: "qa_equipment_return_embed" },
           { label: "정기 검교정", screen: "qa_005_6" },
           { label: "손망실 처리", screen: "qa_005_7" }
         ]
@@ -1462,6 +1493,49 @@
                 </table>
               </div>
             </div>
+          </div>
+        </div>
+      `;
+    }
+
+
+    function qrEmbedScreen() {
+      return `
+        <div class="screen-head">
+          <h1>QA / Test / QR 생성기</h1>
+          <p>URL을 입력하면 QR 코드를 생성하고 PNG, JPG, PDF 형식으로 저장할 수 있습니다.</p>
+        </div>
+        <div class="screen-body">
+          <div class="embedded-page-card">
+            <iframe
+              id="qrGeneratorFrame"
+              class="embedded-page-frame"
+              src="qr-generator-embedded.html"
+              title="QR 생성기"
+              loading="lazy"
+              onload="resizePortalFrame(this)">
+            </iframe>
+          </div>
+        </div>
+      `;
+    }
+
+
+    function equipmentEmbedScreen(titleText) {
+      return `
+        <div class="screen-head">
+          <h1>${titleText}</h1>
+          <p>계측기 불출 및 반납 업무를 확인할 수 있습니다.</p>
+        </div>
+        <div class="screen-body">
+          <div class="embedded-page-card">
+            <iframe
+              class="embedded-page-frame"
+              src="equipment.html"
+              title="${titleText}"
+              loading="lazy"
+              onload="resizePortalFrame(this)">
+            </iframe>
           </div>
         </div>
       `;
@@ -2865,6 +2939,21 @@
         html: () => qaOverviewScreen()
       },
 
+      qa_test_qr_embed: {
+        tab: "QA > Test > QR 생성기",
+        html: () => qrEmbedScreen()
+      },
+
+      qa_equipment_checkout_embed: {
+        tab: "QA > 계측기관리 > 계측기 불출",
+        html: () => equipmentEmbedScreen("QA / 계측기관리 / 계측기 불출")
+      },
+
+      qa_equipment_return_embed: {
+        tab: "QA > 계측기관리 > 계측기 반납",
+        html: () => equipmentEmbedScreen("QA / 계측기관리 / 계측기 반납")
+      },
+
       qa_001_1: {
         tab: "QA > 수입검사 > 고객사양 확인",
         html: () => automationScreen({
@@ -3365,6 +3454,46 @@
         })
       },
     };
+
+
+    function resizePortalFrame(frame) {
+      if (!frame) return;
+
+      const applyHeight = function() {
+        try {
+          const doc = frame.contentWindow.document.documentElement;
+          const body = frame.contentWindow.document.body;
+          const nextHeight = Math.max(
+            980,
+            doc ? doc.scrollHeight : 0,
+            body ? body.scrollHeight : 0
+          );
+          frame.style.height = nextHeight + "px";
+        } catch (error) {
+          frame.style.height = "1120px";
+        }
+      };
+
+      applyHeight();
+      setTimeout(applyHeight, 300);
+      setTimeout(applyHeight, 1000);
+      setTimeout(applyHeight, 2500);
+      setTimeout(applyHeight, 5000);
+    }
+
+    window.resizePortalFrame = resizePortalFrame;
+
+
+    window.addEventListener("message", function(event) {
+      const data = event.data || {};
+      if (data.type !== "qr-generator-height") return;
+
+      const frame = document.getElementById("qrGeneratorFrame");
+      if (!frame) return;
+
+      const height = Math.max(980, Number(data.height) || 0);
+      frame.style.height = height + "px";
+    });
 
     function setActiveMenu(screenKey) {
       document.querySelectorAll(".tree-link, .tree-home").forEach((el) => {
