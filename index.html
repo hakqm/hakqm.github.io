@@ -53,12 +53,36 @@
     }
 
     .brand {
-      display: flex;
+      display: inline-flex;
       align-items: center;
       gap: 10px;
+      padding: 9px 14px;
+      border-radius: 12px;
+      background: rgba(255,255,255,.10);
+      border: 1px solid rgba(255,255,255,.16);
+      color: #fff;
+      text-decoration: none;
+      transition: .2s ease;
+    }
+
+    .brand:hover {
+      background: rgba(255,255,255,.18);
+    }
+
+    .brand-title {
       font-weight: 800;
       font-size: 15px;
       letter-spacing: .2px;
+      white-space: nowrap;
+    }
+
+    .brand-badge {
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.14);
+      font-size: 11px;
+      font-weight: 700;
+      white-space: nowrap;
     }
 
     .brand .icon {
@@ -610,6 +634,18 @@
       line-height: 1.8;
     }
 
+    .portal-footer {
+      padding: 0 16px 18px;
+      color: #6b7280;
+      font-size: 13px;
+      line-height: 1.8;
+      text-align: center;
+    }
+
+    .portal-footer strong {
+      color: var(--navy-dark);
+    }
+
     .modal {
       position: fixed;
       inset: 0;
@@ -763,7 +799,11 @@
       }
 
       .brand {
-        font-size: 14px;
+        padding: 8px 10px;
+      }
+
+      .brand-title {
+        font-size: 13px;
       }
 
       .top-right {
@@ -818,9 +858,10 @@
 <body>
   <div class="app">
     <div class="topbar">
-      <div class="brand">
-        QM AI AGENT
-      </div>
+      <a class="brand" href="https://hakqm.github.io/" title="메인으로 이동">
+        <span class="brand-title">HAK QM AI AGENT</span>
+        <span class="brand-badge">메인</span>
+      </a>
 
       <div class="top-right">
         <div id="userChip" class="user-chip hidden">
@@ -927,6 +968,11 @@
         <div class="workspace">
           <div class="screen" id="screen"></div>
         </div>
+        <footer class="portal-footer">
+          <strong>HI AIR KOREA</strong><br />
+          HAK QM AI AGENT<br />
+          Copyright © 2026 HI AIR KOREA Co.,Ltd. All Rights Reserved.
+        </footer>
       </section>
     </div>
   </div>
@@ -3359,8 +3405,17 @@
       openLoginModal();
     };
 
+    function resetMenuToInitialState() {
+      menuSearch.value = "";
+      clearMenuSearchBtn.style.display = "none";
+      resetMenuFilter();
+    }
+
     function bindMenuEvents() {
-      document.querySelector(".tree-home").addEventListener("click", () => openScreen("home"));
+      document.querySelector(".tree-home").addEventListener("click", () => {
+        resetMenuToInitialState();
+        openScreen("home");
+      });
 
       document.querySelectorAll(".tree-link").forEach((link) => {
         link.addEventListener("click", () => {
