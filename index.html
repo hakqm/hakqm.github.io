@@ -912,7 +912,7 @@
               <details>
                 <summary class="folder"><span class="node-icon">🧪</span> Test</summary>
                 <div class="subtree">
-                  <button type="button" class="tree-link" data-screen="qa_test_qr_embed" onclick="protectedOpenScreen('qa_test_qr_embed')">🌐 QR 생성기</button>
+                  <button type="button" class="tree-link" data-screen="qa_test_qr_embed">🌐 QR 생성기</button>
                 </div>
               </details>
 
@@ -959,8 +959,8 @@
                   <button class="tree-link" data-screen="qa_005_1">🔗 계측기 구매</button>
                   <button class="tree-link" data-screen="qa_005_2">🔗 계측기 검교정</button>
                   <button class="tree-link" data-screen="qa_005_3">🔗 계측기 등록</button>
-                  <button type="button" class="tree-link" data-screen="qa_equipment_checkout_embed" onclick="protectedOpenScreen('qa_equipment_checkout_embed')">🌐 계측기 불출</button>
-                  <button type="button" class="tree-link" data-screen="qa_equipment_return_embed" onclick="protectedOpenScreen('qa_equipment_return_embed')">🌐 계측기 반납</button>
+                  <button type="button" class="tree-link" data-screen="qa_equipment_checkout_embed">🌐 계측기 불출</button>
+                  <button type="button" class="tree-link" data-screen="qa_equipment_return_embed">🌐 계측기 반납</button>
                   <button class="tree-link" data-screen="qa_005_6">🔗 정기 검교정</button>
                   <button class="tree-link" data-screen="qa_005_7">🔗 손망실 처리</button>
                 </div>
@@ -1253,9 +1253,18 @@
         return;
       }
 
+      const modalOpened = !loginModal.classList.contains("hidden");
+      const shouldAlert = !modalOpened || !isSameAction(pendingAction, actionObject);
+
       pendingAction = actionObject;
-      openLoginModal();
-      alert("로그인이 필요합니다. 로그인 후 선택한 메뉴가 자동으로 실행됩니다.");
+
+      if (!modalOpened) {
+        openLoginModal();
+      }
+
+      if (shouldAlert) {
+        alert("로그인이 필요합니다. 로그인 후 선택한 메뉴가 자동으로 실행됩니다.");
+      }
     }
 
     function runPendingAction() {
@@ -1292,7 +1301,7 @@
           </div>
           <div class="login-required-box">
             <strong>로그인 후 메뉴를 사용할 수 있습니다.</strong>
-            <button class="btn primary" onclick="openLoginModalFromHome()">로그인하기</button>
+            <button class="btn primary" type="button" data-action="open-login">로그인하기</button>
           </div>
         `;
 
@@ -1357,9 +1366,9 @@
               <div class="qa-process">
                 <div class="qa-process-head">계측기 바로가기</div>
                 <div class="qa-process-body">
-                  <button onclick="protectedOpenScreen('qa_equipment_checkout_embed')">🌐 계측기 불출</button>
-                  <button onclick="protectedOpenScreen('qa_equipment_return_embed')">🌐 계측기 반납</button>
-                  <button onclick="protectedOpenScreen('qa_test_qr_embed')">🌐 QR 생성기</button>
+                  <button type="button" data-screen="qa_equipment_checkout_embed">🌐 계측기 불출</button>
+                  <button type="button" data-screen="qa_equipment_return_embed">🌐 계측기 반납</button>
+                  <button type="button" data-screen="qa_test_qr_embed">🌐 QR 생성기</button>
                 </div>
               </div>
             </div>
@@ -1443,9 +1452,9 @@
           <div class="part-card-body">
             ${group.items.map((item) => {
               if (item.screen) {
-                return `<button onclick="protectedOpenScreen('${item.screen}')">${item.label}</button>`;
+                return `<button type="button" data-screen="${item.screen}">${item.label}</button>`;
               }
-              return `<button onclick="protectedGoUrl('${item.url}')">${item.label}</button>`;
+              return `<button type="button" data-url="${item.url}">${item.label}</button>`;
             }).join("")}
           </div>
         </div>
@@ -2776,7 +2785,7 @@
           <div class="part-card-head">${escapeHtml(process.pid)} · ${escapeHtml(process.process)}</div>
           <div class="part-card-body">
             ${process.items.map((item) => `
-              <button onclick="protectedOpenScreen('${makeFlowScreenKey(partKey, process.pid, item.step)}')">${escapeHtml(getFlowLabel(process.items, item))}</button>
+              <button type="button" data-screen="${makeFlowScreenKey(partKey, process.pid, item.step)}">${escapeHtml(getFlowLabel(process.items, item))}</button>
             `).join("")}
           </div>
         </div>
@@ -2893,7 +2902,7 @@
               </div>
 
               <div class="action-row">
-                <button class="btn primary" onclick="protectedOpenScreen('${partKey}_overview')">${escapeHtml(part.partName)} 전체 FLOW</button>
+                <button class="btn primary" type="button" data-screen="${partKey}_overview">${escapeHtml(part.partName)} 전체 FLOW</button>
               </div>
             </div>
 
@@ -3519,20 +3528,25 @@
       setActiveMenu(key);
     }
 
-    function protectedOpenScreen(key) {
+    function isSameAction(actionA, actionB) {
+      if (!actionA || !actionB) return false;
+      return actionA.type === actionB.type
+        && actionA.key === actionB.key
+        && actionA.url === actionB.url;
+    }
+
+    function openScreenWithAuth(key) {
       requireLogin({ type: "screen", key: key });
     }
 
-    function protectedGoUrl(url) {
+    function openUrlWithAuth(url) {
       requireLogin({ type: "url", url: url });
     }
 
-    window.protectedOpenScreen = protectedOpenScreen;
-    window.protectedGoUrl = protectedGoUrl;
-    window.openLoginModalFromHome = function() {
+    function openLoginFromScreen() {
       pendingAction = null;
       openLoginModal();
-    };
+    }
 
     function resetMenuToInitialState() {
       menuSearch.value = "";
@@ -3541,25 +3555,53 @@
     }
 
     function bindMenuEvents() {
-      document.querySelector(".tree-home").addEventListener("click", () => {
-        resetMenuToInitialState();
-        openScreen("home");
-      });
+      const treeWrap = document.querySelector(".tree-wrap");
+      const homeButton = document.querySelector(".tree-home");
 
-      document.querySelectorAll(".tree-link").forEach((link) => {
-        link.addEventListener("click", () => {
-          const screen = link.dataset.screen;
-          const url = link.dataset.url;
-
-          if (screen) {
-            requireLogin({ type: "screen", key: screen });
-            return;
-          }
-
-          if (url) {
-            requireLogin({ type: "url", url: url });
-          }
+      if (homeButton) {
+        homeButton.addEventListener("click", () => {
+          resetMenuToInitialState();
+          openScreen("home");
         });
+      }
+
+      if (!treeWrap) return;
+
+      treeWrap.addEventListener("click", (event) => {
+        const link = event.target.closest(".tree-link");
+        if (!link) return;
+
+        const { screen, url } = link.dataset;
+
+        if (screen) {
+          openScreenWithAuth(screen);
+          return;
+        }
+
+        if (url) {
+          openUrlWithAuth(url);
+        }
+      });
+    }
+
+    function bindScreenEvents() {
+      screenEl.addEventListener("click", (event) => {
+        const actionButton = event.target.closest("button[data-screen], button[data-url], button[data-action]");
+        if (!actionButton) return;
+
+        if (actionButton.dataset.action === "open-login") {
+          openLoginFromScreen();
+          return;
+        }
+
+        if (actionButton.dataset.screen) {
+          openScreenWithAuth(actionButton.dataset.screen);
+          return;
+        }
+
+        if (actionButton.dataset.url) {
+          openUrlWithAuth(actionButton.dataset.url);
+        }
       });
     }
 
@@ -3731,6 +3773,7 @@
       loadSavedUser();
       bindActivityEvents();
       bindMenuEvents();
+      bindScreenEvents();
       bindModalEvents();
       syncLoginStateAcrossPages();
       startAutoLogoutWatcher();
