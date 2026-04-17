@@ -3565,6 +3565,15 @@
         const frameDocument = frameWindow && frameWindow.document;
         if (!frameDocument) return;
 
+        const frameUrl = new URL(frameWindow.location.href, window.location.href);
+        const currentPath = frameUrl.pathname.replace(/\/+$/, "") || "/";
+        const isPortalHome = currentPath === "/" || currentPath.endsWith("/index.html");
+
+        if (isPortalHome) {
+          window.location.replace(frameUrl.href);
+          return;
+        }
+
         const rootSelectors = [
           "a.brand",
           "a.company",
@@ -3574,14 +3583,59 @@
           'a[href="/"]'
         ];
 
-        frameDocument.querySelectorAll(rootSelectors.join(",")).forEach((link) => {
-          const targetHref = link.href || "https://hakqm.github.io/";
-          link.setAttribute("target", "_top");
-          link.addEventListener("click", function(event) {
-            event.preventDefault();
-            window.location.href = targetHref;
+        const rootSelectorText = rootSelectors.join(",");
+
+        const moveTop = function(targetHref) {
+          const nextHref = targetHref || "https://hakqm.github.io/";
+          window.location.replace(nextHref);
+        };
+
+        const patchRootLinks = function() {
+          frameDocument.querySelectorAll(rootSelectorText).forEach((link) => {
+            const targetHref = link.href || "https://hakqm.github.io/";
+            link.setAttribute("target", "_top");
+            link.dataset.portalTopPatched = "Y";
+            if (link.dataset.portalTopBound === "Y") return;
+
+            link.dataset.portalTopBound = "Y";
+            link.addEventListener("click", function(event) {
+              event.preventDefault();
+              event.stopPropagation();
+              event.stopImmediatePropagation();
+              moveTop(targetHref);
+            }, true);
           });
-        });
+        };
+
+        patchRootLinks();
+
+        if (!frameDocument.__portalTopClickBound) {
+          frameDocument.__portalTopClickBound = true;
+          frameDocument.addEventListener("click", function(event) {
+            const target = event.target && event.target.closest
+              ? event.target.closest(rootSelectorText)
+              : null;
+            if (!target) return;
+
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+            moveTop(target.href || "https://hakqm.github.io/");
+          }, true);
+        }
+
+        if (!frameDocument.__portalTopObserverBound) {
+          frameDocument.__portalTopObserverBound = true;
+          const observer = new MutationObserver(function() {
+            patchRootLinks();
+          });
+          observer.observe(frameDocument.documentElement || frameDocument.body, {
+            childList: true,
+            subtree: true,
+            attributes: true,
+            attributeFilter: ["href"]
+          });
+        }
       } catch (error) {
         // same-origin frame only
       }
