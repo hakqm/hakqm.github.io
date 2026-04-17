@@ -212,6 +212,42 @@
       background: #cfd9e5;
     }
 
+    .menu-toolbar {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+
+    .menu-filter-btn {
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 999px;
+      background: rgba(255,255,255,.10);
+      color: #ffffff;
+      padding: 7px 12px;
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: .2s ease;
+    }
+
+    .menu-filter-btn:hover {
+      background: rgba(255,255,255,.18);
+    }
+
+    .menu-filter-btn.active {
+      background: #ffffff;
+      color: var(--navy-dark);
+      border-color: rgba(255,255,255,.3);
+    }
+
+    .menu-filter-hint {
+      margin-top: 8px;
+      color: rgba(255,255,255,.82);
+      font-size: 11px;
+      line-height: 1.6;
+    }
+
     .tree-wrap {
       padding: 10px 10px 14px;
       overflow: auto;
@@ -226,27 +262,44 @@
       margin: 10px 8px 8px;
     }
 
-    details { margin-bottom: 4px; border-radius: 8px; }
+    details {
+      margin-bottom: 6px;
+      border-radius: 10px;
+    }
 
     summary {
       list-style: none;
       cursor: pointer;
-      padding: 8px 10px;
-      border-radius: 8px;
+      padding: 9px 10px;
+      border-radius: 10px;
       font-size: 14px;
+      font-weight: 700;
       color: #24314f;
       display: flex;
       align-items: center;
       gap: 8px;
+      transition: .2s ease;
     }
 
     summary::-webkit-details-marker { display: none; }
     summary:hover { background: #e6ebf5; }
 
+    details[open] > summary {
+      background: #ecf2ff;
+      color: #163b78;
+    }
+
+    details.has-active-path > summary {
+      background: #d8e6ff;
+      color: #133f7d;
+      box-shadow: inset 3px 0 0 var(--navy);
+    }
+
     .folder::before {
       content: "▸";
       font-size: 11px;
       color: #55627d;
+      transition: transform .2s ease;
     }
 
     details[open] > summary.folder::before {
@@ -261,27 +314,35 @@
     }
 
     .subtree {
-      margin-left: 16px;
-      border-left: 1px dashed #c8d0df;
-      padding-left: 8px;
-      margin-bottom: 6px;
+      margin: 4px 0 8px 14px;
+      border-left: 2px solid #cdd8ea;
+      padding: 4px 0 4px 10px;
+      border-radius: 0 12px 12px 0;
+      background: linear-gradient(90deg, rgba(233,240,255,.72), rgba(233,240,255,0));
+    }
+
+    .subtree .subtree {
+      border-left-color: #bdd0ed;
+      background: linear-gradient(90deg, rgba(244,247,255,.9), rgba(244,247,255,0));
     }
 
     .tree-link,
     .tree-home {
       display: flex;
       align-items: center;
-      gap: 8px;
+      justify-content: space-between;
+      gap: 10px;
       width: 100%;
       text-align: left;
       border: 0;
       background: transparent;
       padding: 8px 10px;
-      border-radius: 8px;
+      border-radius: 10px;
       font-size: 13px;
       color: #24314f;
       cursor: pointer;
       text-decoration: none;
+      transition: .2s ease;
     }
 
     .tree-link:hover,
@@ -294,6 +355,39 @@
       background: #d8e6ff;
       color: #133f7d;
       font-weight: 800;
+      box-shadow: inset 3px 0 0 var(--navy);
+    }
+
+    .tree-link[data-executable="true"]::after,
+    .tree-link[data-executable="false"]::after {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 42px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+
+    .tree-link[data-executable="true"]::after {
+      content: "실행";
+      color: #0f4aa8;
+      background: #eaf2ff;
+      border: 1px solid #cfe0ff;
+    }
+
+    .tree-link[data-executable="false"]::after {
+      content: "준비";
+      color: #667085;
+      background: #f3f4f6;
+      border: 1px solid #e4e7ec;
+    }
+
+    .tree-link[data-badge="none"]::after {
+      display: none;
+      content: none;
     }
 
     .tree-note {
@@ -898,6 +992,11 @@
               <button type="button" id="clearMenuSearch" class="search-clear-btn" aria-label="검색 초기화">×</button>
             </div>
           </div>
+          <div class="menu-toolbar">
+            <button type="button" id="menuViewAllBtn" class="menu-filter-btn active">전체 메뉴</button>
+            <button type="button" id="menuViewExecutableBtn" class="menu-filter-btn">실행 메뉴만</button>
+          </div>
+          <div class="menu-filter-hint">현재 경로는 자동으로 강조되고, 실행 가능한 메뉴만 빠르게 골라볼 수 있습니다.</div>
         </div>
 
         <div class="tree-wrap">
@@ -1031,11 +1130,15 @@
     let currentUserData = null;
     let isLoginSubmitting = false;
     let pendingAction = null;
+    let currentScreenKey = "home";
+    let menuViewMode = "all";
 
     const screenEl = document.getElementById("screen");
     const tabTitle = document.getElementById("tabTitle");
     const menuSearch = document.getElementById("menuSearch");
     const clearMenuSearchBtn = document.getElementById("clearMenuSearch");
+    const menuViewAllBtn = document.getElementById("menuViewAllBtn");
+    const menuViewExecutableBtn = document.getElementById("menuViewExecutableBtn");
 
     const loginModal = document.getElementById("loginModal");
     const openLoginBtn = document.getElementById("openLoginBtn");
@@ -1090,6 +1193,7 @@
         lastActivity: Date.now()
       }));
       updateLoginUI();
+      if (currentScreenKey === "home") refreshCurrentScreen();
     }
 
     function clearLoginData() {
@@ -1153,6 +1257,7 @@
       loginNameInput.value = "";
       loginEmpNoInput.value = "";
       updateLoginUI();
+      if (currentScreenKey === "home") refreshCurrentScreen();
 
       if (showMessage) {
         alert("로그아웃되었습니다.");
@@ -2796,6 +2901,34 @@
       return `${getMenuIconByScreen(screenKey)} ${safeLabel}`;
     }
 
+    function shouldHideMenuBadge(screenKey) {
+      return screenKey === "qa_overview" || /_overview$/.test(String(screenKey || ""));
+    }
+
+    function syncMenuExecutableBadges() {
+      document.querySelectorAll(".tree-link[data-screen]").forEach((linkEl) => {
+        const screenKey = linkEl.dataset.screen;
+        linkEl.dataset.executable = isExecutableScreen(screenKey) ? "true" : "false";
+
+        if (shouldHideMenuBadge(screenKey)) {
+          linkEl.dataset.badge = "none";
+        } else {
+          delete linkEl.dataset.badge;
+        }
+      });
+    }
+
+    function updateMenuFilterButtons() {
+      if (menuViewAllBtn) menuViewAllBtn.classList.toggle("active", menuViewMode === "all");
+      if (menuViewExecutableBtn) menuViewExecutableBtn.classList.toggle("active", menuViewMode === "executable");
+    }
+
+    function setMenuViewMode(mode) {
+      menuViewMode = mode === "executable" ? "executable" : "all";
+      updateMenuFilterButtons();
+      filterMenu();
+    }
+
     function renderGeneratedPartMenus() {
       const container = document.getElementById("generatedPartMenus");
       if (!container) return;
@@ -3654,6 +3787,24 @@
       frame.style.height = height + "px";
     });
 
+    function updateActivePathState() {
+      document.querySelectorAll("details.has-active-path").forEach((detailsEl) => {
+        detailsEl.classList.remove("has-active-path");
+      });
+
+      const activeMenu = document.querySelector(".tree-link.active");
+      if (!activeMenu) return;
+
+      let currentParent = activeMenu.parentElement;
+      while (currentParent) {
+        const parentDetails = currentParent.closest("details");
+        if (!parentDetails) break;
+        parentDetails.classList.add("has-active-path");
+        parentDetails.open = true;
+        currentParent = parentDetails.parentElement;
+      }
+    }
+
     function setActiveMenu(screenKey) {
       document.querySelectorAll(".tree-link, .tree-home").forEach((el) => {
         el.classList.remove("active");
@@ -3662,17 +3813,29 @@
       if (screenKey === "home") {
         const homeBtn = document.querySelector(".tree-home");
         if (homeBtn) homeBtn.classList.add("active");
+        updateActivePathState();
         return;
       }
 
       const activeBtn = document.querySelector(`.tree-link[data-screen="${screenKey}"]`);
       if (activeBtn) activeBtn.classList.add("active");
+      updateActivePathState();
+    }
+
+    function refreshCurrentScreen() {
+      const item = screens[currentScreenKey];
+      if (!item) return;
+
+      screenEl.innerHTML = typeof item.html === "function" ? item.html() : item.html;
+      tabTitle.textContent = item.tab;
+      setActiveMenu(currentScreenKey);
     }
 
     function openScreen(key) {
       const item = screens[key];
       if (!item) return;
 
+      currentScreenKey = key;
       screenEl.innerHTML = typeof item.html === "function" ? item.html() : item.html;
       tabTitle.textContent = item.tab;
       setActiveMenu(key);
@@ -3701,7 +3864,7 @@
     function resetMenuToInitialState() {
       menuSearch.value = "";
       clearMenuSearchBtn.style.display = "none";
-      resetMenuFilter();
+      filterMenu();
     }
 
     function bindMenuEvents() {
@@ -3804,80 +3967,68 @@
       return String(value || "").toLowerCase().replace(/\s+/g, "");
     }
 
-    function showMenuBranch(detailsEl) {
+    function isLinkAllowedByMenuView(linkEl) {
+      if (!linkEl) return false;
+      if (linkEl.classList.contains("tree-home")) return true;
+      if (menuViewMode !== "executable") return true;
+
+      const screenKey = linkEl.dataset.screen;
+      if (!screenKey) return true;
+      return isExecutableScreen(screenKey);
+    }
+
+    function showMenuBranch(detailsEl, forceExpand = false) {
       detailsEl.style.display = "";
-      detailsEl.open = true;
+      detailsEl.open = forceExpand || detailsEl.classList.contains("has-active-path");
 
-      const children = Array.from(detailsEl.children);
-      children.forEach((child) => {
-        if (child.classList && child.classList.contains("subtree")) {
-          child.style.display = "";
-        }
+      const subtree = Array.from(detailsEl.children).find((child) => child.classList && child.classList.contains("subtree"));
+      if (subtree) subtree.style.display = "";
 
+      if (!subtree) return;
+
+      Array.from(subtree.children).forEach((child) => {
         if (child.tagName === "DETAILS") {
-          showMenuBranch(child);
+          showMenuBranch(child, forceExpand);
+          return;
         }
 
         if (child.classList && child.classList.contains("tree-link")) {
-          child.style.display = "";
+          child.style.display = isLinkAllowedByMenuView(child) ? "" : "none";
         }
       });
-
-      const subtree = Array.from(detailsEl.children).find((child) => child.classList && child.classList.contains("subtree"));
-      if (subtree) {
-        Array.from(subtree.children).forEach((child) => {
-          if (child.tagName === "DETAILS") {
-            showMenuBranch(child);
-          } else if (child.classList && child.classList.contains("tree-link")) {
-            child.style.display = "";
-          }
-        });
-      }
     }
 
-    function filterMenuDetails(detailsEl, keyword) {
+    function filterMenuDetails(detailsEl, keyword, inheritedMatch = false) {
       const summary = Array.from(detailsEl.children).find((child) => child.tagName === "SUMMARY");
       const subtree = Array.from(detailsEl.children).find((child) => child.classList && child.classList.contains("subtree"));
-      const selfMatch = summary ? normalizeMenuKeyword(summary.textContent).includes(keyword) : false;
-
-      if (selfMatch) {
-        detailsEl.style.display = "";
-        detailsEl.open = true;
-        if (subtree) subtree.style.display = "";
-        if (subtree) {
-          Array.from(subtree.children).forEach((child) => {
-            if (child.tagName === "DETAILS") {
-              showMenuBranch(child);
-            } else if (child.classList && child.classList.contains("tree-link")) {
-              child.style.display = "";
-            }
-          });
-        }
-        return true;
-      }
+      const selfMatch = keyword ? (summary ? normalizeMenuKeyword(summary.textContent).includes(keyword) : false) : false;
+      const forceShowDescendants = inheritedMatch || selfMatch;
 
       let hasVisibleChild = false;
 
       if (subtree) {
         Array.from(subtree.children).forEach((child) => {
           if (child.tagName === "DETAILS") {
-            const visible = filterMenuDetails(child, keyword);
+            const visible = filterMenuDetails(child, keyword, forceShowDescendants);
+            child.style.display = visible ? "" : "none";
             if (visible) hasVisibleChild = true;
             return;
           }
 
           if (child.classList && child.classList.contains("tree-link")) {
-            const linkMatch = normalizeMenuKeyword(child.textContent).includes(keyword);
-            child.style.display = linkMatch ? "" : "none";
-            if (linkMatch) hasVisibleChild = true;
+            const matchesKeyword = forceShowDescendants || !keyword || normalizeMenuKeyword(child.textContent).includes(keyword);
+            const isVisible = isLinkAllowedByMenuView(child) && matchesKeyword;
+            child.style.display = isVisible ? "" : "none";
+            if (isVisible) hasVisibleChild = true;
           }
         });
       }
 
-      detailsEl.style.display = hasVisibleChild ? "" : "none";
-      detailsEl.open = hasVisibleChild;
-      if (subtree) subtree.style.display = hasVisibleChild ? "" : "none";
-      return hasVisibleChild;
+      const shouldShow = hasVisibleChild;
+      detailsEl.style.display = shouldShow ? "" : "none";
+      detailsEl.open = shouldShow && (forceShowDescendants || detailsEl.classList.contains("has-active-path") || !!keyword);
+      if (subtree) subtree.style.display = shouldShow ? "" : "none";
+      return shouldShow;
     }
 
     function resetMenuFilter() {
@@ -3888,26 +4039,40 @@
       document.querySelectorAll("details").forEach((detailsEl) => {
         detailsEl.open = detailsEl.dataset.originalOpen === "true";
       });
+
+      if (menuViewMode === "executable") {
+        document.querySelectorAll(".tree-link").forEach((linkEl) => {
+          linkEl.style.display = isLinkAllowedByMenuView(linkEl) ? "" : "none";
+        });
+
+        document.querySelectorAll(".tree-wrap > details, #generatedPartMenus > details").forEach((detailsEl) => {
+          filterMenuDetails(detailsEl, "");
+        });
+      }
+
+      updateActivePathState();
     }
 
     function filterMenu() {
       const keyword = normalizeMenuKeyword(menuSearch.value);
       clearMenuSearchBtn.style.display = menuSearch.value ? "block" : "none";
 
-      if (!keyword) {
+      if (!keyword && menuViewMode === "all") {
         resetMenuFilter();
         return;
       }
 
       const homeBtn = document.querySelector(".tree-home");
       if (homeBtn) {
-        const homeMatch = normalizeMenuKeyword(homeBtn.textContent).includes(keyword);
+        const homeMatch = !keyword || normalizeMenuKeyword(homeBtn.textContent).includes(keyword);
         homeBtn.style.display = homeMatch ? "" : "none";
       }
 
       document.querySelectorAll(".tree-wrap > details, #generatedPartMenus > details").forEach((detailsEl) => {
         filterMenuDetails(detailsEl, keyword);
       });
+
+      updateActivePathState();
     }
 
     function syncLoginStateAcrossPages() {
@@ -3920,6 +4085,8 @@
     function init() {
       renderGeneratedPartMenus();
       registerGeneratedScreens();
+      syncMenuExecutableBadges();
+      updateMenuFilterButtons();
       loadSavedUser();
       bindActivityEvents();
       bindMenuEvents();
@@ -3938,6 +4105,14 @@
         filterMenu();
         menuSearch.focus();
       });
+
+      if (menuViewAllBtn) {
+        menuViewAllBtn.addEventListener("click", () => setMenuViewMode("all"));
+      }
+
+      if (menuViewExecutableBtn) {
+        menuViewExecutableBtn.addEventListener("click", () => setMenuViewMode("executable"));
+      }
 
       openScreen("home");
     }
