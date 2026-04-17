@@ -1364,11 +1364,18 @@
             <h3>바로가기</h3>
             <div class="qa-menu-grid">
               <div class="qa-process">
-                <div class="qa-process-head">계측기 바로가기</div>
+                <div class="qa-process-head">QA 바로가기</div>
                 <div class="qa-process-body">
                   <button type="button" data-screen="qa_equipment_checkout_embed">🌐 계측기 불출</button>
                   <button type="button" data-screen="qa_equipment_return_embed">🌐 계측기 반납</button>
                   <button type="button" data-screen="qa_test_qr_embed">🌐 QR 생성기</button>
+                </div>
+              </div>
+
+              <div class="qa-process">
+                <div class="qa-process-head">산업공조 바로가기</div>
+                <div class="qa-process-body">
+                  <button type="button" data-screen="hvac_004_2">🌐 공정간 검사 / 자재검사</button>
                 </div>
               </div>
             </div>
@@ -1541,6 +1548,30 @@
             <iframe
               class="embedded-page-frame"
               src="equipment.html"
+              title="${titleText}"
+              loading="lazy"
+              onload="prepareEmbeddedPortalFrame(this)">
+            </iframe>
+          </div>
+        </div>
+      `;
+    }
+
+    function steelMaterialCheckEmbedScreen(titleText) {
+      return `
+        <div class="screen-head">
+          <h1>${titleText}</h1>
+          <p>산업공조 자재검사 화면을 작업영역 안에서 바로 확인할 수 있습니다.</p>
+        </div>
+        <div class="screen-body">
+          <div class="action-row" style="margin-top:0; margin-bottom:14px;">
+            <a class="btn primary" href="https://steelmtrcheck.vercel.app/" target="_blank" rel="noopener noreferrer">새 창으로 열기</a>
+          </div>
+
+          <div class="embedded-page-card">
+            <iframe
+              class="embedded-page-frame"
+              src="https://steelmtrcheck.vercel.app/"
               title="${titleText}"
               loading="lazy"
               onload="resizePortalFrame(this)">
@@ -2743,6 +2774,28 @@
       return systems.length ? systems.slice(0, 3).join(", ") : "-";
     }
 
+    const EXECUTABLE_SCREEN_KEYS = new Set([
+      "qa_test_qr_embed",
+      "qa_equipment_checkout_embed",
+      "qa_equipment_return_embed",
+      "hvac_004_2"
+    ]);
+
+    function isExecutableScreen(screenKey) {
+      return EXECUTABLE_SCREEN_KEYS.has(screenKey);
+    }
+
+    function getMenuIconByScreen(screenKey) {
+      return isExecutableScreen(screenKey) ? "🌐" : "🔗";
+    }
+
+    function decorateScreenLabel(screenKey, label) {
+      const safeLabel = String(label || "").trim();
+      if (!safeLabel) return safeLabel;
+      if (/^[🌐🔗]\s*/.test(safeLabel)) return safeLabel;
+      return `${getMenuIconByScreen(screenKey)} ${safeLabel}`;
+    }
+
     function renderGeneratedPartMenus() {
       const container = document.getElementById("generatedPartMenus");
       if (!container) return;
@@ -2753,9 +2806,12 @@
           <details>
             <summary class="folder"><span class="node-icon">📂</span> ${escapeHtml(process.process)}</summary>
             <div class="subtree">
-              ${process.items.map((item) => `
-                <button class="tree-link" data-screen="${makeFlowScreenKey(partKey, process.pid, item.step)}">🔗 ${escapeHtml(getFlowLabel(process.items, item))}</button>
-              `).join("")}
+              ${process.items.map((item) => {
+                const screenKey = makeFlowScreenKey(partKey, process.pid, item.step);
+                return `
+                <button class="tree-link" data-screen="${screenKey}">${escapeHtml(decorateScreenLabel(screenKey, getFlowLabel(process.items, item)))}</button>
+              `;
+              }).join("")}
             </div>
           </details>
         `).join("");
@@ -2784,9 +2840,12 @@
         <div class="part-card">
           <div class="part-card-head">${escapeHtml(process.pid)} · ${escapeHtml(process.process)}</div>
           <div class="part-card-body">
-            ${process.items.map((item) => `
-              <button type="button" data-screen="${makeFlowScreenKey(partKey, process.pid, item.step)}">${escapeHtml(getFlowLabel(process.items, item))}</button>
-            `).join("")}
+            ${process.items.map((item) => {
+              const screenKey = makeFlowScreenKey(partKey, process.pid, item.step);
+              return `
+              <button type="button" data-screen="${screenKey}">${escapeHtml(decorateScreenLabel(screenKey, getFlowLabel(process.items, item)))}</button>
+            `;
+            }).join("")}
           </div>
         </div>
       `).join("");
@@ -2938,6 +2997,11 @@
           });
         });
       });
+
+      screens["hvac_004_2"] = {
+        tab: "산업공조 > 공정간 검사 > 자재검사",
+        html: () => steelMaterialCheckEmbedScreen("산업공조 / 공정간 검사 / 자재검사")
+      };
     }
 
     const screens = {
@@ -3492,6 +3556,38 @@
 
     window.resizePortalFrame = resizePortalFrame;
 
+    function prepareEmbeddedPortalFrame(frame) {
+      resizePortalFrame(frame);
+      if (!frame) return;
+
+      try {
+        const frameWindow = frame.contentWindow;
+        const frameDocument = frameWindow && frameWindow.document;
+        if (!frameDocument) return;
+
+        const rootSelectors = [
+          "a.brand",
+          "a.company",
+          'a[href="https://hakqm.github.io/"]',
+          'a[href="index.html"]',
+          'a[href="./"]',
+          'a[href="/"]'
+        ];
+
+        frameDocument.querySelectorAll(rootSelectors.join(",")).forEach((link) => {
+          const targetHref = link.href || "https://hakqm.github.io/";
+          link.setAttribute("target", "_top");
+          link.addEventListener("click", function(event) {
+            event.preventDefault();
+            window.location.href = targetHref;
+          });
+        });
+      } catch (error) {
+        // same-origin frame only
+      }
+    }
+
+    window.prepareEmbeddedPortalFrame = prepareEmbeddedPortalFrame;
 
     window.addEventListener("message", function(event) {
       const data = event.data || {};
