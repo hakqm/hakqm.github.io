@@ -518,6 +518,89 @@
       gap: 16px;
     }
 
+    .home-hero {
+      position: relative;
+      overflow: hidden;
+      padding: 22px;
+      margin-bottom: 18px;
+      border: 1px solid #c9daf8;
+      border-radius: 18px;
+      background: linear-gradient(135deg, #f8fbff 0%, #edf4ff 52%, #e3edff 100%);
+    }
+
+    .home-hero::after {
+      content: "";
+      position: absolute;
+      right: -40px;
+      top: -40px;
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      background: rgba(52, 74, 140, 0.08);
+    }
+
+    .home-hero > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .home-hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 12px;
+      border-radius: 999px;
+      background: #ffffff;
+      border: 1px solid #d7e3fb;
+      color: #24436f;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .2px;
+      margin-bottom: 12px;
+    }
+
+    .home-hero h2 {
+      margin: 0 0 8px;
+      font-size: 28px;
+      color: #22365e;
+    }
+
+    .home-hero p {
+      margin: 0;
+      max-width: 760px;
+      color: #5f6b84;
+      font-size: 15px;
+      line-height: 1.8;
+    }
+
+    .home-quick-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .home-quick-card {
+      padding: 16px;
+      border: 1px solid #dbe3ec;
+      border-radius: 16px;
+      background: #ffffff;
+      box-shadow: 0 8px 18px rgba(31, 41, 55, 0.06);
+    }
+
+    .home-quick-card strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 22px;
+      color: #22365e;
+    }
+
+    .home-quick-card span {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
     .panel {
       border: 1px solid var(--line);
       border-radius: 14px;
@@ -952,6 +1035,14 @@
 
       .flow-box {
         grid-template-columns: 1fr;
+      }
+
+      .home-quick-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .home-hero h2 {
+        font-size: 24px;
       }
     }
 
@@ -1411,22 +1502,29 @@
 
       return `
         <div class="screen-head">
-          <h1>QM AI 에이전트</h1>
-          <p>로그인 후 메뉴를 사용할 수 있습니다.</p>
-        </div>
+          <h1>QM AI AGENT</h1>
+         </div>
         <div class="screen-body">
+          <div class="home-hero">
+            <div class="home-hero-badge">🏠 HOME DASHBOARD</div>
+            <h2>업무 시작 화면</h2>
+            <p>
+              이 화면은 세부 업무 화면이 아니라 전체 메뉴를 안내하는 홈입니다.
+              좌측 트리 메뉴에서 원하는 파트와 업무를 선택하거나, 아래 바로가기에서 자주 사용하는 기능으로 이동할 수 있습니다.
+            </p>
+          </div>
+
           ${loginBox}
 
-          <div class="kpi-grid">
-            <div class="kpi"><strong>QA</strong><span>상세 메뉴 반영</span></div>
-            <div class="kpi"><strong>6+</strong><span>파트 구조 확장</span></div>
-            <div class="kpi"><strong>Login</strong><span>이름/사번 인증</span></div>
-            <div class="kpi"><strong>Mobile</strong><span>모바일 대응</span></div>
+          <div class="home-quick-grid">
+            <div class="home-quick-card"><strong>QA</strong><span>상세 메뉴 연결 완료</span></div>
+            <div class="home-quick-card"><strong>6+</strong><span>파트 구조 확장 반영</span></div>
+            <div class="home-quick-card"><strong>Login</strong><span>이름/사번 인증 사용</span></div>
           </div>
 
           <div class="panel-grid">
             <div class="panel">
-              <h3>사용 방법</h3>
+              <h3>홈 사용 안내</h3>
               <div class="card-list">
                 <div class="mini-card">
                   <strong>1. 로그인</strong>
@@ -1439,10 +1537,6 @@
                 <div class="mini-card">
                   <strong>3. 상세 기능 사용</strong>
                   <p>계측기관리 메뉴에서 필요한 상세 페이지로 이동할 수 있습니다.</p>
-                </div>
-                <div class="mini-card">
-                  <strong>4. 모바일 사용</strong>
-                  <p>휴대폰에서도 메뉴와 화면을 확인할 수 있도록 정리했습니다.</p>
                 </div>
               </div>
             </div>
