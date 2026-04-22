@@ -464,6 +464,30 @@
       line-height: 1.7;
     }
 
+    .screen-head-bar {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .screen-head-main {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
+    .screen-head-actions {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: flex-start;
+      justify-content: flex-end;
+      min-width: 160px;
+    }
+
+    .screen-head-actions .btn {
+      white-space: nowrap;
+    }
+
     .screen-body {
       padding: 20px 22px 24px;
     }
@@ -1027,6 +1051,16 @@
 
       .screen-head h1 {
         font-size: 22px;
+      }
+
+      .screen-head-bar {
+        flex-direction: column;
+      }
+
+      .screen-head-actions {
+        width: 100%;
+        min-width: 0;
+        justify-content: flex-start;
       }
 
       .kpi-grid {
@@ -1725,8 +1759,15 @@
     function equipmentEmbedScreen(titleText) {
       return `
         <div class="screen-head">
-          <h1>${titleText}</h1>
-          <p>계측기 불출 및 반납 업무를 확인할 수 있습니다.</p>
+          <div class="screen-head-bar">
+            <div class="screen-head-main">
+              <h1>${titleText}</h1>
+              <p>계측기 불출 및 반납 업무를 작업영역 안에서 바로 확인할 수 있습니다.</p>
+            </div>
+            <div class="screen-head-actions">
+              <a class="btn primary" href="equipment.html" target="_blank" rel="noopener noreferrer">새 창으로 열기</a>
+            </div>
+          </div>
         </div>
         <div class="screen-body">
           <div class="embedded-page-card">
@@ -1745,8 +1786,15 @@
     function fanTestReportEmbedScreen(titleText) {
       return `
         <div class="screen-head">
-          <h1>${titleText}</h1>
-          <p>FAN TEST REPORT 자동 작성 화면을 작업영역 안에서 바로 확인할 수 있습니다.</p>
+          <div class="screen-head-bar">
+            <div class="screen-head-main">
+              <h1>${titleText}</h1>
+              <p>FAN TEST REPORT 자동 작성 화면을 작업영역 안에서 바로 확인할 수 있습니다.</p>
+            </div>
+            <div class="screen-head-actions">
+              <a class="btn primary" href="fan_spec_raw_data_report_builder.html" target="_blank" rel="noopener noreferrer">새 창으로 열기</a>
+            </div>
+          </div>
         </div>
         <div class="screen-body">
           <div class="embedded-page-card">
@@ -1765,14 +1813,17 @@
     function steelMaterialCheckEmbedScreen(titleText) {
       return `
         <div class="screen-head">
-          <h1>${titleText}</h1>
-          <p>산업공조 자재검사 화면을 작업영역 안에서 바로 확인할 수 있습니다.</p>
+          <div class="screen-head-bar">
+            <div class="screen-head-main">
+              <h1>${titleText}</h1>
+              <p>산업공조 자재검사 화면을 작업영역 안에서 바로 확인할 수 있습니다.</p>
+            </div>
+            <div class="screen-head-actions">
+              <a class="btn primary" href="https://steelmtrcheck.vercel.app/" target="_blank" rel="noopener noreferrer">새 창으로 열기</a>
+            </div>
+          </div>
         </div>
         <div class="screen-body">
-          <div class="action-row" style="margin-top:0; margin-bottom:14px;">
-            <a class="btn primary" href="https://steelmtrcheck.vercel.app/" target="_blank" rel="noopener noreferrer">새 창으로 열기</a>
-          </div>
-
           <div class="embedded-page-card">
             <iframe
               class="embedded-page-frame"
