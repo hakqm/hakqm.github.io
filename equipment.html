@@ -592,7 +592,7 @@
             type="text"
             id="equipmentSearch"
             class="search-input"
-            placeholder="예: 캘리퍼, 소음, 마이크로"
+            placeholder="예: 캘리퍼, 소음, 도막, 마이크로"
           />
           <button type="button" id="clearSearch" class="clear-btn" aria-label="검색 초기화">×</button>
         </div>
@@ -602,7 +602,7 @@
       </div>
     </section>
 
-    <div id="searchResult" class="search-result">전체 장비 3개 표시 중</div>
+    <div id="searchResult" class="search-result">전체 장비 4개 표시 중</div>
 
     <section class="grid" id="equipmentList">
       <article
@@ -659,11 +659,42 @@
 
       <article
         class="card equipment-card"
+        data-name="도막 두께 측정기 도막측정기 coating thickness gauge"
+        data-desc="금속 표면의 도막 두께를 측정하는 계측기입니다. 사용방법, 상태조회, 검교정 자료 및 불출·반납 기능을 확인할 수 있습니다."
+      >
+        <div class="card-top">
+          <div class="no-badge">No. 03</div>
+          <div class="badge">표면 측정 장비</div>
+        </div>
+        <h3>도막 두께 측정기</h3>
+
+        <div class="mini-status-group">
+          <span id="status-Q-GH-026" class="mini-status status-loading">Q-GH-026</span>
+          <span id="status-Q-GH-032" class="mini-status status-loading">Q-GH-032</span>
+          <span id="status-Q-GH-033" class="mini-status status-loading">Q-GH-033</span>
+          <span id="status-Q-GH-034" class="mini-status status-loading">Q-GH-034</span>
+          <span id="status-Q-GH-039" class="mini-status status-loading">Q-GH-039</span>
+          <span id="status-Q-GH-040" class="mini-status status-loading">Q-GH-040</span>
+          <span id="status-Q-GH-041" class="mini-status status-loading">Q-GH-041</span>
+          <span id="status-Q-GH-042" class="mini-status status-loading">Q-GH-042</span>
+        </div>
+
+        <p>
+          금속 표면의 도막 두께를 측정하는 계측기입니다.
+          사용방법, 상태조회, 검교정 자료 및 불출·반납 기능을 확인할 수 있습니다.
+        </p>
+        <div class="btn-row">
+          <a class="btn btn-primary" href="coating_thickness_gauge.html">상세 보기</a>
+        </div>
+      </article>
+
+      <article
+        class="card equipment-card"
         data-name="마이크로미터"
         data-desc="정밀 치수 측정에 사용하는 계측기입니다. 사용방법과 장비 운영 정보를 확인할 수 있습니다."
       >
         <div class="card-top">
-          <div class="no-badge">No. 03</div>
+          <div class="no-badge">No. 04</div>
           <div class="badge">정밀 측정 장비</div>
         </div>
         <h3>마이크로미터</h3>
@@ -713,7 +744,9 @@
 
     const EQUIPMENT_CODES = [
       "Q-GJ-002", "Q-GJ-007", "Q-GJ-016",
-      "Q-GB-020", "Q-GB-021", "Q-GB-026"
+      "Q-GB-020", "Q-GB-021", "Q-GB-026",
+      "Q-GH-026", "Q-GH-032", "Q-GH-033", "Q-GH-034",
+      "Q-GH-039", "Q-GH-040", "Q-GH-041", "Q-GH-042"
     ];
 
     let currentUserData = null;
