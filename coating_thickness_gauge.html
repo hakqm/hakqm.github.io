@@ -1,0 +1,1201 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>도막 두께 측정기 | HAK 계측기 운영 시스템</title>
+  <style>
+    :root {
+      --primary: #1f3a5f;
+      --primary-dark: #13263f;
+      --bg-top: #eef3f8;
+      --bg-bottom: #f7f9fc;
+      --card: #ffffff;
+      --text: #16202b;
+      --subtext: #667085;
+      --line: #d9e2ec;
+      --line-soft: #e3ebf5;
+      --shadow: 0 10px 24px rgba(19, 38, 63, 0.10);
+      --ok-bg: #ecfdf3;
+      --ok-text: #027a48;
+      --warn-bg: #fef3f2;
+      --warn-text: #b42318;
+      --info-bg: #eef4ff;
+      --info-text: #1f3a5f;
+      --overlay: rgba(15, 23, 42, 0.52);
+      --radius-lg: 18px;
+      --radius-md: 14px;
+      --radius-sm: 10px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      color: var(--text);
+      background: linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
+    }
+
+    button, input, a { font: inherit; }
+    .hidden { display: none !important; }
+
+    .hero {
+      padding: 16px 16px 26px;
+      color: #ffffff;
+      background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+    }
+
+    .hero-inner, .wrap {
+      width: 100%;
+      max-width: 760px;
+      margin: 0 auto;
+    }
+
+    .wrap { padding: 18px 16px 48px; }
+
+    .hero-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+
+    .company {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 12px;
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 999px;
+      background: rgba(255,255,255,0.12);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+
+    .hero-auth {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-left: auto;
+    }
+
+    .hero-title {
+      margin: 0;
+      font-size: 28px;
+      line-height: 1.35;
+    }
+
+    .hero-desc {
+      margin: 10px 0 0;
+      color: rgba(255,255,255,0.88);
+      font-size: 15px;
+      line-height: 1.7;
+    }
+
+    .top-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+
+    .hero-btn, .top-btn, .action-btn, .login-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      border-radius: 12px;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+      transition: 0.2s ease;
+    }
+
+    .hero-btn, .top-btn {
+      padding: 11px 16px;
+      font-size: 14px;
+      background: #ffffff;
+      color: var(--primary-dark);
+    }
+
+    .hero-btn:hover, .top-btn:hover { background: #edf3fb; }
+
+    .hero-btn-outline {
+      border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.08);
+      color: #ffffff;
+    }
+
+    .hero-btn-outline:hover { background: rgba(255,255,255,0.16); }
+
+    .user-chip {
+      display: inline-flex;
+      align-items: center;
+      min-height: 40px;
+      padding: 8px 13px;
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 999px;
+      background: rgba(255,255,255,0.12);
+      color: #ffffff;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .card {
+      margin-bottom: 16px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      background: var(--card);
+      box-shadow: var(--shadow);
+    }
+
+    .section-title {
+      margin: 0 0 14px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--line);
+      color: var(--primary-dark);
+      font-size: 22px;
+      font-weight: 800;
+    }
+
+    .sub {
+      margin: 8px 0 0;
+      color: var(--subtext);
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .summary-box {
+      margin-top: 14px;
+      padding: 14px;
+      border: 1px solid #dbe7f3;
+      border-radius: var(--radius-md);
+      background: #f8fbff;
+      color: #475467;
+      font-size: 14px;
+      line-height: 1.8;
+    }
+
+    .summary-box strong {
+      color: var(--primary-dark);
+    }
+
+    .equipment-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .equipment-item {
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      background: #f8fbff;
+    }
+
+    .equipment-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+
+    .equipment-title {
+      color: var(--primary-dark);
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .status-available { background: var(--ok-bg); color: var(--ok-text); }
+    .status-checkedout { background: var(--warn-bg); color: var(--warn-text); }
+    .status-loading { background: var(--info-bg); color: var(--info-text); }
+
+    .compact-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .compact-field {
+      min-height: 58px;
+      padding: 8px 10px;
+      border: 1px solid var(--line-soft);
+      border-radius: var(--radius-sm);
+      background: #ffffff;
+    }
+
+    .compact-label {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--subtext);
+      font-size: 11px;
+    }
+
+    .compact-value {
+      display: block;
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 1.45;
+      white-space: pre-line;
+      word-break: keep-all;
+    }
+
+    .compact-meta {
+      display: block;
+      margin-top: 4px;
+      color: var(--subtext);
+      font-size: 11px;
+      line-height: 1.5;
+      word-break: break-word;
+    }
+
+    .item-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+
+    .action-btn {
+      min-width: 120px;
+      padding: 10px 14px;
+      border-radius: var(--radius-sm);
+      background: var(--primary);
+      color: #ffffff;
+      font-size: 13px;
+    }
+
+    .action-btn:hover,
+    .login-btn:hover {
+      background: var(--primary-dark);
+    }
+
+    .action-btn:disabled,
+    .login-btn:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+
+    .action-btn-secondary { background: #667085; }
+    .action-btn-secondary:hover { background: #475467; }
+
+    ul, ol {
+      margin: 0;
+      padding-left: 20px;
+      line-height: 1.8;
+    }
+
+    li + li { margin-top: 8px; }
+
+    .video {
+      position: relative;
+      width: 100%;
+      margin-top: 12px;
+      padding-top: 56.25%;
+      overflow: hidden;
+      border: 1px solid #d8dee8;
+      border-radius: var(--radius-md);
+      background: #000000;
+    }
+
+    .video iframe {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+    }
+
+    .footer {
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 1px solid #dce5ef;
+      color: #6b7280;
+      text-align: center;
+      font-size: 13px;
+      line-height: 1.8;
+    }
+
+    .footer strong { color: var(--primary-dark); }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      background: var(--overlay);
+    }
+
+    .modal-card {
+      width: 100%;
+      max-width: 420px;
+      overflow: hidden;
+      border: 1px solid #e5e7eb;
+      border-radius: 22px;
+      background: #ffffff;
+      box-shadow: 0 24px 50px rgba(15, 23, 42, 0.24);
+    }
+
+    .modal-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 20px 20px 14px;
+      border-bottom: 1px solid #e9eef5;
+    }
+
+    .modal-title { margin: 0; color: var(--primary-dark); font-size: 22px; }
+
+    .modal-desc {
+      margin: 8px 0 0;
+      color: var(--subtext);
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .modal-close {
+      width: 34px;
+      height: 34px;
+      border: none;
+      border-radius: 999px;
+      background: #eef2f6;
+      color: #344054;
+      font-size: 18px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .modal-close:hover { background: #dfe7f1; }
+
+    .modal-body {
+      display: grid;
+      gap: 12px;
+      padding: 18px 20px 22px;
+    }
+
+    .login-input {
+      width: 100%;
+      padding: 14px 15px;
+      border: 1px solid #cfd9e5;
+      border-radius: var(--radius-md);
+      outline: none;
+      font-size: 14px;
+      transition: 0.2s ease;
+    }
+
+    .login-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(31, 58, 95, 0.08);
+    }
+
+    .login-help {
+      margin-top: -2px;
+      color: var(--subtext);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .login-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 4px;
+    }
+
+    .login-btn {
+      flex: 1;
+      padding: 13px 16px;
+      border-radius: var(--radius-md);
+      background: var(--primary);
+      color: #ffffff;
+      font-size: 14px;
+    }
+
+    .login-btn-secondary {
+      background: #eef2f6;
+      color: #344054;
+    }
+
+    .login-btn-secondary:hover { background: #dfe7f1; }
+
+    .due-field-normal {
+      background: #ffffff;
+      border-color: var(--line-soft);
+    }
+
+    .due-field-warning {
+      background: #fff4e8;
+      border-color: #fdba74;
+    }
+
+    .due-field-danger {
+      background: #fef3f2;
+      border-color: #fda29b;
+    }
+
+    .due-text-warning {
+      color: #b54708;
+    }
+
+    .due-text-danger {
+      color: #b42318;
+    }
+
+    @media (max-width: 640px) {
+      .hero-top { align-items: stretch; }
+      .item-actions { flex-direction: column; }
+      .action-btn { width: 100%; min-width: auto; }
+    }
+
+    @media (max-width: 480px) {
+      .hero-title { font-size: 24px; }
+      .card { padding: 16px; }
+      .section-title { font-size: 19px; }
+      .compact-grid { grid-template-columns: 1fr; }
+      .modal-head, .modal-body { padding-left: 16px; padding-right: 16px; }
+      .login-row { flex-direction: column; }
+      .login-btn { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="hero-inner">
+      <div class="hero-top">
+        <div class="company">HI AIR KOREA</div>
+        <div class="hero-auth">
+          <div id="userChip" class="user-chip hidden">
+            <span id="userChipText">로그인됨</span>
+          </div>
+          <button type="button" id="openLoginBtn" class="hero-btn">로그인</button>
+          <button type="button" id="logoutBtn" class="hero-btn hero-btn-outline hidden">로그아웃</button>
+        </div>
+      </div>
+
+      <h1 class="hero-title">도막 두께 측정기</h1>
+      <p class="hero-desc">사용방법, 장비 상태, 검교정 자료, 불출·반납 기능을 확인할 수 있습니다.</p>
+
+      <div class="top-actions">
+        <a class="top-btn" href="equipment.html">목록으로</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="card">
+      <h2 class="section-title">01. 장비 정보</h2>
+      <p class="sub">사내 등록 장비 기준 공용 사용 정보입니다.</p>
+      <div class="summary-box">
+        도막 두께 측정기는 금속 표면에 형성된 도막의 두께를 빠르게 확인할 때 사용하는 장비입니다.<br />
+        철계(Fe) 및 비철계(NFe) 금속에 맞는 설정과 교정 상태를 먼저 확인한 뒤 측정하는 것이 중요합니다.<br /><br />
+        <strong>등록 제조사 기준:</strong> ELCOMETER, DEFELSKO, Automation
+      </div>
+    </section>
+
+    <section class="card">
+      <h2 class="section-title">02. 장비 상태</h2>
+      <p class="sub">등록 장비의 상태 조회, 검교정 자료 확인, 불출·반납 처리를 수행할 수 있습니다.</p>
+      <div id="equipmentList" class="equipment-list"></div>
+    </section>
+
+    <section class="card">
+      <h2 class="section-title">03. 사용 전 확인사항</h2>
+      <ol>
+        <li>측정 대상이 철계(Fe)인지 비철계(NFe)인지 확인하고 장비 설정이 맞는지 점검합니다.</li>
+        <li>프로브 표면에 먼지, 도막 가루, 이물질이 없는지 확인하고 필요 시 깨끗하게 닦습니다.</li>
+        <li>베이스 소재 또는 표준 시편을 이용해 영점 조정 및 교정 상태를 확인합니다.</li>
+        <li>측정 부위가 젖어 있거나 거칠기가 심한 경우 측정값 편차가 커질 수 있으므로 상태를 먼저 확인합니다.</li>
+        <li>사용 전 배터리 잔량과 화면 표시 상태를 점검하고 충격이나 낙하 흔적이 있는지 확인합니다.</li>
+      </ol>
+    </section>
+
+    <section class="card">
+      <h2 class="section-title">04. 사용 순서</h2>
+      <ol>
+        <li>측정 대상 재질에 맞게 Fe/NFe 모드 또는 자동 인식 상태를 확인합니다.</li>
+        <li>필요 시 영점 조정판 또는 표준 필름으로 교정을 진행합니다.</li>
+        <li>측정할 표면에 프로브를 수직으로 가볍게 접촉시켜 측정값을 확인합니다.</li>
+        <li>한 지점만 보지 말고 여러 지점을 반복 측정하여 평균값 또는 대표값을 확인합니다.</li>
+        <li>측정값을 기록한 뒤 장비를 케이스에 정리하고 지정 위치에 보관합니다.</li>
+      </ol>
+    </section>
+
+    <section class="card">
+      <h2 class="section-title">05. 사용 영상</h2>
+      <p class="sub">금속 기판의 도막 두께 측정 방법을 설명하는 일반적인 튜토리얼 영상을 연결했습니다.</p>
+      <div class="video">
+        <iframe
+          src="https://www.youtube.com/embed/MFkK95V31zk"
+          title="도막 두께 측정기 사용 영상"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowfullscreen>
+        </iframe>
+      </div>
+    </section>
+
+    <div class="footer">
+      <strong>HI AIR KOREA</strong><br />
+      HAK 계측기 운영 시스템<br />
+      Copyright © 2026 HI AIR KOREA Co.,Ltd. All Rights Reserved.
+    </div>
+  </main>
+
+  <div id="loginModal" class="modal hidden" aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="loginModalTitle">
+      <div class="modal-head">
+        <div>
+          <h3 id="loginModalTitle" class="modal-title">로그인</h3>
+          <p class="modal-desc">이름과 사번을 입력하면 불출 및 반납 기능을 사용할 수 있습니다.</p>
+        </div>
+        <button type="button" id="closeLoginBtn" class="modal-close" aria-label="닫기">×</button>
+      </div>
+      <div class="modal-body">
+        <input type="text" id="loginName" class="login-input" placeholder="이름 입력" />
+        <input type="text" id="loginEmpNo" class="login-input" placeholder="사번 입력" />
+        <div class="login-help">이름과 사번을 정확히 입력해주세요.</div>
+        <div class="login-row">
+          <button type="button" id="submitLoginBtn" class="login-btn">로그인</button>
+          <button type="button" id="cancelLoginBtn" class="login-btn login-btn-secondary">닫기</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwn9I60-14GHDQk_rNF_uJYBpig-Bovl7Qqje_eGGjcFmZJZfqQgtpUg6necytvlQQ-/exec";
+
+    const EQUIPMENT_LIST = [
+      { no: 1, eq_code: "Q-GH-026", eq_name: "도막 두께 측정기(철용)", spec: "0~1500μm", manufacturer: "ELCOMETER", model: "A456CFBS", due: "", file: "CC_Q-GH-026.pdf" },
+      { no: 2, eq_code: "Q-GH-032", eq_name: "도막 두께 측정기", spec: "0~1500μm", manufacturer: "DEFELSKO", model: "PT-6000-FNRS1", due: "", file: "CC_Q-GH-032.pdf" },
+      { no: 3, eq_code: "Q-GH-033", eq_name: "도막 두께 측정기", spec: "0~1500μm", manufacturer: "DEFELSKO", model: "PT-6000-FNRS1", due: "", file: "CC_Q-GH-033.pdf" },
+      { no: 4, eq_code: "Q-GH-034", eq_name: "도막 두께 측정기", spec: "FE(0~1600)μm", manufacturer: "Elcometer", model: "확인 필요", due: "", file: "CC_Q-GH-034.pdf" },
+      { no: 5, eq_code: "Q-GH-039", eq_name: "도막 두께 측정기", spec: "0~3mm", manufacturer: "Automation", model: "QNIX 9500B-FN1", due: "", file: "CC_Q-GH-039.pdf" },
+      { no: 6, eq_code: "Q-GH-040", eq_name: "도막 두께 측정기", spec: "0~1500μm", manufacturer: "ELCOMETER", model: "A456CFNFBS", due: "", file: "CC_Q-GH-040.pdf" },
+      { no: 7, eq_code: "Q-GH-041", eq_name: "도막 두께 측정기", spec: "0~1500μm", manufacturer: "ELCOMETER", model: "A456CFNFBS1", due: "", file: "CC_Q-GH-041.pdf" },
+      { no: 8, eq_code: "Q-GH-042", eq_name: "도막 두께 측정기", spec: "0~1500μm", manufacturer: "ELCOMETER", model: "A456CFNFBS1", due: "", file: "CC_Q-GH-042.pdf" }
+    ];
+
+    const LOGIN_STORAGE_KEY = "hak_login_user";
+    const LOGIN_EXPIRE_MINUTES = 30;
+    const LOGIN_EXPIRE_MS = LOGIN_EXPIRE_MINUTES * 60 * 1000;
+
+    let currentUserData = null;
+    let isLoginSubmitting = false;
+    let pendingAction = null;
+    let actionLoadingMap = {};
+    let equipmentStatusMap = {};
+
+    const loginModal = document.getElementById("loginModal");
+    const openLoginBtn = document.getElementById("openLoginBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const closeLoginBtn = document.getElementById("closeLoginBtn");
+    const cancelLoginBtn = document.getElementById("cancelLoginBtn");
+    const submitLoginBtn = document.getElementById("submitLoginBtn");
+    const userChip = document.getElementById("userChip");
+    const userChipText = document.getElementById("userChipText");
+    const loginNameInput = document.getElementById("loginName");
+    const loginEmpNoInput = document.getElementById("loginEmpNo");
+    const equipmentListEl = document.getElementById("equipmentList");
+
+    function setLoginSubmitting(isSubmitting) {
+      isLoginSubmitting = isSubmitting;
+      submitLoginBtn.disabled = isSubmitting;
+      submitLoginBtn.textContent = isSubmitting ? "로그인 중..." : "로그인";
+      loginNameInput.disabled = isSubmitting;
+      loginEmpNoInput.disabled = isSubmitting;
+    }
+
+    function openLoginModal() {
+      loginModal.classList.remove("hidden");
+      loginModal.setAttribute("aria-hidden", "false");
+      setTimeout(() => loginNameInput.focus(), 50);
+    }
+
+    function closeLoginModal() {
+      loginModal.classList.add("hidden");
+      loginModal.setAttribute("aria-hidden", "true");
+    }
+
+    function updateLoginUI() {
+      if (currentUserData) {
+        userChip.classList.remove("hidden");
+        logoutBtn.classList.remove("hidden");
+        openLoginBtn.classList.add("hidden");
+        userChipText.textContent = `${currentUserData.team} · ${currentUserData.name}님`;
+        closeLoginModal();
+        return;
+      }
+
+      userChip.classList.add("hidden");
+      logoutBtn.classList.add("hidden");
+      openLoginBtn.classList.remove("hidden");
+      userChipText.textContent = "로그인됨";
+    }
+
+    function formatUserDisplay(team, name) {
+      const safeTeam = (team || "").trim();
+      const safeName = (name || "").trim();
+      if (safeTeam && safeName) return `${safeTeam} / ${safeName}`;
+      if (safeTeam) return safeTeam;
+      if (safeName) return safeName;
+      return "-";
+    }
+
+    function formatMakerModel(manufacturer, model) {
+      const maker = (manufacturer || "").trim();
+      const modelName = (model || "").trim();
+
+      if (maker && modelName) return `${maker} · ${modelName}`;
+      if (maker) return maker;
+      if (modelName) return modelName;
+      return "-";
+    }
+
+    function getStatusMeta(status) {
+      if (status === "available") return { badgeClass: "status-badge status-available", badgeText: "사용 가능" };
+      if (status === "checked_out") return { badgeClass: "status-badge status-checkedout", badgeText: "불출 중" };
+      return { badgeClass: "status-badge status-loading", badgeText: "상태 확인 중" };
+    }
+
+    function parseDateOnly(dateText) {
+      if (!dateText) return null;
+
+      const text = String(dateText).trim();
+      if (!text) return null;
+
+      const parts = text.split("-");
+      if (parts.length !== 3) return null;
+
+      const year = Number(parts[0]);
+      const month = Number(parts[1]) - 1;
+      const day = Number(parts[2]);
+
+      const date = new Date(year, month, day);
+      if (isNaN(date.getTime())) return null;
+
+      date.setHours(0, 0, 0, 0);
+      return date;
+    }
+
+    function getDueStatus(dueDateText) {
+      const dueDate = parseDateOnly(dueDateText);
+      if (!dueDate) {
+        return {
+          fieldClass: "due-field-normal",
+          textClass: "",
+          label: dueDateText || "-"
+        };
+      }
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const diffMs = dueDate.getTime() - today.getTime();
+      const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+      if (diffDays < 0) {
+        return {
+          fieldClass: "due-field-danger",
+          textClass: "due-text-danger",
+          label: `${dueDateText} (점검 지남)`
+        };
+      }
+
+      if (diffDays <= 15) {
+        return {
+          fieldClass: "due-field-warning",
+          textClass: "due-text-warning",
+          label: `${dueDateText} (D-${diffDays})`
+        };
+      }
+
+      return {
+        fieldClass: "due-field-normal",
+        textClass: "",
+        label: dueDateText
+      };
+    }
+
+    function saveLoginUser(user) {
+      currentUserData = user;
+      localStorage.setItem(LOGIN_STORAGE_KEY, JSON.stringify({ user, lastActivity: Date.now() }));
+      updateLoginUI();
+    }
+
+    function clearLoginData() {
+      currentUserData = null;
+      localStorage.removeItem(LOGIN_STORAGE_KEY);
+    }
+
+    function touchLoginActivity() {
+      if (!currentUserData) return;
+      const saved = localStorage.getItem(LOGIN_STORAGE_KEY);
+      if (!saved) return;
+
+      try {
+        const parsed = JSON.parse(saved);
+        parsed.lastActivity = Date.now();
+        localStorage.setItem(LOGIN_STORAGE_KEY, JSON.stringify(parsed));
+      } catch (error) {
+        clearLoginData();
+      }
+    }
+
+    function loadSavedUser() {
+      const saved = localStorage.getItem(LOGIN_STORAGE_KEY);
+      if (!saved) {
+        updateLoginUI();
+        return;
+      }
+
+      try {
+        const parsed = JSON.parse(saved);
+        const user = parsed.user;
+        const lastActivity = parsed.lastActivity || 0;
+
+        if (!user || !lastActivity) {
+          clearLoginData();
+          updateLoginUI();
+          return;
+        }
+
+        if (Date.now() - lastActivity > LOGIN_EXPIRE_MS) {
+          clearLoginData();
+          updateLoginUI();
+          alert("로그인 세션이 만료되어 자동으로 로그아웃되었습니다. 다시 로그인해주세요.");
+          return;
+        }
+
+        currentUserData = user;
+        touchLoginActivity();
+      } catch (error) {
+        clearLoginData();
+      }
+
+      updateLoginUI();
+    }
+
+    function logout(showMessage = true) {
+      clearLoginData();
+      pendingAction = null;
+      actionLoadingMap = {};
+      loginNameInput.value = "";
+      loginEmpNoInput.value = "";
+      updateLoginUI();
+      if (showMessage) alert("로그아웃되었습니다.");
+    }
+
+    function autoLogout() {
+      logout(false);
+      alert("일정 시간 동안 사용 기록이 없어 로그인 세션이 종료되었습니다. 다시 로그인해주세요.");
+    }
+
+    function startAutoLogoutWatcher() {
+      setInterval(() => {
+        if (!currentUserData) return;
+        const saved = localStorage.getItem(LOGIN_STORAGE_KEY);
+        if (!saved) {
+          logout(false);
+          return;
+        }
+
+        try {
+          const parsed = JSON.parse(saved);
+          const lastActivity = parsed.lastActivity || 0;
+          if (Date.now() - lastActivity > LOGIN_EXPIRE_MS) autoLogout();
+        } catch (error) {
+          logout(false);
+        }
+      }, 60000);
+    }
+
+    function bindActivityEvents() {
+      ["click", "keydown", "touchstart", "scroll"].forEach((eventName) => {
+        document.addEventListener(eventName, () => touchLoginActivity(), { passive: true });
+      });
+    }
+
+    function jsonpRequest(url, callbackName) {
+      return new Promise((resolve, reject) => {
+        const script = document.createElement("script");
+        const uniqueCallback = `${callbackName}_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+
+        window[uniqueCallback] = function(result) {
+          resolve(result);
+          delete window[uniqueCallback];
+          script.remove();
+        };
+
+        script.src = `${url}&callback=${uniqueCallback}`;
+        script.onerror = function() {
+          reject(new Error("Apps Script 연결 오류"));
+          delete window[uniqueCallback];
+          script.remove();
+        };
+
+        document.body.appendChild(script);
+      });
+    }
+
+    async function login() {
+      const name = loginNameInput.value.trim();
+      const empNo = loginEmpNoInput.value.trim();
+
+      if (!name || !empNo) {
+        alert("이름과 사번을 입력해주세요.");
+        return;
+      }
+
+      if (isLoginSubmitting) return;
+
+      setLoginSubmitting(true);
+
+      try {
+        const url = `${WEB_APP_URL}?action=login&name=${encodeURIComponent(name)}&emp_no=${encodeURIComponent(empNo)}`;
+        const result = await jsonpRequest(url, "loginCallback");
+
+        if (!result.success) {
+          alert(result.message || "로그인에 실패했습니다.");
+          return;
+        }
+
+        saveLoginUser(result.user);
+        alert("로그인되었습니다.");
+        runPendingAction();
+      } catch (error) {
+        console.error(error);
+        alert("로그인 중 오류가 발생했습니다.");
+      } finally {
+        setLoginSubmitting(false);
+      }
+    }
+
+    function renderEquipmentRows() {
+      equipmentListEl.innerHTML = "";
+
+      EQUIPMENT_LIST.forEach((item) => {
+        const statusData = equipmentStatusMap[item.eq_code] || {};
+        const statusMeta = getStatusMeta(statusData.status || "");
+        const location = statusData.location || "-";
+        const currentUserDisplay = formatUserDisplay(statusData.current_user_team || "", statusData.current_user_name || "");
+        const checkoutTime = statusData.checkout_time || "-";
+        const dueDate = statusData.inspection_due_date || item.due || "-";
+        const dueMeta = getDueStatus(dueDate);
+        const makerModel = formatMakerModel(item.manufacturer, item.model);
+
+        const article = document.createElement("article");
+        article.className = "equipment-item";
+        article.innerHTML = `
+          <div class="equipment-head">
+            <div class="equipment-title">${item.no}. ${item.eq_code}</div>
+            <div class="${statusMeta.badgeClass}">${statusMeta.badgeText}</div>
+          </div>
+          <div class="compact-grid">
+            <div class="compact-field">
+              <span class="compact-label">장비명</span>
+              <span class="compact-value">${item.eq_name}</span>
+              <span class="compact-meta">${makerModel}</span>
+            </div>
+            <div class="compact-field">
+              <span class="compact-label">규격</span>
+              <span class="compact-value">${item.spec}</span>
+            </div>
+            <div class="compact-field">
+              <span class="compact-label">보관 위치</span>
+              <span class="compact-value">${location}</span>
+            </div>
+            <div class="compact-field ${dueMeta.fieldClass}">
+              <span class="compact-label">점검 예정일</span>
+              <span class="compact-value ${dueMeta.textClass}">${dueMeta.label}</span>
+            </div>
+            <div class="compact-field">
+              <span class="compact-label">현재 사용자</span>
+              <span class="compact-value">${currentUserDisplay}</span>
+            </div>
+            <div class="compact-field">
+              <span class="compact-label">불출 시간</span>
+              <span class="compact-value">${checkoutTime}</span>
+            </div>
+          </div>
+          <div class="item-actions">
+            <button class="action-btn" data-action="certificate" data-eq-code="${item.eq_code}">검교정 성적서</button>
+            <button class="action-btn" data-action="checkout" data-eq-code="${item.eq_code}">
+              ${actionLoadingMap[`checkout_${item.eq_code}`] ? "불출중..." : "불출하기"}
+            </button>
+            <button class="action-btn action-btn-secondary" data-action="return" data-eq-code="${item.eq_code}">
+              ${actionLoadingMap[`return_${item.eq_code}`] ? "반납중..." : "반납하기"}
+            </button>
+          </div>
+        `;
+
+        const checkoutBtn = article.querySelector(`button[data-action="checkout"][data-eq-code="${item.eq_code}"]`);
+        const returnBtn = article.querySelector(`button[data-action="return"][data-eq-code="${item.eq_code}"]`);
+
+        if (checkoutBtn && actionLoadingMap[`checkout_${item.eq_code}`]) checkoutBtn.disabled = true;
+        if (returnBtn && actionLoadingMap[`return_${item.eq_code}`]) returnBtn.disabled = true;
+
+        equipmentListEl.appendChild(article);
+      });
+    }
+
+    async function loadSelectedEquipmentStatus() {
+      try {
+        const eqCodes = EQUIPMENT_LIST.map(item => item.eq_code).join(",");
+        const result = await jsonpRequest(
+          `${WEB_APP_URL}?action=getEquipmentStatuses&eq_codes=${encodeURIComponent(eqCodes)}`,
+          "selectedStatusCallback"
+        );
+
+        if (!result.success || !result.equipments) {
+          equipmentStatusMap = {};
+          renderEquipmentRows();
+          return;
+        }
+
+        equipmentStatusMap = result.equipments || {};
+        renderEquipmentRows();
+      } catch (error) {
+        console.error(error);
+        equipmentStatusMap = {};
+        renderEquipmentRows();
+      }
+    }
+
+    function updateSingleEquipmentStatus(eqCode, equipmentData) {
+      if (!eqCode) return;
+      equipmentStatusMap[eqCode] = equipmentData || {};
+      renderEquipmentRows();
+    }
+
+    function getEquipmentByCode(eqCode) {
+      return EQUIPMENT_LIST.find((item) => item.eq_code === eqCode) || null;
+    }
+
+    function getActionButton(action, eqCode) {
+      return equipmentListEl.querySelector(`button[data-action="${action}"][data-eq-code="${eqCode}"]`);
+    }
+
+    function setActionButtonLoading(action, eqCode, isLoading) {
+      const button = getActionButton(action, eqCode);
+      if (!button) return;
+
+      const buttonKey = `${action}_${eqCode}`;
+
+      if (isLoading) {
+        actionLoadingMap[buttonKey] = true;
+        button.disabled = true;
+
+        if (action === "checkout") {
+          button.textContent = "불출중...";
+        } else if (action === "return") {
+          button.textContent = "반납중...";
+        }
+        return;
+      }
+
+      delete actionLoadingMap[buttonKey];
+      button.disabled = false;
+
+      if (action === "checkout") {
+        button.textContent = "불출하기";
+      } else if (action === "return") {
+        button.textContent = "반납하기";
+      }
+    }
+
+    function runPendingAction() {
+      if (!pendingAction || !currentUserData) return;
+
+      const { action, eqCode } = pendingAction;
+      pendingAction = null;
+
+      if (action === "certificate") {
+        openCertificate(eqCode, true);
+      } else if (action === "checkout") {
+        checkoutEquipment(eqCode, true);
+      } else if (action === "return") {
+        returnEquipment(eqCode, true);
+      }
+    }
+
+    async function checkoutEquipment(eqCode, skipLoginCheck = false) {
+      if (!currentUserData && !skipLoginCheck) {
+        pendingAction = { action: "checkout", eqCode };
+        openLoginModal();
+        alert("로그인이 필요합니다. 로그인 후 불출이 자동으로 진행됩니다.");
+        return;
+      }
+
+      const loadingKey = `checkout_${eqCode}`;
+      if (actionLoadingMap[loadingKey]) return;
+
+      touchLoginActivity();
+      setActionButtonLoading("checkout", eqCode, true);
+
+      try {
+        const url = `${WEB_APP_URL}?action=checkout&eq_code=${encodeURIComponent(eqCode)}&user_name=${encodeURIComponent(currentUserData.name)}&user_team=${encodeURIComponent(currentUserData.team)}&user_id=${encodeURIComponent(currentUserData.user_id)}&emp_no=${encodeURIComponent(currentUserData.emp_no)}`;
+        const result = await jsonpRequest(url, "checkoutCallback");
+
+        if (!result.success) {
+          alert(result.message || "불출 처리에 실패했습니다.");
+          return;
+        }
+
+        updateSingleEquipmentStatus(eqCode, result.equipment);
+        alert(`${eqCode} 불출이 완료되었습니다.`);
+      } catch (error) {
+        console.error(error);
+        alert("불출 처리 중 오류가 발생했습니다.");
+      } finally {
+        setActionButtonLoading("checkout", eqCode, false);
+      }
+    }
+
+    async function returnEquipment(eqCode, skipLoginCheck = false) {
+      if (!currentUserData && !skipLoginCheck) {
+        pendingAction = { action: "return", eqCode };
+        openLoginModal();
+        alert("로그인이 필요합니다. 로그인 후 반납이 자동으로 진행됩니다.");
+        return;
+      }
+
+      const loadingKey = `return_${eqCode}`;
+      if (actionLoadingMap[loadingKey]) return;
+
+      touchLoginActivity();
+      setActionButtonLoading("return", eqCode, true);
+
+      try {
+        const url = `${WEB_APP_URL}?action=return&eq_code=${encodeURIComponent(eqCode)}&user_name=${encodeURIComponent(currentUserData.name)}`;
+        const result = await jsonpRequest(url, "returnCallback");
+
+        if (!result.success) {
+          alert(result.message || "반납 처리에 실패했습니다.");
+          return;
+        }
+
+        updateSingleEquipmentStatus(eqCode, result.equipment);
+        alert(`${eqCode} 반납이 완료되었습니다.`);
+      } catch (error) {
+        console.error(error);
+        alert("반납 처리 중 오류가 발생했습니다.");
+      } finally {
+        setActionButtonLoading("return", eqCode, false);
+      }
+    }
+
+    function openCertificate(eqCode, skipLoginCheck = false) {
+      if (!currentUserData && !skipLoginCheck) {
+        pendingAction = { action: "certificate", eqCode };
+        openLoginModal();
+        alert("로그인이 필요합니다. 로그인 후 검교정 성적서를 자동으로 열어드립니다.");
+        return;
+      }
+
+      const equipment = getEquipmentByCode(eqCode);
+      if (!equipment) {
+        alert("해당 장비 정보를 찾을 수 없습니다.");
+        return;
+      }
+
+      touchLoginActivity();
+      window.open(equipment.file, "_blank");
+    }
+
+    function clearPendingAction() {
+      pendingAction = null;
+    }
+
+    function bindModalEvents() {
+      openLoginBtn.addEventListener("click", () => {
+        clearPendingAction();
+        openLoginModal();
+      });
+
+      logoutBtn.addEventListener("click", () => logout());
+
+      closeLoginBtn.addEventListener("click", () => {
+        clearPendingAction();
+        closeLoginModal();
+      });
+
+      cancelLoginBtn.addEventListener("click", () => {
+        clearPendingAction();
+        closeLoginModal();
+      });
+
+      submitLoginBtn.addEventListener("click", login);
+
+      loginModal.addEventListener("click", (event) => {
+        if (event.target === loginModal) {
+          clearPendingAction();
+          closeLoginModal();
+        }
+      });
+
+      document.addEventListener("keydown", (event) => {
+        const modalOpened = !loginModal.classList.contains("hidden");
+
+        if (event.key === "Escape" && modalOpened) {
+          clearPendingAction();
+          closeLoginModal();
+          return;
+        }
+
+        if (event.key === "Enter" && modalOpened) {
+          const activeElement = document.activeElement;
+          if (activeElement === loginNameInput || activeElement === loginEmpNoInput) {
+            login();
+          }
+        }
+      });
+    }
+
+    function bindEquipmentEvents() {
+      equipmentListEl.addEventListener("click", (event) => {
+        const button = event.target.closest("button[data-action]");
+        if (!button) return;
+
+        const { action, eqCode } = button.dataset;
+
+        if (action === "certificate") return openCertificate(eqCode);
+        if (action === "checkout") return checkoutEquipment(eqCode);
+        if (action === "return") return returnEquipment(eqCode);
+      });
+    }
+
+    function init() {
+      loadSavedUser();
+      bindActivityEvents();
+      bindModalEvents();
+      bindEquipmentEvents();
+      startAutoLogoutWatcher();
+      renderEquipmentRows();
+      loadSelectedEquipmentStatus();
+    }
+
+    init();
+  </script>
+</body>
+</html>
