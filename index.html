@@ -1516,11 +1516,6 @@
 
           ${loginBox}
 
-          <div class="home-quick-grid">
-            <div class="home-quick-card"><strong>QA</strong><span>상세 메뉴 연결 완료</span></div>
-            <div class="home-quick-card"><strong>6+</strong><span>파트 구조 확장 반영</span></div>
-            <div class="home-quick-card"><strong>Login</strong><span>이름/사번 인증 사용</span></div>
-          </div>
 
           <div class="panel-grid">
             <div class="panel">
@@ -1541,21 +1536,6 @@
               </div>
             </div>
 
-            <div class="panel">
-              <h3>현재 구성</h3>
-              <div class="table-wrap">
-                <table>
-                  <tr><th>파트</th><th>상태</th></tr>
-                  <tr><td>QA</td><td><span class="badge b-blue">상세 메뉴 연결</span></td></tr>
-                  <tr><td>상선</td><td><span class="badge b-green">세부 메뉴 반영</span></td></tr>
-                  <tr><td>해군</td><td><span class="badge b-green">세부 메뉴 반영</span></td></tr>
-                  <tr><td>해양</td><td><span class="badge b-green">세부 메뉴 반영</span></td></tr>
-                  <tr><td>산업공조</td><td><span class="badge b-green">세부 메뉴 반영</span></td></tr>
-                  <tr><td>FAN</td><td><span class="badge b-green">세부 메뉴 반영</span></td></tr>
-                  <tr><td>퓨얼셀</td><td><span class="badge b-green">세부 메뉴 반영</span></td></tr>
-                </table>
-              </div>
-            </div>
           </div>
 
           <div class="panel" style="margin-top:16px;">
@@ -1574,6 +1554,13 @@
                 <div class="qa-process-head">산업공조 바로가기</div>
                 <div class="qa-process-body">
                   <button type="button" data-screen="hvac_004_2">🌐 공정간 검사 / 자재검사</button>
+                </div>
+              </div>
+
+              <div class="qa-process">
+                <div class="qa-process-head">FAN 바로가기</div>
+                <div class="qa-process-body">
+                  <button type="button" data-screen="fan_004_2">🌐 고객검사 / FAN TEST REPORT</button>
                 </div>
               </div>
             </div>
@@ -1746,6 +1733,26 @@
             <iframe
               class="embedded-page-frame"
               src="equipment.html"
+              title="${titleText}"
+              loading="lazy"
+              onload="prepareEmbeddedPortalFrame(this)">
+            </iframe>
+          </div>
+        </div>
+      `;
+    }
+
+    function fanTestReportEmbedScreen(titleText) {
+      return `
+        <div class="screen-head">
+          <h1>${titleText}</h1>
+          <p>FAN TEST REPORT 자동 작성 화면을 작업영역 안에서 바로 확인할 수 있습니다.</p>
+        </div>
+        <div class="screen-body">
+          <div class="embedded-page-card">
+            <iframe
+              class="embedded-page-frame"
+              src="fan_spec_raw_data_report_builder.html"
               title="${titleText}"
               loading="lazy"
               onload="prepareEmbeddedPortalFrame(this)">
@@ -2976,7 +2983,8 @@
       "qa_test_qr_embed",
       "qa_equipment_checkout_embed",
       "qa_equipment_return_embed",
-      "hvac_004_2"
+      "hvac_004_2",
+      "fan_004_2"
     ]);
 
     function isExecutableScreen(screenKey) {
@@ -3227,6 +3235,11 @@
       screens["hvac_004_2"] = {
         tab: "산업공조 > 공정간 검사 > 자재검사",
         html: () => steelMaterialCheckEmbedScreen("산업공조 / 공정간 검사 / 자재검사")
+      };
+
+      screens["fan_004_2"] = {
+        tab: "FAN > 고객검사 > FAN TEST REPORT",
+        html: () => fanTestReportEmbedScreen("FAN / 고객검사 / FAN TEST REPORT")
       };
     }
 
