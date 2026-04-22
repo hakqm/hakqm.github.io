@@ -436,6 +436,30 @@
 
     .login-btn-secondary:hover { background: #dfe7f1; }
 
+
+    .due-field-normal {
+      background: #ffffff;
+      border-color: var(--line-soft);
+    }
+
+    .due-field-warning {
+      background: #fff4e8;
+      border-color: #fdba74;
+    }
+
+    .due-field-danger {
+      background: #fef3f2;
+      border-color: #fda29b;
+    }
+
+    .due-text-warning {
+      color: #b54708;
+    }
+
+    .due-text-danger {
+      color: #b42318;
+    }
+
     @media (max-width: 640px) {
       .hero-top { align-items: stretch; }
       .item-actions { flex-direction: column; }
@@ -646,6 +670,66 @@
       return { badgeClass: "status-badge status-loading", badgeText: "상태 확인 중" };
     }
 
+
+    function parseDateOnly(dateText) {
+      if (!dateText) return null;
+
+      const text = String(dateText).trim();
+      if (!text) return null;
+
+      const parts = text.split("-");
+      if (parts.length !== 3) return null;
+
+      const year = Number(parts[0]);
+      const month = Number(parts[1]) - 1;
+      const day = Number(parts[2]);
+
+      const date = new Date(year, month, day);
+      if (isNaN(date.getTime())) return null;
+
+      date.setHours(0, 0, 0, 0);
+      return date;
+    }
+
+    function getDueStatus(dueDateText) {
+      const dueDate = parseDateOnly(dueDateText);
+      if (!dueDate) {
+        return {
+          fieldClass: "due-field-normal",
+          textClass: "",
+          label: dueDateText || "-"
+        };
+      }
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const diffMs = dueDate.getTime() - today.getTime();
+      const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+      if (diffDays < 0) {
+        return {
+          fieldClass: "due-field-danger",
+          textClass: "due-text-danger",
+          label: `${dueDateText} (점검 지남)`
+        };
+      }
+
+      if (diffDays <= 15) {
+        return {
+          fieldClass: "due-field-warning",
+          textClass: "due-text-warning",
+          label: `${dueDateText} (D-${diffDays})`
+        };
+      }
+
+      return {
+        fieldClass: "due-field-normal",
+        textClass: "",
+        label: dueDateText
+      };
+    }
+
     function saveLoginUser(user) {
       currentUserData = user;
       localStorage.setItem(LOGIN_STORAGE_KEY, JSON.stringify({ user, lastActivity: Date.now() }));
@@ -809,6 +893,8 @@
         const location = statusData.location || "-";
         const currentUserDisplay = formatUserDisplay(statusData.current_user_team || "", statusData.current_user_name || "");
         const checkoutTime = statusData.checkout_time || "-";
+        const dueDate = statusData.inspection_due_date || item.due || "-";
+        const dueMeta = getDueStatus(dueDate);
 
         const article = document.createElement("article");
         article.className = "equipment-item";
@@ -821,7 +907,7 @@
             <div class="compact-field"><span class="compact-label">장비명</span><span class="compact-value">${item.eq_name}</span></div>
             <div class="compact-field"><span class="compact-label">규격</span><span class="compact-value">${item.spec}</span></div>
             <div class="compact-field"><span class="compact-label">보관 위치</span><span class="compact-value">${location}</span></div>
-            <div class="compact-field"><span class="compact-label">점검 예정일</span><span class="compact-value">${item.due}</span></div>
+            <div class="compact-field ${dueMeta.fieldClass}"><span class="compact-label">점검 예정일</span><span class="compact-value ${dueMeta.textClass}">${dueMeta.label}</span></div>
             <div class="compact-field"><span class="compact-label">현재 사용자</span><span class="compact-value">${currentUserDisplay}</span></div>
             <div class="compact-field"><span class="compact-label">불출 시간</span><span class="compact-value">${checkoutTime}</span></div>
           </div>
