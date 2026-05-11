@@ -27,7 +27,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
             box-sizing: border-box;
         }
 
@@ -37,7 +37,7 @@
             display: flex;
             flex-direction: column;
             gap: 20px;
-            height: 100%;
+            min-height: 100%;
         }
 
         .api-section {
@@ -172,6 +172,47 @@
         }
         .status-text { font-size: 14px; font-weight: bold; color: var(--text-main); min-width: 200px; }
 
+
+        .backend-row {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr);
+            gap: 8px;
+            margin-top: 14px;
+        }
+        .backend-row label {
+            color: var(--text-sub);
+            font-size: 13px;
+            font-weight: 700;
+        }
+        .backend-row input {
+            width: 100%;
+            max-width: 760px;
+            margin-top: 0;
+        }
+        .backend-note {
+            color: #FCD34D;
+            font-size: 12px;
+            line-height: 1.6;
+            margin-top: 8px;
+        }
+
+        @media (max-width: 900px) {
+            body { padding: 12px; }
+            .container { height: auto; }
+            .api-section { padding: 18px; }
+            .api-section input { width: 100%; }
+            .main-content { flex-direction: column; }
+            .left-panel { width: 100%; }
+            .right-panel { min-height: 320px; }
+            .status-footer { flex-direction: column; align-items: stretch; padding: 15px; }
+            .status-text { min-width: 0; }
+        }
+
+        @media (max-width: 520px) {
+            .left-panel, .right-panel, .api-section { padding: 16px; }
+            .status-footer { gap: 10px; }
+        }
+
     </style>
 </head>
 <body>
@@ -180,6 +221,14 @@
     <div class="api-section">
         <h3 style="margin: 0; color: #E9ECEF;">Gemini API Key Authentication</h3>
         <input type="password" id="apiKey" placeholder="이곳에 API 키를 입력하세요 (AIzaSy...)">
+        <div class="backend-row">
+            <label for="backendUrl">처리 서버 URL</label>
+            <input type="text" id="backendUrl" value="/process" placeholder="예: /process 또는 https://your-app.vercel.app/process">
+            <div class="backend-note">
+                ※ 이 도구는 명판 이미지 분석과 엑셀 생성을 서버의 <b>/process</b>에서 처리하는 방식입니다.
+                GitHub Pages 단독 배포에서는 별도 처리 서버 URL이 필요합니다.
+            </div>
+        </div>
     </div>
 
     <div class="main-content">
@@ -241,7 +290,9 @@
     async function startProcess() {
         const apiKey = document.getElementById('apiKey').value.trim();
         const unitName = document.getElementById('unitName').value.trim();
+        const backendUrl = (document.getElementById('backendUrl').value || '/process').trim();
         if (!apiKey) return alert("API 키를 입력해주세요!");
+        if (!backendUrl) return alert("처리 서버 URL을 입력해주세요!");
         if (imageInput.files.length === 0) return alert("이미지를 선택해주세요!");
         if (!excelInput.files[0]) return alert("엑셀 파일을 선택해주세요!");
 
@@ -262,8 +313,13 @@
         }
 
         try {
-            const response = await fetch('/process', { method: 'POST', body: formData });
-            const result = await response.json();
+            const response = await fetch(backendUrl, { method: 'POST', body: formData });
+            let result;
+            try {
+                result = await response.json();
+            } catch (jsonError) {
+                throw new Error('처리 서버 응답을 읽을 수 없습니다. 서버 URL 또는 배포 상태를 확인해주세요.');
+            }
             
             if (response.ok) {
                 // 바 업데이트 및 완료 문구
@@ -288,6 +344,30 @@
             startBtn.innerText = "성적서 생성";
         }
     }
+
+    function sendPortalHeight() {
+        const height = Math.max(
+            document.documentElement.scrollHeight,
+            document.body ? document.body.scrollHeight : 0,
+            900
+        );
+        if (window.parent && window.parent !== window) {
+            window.parent.postMessage({ type: 'fuelcell-serial-report-height', height }, '*');
+        }
+    }
+
+    window.addEventListener('load', sendPortalHeight);
+    window.addEventListener('resize', sendPortalHeight);
+    if (window.MutationObserver) {
+        const observer = new MutationObserver(sendPortalHeight);
+        observer.observe(document.documentElement, {
+            childList: true,
+            subtree: true,
+            attributes: true,
+            characterData: true
+        });
+    }
+
 </script>
 </body>
 </html>
