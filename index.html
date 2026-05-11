@@ -1810,6 +1810,35 @@
       `;
     }
 
+    function offshoreHvacPtrEmbedScreen(titleText) {
+      return `
+        <div class="screen-head">
+          <div class="screen-head-bar">
+            <div class="screen-head-main">
+              <h1>${titleText}</h1>
+              <p>OFFSHORE HVAC PTR 자동 작성 화면을 작업영역 안에서 바로 확인할 수 있습니다.</p>
+            </div>
+            <div class="screen-head-actions">
+              <a class="btn primary" href="offshore_hvac_ptr.html" target="_blank" rel="noopener noreferrer">새 창으로 열기</a>
+            </div>
+          </div>
+        </div>
+        <div class="screen-body">
+          <div class="embedded-page-card">
+            <iframe
+              id="offshoreHvacPtrFrame"
+              class="embedded-page-frame"
+              src="offshore_hvac_ptr.html"
+              title="${titleText}"
+              loading="lazy"
+              onload="resizePortalFrame(this)">
+            </iframe>
+          </div>
+        </div>
+      `;
+    }
+
+
     function steelMaterialCheckEmbedScreen(titleText) {
       return `
         <div class="screen-head">
@@ -3035,7 +3064,8 @@
       "qa_equipment_checkout_embed",
       "qa_equipment_return_embed",
       "hvac_004_2",
-      "fan_004_2"
+      "fan_004_2",
+      "marine_004_1"
     ]);
 
     function isExecutableScreen(screenKey) {
@@ -3291,6 +3321,11 @@
       screens["fan_004_2"] = {
         tab: "FAN > 고객검사 > FAN TEST REPORT",
         html: () => fanTestReportEmbedScreen("FAN / 고객검사 / FAN TEST REPORT")
+      };
+
+      screens["marine_004_1"] = {
+        tab: "해양 > FAT 고객검사 > 성능 검사 및 외관 검사",
+        html: () => offshoreHvacPtrEmbedScreen("해양 / FAT 고객검사 / 성능 검사 및 외관 검사")
       };
     }
 
@@ -3938,6 +3973,17 @@
       if (data.type !== "qr-generator-height") return;
 
       const frame = document.getElementById("qrGeneratorFrame");
+      if (!frame) return;
+
+      const height = Math.max(980, Number(data.height) || 0);
+      frame.style.height = height + "px";
+    });
+
+    window.addEventListener("message", function(event) {
+      const data = event.data || {};
+      if (data.type !== "offshore-hvac-ptr-height") return;
+
+      const frame = document.getElementById("offshoreHvacPtrFrame");
       if (!frame) return;
 
       const height = Math.max(980, Number(data.height) || 0);
