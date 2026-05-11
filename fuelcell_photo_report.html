@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fuel Cell 사전검사 사진 Report</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <style>
+        :root { --primary: #004680; --accent: #00a0e9; --bg: #f4f7fa; }
+        body { font-family: 'Pretendard', sans-serif; background: var(--bg); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
+        .card { width: 100%; max-width: 650px; background: white; padding: 40px; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); }
+        h1 { color: var(--primary); font-size: 22px; text-align: center; margin-bottom: 30px; line-height: 1.4; border-bottom: 2px solid #eee; padding-bottom: 20px; }
+        .group { margin-bottom: 20px; }
+        label { display: block; font-weight: 600; margin-bottom: 8px; font-size: 14px; color: #444; }
+        input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; font-size: 14px; transition: 0.3s; }
+        input:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px rgba(0, 160, 233, 0.1); }
+        .prog-container { display: none; margin-top: 25px; background: #f0f0f0; border-radius: 10px; height: 14px; overflow: hidden; }
+        .prog-fill { background: linear-gradient(90deg, var(--primary), var(--accent)); width: 0%; height: 100%; transition: width 0.2s; }
+        .prog-text { text-align: center; font-size: 13px; color: #666; margin-top: 8px; font-weight: bold; }
+        button { width: 100%; background: var(--primary); color: white; padding: 16px; border: none; border-radius: 12px; font-size: 17px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 15px; }
+        button:hover { background: #002d52; transform: translateY(-2px); }
+        .note { font-size: 12px; color: #d9534f; text-align: center; margin-top: 15px; font-weight: bold; }
+
+        @media (max-width: 720px) {
+            body { align-items: flex-start; padding: 12px; }
+            .card { padding: 22px 18px; border-radius: 16px; }
+            h1 { font-size: 19px; margin-bottom: 22px; }
+            .two-col { grid-template-columns: 1fr !important; gap: 0 !important; }
+            button { padding: 14px; font-size: 15px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h1>Reformer Catalyst Tube<br>PHOTOS REPORT TOOL</h1>
+
+    <div class="group">
+        <label>1. 엑셀 양식 업로드 (.xlsx)</label>
+        <input type="file" id="input-tpl" accept=".xlsx">
+    </div>
+
+    <div class="two-col" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+        <div class="group">
+            <label>2. 호기 번호 (Unit #)</label>
+            <input type="text" id="input-unit" placeholder="예: 601">
+        </div>
+        <div class="group">
+            <label>3. 검사 날짜 (Date)</label>
+            <input type="date" id="input-date">
+        </div>
+    </div>
+
+    <div class="group">
+        <label>4. 사진 선택 (74장)</label>
+        <input type="file" id="input-photos" multiple accept=".jpg,.jpeg,.png,image/jpeg,image/png">
+    </div>
+
+    <button onclick="runAutomation()">리포트 생성 및 다운로드</button>
+
+    <div id="prog-wrapper" style="display:none;">
+        <div class="prog-container"><div id="prog-bar" class="prog-fill"></div></div>
+        <div id="prog-status" class="prog-text">데이터 처리 중... 0%</div>
+    </div>
+    
+    <div class="note">* 호기 번호가 파일명으로 자동 지정되며, Report No.에는 호기 번호만 입력됩니다.</div>
+</div>
+
+<script>
+
+    function getExcelImageExtension(file) {
+        const type = String(file.type || '').toLowerCase();
+        const name = String(file.name || '').toLowerCase();
+
+        if (type.includes('png') || name.endsWith('.png')) return 'png';
+        if (type.includes('jpeg') || type.includes('jpg') || name.endsWith('.jpg') || name.endsWith('.jpeg')) return 'jpeg';
+
+        return null;
+    }
+
+    async function runAutomation() {
+        const tplFile = document.getElementById('input-tpl').files[0];
+        const unitVal = document.getElementById('input-unit').value;
+        const dateVal = document.getElementById('input-date').value;
+        const photoFiles = document.getElementById('input-photos').files;
+        
+        const wrapper = document.getElementById('prog-wrapper');
+        const bar = document.getElementById('prog-bar');
+        const status = document.getElementById('prog-status');
+
+        if (!tplFile || !photoFiles[0] || !unitVal) {
+            alert("양식 파일, 호기 번호, 사진을 모두 등록해주세요.");
+            return;
+        }
+
+        try {
+            wrapper.style.display = 'block';
+            status.innerText = "양식 로드 중...";
+            
+            const workbook = new ExcelJS.Workbook();
+            await workbook.xlsx.load(await tplFile.arrayBuffer());
+            const sheet = workbook.worksheets[0];
+
+            // 인쇄 설정 유지 (페이지 나누기 추가)
+            if (sheet.pageSetup) {
+                sheet.pageSetup.fitToHeight = 0; 
+                sheet.pageSetup.fitToWidth = 1;
+            }
+            sheet.getRow(53).addPageBreak(); 
+            sheet.getRow(106).addPageBreak(); 
+            sheet.getRow(159).addPageBreak(); 
+
+            const photos = Array.from(photoFiles).sort((a, b) => a.name.localeCompare(b.name));
+
+            // 기본 정보 입력
+            const cells = {
+                // [수정] Report No. 셀에는 호기 번호만 입력
+                report: ['J2', 'J55', 'J108', 'J161'],
+                unit: ['B4', 'B57', 'B110', 'B163'],
+                date: ['H3', 'H56', 'H109', 'H162']
+            };
+            
+            // J2 등 Report No. 칸에 입력하신 호기 번호만 넣습니다.
+            cells.report.forEach(c => { if(sheet.getCell(c)) sheet.getCell(c).value = unitVal; });
+            cells.unit.forEach(c => { if(sheet.getCell(c)) sheet.getCell(c).value = `#${unitVal}`; });
+            cells.date.forEach(c => { if(sheet.getCell(c)) sheet.getCell(c).value = dateVal; });
+
+            // 사진 매핑 및 규격 설정
+            const mapping = [];
+            const cols = ['A', 'D', 'G', 'J'];
+            for(let r=6; r<=46; r+=8) cols.forEach(c => mapping.push({c, r}));
+            for(let r=59; r<=99; r+=8) cols.forEach(c => mapping.push({c, r}));
+            for(let r=112; r<=152; r+=8) cols.forEach(c => mapping.push({c, r}));
+            mapping.push({c:'A', r:165}, {c:'D', r:165});
+
+            const imgW = 5.76 * 37.8; 
+            const imgH = 4.19 * 37.8;  
+            const colIdx = { 'A': 1, 'D': 4, 'G': 7, 'J': 10 };
+
+            for (let i = 0; i < photos.length; i++) {
+                if (!mapping[i]) break;
+                const b64 = await new Promise((res, rej) => {
+                    const r = new FileReader();
+                    r.onload = () => res(r.result.split(',')[1]);
+                    r.onerror = rej;
+                    r.readAsDataURL(photos[i]);
+                });
+
+                const ext = getExcelImageExtension(photos[i]);
+                if (!ext) {
+                    alert(`${photos[i].name} 파일은 지원하지 않는 이미지 형식입니다. JPG 또는 PNG로 등록해주세요.`);
+                    continue;
+                }
+
+                const imgId = workbook.addImage({ base64: b64, extension: ext });
+                sheet.addImage(imgId, {
+                    tl: { col: colIdx[mapping[i].c] - 1, row: mapping[i].r - 1 },
+                    ext: { width: imgW, height: imgH },
+                    editAs: 'oneCell'
+                });
+
+                const per = Math.round(((i + 1) / photos.length) * 100);
+                bar.style.width = per + '%';
+                status.innerText = `사진 삽입 중... ${per}% (${i + 1}/${photos.length})`;
+                if (i % 3 === 0) await new Promise(r => setTimeout(r, 10));
+            }
+
+            status.innerText = "파일 생성 중...";
+            const buffer = await workbook.xlsx.writeBuffer();
+            
+            // [수정] 파일명을 입력하신 호기 번호로만 설정 (예: 601.xlsx)
+            saveAs(new Blob([buffer]), `${unitVal}.xlsx`);
+            
+            status.innerText = "완성되었습니다!";
+            setTimeout(() => { wrapper.style.display = 'none'; bar.style.width = '0%'; }, 3000);
+
+        } catch (err) {
+            alert("오류가 발생했습니다: " + err.message);
+            status.innerText = "오류 발생";
+        }
+    }
+
+    (function setupPortalResize() {
+        function sendHeight() {
+            const height = Math.max(720, document.documentElement.scrollHeight, document.body.scrollHeight);
+            window.parent.postMessage({ type: 'fuelcell-photo-report-height', height }, '*');
+        }
+
+        window.addEventListener('load', sendHeight);
+        window.addEventListener('resize', sendHeight);
+        setInterval(sendHeight, 1000);
+    })();
+
+</script>
+</body>
+</html>

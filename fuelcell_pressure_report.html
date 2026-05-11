@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fuel Cell 압력검사 Report</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx-populate/1.21.0/xlsx-populate.min.js"></script>
+    <style>
+        :root {
+            --primary: #0054a6; --bg: #f0f4f8; --success: #28a745;
+            --error: #dc3545; --blue-section: #e3f2fd; --tab-h: #2c3e50;
+        }
+        * { box-sizing: border-box; }
+        body { font-family: 'Malgun Gothic', sans-serif; background: var(--bg); padding: 20px; color: #333; margin: 0; }
+        .container { max-width: 1300px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.12); }
+
+        /* Header */
+        .header { background: #2c3e50; color: white; padding: 15px 25px; border-radius: 8px; margin-bottom: 20px; }
+        .api-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .api-row input { width: 320px; padding: 9px 12px; border-radius: 4px; border: none; font-family: monospace; }
+        .btn-api { padding: 9px 18px; background: #34495e; color: white; border: 1px solid #7f8c8d; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .btn-api:hover { background: #1abc9c; border-color: #1abc9c; }
+        .badge { padding: 5px 12px; border-radius: 20px; font-size: 13px; font-weight: bold; background: #7f8c8d; color: white; }
+        .badge-ok { background: var(--success); }
+        .badge-ng { background: var(--error); }
+        #errorLog { color: #ffeb3b; font-size: 13px; margin-top: 8px; font-weight: bold; min-height: 18px; }
+
+        /* Top controls */
+        .top-controls { display: flex; align-items: center; gap: 30px; margin-bottom: 20px; padding: 15px 20px; background: #f8f9fa; border-radius: 8px; border: 1px solid #dee2e6; flex-wrap: wrap; }
+        .ctrl-group { display: flex; align-items: center; gap: 10px; }
+        .ctrl-label { font-weight: bold; color: #495057; white-space: nowrap; }
+        .count-btns { display: flex; gap: 5px; }
+        .count-btn { width: 38px; height: 38px; border: 2px solid #ced4da; background: white; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 15px; transition: all 0.15s; }
+        .count-btn:hover { border-color: var(--primary); color: var(--primary); }
+        .count-btn.active { background: var(--primary); border-color: var(--primary); color: white; }
+        .upload-zone-sm { border: 2px dashed #ced4da; border-radius: 8px; padding: 10px 18px; cursor: pointer; font-size: 14px; background: white; transition: all 0.15s; white-space: nowrap; }
+        .upload-zone-sm:hover { border-color: var(--primary); background: #e9f2fb; }
+        .upload-zone-sm.loaded { border-color: var(--success); background: #f0fff4; color: #155724; }
+
+        /* Tabs */
+        .tabs-wrap { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 0; border-bottom: 3px solid var(--primary); padding-bottom: 0; }
+        .tab-btn { padding: 9px 18px; border: 2px solid #dee2e6; border-bottom: none; background: #f8f9fa; border-radius: 6px 6px 0 0; cursor: pointer; font-weight: bold; font-size: 14px; color: #6c757d; transition: all 0.15s; position: relative; }
+        .tab-btn:hover { background: #e9f2fb; color: var(--primary); }
+        .tab-btn.active { background: var(--primary); border-color: var(--primary); color: white; margin-bottom: -3px; z-index: 1; }
+        .tab-btn.done::after { content: ' ✅'; font-size: 12px; }
+
+        /* Unit panel */
+        .unit-panel { display: none; border: 2px solid var(--primary); border-top: none; border-radius: 0 0 10px 10px; padding: 25px; }
+        .unit-panel.active { display: block; }
+        .panel-grid { display: grid; grid-template-columns: 1fr 1.15fr; gap: 30px; }
+
+        /* Photo upload */
+        .upload-zone-lg { border: 2px dashed #cbd5e0; border-radius: 10px; padding: 30px 20px; text-align: center; background: #fafafa; cursor: pointer; transition: all 0.15s; }
+        .upload-zone-lg:hover { border-color: var(--primary); background: #e9f2fb; }
+        .upload-zone-lg p { margin: 0; color: #555; font-size: 15px; }
+        .status-text { margin-top: 12px; font-weight: bold; color: var(--primary); min-height: 22px; font-size: 14px; }
+
+        /* Table */
+        table { width: 100%; border-collapse: collapse; margin-top: 5px; }
+        th, td { border: 1px solid #dee2e6; padding: 10px 10px; font-size: 14px; }
+        th { background: #f8f9fa; width: 38%; white-space: nowrap; }
+        .expiry-row td { background-color: var(--blue-section); }
+        .expiry-row th { background-color: #c8e6fd; color: #0d47a1; font-weight: bold; }
+        input.field { width: 100%; border: 1px solid #ced4da; padding: 7px 9px; border-radius: 4px; font-family: 'Malgun Gothic', sans-serif; font-size: 14px; }
+        input.field:read-only { background: #f1f3f5; color: #495057; }
+
+        /* Buttons */
+        .btn-row { display: flex; gap: 10px; margin-top: 20px; }
+        .btn-export-one { flex: 1; padding: 13px; background: #217346; color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: bold; cursor: pointer; }
+        .btn-export-one:hover { background: #1a5c38; }
+        .btn-export-all { width: 100%; padding: 15px; background: #0054a6; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 20px; }
+        .btn-export-all:hover { background: #003d7a; }
+        .btn-clear { padding: 13px 18px; background: #6c757d; color: white; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; }
+        .btn-clear:hover { background: #545b62; }
+
+        /* Misc */
+        h3 { margin: 0 0 12px 0; font-size: 16px; color: var(--tab-h); }
+        .section-title { font-size: 13px; color: #6c757d; margin-bottom: 10px; }
+
+        @media (max-width: 900px) {
+            body { padding: 12px; }
+            .container { padding: 18px; border-radius: 10px; }
+            .panel-grid { grid-template-columns: 1fr; gap: 20px; }
+            .api-row input { width: 100%; }
+            .top-controls { gap: 14px; padding: 14px; }
+            .ctrl-group { width: 100%; align-items: stretch; flex-direction: column; }
+            .count-btns { flex-wrap: wrap; }
+            .btn-export-all { width: 100% !important; }
+            .tabs-wrap { overflow-x: auto; flex-wrap: nowrap; }
+            .tab-btn { flex: 0 0 auto; }
+            .unit-panel { padding: 16px; }
+            th, td { display: block; width: 100%; }
+            th { border-bottom: 0; }
+            .btn-row { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <!-- Header -->
+    <div class="header">
+        <div class="api-row">
+            <strong>🔑 Google Vision API Key</strong>
+            <input type="password" id="apiKey" placeholder="API 키를 입력하세요" autocomplete="off">
+            <button class="btn-api" id="btnCheckApi">실행 가능 확인</button>
+            <span id="apiBadge" class="badge">확인 전</span>
+        </div>
+        <div id="errorLog"></div>
+    </div>
+
+    <!-- Top Controls: Unit Count + Template -->
+    <div class="top-controls">
+        <div class="ctrl-group">
+            <span class="ctrl-label">🔢 검사 대수:</span>
+            <div class="count-btns" id="countBtns"></div>
+        </div>
+        <div class="ctrl-group">
+            <span class="ctrl-label">📄 성적서 양식:</span>
+            <div class="upload-zone-sm" id="btnTemplate">
+                <span id="templateLabel">클릭하여 엑셀 양식 (.xlsx) 선택</span>
+            </div>
+            <input type="file" id="templateInput" accept=".xlsx" style="display:none">
+        </div>
+        <div class="ctrl-group" style="margin-left:auto;">
+            <button class="btn-export-all" onclick="exportAll()" style="margin-top:0; width:auto; padding:10px 24px; font-size:14px;">
+                📦 전체 일괄 다운로드
+            </button>
+        </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs-wrap" id="tabsWrap"></div>
+
+    <!-- Unit Panels (generated by JS) -->
+    <div id="unitsContainer"></div>
+
+</div>
+
+<script>
+/* ─────────────────────────────────────────────
+   STATE
+───────────────────────────────────────────── */
+let isApiReady = false;
+let excelTemplateFile = null;
+let activeUnit = 0;
+let activeUnitCount = 5;
+const MAX_UNITS = 10;
+
+/* ─────────────────────────────────────────────
+   INIT
+───────────────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', () => {
+    buildUI();
+    initCountButtons();
+    setUnitCount(5);
+    switchUnit(0);
+
+    // API Check
+    document.getElementById('btnCheckApi').addEventListener('click', checkApi);
+
+    // Template upload
+    document.getElementById('btnTemplate').addEventListener('click', () => {
+        document.getElementById('templateInput').click();
+    });
+    document.getElementById('templateInput').addEventListener('change', e => {
+        if (e.target.files.length > 0) {
+            excelTemplateFile = e.target.files[0];
+            const lbl = document.getElementById('templateLabel');
+            lbl.innerHTML = `✅ <b>${excelTemplateFile.name}</b>`;
+            document.getElementById('btnTemplate').classList.add('loaded');
+        }
+    });
+});
+
+/* ─────────────────────────────────────────────
+   BUILD DYNAMIC UI
+───────────────────────────────────────────── */
+function buildUI() {
+    const tabsWrap = document.getElementById('tabsWrap');
+    const container = document.getElementById('unitsContainer');
+
+    for (let i = 0; i < MAX_UNITS; i++) {
+        // Tab button
+        const tab = document.createElement('button');
+        tab.className = 'tab-btn';
+        tab.id = `tab-${i}`;
+        tab.textContent = `${i + 1}호기`;
+        tab.onclick = () => switchUnit(i);
+        tabsWrap.appendChild(tab);
+
+        // Unit panel
+        const panel = document.createElement('div');
+        panel.className = 'unit-panel';
+        panel.id = `panel-${i}`;
+        panel.innerHTML = buildPanelHTML(i);
+        container.appendChild(panel);
+
+        // Attach event listeners for this unit
+        attachUnitListeners(i);
+    }
+}
+
+function buildPanelHTML(i) {
+    return `
+    <div class="panel-grid">
+        <div>
+            <h3>📸 ${i+1}호기 검사 사진 분석</h3>
+            <p class="section-title">기록판, 게이지, 온도계 사진을 모두 선택하세요 (다중 선택 가능)</p>
+            <div class="upload-zone-lg" id="zone-${i}">
+                <p>클릭하여 사진 선택</p>
+                <p style="font-size:12px; color:#888; margin-top:8px;">기록판 / 게이지 / 온도계</p>
+            </div>
+            <input type="file" id="photo-${i}" multiple accept="image/*" style="display:none">
+            <div class="status-text" id="status-${i}"></div>
+        </div>
+        <div>
+            <h3>📋 추출 데이터</h3>
+            <table>
+                <tr><th>SERIAL NO</th><td><input type="text" id="serial-${i}" class="field" autocomplete="off"></td></tr>
+                <tr><th>DATE</th><td><input type="date" id="date-${i}" class="field" autocomplete="off"></td></tr>
+                <tr><th>START TIME</th><td><input type="time" id="start-${i}" class="field" autocomplete="off"></td></tr>
+                <tr><th>FINAL TIME</th><td><input type="time" id="final-${i}" class="field" autocomplete="off"></td></tr>
+                <tr><th>HOLDING TIME (자동)</th><td><input type="text" id="holding-${i}" class="field" readonly placeholder="자동 계산"></td></tr>
+                <tr><th>PRESSURE (kPa G)</th><td><input type="number" id="pressure-${i}" class="field" autocomplete="off"></td></tr>
+                <tr><th>GAUGE S/N #1</th><td><input type="text" id="gauge1-${i}" class="field" autocomplete="off"></td></tr>
+                <tr class="expiry-row"><th>Calibration Due #1</th><td><input type="date" id="expiry1-${i}" class="field" autocomplete="off"></td></tr>
+                <tr><th>GAUGE S/N #2</th><td><input type="text" id="gauge2-${i}" class="field" autocomplete="off"></td></tr>
+                <tr class="expiry-row"><th>Calibration Due #2</th><td><input type="date" id="expiry2-${i}" class="field" autocomplete="off"></td></tr>
+                <tr><th>TEST TEMP (°C)</th><td><input type="text" id="temp-${i}" class="field" placeholder="직접 입력 가능 (예: 18.4)" autocomplete="off"></td></tr>
+            </table>
+            <div class="btn-row">
+                <button class="btn-export-one" onclick="exportUnit(${i})">📊 ${i+1}호기 엑셀 다운로드</button>
+                <button class="btn-clear" onclick="clearUnit(${i})" title="이 호기 데이터 초기화">🗑 초기화</button>
+            </div>
+        </div>
+    </div>`;
+}
+
+function attachUnitListeners(i) {
+    document.getElementById(`zone-${i}`).addEventListener('click', () => {
+        if (!isApiReady) { alert("먼저 API 확인을 해주세요."); return; }
+        document.getElementById(`photo-${i}`).click();
+    });
+    document.getElementById(`photo-${i}`).addEventListener('change', e => handlePhotoChange(i, e.target.files));
+    document.getElementById(`start-${i}`).addEventListener('change', () => calcHolding(i));
+    document.getElementById(`final-${i}`).addEventListener('change', () => calcHolding(i));
+}
+
+/* ─────────────────────────────────────────────
+   UNIT COUNT
+───────────────────────────────────────────── */
+function initCountButtons() {
+    const wrap = document.getElementById('countBtns');
+    for (let n = 1; n <= MAX_UNITS; n++) {
+        const btn = document.createElement('button');
+        btn.className = 'count-btn';
+        btn.textContent = n;
+        btn.onclick = () => setUnitCount(n);
+        wrap.appendChild(btn);
+    }
+}
+
+function setUnitCount(n) {
+    activeUnitCount = n;
+    for (let i = 0; i < MAX_UNITS; i++) {
+        const tab = document.getElementById(`tab-${i}`);
+        tab.style.display = i < n ? '' : 'none';
+    }
+    document.querySelectorAll('.count-btn').forEach((btn, idx) => {
+        btn.classList.toggle('active', idx + 1 === n);
+    });
+    if (activeUnit >= n) switchUnit(n - 1);
+}
+
+function switchUnit(idx) {
+    document.querySelectorAll('.unit-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+    document.getElementById(`panel-${idx}`).classList.add('active');
+    document.getElementById(`tab-${idx}`).classList.add('active');
+    activeUnit = idx;
+}
+
+/* ─────────────────────────────────────────────
+   API CHECK
+───────────────────────────────────────────── */
+async function checkApi() {
+    const key = document.getElementById('apiKey').value.trim();
+    const badge = document.getElementById('apiBadge');
+    const errorLog = document.getElementById('errorLog');
+    errorLog.innerText = '';
+    if (!key) { alert("API 키를 입력하세요."); return; }
+    badge.innerText = "확인 중...";
+    badge.className = "badge";
+    try {
+        const resp = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${key}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ requests: [{ image: { content: "R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" }, features: [{ type: "TEXT_DETECTION" }] }] })
+        });
+        if (resp.ok) {
+            badge.innerText = "✅ 실행 가능"; badge.className = "badge badge-ok"; isApiReady = true;
+        } else {
+            const err = await resp.json();
+            throw new Error(err.error ? err.error.message : "연결 오류");
+        }
+    } catch (e) {
+        badge.innerText = "❌ 연결 불가"; badge.className = "badge badge-ng"; isApiReady = false;
+        errorLog.innerText = "⚠️ 원인: " + e.message;
+    }
+}
+
+/* ─────────────────────────────────────────────
+   PHOTO ANALYSIS
+───────────────────────────────────────────── */
+function handlePhotoChange(unitIdx, files) {
+    if (!files || files.length === 0) return;
+    const key = document.getElementById('apiKey').value.trim();
+    const status = document.getElementById(`status-${unitIdx}`);
+
+    // ✅ 핵심 수정: FileList는 input 초기화 시 무효화되므로
+    //    Array.from()으로 먼저 복사한 뒤 clearUnit 호출
+    const fileArray = Array.from(files);
+
+    clearFieldsOnly(unitIdx); // 필드만 초기화 (파일 input은 건드리지 않음)
+
+    (async () => {
+        for (let i = 0; i < fileArray.length; i++) {
+            status.innerText = `🔄 [${i + 1}/${fileArray.length}] 사진 분석 중...`;
+            await performOcr(fileArray[i], key, unitIdx);
+        }
+        calcHolding(unitIdx);
+        updateTabLabel(unitIdx);
+        status.innerText = "✅ 분석 완료! 빈칸은 직접 입력해주세요.";
+    })();
+}
+
+async function performOcr(file, key, unitIdx) {
+    return new Promise(resolve => {
+        const reader = new FileReader();
+        reader.onloadend = async () => {
+            const base64 = reader.result.split(',')[1];
+            try {
+                const resp = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${key}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ requests: [{ image: { content: base64 }, features: [{ type: "TEXT_DETECTION" }] }] })
+                });
+                const data = await resp.json();
+                if (data.responses && data.responses[0] && data.responses[0].fullTextAnnotation) {
+                    processOcrText(data.responses[0].fullTextAnnotation.text, unitIdx);
+                }
+            } catch (e) {
+                console.error(`[${unitIdx + 1}호기] OCR 에러:`, e);
+            }
+            resolve();
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
+/* ─────────────────────────────────────────────
+   OCR TEXT PROCESSING
+───────────────────────────────────────────── */
+function processOcrText(text, u) {
+    const get = id => document.getElementById(`${id}-${u}`);
+
+    console.log(`[${u + 1}호기] OCR TEXT:\n`, text); // 디버그용
+
+    // 1. SERIAL NO
+    const sn = text.match(/HAK-ACC-\d+/i);
+    if (sn && !get('serial').value) get('serial').value = sn[0].toUpperCase();
+
+    // 2. DATE
+    const dt = text.match(/(20\d{2})\s*[.년\-\/]\s*(\d{1,2})\s*[.월\-\/]\s*(\d{1,2})/);
+    if (dt && !get('date').value) {
+        get('date').value = `${dt[1]}-${dt[2].padStart(2, '0')}-${dt[3].padStart(2, '0')}`;
+    }
+
+    // 3. START TIME / FINAL TIME (개선된 다중 전략)
+    const times = extractTimes(text);
+    if (times.start && !get('start').value) get('start').value = times.start;
+    if (times.final && !get('final').value) get('final').value = times.final;
+
+    // 4. PRESSURE
+    const exactPressure = text.match(/3050/);
+    const barPressure = text.match(/([\d.]+)\s*(?:bar|BAR)/i);
+    const curPressure = get('pressure').value;
+    if (exactPressure) {
+        get('pressure').value = 3050;
+    } else if (barPressure && curPressure !== "3050") {
+        get('pressure').value = Math.round(parseFloat(barPressure[1]) * 100);
+    }
+
+    // 5. GAUGE S/N
+    const gauges = [...new Set(text.match(/038\d{3}/g) || [])];
+    if (gauges.length >= 1 && !get('gauge1').value) get('gauge1').value = gauges[0];
+    if (gauges.length >= 2 && !get('gauge2').value) get('gauge2').value = gauges[1];
+
+    // 6. TEMPERATURE (개선된 다중 전략)
+    const temp = extractTemperature(text);
+    if (temp && !get('temp').value) get('temp').value = temp;
+}
+
+/* ─────────────────────────────────────────────
+   ⏰ 개선된 시간 추출
+   HOLDING (Min) / START TIME / FINAL TIME
+───────────────────────────────────────────── */
+function extractTimes(text) {
+    let start = "", final_ = "";
+
+    // [전략 1] "START TIME" 키워드 뒤 시간 (0~40자 내, 개행 포함)
+    let m = text.match(/START\s*TIME[\s\S]{0,40}?(\d{1,2}:\d{2})/i);
+    if (m) start = normalizeTime(m[1]);
+
+    // [전략 2] "FINAL TIME" 키워드 뒤 시간
+    m = text.match(/FINAL\s*TIME[\s\S]{0,40}?(\d{1,2}:\d{2})/i);
+    if (m) final_ = normalizeTime(m[1]);
+
+    // [전략 3] "HOLDING" 테이블 포맷 (HOLDING → 첫번째 시간 = START, 두번째 = FINAL)
+    // 예: "HOLDING (Min) START TIME FINAL TIME\n30 08:30 09:00"
+    if (!start || !final_) {
+        m = text.match(/HOLDING[\s\S]{0,80}?(\d{1,2}:\d{2})[\s\S]{0,40}?(\d{1,2}:\d{2})/i);
+        if (m) {
+            if (!start) start = normalizeTime(m[1]);
+            if (!final_) final_ = normalizeTime(m[2]);
+        }
+    }
+
+    // [전략 4] 한국어 키워드
+    if (!start) {
+        m = text.match(/시작\s*시간[\s\S]{0,20}?(\d{1,2}:\d{2})/i)
+            || text.match(/(?:start|시작)[\s\S]{0,15}?(\d{1,2}:\d{2})/i);
+        if (m) start = normalizeTime(m[1]);
+    }
+    if (!final_) {
+        m = text.match(/(?:종료|완료)\s*시간[\s\S]{0,20}?(\d{1,2}:\d{2})/i)
+            || text.match(/(?:final|end|종료|완료)[\s\S]{0,15}?(\d{1,2}:\d{2})/i);
+        if (m) final_ = normalizeTime(m[1]);
+    }
+
+    // [전략 5] 모든 HH:MM 탐색 → 차이가 1~120분인 두 시간 쌍 선택
+    if (!start || !final_) {
+        const allTimes = [...text.matchAll(/\b(\d{1,2}):(\d{2})\b/g)];
+        for (let i = 0; i < allTimes.length - 1; i++) {
+            const sh = parseInt(allTimes[i][1]), sm = parseInt(allTimes[i][2]);
+            const fh = parseInt(allTimes[i+1][1]), fm = parseInt(allTimes[i+1][2]);
+            // 유효한 시간 범위 검증
+            if (sh > 23 || sm > 59 || fh > 23 || fm > 59) continue;
+            const diff = (fh * 60 + fm) - (sh * 60 + sm);
+            if (diff > 0 && diff <= 120) {
+                if (!start) start = `${String(sh).padStart(2,'0')}:${String(sm).padStart(2,'0')}`;
+                if (!final_) final_ = `${String(fh).padStart(2,'0')}:${String(fm).padStart(2,'0')}`;
+                break;
+            }
+        }
+    }
+
+    return { start, final: final_ };
+}
+
+function normalizeTime(t) {
+    const parts = t.split(':');
+    if (parts.length !== 2) return t;
+    return `${String(parseInt(parts[0])).padStart(2,'0')}:${parts[1]}`;
+}
+
+/* ─────────────────────────────────────────────
+   🌡️ 개선된 온도 추출 (LCD 온도계 전용 강화)
+   
+   [문제 분석] BLUETEC BD-718 같은 LCD 온도계 사진에서
+   - 하단 "시:분 일 월" 예) "19:34 26 04" → OCR이 "26.04" 로 오인식
+   - LCD 특성상 소수점을 공백으로 읽어 "18 4°C" 처럼 추출됨
+   → °C 기호 주변을 최우선 탐색 + 날짜/시간 패턴 사전 제거
+───────────────────────────────────────────── */
+function extractTemperature(text) {
+    // ① 노이즈 제거: HH:MM 시간, DD/MM 날짜 패턴 먼저 마스킹
+    let t = text
+        .replace(/\d{1,2}:\d{2}/g, '__TIME__')          // 시간 (19:34 등)
+        .replace(/\b\d{1,2}[\/\-\.]\d{1,2}\b/g, '__DATE__'); // 날짜 (26/04 등)
+
+    // [전략 1] 소수점 있는 숫자 + °C 기호 (가장 확실)
+    // "18.4°C", "18.4 °C", "18.4℃"
+    let m = t.match(/(\d{1,2}\.\d{1,2})\s*(?:°\s*[Cc]|℃)/);
+    if (m) return m[1];
+
+    // [전략 2] 🔑 LCD 핵심 패턴: 숫자 사이에 공백·점·없음 허용 → °C 앞에서 탐색
+    // "18 4°C" (공백) / "18.4°C" (점) / "184°C" (없음) / "18·4°C" (중간점) 모두 처리
+    m = t.match(/(\d{1,2})\s*[·.\s]?\s*(\d)\s*°\s*[Cc]/);
+    if (m) {
+        const val = parseFloat(`${m[1]}.${m[2]}`);
+        if (val >= 1 && val <= 60) return `${m[1]}.${m[2]}`;
+    }
+
+    // [전략 3] °C 기호 없이 숫자+C만 있는 경우 ("18.4C", "18 4C")
+    m = t.match(/(\d{1,2})\s*\.?\s*(\d)\s*[Cc]\b/);
+    if (m) {
+        const val = parseFloat(`${m[1]}.${m[2]}`);
+        if (val >= 5 && val <= 50) return `${m[1]}.${m[2]}`;
+    }
+
+    // [전략 4] TEMP / 온도 레이블 근처 숫자
+    m = text.match(/(?:TEMP|온도|Temperature)[\s:]*(\d{1,2}\.?\d*)/i);
+    if (m) return m[1];
+
+    // [전략 5] 정수 + °C (소수점 전혀 없는 경우)
+    m = t.match(/(\d{1,2})\s*(?:°\s*[Cc]|℃)/);
+    if (m) return m[1];
+
+    // [전략 6] 마스킹된 텍스트에서 5~50 범위 소수점 숫자 탐색
+    // kPa/bar/psi 등 압력 단위 숫자 추가 제거 후 검색
+    const cleaned = t
+        .replace(/[\d.]+\s*(?:kPa|bar|BAR|psi|PSI|MPa|hPa)/gi, '')
+        .replace(/__TIME__|__DATE__/g, '');
+    const decNums = [...cleaned.matchAll(/\b(\d{1,2}\.\d{1,2})\b/g)];
+    for (const dn of decNums) {
+        const val = parseFloat(dn[1]);
+        if (val >= 5 && val <= 50) return dn[1];
+    }
+
+    return null; // 찾지 못하면 공란 유지 → 수기 입력
+}
+
+/* ─────────────────────────────────────────────
+   HOLDING TIME CALC
+───────────────────────────────────────────── */
+function calcHolding(unitIdx) {
+    const s = document.getElementById(`start-${unitIdx}`).value;
+    const f = document.getElementById(`final-${unitIdx}`).value;
+    if (s && f) {
+        const [sh, sm] = s.split(':').map(Number);
+        const [fh, fm] = f.split(':').map(Number);
+        const diff = (fh * 60 + fm) - (sh * 60 + sm);
+        document.getElementById(`holding-${unitIdx}`).value = diff > 0 ? `${diff} Min` : '';
+    }
+}
+
+/* ─────────────────────────────────────────────
+   UTILS
+───────────────────────────────────────────── */
+// 필드 값만 초기화 (사진 분석 전 호출 - file input은 건드리지 않음)
+function clearFieldsOnly(unitIdx) {
+    ['serial','date','start','final','holding','pressure','gauge1','expiry1','gauge2','expiry2','temp'].forEach(id => {
+        const el = document.getElementById(`${id}-${unitIdx}`);
+        if (el) el.value = '';
+    });
+    document.getElementById(`status-${unitIdx}`).innerText = '';
+    document.getElementById(`tab-${unitIdx}`).classList.remove('done');
+    document.getElementById(`tab-${unitIdx}`).textContent = `${unitIdx + 1}호기`;
+}
+
+// 전체 초기화 (🗑 초기화 버튼 클릭 시 - file input 포함 리셋)
+function clearUnit(unitIdx) {
+    clearFieldsOnly(unitIdx);
+    const photoInput = document.getElementById(`photo-${unitIdx}`);
+    if (photoInput) photoInput.value = '';
+}
+
+function updateTabLabel(unitIdx) {
+    const serial = document.getElementById(`serial-${unitIdx}`).value;
+    const tab = document.getElementById(`tab-${unitIdx}`);
+    tab.textContent = `${unitIdx + 1}호기`;
+    if (serial) tab.classList.add('done');
+}
+
+/* ─────────────────────────────────────────────
+   EXCEL EXPORT
+───────────────────────────────────────────── */
+async function exportUnit(unitIdx) {
+    if (!excelTemplateFile) { alert("성적서 양식 파일을 먼저 업로드하세요."); return; }
+    const get = id => document.getElementById(`${id}-${unitIdx}`).value;
+
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+        try {
+            const workbook = await XlsxPopulate.fromDataAsync(e.target.result);
+            const sheet = workbook.sheet(0);
+
+            // Serial
+            const serialFull = get('serial');
+            const serialNum = serialFull.replace(/HAK-ACC-/i, '').trim();
+            sheet.cell('L5').value(serialNum);
+
+            // Date
+            sheet.cell('B36').value(get('date'));
+
+            // Holding
+            const holdingNum = parseInt(get('holding').replace(/\D/g, ''));
+            sheet.cell('D15').value(holdingNum || '');
+
+            // Pressure kPa + bar
+            const kpaVal = parseFloat(get('pressure'));
+            sheet.cell('D11').value(isNaN(kpaVal) ? '' : kpaVal);
+            if (!isNaN(kpaVal)) sheet.cell('D12').value(parseFloat((kpaVal / 100).toFixed(1)));
+
+            // Gauge
+            sheet.cell('K9').value(get('gauge1'));
+            sheet.cell('L9').value(get('expiry1'));
+            sheet.cell('K10').value(get('gauge2'));
+            sheet.cell('L10').value(get('expiry2'));
+
+            // Temperature
+            const tempVal = parseFloat(get('temp'));
+            sheet.cell('D13').value(isNaN(tempVal) ? get('temp') : tempVal);
+
+            const blob = await workbook.outputAsync();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Pressure Report_${serialNum || 'Output'}.xlsx`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        } catch (err) {
+            console.error(err);
+            alert(`${unitIdx + 1}호기 엑셀 생성 오류: ` + err.message);
+        }
+    };
+    reader.readAsArrayBuffer(excelTemplateFile);
+}
+
+async function exportAll() {
+    if (!excelTemplateFile) { alert("성적서 양식 파일을 먼저 업로드하세요."); return; }
+    for (let i = 0; i < activeUnitCount; i++) {
+        await exportUnit(i);
+        await new Promise(r => setTimeout(r, 700)); // 브라우저 다운로드 간격
+    }
+}
+
+(function setupPortalResize() {
+    function sendHeight() {
+        const height = Math.max(900, document.documentElement.scrollHeight, document.body.scrollHeight);
+        window.parent.postMessage({ type: 'fuelcell-pressure-report-height', height }, '*');
+    }
+
+    window.addEventListener('load', sendHeight);
+    window.addEventListener('resize', sendHeight);
+    setInterval(sendHeight, 1000);
+})();
+
+</script>
+</body>
+</html>
