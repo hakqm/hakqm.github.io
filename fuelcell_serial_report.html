@@ -1,373 +1,766 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FUELCELL Serial List 웹 자동화</title>
-    <style>
-        :root {
-            --bg-dark: #1A1C1E;
-            --panel-bg: #212529;
-            --input-bg: #2B3035;
-            --border-color: #343A40;
-            --text-main: #E9ECEF;
-            --text-sub: #ADB5BD;
-            --primary: #3B82F6;
-            --primary-hover: #2563EB;
-            --success: #10B981;
-            --success-hover: #059669;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FUELCELL Serial List 자동화</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap');
 
-        body {
-            font-family: 'Segoe UI', 'Malgun Gothic', sans-serif;
-            background-color: var(--bg-dark);
-            color: var(--text-main);
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-            box-sizing: border-box;
-        }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-        .container {
-            width: 100%;
-            max-width: 1200px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            min-height: 100%;
-        }
+  :root {
+    --bg: #0d0f11;
+    --surface: #161a1f;
+    --surface2: #1d2228;
+    --border: #2a3040;
+    --border2: #3a4455;
+    --text: #c8d4e0;
+    --text2: #7a8fa8;
+    --text3: #3d5068;
+    --accent: #2d7dd2;
+    --accent2: #1a5fa8;
+    --green: #1db97a;
+    --green2: #138555;
+    --red: #e0463d;
+    --amber: #d4893a;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'IBM Plex Sans KR', sans-serif;
+  }
 
-        .api-section {
-            background-color: var(--panel-bg);
-            padding: 20px 30px;
-            border-radius: 10px;
-            border: 1px solid var(--border-color);
-            text-align: center;
-        }
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 16px;
+  }
 
-        .api-section input {
-            width: 80%;
-            max-width: 600px;
-            padding: 12px;
-            margin-top: 10px;
-            background-color: var(--input-bg);
-            border: 1px solid #495057;
-            border-radius: 8px;
-            color: white;
-            font-size: 14px;
-        }
+  .wrap { width: 100%; max-width: 1100px; display: flex; flex-direction: column; gap: 16px; }
 
-        .main-content {
-            display: flex;
-            gap: 20px;
-            flex: 1;
-            min-height: 0;
-        }
+  /* Header */
+  .header {
+    display: flex; align-items: center; gap: 16px;
+    padding: 18px 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+  }
+  .header-icon {
+    width: 40px; height: 40px; border-radius: 8px;
+    background: var(--accent2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+  }
+  .header-title { font-size: 18px; font-weight: 600; color: var(--text); }
+  .header-sub { font-size: 13px; color: var(--text2); margin-top: 2px; }
+  .header-badge {
+    margin-left: auto;
+    background: #0d2040;
+    border: 1px solid var(--accent2);
+    color: var(--accent);
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 4px;
+  }
 
-        .left-panel {
-            background-color: var(--panel-bg);
-            width: 350px;
-            padding: 20px;
-            border-radius: 10px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
+  /* Main layout */
+  .main { display: flex; gap: 16px; }
+  .sidebar {
+    width: 300px; flex-shrink: 0;
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+  }
+  .panel-title {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.08em;
+    color: var(--text3); text-transform: uppercase;
+    margin-bottom: 14px;
+  }
 
-        /* 호기명 입력 스타일 */
-        .unit-input-group {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-            margin-bottom: 10px;
-        }
-        .unit-input-group label { font-size: 14px; color: var(--primary); font-weight: bold; }
-        .unit-input-group input {
-            padding: 10px;
-            background-color: var(--input-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 5px;
-            color: white;
-        }
+  /* Inputs */
+  .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+  .field label { font-size: 12px; color: var(--text2); }
+  .field input[type=text], .field input[type=password] {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 13px;
+    padding: 9px 12px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .field input[type=text]:focus, .field input[type=password]:focus {
+    border-color: var(--accent);
+  }
 
-        .file-btn {
-            background-color: var(--primary);
-            color: white;
-            padding: 12px;
-            border: none;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: bold;
-            cursor: pointer;
-            text-align: center;
-            transition: background 0.2s;
-        }
-        .file-btn:hover { background-color: var(--primary-hover); }
-        .file-input-hidden { display: none; }
-        .file-status { color: var(--text-sub); font-size: 12px; text-align: center; margin-top: -5px; }
+  /* File picker buttons */
+  .file-btn {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 11px 14px;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    width: 100%;
+    margin-bottom: 4px;
+  }
+  .file-btn:hover { border-color: var(--accent); background: #1a2535; }
+  .file-btn input { display: none; }
+  .file-btn-icon { font-size: 18px; }
+  .file-btn-text { flex: 1; }
+  .file-btn-label { font-size: 13px; font-weight: 500; color: var(--text); }
+  .file-btn-sub { font-size: 11px; color: var(--text2); margin-top: 2px; }
+  .file-status {
+    font-size: 11px; color: var(--text3);
+    font-family: var(--mono);
+    padding-left: 4px;
+    margin-bottom: 10px;
+  }
+  .file-status.ready { color: var(--green); }
 
-        .start-btn {
-            margin-top: auto;
-            background-color: var(--success);
-            color: white;
-            padding: 18px;
-            border: none;
-            border-radius: 8px;
-            font-size: 18px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        .start-btn:hover { background-color: var(--success-hover); }
-        .start-btn:disabled { background-color: #6c757d; cursor: not-allowed; }
+  /* Action buttons */
+  .btn-verify {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 13px; font-weight: 500;
+    padding: 10px;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: 0.15s;
+    margin-bottom: 6px;
+  }
+  .btn-verify:hover { border-color: var(--accent); color: var(--accent); }
 
-        .right-panel {
-            background-color: var(--panel-bg);
-            flex: 1;
-            padding: 20px;
-            border-radius: 10px;
-            display: flex;
-            flex-direction: column;
-        }
+  .btn-start {
+    width: 100%; margin-top: auto;
+    background: var(--green2);
+    border: none;
+    color: #fff;
+    font-family: var(--sans);
+    font-size: 15px; font-weight: 600;
+    padding: 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.15s;
+    position: relative; overflow: hidden;
+  }
+  .btn-start:hover:not(:disabled) { background: #17a066; }
+  .btn-start:disabled {
+    background: #1d2a22;
+    color: var(--text3);
+    cursor: not-allowed;
+  }
+  .btn-start.running {
+    background: var(--accent2);
+  }
 
-        .log-area {
-            background-color: var(--bg-dark);
-            flex: 1;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 15px;
-            font-family: 'Consolas', monospace;
-            font-size: 13px;
-            color: #D1D5DB;
-            overflow-y: auto;
-            white-space: pre-wrap;
-            margin-top: 10px;
-        }
+  .verify-msg {
+    font-size: 11px; font-family: var(--mono);
+    padding: 6px 8px; border-radius: 5px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text2);
+    line-height: 1.4;
+  }
+  .verify-msg.ok { color: var(--green); border-color: #1d5c3a; background: #0a1f14; }
+  .verify-msg.fail { color: var(--red); border-color: #4a1a18; background: #1a0b0a; }
 
-        /* 상태 바 디자인 */
-        .status-footer {
-            background-color: var(--panel-bg);
-            padding: 15px 30px;
-            border-radius: 10px;
-            border: 1px solid var(--border-color);
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
-        .progress-container {
-            flex: 1;
-            background-color: var(--input-bg);
-            height: 12px;
-            border-radius: 6px;
-            overflow: hidden;
-        }
-        .progress-bar {
-            background-color: var(--success);
-            width: 0%;
-            height: 100%;
-            transition: width 0.3s;
-        }
-        .status-text { font-size: 14px; font-weight: bold; color: var(--text-main); min-width: 200px; }
+  /* Log panel */
+  .log-wrap { flex: 1; display: flex; flex-direction: column; }
+  .log-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .log-title { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: var(--text3); text-transform: uppercase; }
+  .log-count {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text3);
+  }
+  .log-area {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text2);
+    overflow-y: auto;
+    min-height: 340px;
+    max-height: 440px;
+    line-height: 1.7;
+    white-space: pre-wrap;
+  }
+  .log-area .log-ok { color: var(--green); }
+  .log-area .log-warn { color: var(--amber); }
+  .log-area .log-err { color: var(--red); }
+  .log-area .log-info { color: var(--accent); }
+  .log-area .log-dim { color: var(--text3); }
 
+  /* Footer progress */
+  .footer {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 24px;
+    display: flex; align-items: center; gap: 20px;
+  }
+  .status-label { font-size: 13px; color: var(--text2); min-width: 220px; }
+  .status-label span { font-weight: 600; color: var(--text); }
+  .prog-track {
+    flex: 1; height: 6px;
+    background: var(--surface2);
+    border-radius: 3px; overflow: hidden;
+  }
+  .prog-bar {
+    height: 100%; width: 0%;
+    background: var(--green);
+    border-radius: 3px;
+    transition: width 0.35s ease;
+  }
+  .prog-pct {
+    font-family: var(--mono);
+    font-size: 12px; color: var(--text2);
+    min-width: 36px; text-align: right;
+  }
 
-        .backend-row {
-            display: grid;
-            grid-template-columns: minmax(0, 1fr);
-            gap: 8px;
-            margin-top: 14px;
-        }
-        .backend-row label {
-            color: var(--text-sub);
-            font-size: 13px;
-            font-weight: 700;
-        }
-        .backend-row input {
-            width: 100%;
-            max-width: 760px;
-            margin-top: 0;
-        }
-        .backend-note {
-            color: #FCD34D;
-            font-size: 12px;
-            line-height: 1.6;
-            margin-top: 8px;
-        }
+  /* Scrollbar */
+  .log-area::-webkit-scrollbar { width: 4px; }
+  .log-area::-webkit-scrollbar-track { background: transparent; }
+  .log-area::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
 
-        @media (max-width: 900px) {
-            body { padding: 12px; }
-            .container { height: auto; }
-            .api-section { padding: 18px; }
-            .api-section input { width: 100%; }
-            .main-content { flex-direction: column; }
-            .left-panel { width: 100%; }
-            .right-panel { min-height: 320px; }
-            .status-footer { flex-direction: column; align-items: stretch; padding: 15px; }
-            .status-text { min-width: 0; }
-        }
+  /* API note */
+  .api-note {
+    font-size: 11px; color: var(--text3); font-family: var(--mono);
+    margin-top: 4px; line-height: 1.5;
+  }
 
-        @media (max-width: 520px) {
-            .left-panel, .right-panel, .api-section { padding: 16px; }
-            .status-footer { gap: 10px; }
-        }
+  .divider { border: none; border-top: 1px solid var(--border); margin: 8px 0; }
 
-    </style>
+  .sidebar-bottom { margin-top: auto; }
+</style>
 </head>
 <body>
 
-<div class="container">
-    <div class="api-section">
-        <h3 style="margin: 0; color: #E9ECEF;">Gemini API Key Authentication</h3>
-        <input type="password" id="apiKey" placeholder="이곳에 API 키를 입력하세요 (AIzaSy...)">
-        <div class="backend-row">
-            <label for="backendUrl">처리 서버 URL</label>
-            <input type="text" id="backendUrl" value="/process" placeholder="예: /process 또는 https://your-app.vercel.app/process">
-            <div class="backend-note">
-                ※ 이 도구는 명판 이미지 분석과 엑셀 생성을 서버의 <b>/process</b>에서 처리하는 방식입니다.
-                GitHub Pages 단독 배포에서는 별도 처리 서버 URL이 필요합니다.
-            </div>
+<div class="wrap">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-icon">⚡</div>
+    <div>
+      <div class="header-title">FUELCELL Serial List 자동화</div>
+      <div class="header-sub">명판 이미지 → AI 판독 → 엑셀 자동 기입</div>
+    </div>
+    <div class="header-badge">AI · Gemini Vision</div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="panel" style="display:flex;flex-direction:column;flex:1;gap:0;">
+        <div class="panel-title">작업 설정</div>
+
+        <!-- API Key -->
+        <div class="field">
+          <label>Gemini API Key</label>
+          <input type="password" id="apiKey" placeholder="AIzaSy...">
         </div>
+        <button class="btn-verify" onclick="verifyKey()">🔑 키 확인</button>
+        <div class="verify-msg" id="verifyMsg">API 키를 입력하고 확인을 눌러주세요.</div>
+        <div class="api-note">Gemini API 키 발급: aistudio.google.com</div>
+
+        <hr class="divider" style="margin:14px 0;">
+
+        <!-- Unit name -->
+        <div class="field">
+          <label>호기명</label>
+          <input type="text" id="unitName" placeholder="예: M-400">
+        </div>
+
+        <!-- Image files -->
+        <label class="file-btn">
+          <input type="file" id="imgInput" multiple accept="image/*" onchange="onImgChange()">
+          <span class="file-btn-icon">🖼</span>
+          <span class="file-btn-text">
+            <span class="file-btn-label">명판 이미지 선택</span>
+            <span class="file-btn-sub">다중 선택 가능 (jpg, png, webp)</span>
+          </span>
+        </label>
+        <div class="file-status" id="imgStatus">선택된 사진: 0장</div>
+
+        <!-- Excel file -->
+        <label class="file-btn">
+          <input type="file" id="xlsxInput" accept=".xlsx" onchange="onXlsxChange()">
+          <span class="file-btn-icon">📊</span>
+          <span class="file-btn-text">
+            <span class="file-btn-label">엑셀 양식 선택</span>
+            <span class="file-btn-sub">.xlsx 파일</span>
+          </span>
+        </label>
+        <div class="file-status" id="xlsxStatus">엑셀 파일 미선택</div>
+
+        <div style="flex:1;"></div>
+
+        <button class="btn-start" id="startBtn" disabled onclick="startProcess()">
+          성적서 생성 (키 인증 필요)
+        </button>
+      </div>
     </div>
 
-    <div class="main-content">
-        <div class="left-panel">
-            <h3 style="color: var(--primary); text-align: center; margin-top: 0;">Work Setup</h3>
-            
-            <div class="unit-input-group">
-                <label>호기명 입력</label>
-                <input type="text" id="unitName" placeholder="예: M-400">
-            </div>
-
-            <label class="file-btn">📁 명판 이미지 다중 선택
-                <input type="file" id="imageFiles" class="file-input-hidden" multiple accept="image/*">
-            </label>
-            <div class="file-status" id="imageStatus">선택된 사진: 0장</div>
-
-            <label class="file-btn">📊 엑셀 양식 선택
-                <input type="file" id="excelFile" class="file-input-hidden" accept=".xlsx">
-            </label>
-            <div class="file-status" id="excelStatus">엑셀 파일 미선택</div>
-
-            <button class="start-btn" id="startBtn" onclick="startProcess()">성적서 생성</button>
-        </div>
-
-        <div class="right-panel">
-            <h3 style="margin: 0; color: var(--text-sub);">Real-time Processing Log</h3>
-            <div class="log-area" id="logArea">시스템 대기 중...</div>
-        </div>
+    <!-- Log panel -->
+    <div class="panel log-wrap">
+      <div class="log-header">
+        <div class="log-title">실시간 처리 로그</div>
+        <div class="log-count" id="logCount"></div>
+      </div>
+      <div class="log-area" id="logArea"><span class="log-dim">시스템 대기 중...</span></div>
     </div>
 
-    <div class="status-footer">
-        <div class="status-text" id="statusText">진행률: 0% (대기 중)</div>
-        <div class="progress-container">
-            <div class="progress-bar" id="progressBar"></div>
-        </div>
+  </div>
+
+  <!-- Footer progress -->
+  <div class="footer">
+    <div class="status-label" id="statusLabel">상태: <span>대기 중</span></div>
+    <div class="prog-track">
+      <div class="prog-bar" id="progBar"></div>
     </div>
+    <div class="prog-pct" id="progPct">0%</div>
+  </div>
+
 </div>
 
 <script>
-    const imageInput = document.getElementById('imageFiles');
-    const excelInput = document.getElementById('excelFile');
-    const startBtn = document.getElementById('startBtn');
-    const logArea = document.getElementById('logArea');
-    const progressBar = document.getElementById('progressBar');
-    const statusText = document.getElementById('statusText');
+// ─── NAMEPLATE PROMPT ────────────────────────────────────────────────────
+const NAMEPLATE_PROMPT = `당신은 HI AIR KOREA의 명판 판독 최고 전문가입니다.
+사진에서 '시리얼 번호'를 추출하고, 아래 규칙을 바탕으로 '제품명'을 정확히 결정하세요.
 
-    imageInput.addEventListener('change', () => {
-        document.getElementById('imageStatus').innerText = `선택된 사진: ${imageInput.files.length}장`;
-    });
-    excelInput.addEventListener('change', () => {
-        document.getElementById('excelStatus').innerText = excelInput.files[0] ? excelInput.files[0].name : "엑셀 파일 미선택";
-    });
+[허용된 제품명 목록 - 무조건 이 안에서만 고르세요!]
+ACC400, HTR400, HEX400, HEX490, FCV832, FAN151, FAN160, PMP400, PMP830, EJECTOR010, Reformer, ILS, PT012, FT012, LT400, PDT110, TCV800, FT490, HEX910, FS140, CV020, FCV012 Valve / Actuator, HEX431, PT510, LT450, FS160, VLD, FT140, PSE500, PMP450, PMP451, TNK450, PSV800, CV550, FCV500, FCV140
 
-    function addLog(msg) {
-        logArea.innerHTML += `\n${msg}`;
-        logArea.scrollTop = logArea.scrollHeight;
+[🔥 하드모드 명판 식별 규칙 🔥]
+1. ACC400 : 명판 상단에 'HIAIRKOREA Co., Ltd.'와 'ACCUMULATOR', 그리고 'ACC400'이 적혀있는 은색 금속 명판입니다.
+  - product 값: 무조건 "ACC400"으로 출력하세요.
+  - serial_number 값: 'MANUFACTURER'S SERIAL NUMBER' 옆의 네모 박스 안에 적힌 값(예: HAK-ACC-250208)을 정확히 추출하세요.
+2. HTR400 : 별도의 명판이 없습니다. 제품의 두꺼운 은색 금속 테두리(플랜지) 곡면 표면에 글자가 직접 타각(각인)되어 있습니다. 'WATLOW'라는 제조사 이름과 함께 타각된 번호(예: SN 700-08116-C-2234)에서 'SN' 뒷부분이 시리얼 번호입니다.
+3. HEX400 : 'AIC HEAT EXCHANGER'. ★주의: 글자가 일부 안 보여도 '25.HX40'으로 시작하면 무조건 HEX400입니다.
+4. HEX490 : 'AIC HEAT EXCHANGER', '25.HX49.217.' 형식.
+5. FCV832 : 모델 'WED-1350C', 시리얼의 예시 '0346930-25-50-33' 형식이며 흰 바탕의 검은 글씨 명판입니다. 제품은 빨간색입니다.
+6. FAN151 : 'TAE IL BLOWER MFG. CO., LTD' 제조사. SERVICE 항목이 'PROPELLER FAN'이며 MODEL명은 'FAN-151'. 시리얼이 'Z03038...' 형태이며 SERIAL NO. 칸이 시리얼입니다.
+7. FAN160 : 'HI AIR KOREA' 제조사의 'AIR BLOWER FAN' 은색 명판입니다. 'Model : TSF-1.8-S1'을 확인하세요. 'Mfg No.:' 항목의 값(예: Z03250029)이 시리얼 번호입니다. product 값은 반드시 "FAN160" 입니다.
+8. PMP400 : ★★★ 초강력 경고 ★★★
+   반드시 아래 조건을 모두 만족해야만 PMP400으로 출력할 수 있습니다.
+   - 조건 1: 명판 또는 제품에 'TEIKOKU' 로고가 반드시 있어야 합니다.
+   - 조건 2: 금속 명판 위에 '検査合格票 (ACCEPTANCE TAG)'라고 적힌 종이 꼬리표가 붙어 있어야 합니다.
+   - 조건 3: 종이 꼬리표 중앙에 'FV-1844A-...' 형태의 시리얼이 있어야 합니다.
+   ★ GOULDS, WEG, BALDOR 등 다른 제조사 명판이 보이면 절대로 PMP400으로 출력하지 마세요!
+   ★ 'e-SV Multistage Pump' 명판이 보이면 → PMP450 또는 PMP451 입니다!
+9. PMP830 : 상단은 노란색 바탕, 하단은 검은색 바탕으로 된 명판입니다. 최상단에 'BALDOR RELIANCE' 로고가 있으며, 'SPEC' 항목이 '37M031S864G1'이면 무조건 PMP830입니다. 명판 하단부의 'SER' 항목 옆 'F'로 시작하는 긴 문자열(예: F2411135773)이 시리얼 번호입니다.
+10. EJECTOR010 : 상단에 'FUEL / STEAM EJECTOR'라고 적혀있습니다. ★주의: 'TAG/N' 항목의 'EJT010'은 시리얼이 아닙니다. 반드시 'S/N' 항목의 값(예: EJT010-2503-035)을 추출하세요.
+11. Reformer : 금속 태그에 얕게 타각(각인)되어 있습니다. '94011-REF-M-XXX' 형태를 찾으세요. 'REF' 약어가 보이면 무조건 "Reformer"로 출력하세요.
+12. ILS : 'INTEGRATED LOW TEMP SHIFT' 또는 '94011-ILS-XXX' 형식입니다.
+13. PDT110 : 아래쪽 검은 펜 라벨에 'YPDT110'이라고 적힌 센서입니다.
+    ★초강력 주의: JSON의 product 값은 반드시 "LT400 / PDT110" 으로 출력하세요!!
+    시리얼은 S/N 긴 번호와 노란 띠 번호를 합쳐서 출력하세요. (예: N1SD0510103615(251016-32))
+14. LT400 : 아래쪽 검은 펜 라벨에 'YLT400'이라고 적힌 센서입니다.
+    ★초강력 주의: JSON의 product 값은 반드시 "LT400 / PDT110" 으로 출력하세요!!
+    시리얼은 S/N 긴 번호와 노란 띠 번호를 합쳐서 출력하세요. (예: N1SD0510103696(251016-06))
+15. PT012 : 명판에 '(PASS)PT012...' 노란 띠가 있거나 'YPT012' 라벨이 있습니다. 흐릿하더라도 'N1SD...'를 최대한 읽어내어 노란띠 번호와 괄호로 합쳐주세요. product 값은 반드시 "PT012"로 출력하세요.
+16. FT012 : 명판에 '(PASS)FT012...' 노란 띠가 있거나 'YFT012' 라벨이 있습니다. product 값은 반드시 "FT012"로 출력하세요. 'S/N:' 항목의 긴 문자열과 노란색 띠 끝 번호를 괄호로 합쳐서 출력하세요. (예: N1SD0510103768(251017-14))
+17. TCV800 : TCV800에 해당하는 명판을 판독하세요. product 값은 반드시 "TCV800"으로 출력하세요.
+18. FT490 : SIEMENS 제조사의 'SITRANS F M MAG' 유량계이며, 2가지 형태의 명판 사진이 따로 들어옵니다.
+    ★초강력 주의: JSON의 product 값은 무조건 "FT490" 으로 통일해서 출력하세요!!
+    - 상단 명판 (MAG 5000): 'Serial No./ 出厂编号 :' 항목 옆의 값(예: N1T3210052)만 추출하세요.
+    - 하단 명판 (MAG 5000/1100): 'Serial No.:' 항목의 값(예: 680013H095)만 추출하세요.
+19. HEX910 : 'P/N : AIEC663831-01', 시리얼은 'XX.H910.' 형식
+20. FS140 : 곡면 형태의 기기에 부착된 검은색 명판이며 상단에 'FLOTECT'라고 크게 적혀 있습니다. 'SN:' 항목 바로 옆 은색 네모 박스 안에 타각된 값이 시리얼입니다. 첫 글자가 B로 보이더라도 'A'로 교정해서 출력하세요. (예: A51AJ)
+21. CV020 : 바코드 밑 '1PDK'로 시작하는 번호
+22. FCV012 Valve / Actuator : 밸브와 액추에이터 2가지 사진이 따로 들어옵니다.
+    ★초강력 주의: JSON의 product 값은 반드시 "FCV012 Valve / Actuator" 로 똑같이 출력하세요!!
+    - 밸브 사진(빨간 띠 명판, KOSO): 'SER NO.' 값 추출 후 끝에 '(Valve)' 붙이기. (예: KC25-00026-006(Valve))
+    - 액추에이터 사진(검은 바탕 명판, MG CO.): 'SER.No.' 값 추출 후 끝에 '(Actuator)' 붙이기. (예: EW004763(Actuator))
+23. HEX431 : 상단에 'ALFA LAVAL' 로고가 있고, 'Type' 항목이 'AlfaNova 27-26H' (또는 24-26H)이면 무조건 HEX431입니다. 'Serial No:' 항목 옆의 값(예: AAD003079753)이 시리얼 번호입니다.
+24. PT510 : 'Ashcroft' 제조사의 원통형 센서입니다. JSON의 product 값은 반드시 "PT510" 으로만 출력하세요!!
+    - 바코드 위주 사진: 'SERIAL:' 옆 'EST...' 값(예: EST250306049)이 시리얼입니다.
+    - 노란 띠 위주 사진: 노란 띠에 적힌 숫자(예: 250404-18)가 시리얼입니다.
+25. LT450 : 은색 원통형 센서. 'MODEL : MS-10'이라고 적혀 있으면 무조건 LT450입니다. 'SERIAL NO. :' 항목 옆의 값(예: 240820-235)이 시리얼 번호입니다.
+26. FS160 : 검은색 소형 원통형 스위치. 'MDL V8'이라고 적혀 있으면 무조건 FS160입니다. 'SN:' 항목 옆의 값(예: A49AJ)이 시리얼 번호입니다.
+27. VLD : 상단에 'DANOTHERM' 로고가 있는 명판입니다. 'DANOTHERM' 로고나 'FC610402-01'이 보이면 무조건 "VLD" 로만 출력하세요. 'S/N:' 항목의 값(예: 520131-010)을 추출하세요.
+28. FT140 : 'MODEL : 311-05-06-DC24-AIR'
+29. PSE500 : 링에 매달려 있는 집 모양(오각형)의 빨간색 금속 태그입니다. 'RUPTURE DISC'라고 적혀있고, MODEL 항목이 'KSRSRP'이면 무조건 PSE500입니다. 'REORDER BY LOT' 항목 옆의 값(예: 2F0411-001)을 시리얼로 추출하세요.
+30. PMP450 :
+    - 사진 특징: 펌프 명판(GOULDS 제조사)이며 '3SV22TA40' 글자가 보입니다.
+    - product 값: 엑셀 매칭을 위해 반드시 "PMP450"으로 출력하세요. (절대 M을 붙이지 마세요)
+    - serial_number 값: 하단 바코드 옆 번호의 띄어쓰기를 없애고 출력하세요 (예: D2500003, C2504672).
+30-1. PMP450(M) :
+    - 사진 특징: 모터 명판(WEG 제조사)이며 '13467116' 숫자가 확인됩니다.
+    - product 값: 엑셀 매칭을 위해 반드시 "PMP450(M)"으로 출력하세요! (괄호 대문자 M까지 완벽히 똑같이 적으세요).
+    - serial_number 값: 무조건 고정값인 "13467116"을 출력하세요.
+31. PMP451 :
+    - 사진 특징: 펌프 명판(GOULDS 제조사)이며 '1SV10TA30' 글자가 보입니다.
+    - product 값: 엑셀 매칭을 위해 반드시 "PMP451"로 출력하세요.
+    - serial_number 값: 하단 바코드 옆 번호의 띄어쓰기를 없애고 출력하세요 (예: B2503560, C2304783).
+31-1. PMP451(M) :
+    - 사진 특징: 모터 명판(WEG 제조사)이며 '14060078' 숫자가 확인됩니다.
+    - product 값: 엑셀 매칭을 위해 반드시 "PMP451(M)"으로 출력하세요!
+    - serial_number 값: 무조건 고정값인 "14060078"을 출력하세요.
+32. TNK450 : 표 안에 'WATER TANK' 글자가 보이면 확인 완료입니다. product는 "TNK450", serial_number는 'Serial no.' 칸에 적힌 번호(예: H400421)로 출력하세요.
+33. PSV800 : 파란색 바탕의 '(주)고려특수금속 안전밸브' 명판입니다. 반드시 '제조번호' 항목의 값(예: A63677)을 추출하세요. product 값은 "PSV800" 입니다.
+34. FCV140 : 'INDELAC' 제조사. 파란색 기기이며, 은색 명판에 MODEL명이 'SX4EF05'로 시작하면 무조건 FCV140입니다. 'SERIAL NO.' 항목 옆의 값(예: 66924-0159)이 시리얼 번호입니다.
+
+[기본 필수 규칙]
+- ACC400 : 끝부분 영문 'C'를 숫자 '0'으로 교정.
+- FAN151 / FAN160 : MODEL명이 'FAN-151'이면 FAN151, 'FAN-160'이면 FAN160.
+- FS160 vs FS140 : FS160 시리얼은 A49AJ, FS140은 A51AJ 에 가깝습니다.
+- HEX400 : '25.HX40'으로 시작. / HEX910 : 'H910' 포함. / FCV832 : 0346930- 형태. / FT140 : 232287- 형태.
+
+[유연한 추론 규칙]
+사진이 흐리거나 부분만 보여 100% 확신할 수 없어도 포기하지 마세요! 명판 레이아웃, 제조사, 패턴을 바탕으로 가장 확률이 높은 제품명을 추측해 내세요. 추측한 경우 is_guessed를 true로 설정하세요.
+
+[출력 형식 (JSON만 출력, 다른 텍스트 없이)]
+모든 응답에 pump_model 필드를 반드시 포함하세요.
+- 일반 제품: {"product": "제품명", "serial": "시리얼번호", "pump_model": "", "is_guessed": false}
+- PMP450 펌프 예시: {"product": "PMP450", "serial": "C2504672", "pump_model": "3SV22TA40", "is_guessed": false}
+- PMP451 펌프 예시: {"product": "PMP451", "serial": "C2304783", "pump_model": "1SV10TA30", "is_guessed": false}
+- 추측한 경우: {"product": "추측제품명", "serial": "추측시리얼", "pump_model": "", "is_guessed": true}
+- 판독 불가: {"product": "Unknown", "serial": "B/L", "pump_model": "", "is_guessed": false}`;
+
+// ─── CONSTANTS ──────────────────────────────────────────────────────────
+const MULTI_SERIAL = new Set([
+  "HEX400","HEX490","FT490","FCV012VALVE/ACTUATOR","PT510","LT400/PDT110"
+]);
+
+// ─── STATE ──────────────────────────────────────────────────────────────
+let apiVerified = false;
+let apiKey = '';
+
+// ─── UTILS ──────────────────────────────────────────────────────────────
+function normalize(t) { return String(t).replace(/\s/g,'').toUpperCase(); }
+
+function extractJson(text) {
+  text = text.replace(/```json/g,'').replace(/```/g,'').trim();
+  const m = text.match(/\{[\s\S]*?\}/);
+  if (!m) throw new Error('JSON 파싱 실패: ' + text.slice(0,80));
+  return JSON.parse(m[0]);
+}
+
+function correctPmp(product, serial, pumpModel) {
+  if (!['PMP450','PMP451'].includes(product)) return product;
+  const pm = (pumpModel||'').replace(/\s/g,'').toUpperCase();
+  if (pm === '3SV22TA40') return 'PMP450';
+  if (pm === '1SV10TA30') return 'PMP451';
+  const s = (serial||'').replace(/\s/g,'');
+  if (s.startsWith('13467116')) return 'PMP450';
+  if (s.startsWith('14060078')) return 'PMP451';
+  return product;
+}
+
+// ─── IMAGE RESIZE (Canvas) ───────────────────────────────────────────────
+async function resizeImage(file) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const MAX = 1600;
+      let { width: w, height: h } = img;
+      if (w > MAX || h > MAX) {
+        if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
+        else { w = Math.round(w * MAX / h); h = MAX; }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      URL.revokeObjectURL(url);
+      canvas.toBlob(blob => {
+        const reader = new FileReader();
+        reader.onload = e => resolve(e.target.result.split(',')[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      }, 'image/jpeg', 0.92);
+    };
+    img.onerror = reject;
+    img.src = url;
+  });
+}
+
+// ─── CLAUDE API CALL ─────────────────────────────────────────────────────
+async function callGemini(base64Img) {
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{
+          parts: [
+            { text: NAMEPLATE_PROMPT },
+            { inline_data: { mime_type: 'image/jpeg', data: base64Img } }
+          ]
+        }],
+        generationConfig: { maxOutputTokens: 512, temperature: 0.1 }
+      })
     }
+  );
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error?.message || `Gemini API 오류 ${res.status}`);
+  }
+  const data = await res.json();
+  return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+}
 
-    async function startProcess() {
-        const apiKey = document.getElementById('apiKey').value.trim();
-        const unitName = document.getElementById('unitName').value.trim();
-        const backendUrl = (document.getElementById('backendUrl').value || '/process').trim();
-        if (!apiKey) return alert("API 키를 입력해주세요!");
-        if (!backendUrl) return alert("처리 서버 URL을 입력해주세요!");
-        if (imageInput.files.length === 0) return alert("이미지를 선택해주세요!");
-        if (!excelInput.files[0]) return alert("엑셀 파일을 선택해주세요!");
+// ─── EXCEL HELPERS (SheetJS) ─────────────────────────────────────────────
+function buildIndex(ws) {
+  const ref = ws['!ref'];
+  if (!ref) return {};
+  const range = XLSX.utils.decode_range(ref);
+  const index = {};
+  for (let r = range.s.r; r <= range.e.r; r++) {
+    const addr = XLSX.utils.encode_cell({ r, c: 1 }); // col B
+    const cell = ws[addr];
+    if (cell && cell.v != null) {
+      const key = normalize(String(cell.v));
+      if (!index[key]) index[key] = [];
+      index[key].push(r);
+    }
+  }
+  return index;
+}
 
-        startBtn.disabled = true;
-        startBtn.innerText = "처리 중...";
-        
-        // 상태 초기화
-        let total = imageInput.files.length;
-        progressBar.style.width = "0%";
-        statusText.innerText = `진행률: 0% (0 / ${total})`;
-        addLog(`\n🚀 [성적서 생성 시작] 사진 ${total}장 분석 중...`);
+function findEmptyRow(ws, rows) {
+  for (const r of rows) {
+    const addr = XLSX.utils.encode_cell({ r, c: 2 }); // col C
+    if (!ws[addr] || ws[addr].v == null || ws[addr].v === '') return r;
+  }
+  return rows[rows.length - 1];
+}
 
-        const formData = new FormData();
-        formData.append('api_key', apiKey);
-        formData.append('excel', excelInput.files[0]);
-        for (let i = 0; i < imageInput.files.length; i++) {
-            formData.append('images', imageInput.files[i]);
+function writeCell(ws, r, val, isRed) {
+  const addr = XLSX.utils.encode_cell({ r, c: 2 });
+  ws[addr] = { t: 's', v: String(val) };
+  if (isRed) {
+    ws[addr].s = { font: { color: { rgb: 'FF0000' } } };
+  }
+  // Expand sheet range if needed
+  const ref = ws['!ref'];
+  if (ref) {
+    const range = XLSX.utils.decode_range(ref);
+    if (r > range.e.r) { range.e.r = r; ws['!ref'] = XLSX.utils.encode_range(range); }
+    if (2 > range.e.c) { range.e.c = 2; ws['!ref'] = XLSX.utils.encode_range(range); }
+  }
+}
+
+// ─── LOG HELPERS ─────────────────────────────────────────────────────────
+function logLine(html) {
+  const el = document.getElementById('logArea');
+  el.innerHTML += '\n' + html;
+  el.scrollTop = el.scrollHeight;
+}
+function logOk(t)   { logLine(`<span class="log-ok">${t}</span>`); }
+function logWarn(t) { logLine(`<span class="log-warn">${t}</span>`); }
+function logErr(t)  { logLine(`<span class="log-err">${t}</span>`); }
+function logInfo(t) { logLine(`<span class="log-info">${t}</span>`); }
+function logDim(t)  { logLine(`<span class="log-dim">${t}</span>`); }
+
+function setProgress(cur, total) {
+  const pct = total ? Math.round(cur / total * 100) : 0;
+  document.getElementById('progBar').style.width = pct + '%';
+  document.getElementById('progPct').textContent = pct + '%';
+  document.getElementById('statusLabel').innerHTML =
+    `분석 중... <span>${cur} / ${total}장 완료</span>`;
+  document.getElementById('logCount').textContent = `${cur}/${total}`;
+}
+
+// ─── FILE INPUT EVENTS ───────────────────────────────────────────────────
+function onImgChange() {
+  const n = document.getElementById('imgInput').files.length;
+  const el = document.getElementById('imgStatus');
+  el.textContent = n > 0 ? `선택된 사진: ${n}장` : '선택된 사진: 0장';
+  el.className = 'file-status' + (n > 0 ? ' ready' : '');
+}
+function onXlsxChange() {
+  const f = document.getElementById('xlsxInput').files[0];
+  const el = document.getElementById('xlsxStatus');
+  el.textContent = f ? f.name : '엑셀 파일 미선택';
+  el.className = 'file-status' + (f ? ' ready' : '');
+}
+
+// ─── API KEY VERIFY ──────────────────────────────────────────────────────
+async function verifyKey() {
+  const key = document.getElementById('apiKey').value.trim();
+  const msg = document.getElementById('verifyMsg');
+
+  if (!key) {
+    msg.className = 'verify-msg fail';
+    msg.textContent = '⚠ API 키를 입력해주세요.';
+    return;
+  }
+
+  msg.className = 'verify-msg';
+  msg.textContent = '⏳ 검증 중...';
+
+  try {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${key}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents: [{ parts: [{ text: 'hi' }] }] })
+      }
+    );
+
+    if (res.ok) {
+      apiVerified = true; apiKey = key;
+      msg.className = 'verify-msg ok';
+      msg.textContent = '✅ 검증 성공! 작업을 시작할 수 있습니다.';
+      document.getElementById('startBtn').disabled = false;
+      document.getElementById('startBtn').textContent = '성적서 생성';
+      logInfo('✨ Gemini API 키 인증 완료. 파일을 등록하세요.');
+    } else {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error?.message || `HTTP ${res.status}`);
+    }
+  } catch (e) {
+    apiVerified = false;
+    msg.className = 'verify-msg fail';
+    msg.textContent = '❌ 검증 실패: ' + e.message;
+    logErr('API 키 검증 실패: ' + e.message);
+  }
+}
+
+// ─── MAIN PROCESS ────────────────────────────────────────────────────────
+async function startProcess() {
+  const imgFiles = document.getElementById('imgInput').files;
+  const xlsxFile = document.getElementById('xlsxInput').files[0];
+  const unitName = document.getElementById('unitName').value.trim();
+
+  if (!imgFiles.length) { alert('이미지를 선택해주세요!'); return; }
+  if (!xlsxFile)         { alert('엑셀 파일을 선택해주세요!'); return; }
+
+  const btn = document.getElementById('startBtn');
+  btn.disabled = true; btn.className = 'btn-start running'; btn.textContent = '⚙ 작업 진행 중...';
+  document.getElementById('logArea').innerHTML = '';
+  document.getElementById('progBar').style.width = '0%';
+  document.getElementById('progBar').style.background = 'var(--green)';
+  document.getElementById('progPct').textContent = '0%';
+  document.getElementById('logCount').textContent = '';
+
+  const total = imgFiles.length;
+  logInfo(`🚀 성적서 생성 시작 — 사진 ${total}장 분석`);
+  logDim('━'.repeat(44));
+
+  // Read Excel
+  let wb, ws, index;
+  try {
+    const xlsxBytes = await xlsxFile.arrayBuffer();
+    wb = XLSX.read(xlsxBytes, { type: 'array', cellStyles: true });
+    ws = wb.Sheets[wb.SheetNames[0]];
+    index = buildIndex(ws);
+    logDim(`📊 엑셀 로드 완료: ${wb.SheetNames[0]} (${Object.keys(index).length}개 항목)`);
+  } catch (e) {
+    logErr('❌ 엑셀 파일 읽기 실패: ' + e.message);
+    resetBtn(btn); return;
+  }
+
+  let doneCount = 0;
+
+  for (let i = 0; i < imgFiles.length; i++) {
+    const file = imgFiles[i];
+    const fname = file.name;
+
+    try {
+      const b64 = await resizeImage(file);
+      const rawText = await callGemini(b64);
+      const parsed = extractJson(rawText);
+
+      const rawProduct = parsed.product || 'UNKNOWN';
+      let normProduct = normalize(rawProduct);
+      const serial = parsed.serial || '';
+      const pumpModel = parsed.pump_model || '';
+      const isGuessed = !!parsed.is_guessed;
+
+      normProduct = correctPmp(normProduct, serial, pumpModel);
+
+      const rows = index[normProduct];
+
+      if (rows) {
+        if (MULTI_SERIAL.has(normProduct)) {
+          const r = rows[rows.length - 1];
+          const existing = ws[XLSX.utils.encode_cell({r, c: 2})];
+          if (existing && existing.v && !String(existing.v).includes(serial)) {
+            writeCell(ws, r, existing.v + ' / ' + serial, isGuessed);
+          } else {
+            writeCell(ws, r, serial, isGuessed);
+          }
+        } else {
+          const r = findEmptyRow(ws, rows);
+          writeCell(ws, r, serial, isGuessed);
         }
+        const tag = isGuessed ? ' <span class="log-warn">[추측]</span>' : '';
+        logOk(`✔ [${i+1}/${total}] ${fname}${tag}`);
+        logDim(`   → ${rawProduct} | S/N: ${serial}`);
+      } else {
+        logWarn(`⚠ [${i+1}/${total}] ${fname}`);
+        logDim(`   → '${rawProduct}' 엑셀 매칭 실패`);
+      }
 
-        try {
-            const response = await fetch(backendUrl, { method: 'POST', body: formData });
-            let result;
-            try {
-                result = await response.json();
-            } catch (jsonError) {
-                throw new Error('처리 서버 응답을 읽을 수 없습니다. 서버 URL 또는 배포 상태를 확인해주세요.');
-            }
-            
-            if (response.ok) {
-                // 바 업데이트 및 완료 문구
-                progressBar.style.width = "100%";
-                statusText.innerText = "🎉 성적서 생성 완료!";
-                result.logs.forEach(log => addLog(log));
-
-                // 파일 다운로드 (파일명 설정)
-                const finalFileName = unitName ? `8-1 Serialized Components ${unitName}.xlsx` : `8-1 Serialized Components.xlsx`;
-                const link = document.createElement('a');
-                link.href = `data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,${result.excel_b64}`;
-                link.download = finalFileName;
-                link.click();
-            } else {
-                throw new Error(result.error);
-            }
-        } catch (error) {
-            addLog(`❌ 오류: ${error.message}`);
-            statusText.innerText = "❌ 작업 중단됨";
-        } finally {
-            startBtn.disabled = false;
-            startBtn.innerText = "성적서 생성";
-        }
+      doneCount++;
+    } catch (e) {
+      logErr(`✖ [${i+1}/${total}] ${fname}: ${e.message}`);
     }
 
-    function sendPortalHeight() {
-        const height = Math.max(
-            document.documentElement.scrollHeight,
-            document.body ? document.body.scrollHeight : 0,
-            900
-        );
-        if (window.parent && window.parent !== window) {
-            window.parent.postMessage({ type: 'fuelcell-serial-report-height', height }, '*');
-        }
-    }
+    setProgress(i + 1, total);
+  }
 
-    window.addEventListener('load', sendPortalHeight);
-    window.addEventListener('resize', sendPortalHeight);
-    if (window.MutationObserver) {
-        const observer = new MutationObserver(sendPortalHeight);
-        observer.observe(document.documentElement, {
-            childList: true,
-            subtree: true,
-            attributes: true,
-            characterData: true
-        });
-    }
+  logDim('━'.repeat(44));
+  logOk(`✅ 완료: ${doneCount}/${total}장 처리`);
 
+  // Export Excel
+  try {
+    const wbOut = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    const blob = new Blob([wbOut], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = unitName
+      ? `8-1 Serialized Components ${unitName}.xlsx`
+      : '8-1 Serialized Components.xlsx';
+    a.click();
+    URL.revokeObjectURL(url);
+    logInfo('⬇ 엑셀 파일 다운로드 완료!');
+    document.getElementById('statusLabel').innerHTML = '상태: <span>🎉 성적서 생성 완료!</span>';
+  } catch (e) {
+    logErr('엑셀 저장 실패: ' + e.message);
+  }
+
+  resetBtn(btn);
+}
+
+function resetBtn(btn) {
+  btn.disabled = false;
+  btn.className = 'btn-start';
+  btn.textContent = '성적서 재생성';
+}
+
+// end
 </script>
 </body>
 </html>
