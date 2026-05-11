@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FUELCELL Serial List 웹 자동화</title>
+    <style>
+        :root {
+            --bg-dark: #1A1C1E;
+            --panel-bg: #212529;
+            --input-bg: #2B3035;
+            --border-color: #343A40;
+            --text-main: #E9ECEF;
+            --text-sub: #ADB5BD;
+            --primary: #3B82F6;
+            --primary-hover: #2563EB;
+            --success: #10B981;
+            --success-hover: #059669;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Malgun Gothic', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            height: 100%;
+        }
+
+        .api-section {
+            background-color: var(--panel-bg);
+            padding: 20px 30px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .api-section input {
+            width: 80%;
+            max-width: 600px;
+            padding: 12px;
+            margin-top: 10px;
+            background-color: var(--input-bg);
+            border: 1px solid #495057;
+            border-radius: 8px;
+            color: white;
+            font-size: 14px;
+        }
+
+        .main-content {
+            display: flex;
+            gap: 20px;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .left-panel {
+            background-color: var(--panel-bg);
+            width: 350px;
+            padding: 20px;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        /* 호기명 입력 스타일 */
+        .unit-input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+        .unit-input-group label { font-size: 14px; color: var(--primary); font-weight: bold; }
+        .unit-input-group input {
+            padding: 10px;
+            background-color: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            color: white;
+        }
+
+        .file-btn {
+            background-color: var(--primary);
+            color: white;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            text-align: center;
+            transition: background 0.2s;
+        }
+        .file-btn:hover { background-color: var(--primary-hover); }
+        .file-input-hidden { display: none; }
+        .file-status { color: var(--text-sub); font-size: 12px; text-align: center; margin-top: -5px; }
+
+        .start-btn {
+            margin-top: auto;
+            background-color: var(--success);
+            color: white;
+            padding: 18px;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .start-btn:hover { background-color: var(--success-hover); }
+        .start-btn:disabled { background-color: #6c757d; cursor: not-allowed; }
+
+        .right-panel {
+            background-color: var(--panel-bg);
+            flex: 1;
+            padding: 20px;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .log-area {
+            background-color: var(--bg-dark);
+            flex: 1;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            font-family: 'Consolas', monospace;
+            font-size: 13px;
+            color: #D1D5DB;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            margin-top: 10px;
+        }
+
+        /* 상태 바 디자인 */
+        .status-footer {
+            background-color: var(--panel-bg);
+            padding: 15px 30px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .progress-container {
+            flex: 1;
+            background-color: var(--input-bg);
+            height: 12px;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        .progress-bar {
+            background-color: var(--success);
+            width: 0%;
+            height: 100%;
+            transition: width 0.3s;
+        }
+        .status-text { font-size: 14px; font-weight: bold; color: var(--text-main); min-width: 200px; }
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="api-section">
+        <h3 style="margin: 0; color: #E9ECEF;">Gemini API Key Authentication</h3>
+        <input type="password" id="apiKey" placeholder="이곳에 API 키를 입력하세요 (AIzaSy...)">
+    </div>
+
+    <div class="main-content">
+        <div class="left-panel">
+            <h3 style="color: var(--primary); text-align: center; margin-top: 0;">Work Setup</h3>
+            
+            <div class="unit-input-group">
+                <label>호기명 입력</label>
+                <input type="text" id="unitName" placeholder="예: M-400">
+            </div>
+
+            <label class="file-btn">📁 명판 이미지 다중 선택
+                <input type="file" id="imageFiles" class="file-input-hidden" multiple accept="image/*">
+            </label>
+            <div class="file-status" id="imageStatus">선택된 사진: 0장</div>
+
+            <label class="file-btn">📊 엑셀 양식 선택
+                <input type="file" id="excelFile" class="file-input-hidden" accept=".xlsx">
+            </label>
+            <div class="file-status" id="excelStatus">엑셀 파일 미선택</div>
+
+            <button class="start-btn" id="startBtn" onclick="startProcess()">성적서 생성</button>
+        </div>
+
+        <div class="right-panel">
+            <h3 style="margin: 0; color: var(--text-sub);">Real-time Processing Log</h3>
+            <div class="log-area" id="logArea">시스템 대기 중...</div>
+        </div>
+    </div>
+
+    <div class="status-footer">
+        <div class="status-text" id="statusText">진행률: 0% (대기 중)</div>
+        <div class="progress-container">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const imageInput = document.getElementById('imageFiles');
+    const excelInput = document.getElementById('excelFile');
+    const startBtn = document.getElementById('startBtn');
+    const logArea = document.getElementById('logArea');
+    const progressBar = document.getElementById('progressBar');
+    const statusText = document.getElementById('statusText');
+
+    imageInput.addEventListener('change', () => {
+        document.getElementById('imageStatus').innerText = `선택된 사진: ${imageInput.files.length}장`;
+    });
+    excelInput.addEventListener('change', () => {
+        document.getElementById('excelStatus').innerText = excelInput.files[0] ? excelInput.files[0].name : "엑셀 파일 미선택";
+    });
+
+    function addLog(msg) {
+        logArea.innerHTML += `\n${msg}`;
+        logArea.scrollTop = logArea.scrollHeight;
+    }
+
+    async function startProcess() {
+        const apiKey = document.getElementById('apiKey').value.trim();
+        const unitName = document.getElementById('unitName').value.trim();
+        if (!apiKey) return alert("API 키를 입력해주세요!");
+        if (imageInput.files.length === 0) return alert("이미지를 선택해주세요!");
+        if (!excelInput.files[0]) return alert("엑셀 파일을 선택해주세요!");
+
+        startBtn.disabled = true;
+        startBtn.innerText = "처리 중...";
+        
+        // 상태 초기화
+        let total = imageInput.files.length;
+        progressBar.style.width = "0%";
+        statusText.innerText = `진행률: 0% (0 / ${total})`;
+        addLog(`\n🚀 [성적서 생성 시작] 사진 ${total}장 분석 중...`);
+
+        const formData = new FormData();
+        formData.append('api_key', apiKey);
+        formData.append('excel', excelInput.files[0]);
+        for (let i = 0; i < imageInput.files.length; i++) {
+            formData.append('images', imageInput.files[i]);
+        }
+
+        try {
+            const response = await fetch('/process', { method: 'POST', body: formData });
+            const result = await response.json();
+            
+            if (response.ok) {
+                // 바 업데이트 및 완료 문구
+                progressBar.style.width = "100%";
+                statusText.innerText = "🎉 성적서 생성 완료!";
+                result.logs.forEach(log => addLog(log));
+
+                // 파일 다운로드 (파일명 설정)
+                const finalFileName = unitName ? `8-1 Serialized Components ${unitName}.xlsx` : `8-1 Serialized Components.xlsx`;
+                const link = document.createElement('a');
+                link.href = `data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,${result.excel_b64}`;
+                link.download = finalFileName;
+                link.click();
+            } else {
+                throw new Error(result.error);
+            }
+        } catch (error) {
+            addLog(`❌ 오류: ${error.message}`);
+            statusText.innerText = "❌ 작업 중단됨";
+        } finally {
+            startBtn.disabled = false;
+            startBtn.innerText = "성적서 생성";
+        }
+    }
+</script>
+</body>
+</html>
