@@ -1839,6 +1839,36 @@
     }
 
 
+
+
+    function fuelcellReportEmbedScreen(titleText, fileName, frameId, description) {
+      return `
+        <div class="screen-head">
+          <div class="screen-head-bar">
+            <div class="screen-head-main">
+              <h1>${titleText}</h1>
+              <p>${description}</p>
+            </div>
+            <div class="screen-head-actions">
+              <a class="btn primary" href="${fileName}" target="_blank" rel="noopener noreferrer">새 창으로 열기</a>
+            </div>
+          </div>
+        </div>
+        <div class="screen-body">
+          <div class="embedded-page-card">
+            <iframe
+              id="${frameId}"
+              class="embedded-page-frame"
+              src="${fileName}"
+              title="${titleText}"
+              loading="lazy"
+              onload="resizePortalFrame(this)">
+            </iframe>
+          </div>
+        </div>
+      `;
+    }
+
     function steelMaterialCheckEmbedScreen(titleText) {
       return `
         <div class="screen-head">
@@ -3065,7 +3095,9 @@
       "qa_equipment_return_embed",
       "hvac_004_2",
       "fan_004_2",
-      "marine_004_1"
+      "marine_004_1",
+      "fuelcell_005_1",
+      "fuelcell_005_4"
     ]);
 
     function isExecutableScreen(screenKey) {
@@ -3327,6 +3359,27 @@
         tab: "해양 > FAT 고객검사 > 성능 검사 및 외관 검사",
         html: () => offshoreHvacPtrEmbedScreen("해양 / FAT 고객검사 / 성능 검사 및 외관 검사")
       };
+
+      screens["fuelcell_005_1"] = {
+        tab: "퓨얼셀 > 공정간 검사 > 사전검사",
+        html: () => fuelcellReportEmbedScreen(
+          "퓨얼셀 / 공정간 검사 / 사전검사",
+          "fuelcell_photo_report.html",
+          "fuelcellPhotoReportFrame",
+          "퓨얼셀 사전검사 사진 리포트 생성 화면을 작업영역 안에서 바로 확인할 수 있습니다."
+        )
+      };
+
+      screens["fuelcell_005_4"] = {
+        tab: "퓨얼셀 > 공정간 검사 > 압력검사",
+        html: () => fuelcellReportEmbedScreen(
+          "퓨얼셀 / 공정간 검사 / 압력검사",
+          "fuelcell_pressure_report.html",
+          "fuelcellPressureReportFrame",
+          "퓨얼셀 압력검사 성적서 생성 화면을 작업영역 안에서 바로 확인할 수 있습니다."
+        )
+      };
+
     }
 
     const screens = {
@@ -3989,6 +4042,23 @@
       const height = Math.max(980, Number(data.height) || 0);
       frame.style.height = height + "px";
     });
+
+    window.addEventListener("message", function(event) {
+      const data = event.data || {};
+      const frameMap = {
+        "fuelcell-photo-report-height": "fuelcellPhotoReportFrame",
+        "fuelcell-pressure-report-height": "fuelcellPressureReportFrame"
+      };
+      const frameId = frameMap[data.type];
+      if (!frameId) return;
+
+      const frame = document.getElementById(frameId);
+      if (!frame) return;
+
+      const height = Math.max(980, Number(data.height) || 0);
+      frame.style.height = height + "px";
+    });
+
 
     function updateActivePathState() {
       document.querySelectorAll("details.has-active-path").forEach((detailsEl) => {
