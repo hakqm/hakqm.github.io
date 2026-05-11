@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OFFSHORE HVAC PTR Generator</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#06132a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100vh;padding:24px 16px;color:#E8F4FD;}
+.wrap{max-width:820px;margin:0 auto;}
+
+.header{display:flex;align-items:center;gap:14px;margin-bottom:22px;}
+.logo{background:#1A56DB;border-radius:12px;padding:10px 16px;font-size:22px;}
+.header h1{font-size:19px;font-weight:600;}
+.header p{font-size:12px;color:#6B9DD4;margin-top:3px;}
+
+.card{background:#0d2147;border:0.5px solid #1e3d6e;border-radius:12px;margin-bottom:12px;overflow:hidden;}
+.card-head{display:flex;align-items:center;gap:10px;padding:11px 16px;border-bottom:0.5px solid #1e3d6e;}
+.step{background:#1A56DB;color:#fff;font-size:10px;font-weight:700;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.card-head h2{font-size:13px;font-weight:500;color:#C8DFF5;}
+.card-body{padding:14px 16px;}
+
+label{display:block;font-size:11px;color:#6B9DD4;margin-bottom:4px;font-weight:500;}
+input[type=text],input[type=password],input[type=date],input[type=number]{
+  width:100%;background:#071830;border:0.5px solid #1e3d6e;border-radius:7px;
+  color:#E8F4FD;font-size:13px;padding:8px 11px;outline:none;transition:border-color .15s;font-family:inherit;}
+input:focus{border-color:#4D8FD6;}
+input::placeholder{color:#2d5080;}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+.inp-unit{display:flex;}
+.inp-unit input{border-radius:7px 0 0 7px;border-right:none;}
+.unit{background:#071830;border:0.5px solid #1e3d6e;border-left:none;border-radius:0 7px 7px 0;color:#4D8FD6;font-size:12px;padding:8px 9px;white-space:nowrap;}
+
+.count-row{display:flex;align-items:center;gap:6px;margin-bottom:12px;}
+.count-row span{font-size:12px;color:#6B9DD4;}
+.cb{width:28px;height:28px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;border:0.5px solid #1e3d6e;background:#071830;color:#6B9DD4;transition:all .1s;}
+.cb.on{border:1.5px solid #4D8FD6;background:#1A56DB;color:#fff;}
+
+.tag-hdr{display:flex;gap:8px;margin-bottom:5px;padding-left:28px;}
+.tag-hdr span{font-size:11px;color:#6B9DD4;flex:1;}
+.tag-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.tag-num{font-size:11px;color:#4D8FD6;width:22px;text-align:right;flex-shrink:0;}
+.tag-row input{flex:1;font-family:monospace;font-size:12px;}
+.req{color:#F87171;}
+
+.dz-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px;}
+.dz{border:1.5px dashed #1e3d6e;border-radius:9px;background:#071830;padding:16px 10px;text-align:center;cursor:pointer;transition:all .15s;position:relative;}
+.dz:hover{border-color:#4D8FD6;background:#0d264a;}
+.dz.filled{border:1px solid #16a34a;background:#052e16;}
+.dz input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.dz-icon{font-size:22px;margin-bottom:5px;}
+.dz-title{font-size:12px;font-weight:600;color:#E8F4FD;}
+.dz.filled .dz-title{color:#86EFAC;}
+.dz-sub{font-size:10px;color:#2d5080;margin-top:2px;}
+.dz.filled .dz-sub{color:#4ADE80;}
+.dz-name{font-size:10px;color:#2d5080;margin-top:4px;font-family:monospace;word-break:break-all;}
+.dz.filled .dz-name{color:#22C55E;}
+
+.pills{display:flex;flex-wrap:wrap;gap:4px;}
+.pill{background:#071830;border:0.5px solid #1e3d6e;border-radius:4px;padding:2px 7px;font-size:10px;font-family:monospace;color:#6B9DD4;}
+.pill b{color:#4D8FD6;}
+
+.btn-gen{width:100%;padding:13px;font-size:15px;font-weight:600;background:#1A56DB;color:#fff;border:none;border-radius:9px;cursor:pointer;}
+.btn-gen:hover{opacity:.9;}
+.btn-gen:disabled{opacity:.4;cursor:not-allowed;}
+.btn-dl{display:none;width:100%;padding:12px;font-size:14px;font-weight:600;background:#052e16;color:#4ADE80;border:1px solid #16a34a;border-radius:9px;cursor:pointer;margin-top:10px;}
+
+.pb-wrap{margin-top:12px;display:none;}
+.pb{height:4px;background:#071830;border-radius:2px;overflow:hidden;}
+.pf{height:100%;background:#1A56DB;border-radius:2px;width:0%;transition:width .3s;}
+.pb-txt{font-size:11px;color:#6B9DD4;margin-top:5px;}
+
+.logbox{margin-top:12px;background:#040f1f;border:0.5px solid #132440;border-radius:8px;padding:11px 13px;font-family:monospace;font-size:11px;max-height:240px;overflow-y:auto;display:none;line-height:1.8;}
+.lok{color:#4ADE80;} .lerr{color:#F87171;} .ldim{color:#2d5080;} .lbold{color:#E8F4FD;font-weight:600;}
+
+.api-row{display:flex;gap:8px;}
+.api-row input{flex:1;}
+.btn-eye{background:#1e3d6e;color:#6B9DD4;border:none;border-radius:7px;padding:0 12px;cursor:pointer;font-size:12px;}
+
+@media(max-width:600px){.grid2,.grid3,.dz-grid{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="header">
+  <div class="logo">🌡</div>
+  <div>
+    <h1>OFFSHORE HVAC Performance Test Report Generator</h1>
+    <p>OFFSHORE HVAC 자료 기반 PDF 자동 분석 → PTR 양식 자동 입력 → Excel 다운로드</p>
+  </div>
+</div>
+
+<!-- API Key -->
+<div class="card">
+  <div class="card-head"><span class="step">0</span><h2>Anthropic API Key</h2></div>
+  <div class="card-body">
+    <label>sk-ant-api03- 로 시작하는 Key 입력</label>
+    <div class="api-row">
+      <input type="password" id="apiKey" placeholder="sk-ant-api03-...">
+      <button class="btn-eye" onclick="toggleKey()">보기</button>
+    </div>
+    <p style="font-size:11px;color:#2d5080;margin-top:6px;">※ API Key는 이 브라우저에서만 사용되며 어디에도 저장되지 않습니다.</p>
+  </div>
+</div>
+
+<!-- Tag No. -->
+<div class="card">
+  <div class="card-head"><span class="step">1</span><h2>Tag No. 및 Motor Serial No.</h2></div>
+  <div class="card-body">
+    <div class="count-row">
+      <span>장비 개수:</span>
+      <button class="cb on" id="cb1" onclick="setCount(1)">1</button>
+      <button class="cb"    id="cb2" onclick="setCount(2)">2</button>
+      <button class="cb"    id="cb3" onclick="setCount(3)">3</button>
+      <button class="cb"    id="cb4" onclick="setCount(4)">4</button>
+      <button class="cb"    id="cb5" onclick="setCount(5)">5</button>
+      <button class="cb"    id="cb6" onclick="setCount(6)">6</button>
+    </div>
+    <div class="tag-hdr"><span>Tag No. <span class="req">*</span></span><span>Motor Serial No.</span></div>
+    <div id="tagRows"></div>
+  </div>
+</div>
+
+<!-- 시험 조건 -->
+<div class="card">
+  <div class="card-head"><span class="step">2</span><h2>시험 조건 입력</h2></div>
+  <div class="card-body">
+    <div class="grid2" style="margin-bottom:12px;">
+      <div>
+        <label>DATE → M3</label>
+        <input type="date" id="fDate">
+      </div>
+      <div>
+        <label>DENSITY → L12</label>
+        <div class="inp-unit">
+          <input type="number" id="fDensity" placeholder="예: 1.217" step="0.001">
+          <span class="unit">kg/m³</span>
+        </div>
+      </div>
+    </div>
+    <div class="grid3">
+      <div>
+        <label>TEMPERATURE → E13</label>
+        <div class="inp-unit">
+          <input type="number" id="fTemp" placeholder="예: 15.7" step="0.1">
+          <span class="unit">℃</span>
+        </div>
+      </div>
+      <div>
+        <label>HUMIDITY → L13</label>
+        <div class="inp-unit">
+          <input type="number" id="fHumidity" placeholder="예: 66.4" step="0.1">
+          <span class="unit">%</span>
+        </div>
+      </div>
+      <div>
+        <label>STATIC PRESSURE → C15</label>
+        <div class="inp-unit">
+          <input type="number" id="fStaticP" placeholder="예: 873" step="1">
+          <span class="unit">Pa</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 파일 업로드 -->
+<div class="card">
+  <div class="card-head"><span class="step">3</span><h2>파일 업로드 — 클릭 또는 드래그 앤 드롭</h2></div>
+  <div class="card-body">
+    <div class="dz-grid">
+      <div class="dz" id="dzTpl" ondragover="event.preventDefault()" ondrop="drop(event,'tpl')">
+        <input type="file" accept=".xlsx,.xls" onchange="setFile('tpl',this.files[0])">
+        <div class="dz-icon">📄</div>
+        <div class="dz-title">PTR 양식 <span class="req">*</span></div>
+        <div class="dz-sub">Excel 템플릿 (.xlsx)</div>
+        <div class="dz-name" id="nTpl">클릭 또는 드래그</div>
+      </div>
+      <div class="dz" id="dzDs" ondragover="event.preventDefault()" ondrop="drop(event,'ds')">
+        <input type="file" accept=".pdf" onchange="setFile('ds',this.files[0])">
+        <div class="dz-icon">📋</div>
+        <div class="dz-title">Data Sheet <span class="req">*</span></div>
+        <div class="dz-sub">장비 사양 PDF</div>
+        <div class="dz-name" id="nDs">클릭 또는 드래그</div>
+      </div>
+      <div class="dz" id="dzGd" ondragover="event.preventDefault()" ondrop="drop(event,'gd')">
+        <input type="file" accept=".pdf" onchange="setFile('gd',this.files[0])">
+        <div class="dz-icon">📐</div>
+        <div class="dz-title">General Drawing <span class="req">*</span></div>
+        <div class="dz-sub">도면 PDF</div>
+        <div class="dz-name" id="nGd">클릭 또는 드래그</div>
+      </div>
+    </div>
+    <div class="pills">
+      <span class="pill"><b>B8</b> FAN TYPE</span><span class="pill"><b>E8</b> FLOW RATE</span>
+      <span class="pill"><b>I8</b> STATIC P.</span><span class="pill"><b>M8</b> FAN RPM</span>
+      <span class="pill"><b>C9</b> MTR TYPE</span><span class="pill"><b>G9</b> OUTPUT</span>
+      <span class="pill"><b>K9</b> VOLTAGE</span><span class="pill"><b>C10</b> CURRENT</span>
+      <span class="pill"><b>G10</b> POLE</span><span class="pill"><b>K10</b> PHASE</span>
+      <span class="pill"><b>C11</b> FREQ.</span><span class="pill"><b>G11</b> IP</span>
+      <span class="pill"><b>K11</b> MTR RPM</span><span class="pill"><b>M10</b> MAKER</span>
+      <span class="pill"><b>M3</b> DATE</span><span class="pill"><b>C12</b> S/N</span>
+      <span class="pill"><b>L12</b> DENSITY</span><span class="pill"><b>E13</b> TEMP</span>
+      <span class="pill"><b>L13</b> HUMIDITY</span><span class="pill"><b>C15</b> STATIC P.</span>
+    </div>
+  </div>
+</div>
+
+<!-- 생성 -->
+<div class="card">
+  <div class="card-head"><span class="step">4</span><h2>보고서 생성 및 다운로드</h2></div>
+  <div class="card-body">
+    <button class="btn-gen" id="btnGen" onclick="generate()">보고서 생성</button>
+    <button class="btn-dl"  id="btnDl"  onclick="download()">⬇ Excel 다운로드</button>
+    <div class="pb-wrap" id="pbWrap">
+      <div class="pb"><div class="pf" id="pf"></div></div>
+      <div class="pb-txt" id="pbTxt"></div>
+    </div>
+    <div class="logbox" id="logbox"></div>
+  </div>
+</div>
+
+</div>
+
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+let activeCount = 1;
+let files = {tpl:null, ds:null, gd:null};
+let resultBlob = null;
+
+function notifyParentHeight() {
+  try {
+    const height = Math.max(
+      document.documentElement.scrollHeight,
+      document.body.scrollHeight
+    );
+    window.parent.postMessage({ type: 'offshore-hvac-ptr-height', height: height }, '*');
+  } catch (error) {}
+}
+
+window.addEventListener('load', notifyParentHeight);
+window.addEventListener('resize', notifyParentHeight);
+
+// ── 태그 행 ───────────────────────────────────────────────────
+function buildRows() {
+  const c = document.getElementById('tagRows');
+  c.innerHTML = '';
+  for (let i = 0; i < 6; i++) {
+    const r = document.createElement('div');
+    r.className = 'tag-row';
+    r.id = 'tr'+i;
+    r.style.display = i < activeCount ? '' : 'none';
+    r.innerHTML = `<span class="tag-num">#${i+1}</span>
+      <input type="text" id="tag${i}" placeholder="예: TM6600GA701A">
+      <input type="text" id="sn${i}"  placeholder="Motor S/N (직접입력 또는 자동추출)">`;
+    c.appendChild(r);
+  }
+}
+buildRows();
+
+function setCount(n) {
+  activeCount = n;
+  for (let i = 1; i <= 6; i++) {
+    document.getElementById('cb'+i).className = 'cb'+(i===n?' on':'');
+    document.getElementById('tr'+(i-1)).style.display = i<=n?'':'none';
+  }
+  notifyParentHeight();
+}
+
+// ── API Key ───────────────────────────────────────────────────
+let showKey = false;
+function toggleKey() {
+  showKey = !showKey;
+  document.getElementById('apiKey').type = showKey ? 'text' : 'password';
+  document.querySelector('.btn-eye').textContent = showKey ? '숨기기' : '보기';
+}
+
+// ── 파일 처리 ─────────────────────────────────────────────────
+function drop(e, type) {
+  e.preventDefault();
+  const f = e.dataTransfer.files[0];
+  if (f) setFile(type, f);
+}
+
+function setFile(type, file) {
+  if (!file) return;
+  const ok = type==='tpl' ? /\.(xlsx|xls)$/i.test(file.name) : file.type==='application/pdf';
+  if (!ok) { alert(type==='tpl'?'Excel 파일만 가능합니다.':'PDF 파일만 가능합니다.'); return; }
+  files[type] = file;
+  const mb = (file.size/1024/1024).toFixed(1);
+  const zMap = {tpl:'dzTpl',ds:'dzDs',gd:'dzGd'};
+  const nMap = {tpl:'nTpl', ds:'nDs', gd:'nGd'};
+  document.getElementById(zMap[type]).className = 'dz filled';
+  document.getElementById(nMap[type]).textContent = file.name + '  ('+mb+' MB)';
+  notifyParentHeight();
+}
+
+// ── PDF → 텍스트 ──────────────────────────────────────────────
+async function pdfToText(file) {
+  const ab  = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({data: ab}).promise;
+  let out = '';
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const pg = await pdf.getPage(i);
+    const ct = await pg.getTextContent();
+    out += `[PAGE ${i}]\n` + ct.items.map(s=>s.str).join(' ') + '\n';
+  }
+  return out;
+}
+
+function cropAround(text, tag, chars=8000) {
+  const idx = text.toUpperCase().indexOf(tag.toUpperCase());
+  if (idx===-1) return text.slice(0,16000);
+  return text.slice(Math.max(0,idx-3000), Math.min(text.length, idx+chars));
+}
+
+// ── 로그 & 진행 ───────────────────────────────────────────────
+function log(msg, cls='') {
+  const box = document.getElementById('logbox');
+  box.style.display = 'block';
+  const d = document.createElement('div');
+  if (cls) d.className = cls;
+  d.textContent = (cls==='lok'?'✓ ':cls==='lerr'?'✗ ':'› ') + msg;
+  box.appendChild(d);
+  box.scrollTop = box.scrollHeight;
+  notifyParentHeight();
+}
+
+function prog(p, txt) {
+  document.getElementById('pbWrap').style.display = 'block';
+  document.getElementById('pf').style.width = p+'%';
+  if (txt) document.getElementById('pbTxt').textContent = txt;
+  notifyParentHeight();
+}
+
+// ── JSON 파싱 ─────────────────────────────────────────────────
+function safeJson(text) {
+  text = text.replace(/```json/g,'').replace(/```/g,'').trim();
+  const m = text.match(/\{[\s\S]*?\}/);
+  return JSON.parse(m ? m[0] : text);
+}
+
+// ── Anthropic API 호출 ────────────────────────────────────────
+async function claude(apiKey, prompt, maxTokens=800) {
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type':      'application/json',
+      'x-api-key':         apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-allow-browser': 'true',
+    },
+    body: JSON.stringify({
+      model:      'claude-haiku-4-5-20251001',
+      max_tokens: maxTokens,
+      messages:   [{role:'user', content:prompt}],
+    })
+  });
+  if (!res.ok) {
+    const e = await res.json().catch(()=>({error:{message:'HTTP '+res.status}}));
+    throw new Error(e.error?.message || 'HTTP '+res.status);
+  }
+  return (await res.json()).content[0].text;
+}
+
+// ── AI 데이터 추출 ────────────────────────────────────────────
+async function extractData(apiKey, tagNo, gdText, dsText) {
+  const gd = cropAround(gdText, tagNo, 8000);
+
+  // 1차: General Drawing
+  log(`"${tagNo}" General Drawing 분석 중...`, 'lbold');
+  const gdRaw = await claude(apiKey, `You are an HVAC engineering document expert.
+The text below is from a General Drawing PDF.
+
+STEP 1: Find the EQUIPMENT section, locate Tag No. "${tagNo}".
+STEP 2: Find the FAN section and EL-MOTOR section on the same or nearby page.
+
+=== FAN section ===
+fanType: FAN TYPE or MODEL value
+airFlowRate_m3h: DUTY value (number only)
+staticPressure_Pa: STATIC PRESSURE value (number only)
+fanRPM: RPM in FAN section (number only)
+motorType: MODEL listed under FAN section
+
+=== EL-MOTOR section ===
+motorOutput_kW: RATING (number only, kW)
+voltage_V: from POWER SUPPLY, voltage only (e.g. "3Ph,380V,60Hz"→380)
+phase: from POWER SUPPLY, phase only (e.g. "3Ph,380V,60Hz"→3)
+frequency_Hz: from POWER SUPPLY, frequency only (e.g. "3Ph,380V,60Hz"→60)
+pole: from MODEL, last number=pole count (e.g. "M3JP 132SMC 4"→4)
+ip: from IP/COOLING, IP only (e.g. "IP55/IC411"→"IP55")
+motorRPM: RPM in EL-MOTOR section (number only)
+maker: MANUFACTURER value
+
+Return ONLY valid JSON:
+{"fanType":"","airFlowRate_m3h":null,"staticPressure_Pa":null,"fanRPM":null,"motorType":"","motorOutput_kW":null,"voltage_V":null,"phase":null,"frequency_Hz":null,"pole":null,"ip":"","motorRPM":null,"maker":""}
+
+--- GENERAL DRAWING TEXT ---
+${gd}`);
+  const gdData = safeJson(gdRaw);
+
+  // 2차: Data Sheet
+  log(`"${tagNo}" Data Sheet 분석 중...`, 'lbold');
+  const dsRaw = await claude(apiKey, `You are an HVAC engineering document expert.
+
+TASK: Find Rated Current (Amperes) for Tag No. "${tagNo}" in the Data Sheet below.
+
+STEP 1: Find section where "TANG NO." or "TAG NO." = "${tagNo}".
+STEP 2: Find "Rated current IN" label and extract the Ampere value.
+
+CRITICAL RULES:
+- USE ONLY: "Rated current IN" value (unit A) → current_A
+- DO NOT USE: "Is/IN" or "Is/In" (this is a ratio, NOT Amperes!)
+- DO NOT USE: "Starting current" or "No-load current"
+Example: "Rated current IN  13  A" → current_A=13
+         "Starting current Is/IN  7.7" → IGNORE (7.7 is WRONG)
+
+Also extract motorSerialNo if found (empty string if not).
+
+Return ONLY valid JSON:
+{"current_A":null,"motorSerialNo":""}
+
+--- DATA SHEET TEXT ---
+${dsText}`, 200);
+  const dsData = safeJson(dsRaw);
+
+  return {
+    tagNo, motorSerialNo: dsData.motorSerialNo||'', current_A: dsData.current_A,
+    fanType: gdData.fanType||'', airFlowRate_m3h: gdData.airFlowRate_m3h,
+    staticPressure_Pa: gdData.staticPressure_Pa, fanRPM: gdData.fanRPM,
+    motorType: gdData.motorType||'', motorOutput_kW: gdData.motorOutput_kW,
+    voltage_V: gdData.voltage_V, phase: gdData.phase, frequency_Hz: gdData.frequency_Hz,
+    pole: gdData.pole, ip: gdData.ip||'', motorRPM: gdData.motorRPM, maker: gdData.maker||'',
+  };
+}
+
+// ── Excel 셀 채우기 ───────────────────────────────────────────
+function fillSheet(ws, tag, sn, d, params) {
+  function s(a,v){ if(v!=null&&v!==''){if(!ws[a])ws[a]={};ws[a].t='s';ws[a].v=String(v);} }
+  function n(a,v){ if(v!=null&&v!==''){const num=parseFloat(v);if(!isNaN(num)){if(!ws[a])ws[a]={};ws[a].t='n';ws[a].v=num;ws[a].w=String(num);}} }
+
+  s('K5', tag);
+  s('C12', sn || d.motorSerialNo);
+  if (params.date) {
+    const dt = new Date(params.date+'T12:00:00');
+    const serial = Math.round((dt - new Date(1899,11,31)) / 86400000);
+    if (!ws['M3']) ws['M3']={};
+    ws['M3'].t='n'; ws['M3'].v=serial; ws['M3'].z='YYYY/MM/DD'; ws['M3'].w=params.date;
+  }
+  n('L12',params.density); n('E13',params.temp);
+  n('L13',params.humidity); n('C15',params.staticP);
+  s('B8',d.fanType); n('E8',d.airFlowRate_m3h);
+  n('I8',d.staticPressure_Pa); n('M8',d.fanRPM);
+  s('C9',d.motorType); n('G9',d.motorOutput_kW);
+  n('K9',d.voltage_V); n('C10',d.current_A);
+  n('G10',d.pole); n('K10',d.phase);
+  n('C11',d.frequency_Hz); s('G11',d.ip);
+  n('K11',d.motorRPM); s('M10',d.maker);
+}
+
+// ── 메인 ─────────────────────────────────────────────────────
+async function generate() {
+  const apiKey = document.getElementById('apiKey').value.trim();
+  const tags=[], sns=[];
+  for (let i=0;i<activeCount;i++) {
+    const t = document.getElementById('tag'+i)?.value.trim();
+    const s = document.getElementById('sn'+i)?.value.trim()||'';
+    if (t) { tags.push(t); sns.push(s); }
+  }
+
+  if (!apiKey)      { alert('API Key를 입력해주세요.'); return; }
+  if (!tags.length) { alert('Tag No.를 입력해주세요.'); return; }
+  if (!files.tpl)   { alert('PTR 양식(Excel)을 업로드해주세요.'); return; }
+  if (!files.ds)    { alert('Data Sheet PDF를 업로드해주세요.'); return; }
+  if (!files.gd)    { alert('General Drawing PDF를 업로드해주세요.'); return; }
+
+  const btn = document.getElementById('btnGen');
+  btn.disabled=true; btn.textContent='처리 중...';
+  document.getElementById('btnDl').style.display='none';
+  document.getElementById('logbox').innerHTML='';
+  resultBlob=null;
+
+  try {
+    prog(5,'General Drawing 텍스트 추출 중...');
+    log('General Drawing PDF 텍스트 추출 중...');
+    const gdText = await pdfToText(files.gd);
+    log(`→ ${(files.gd.size/1024/1024).toFixed(1)} MB / ${gdText.length.toLocaleString()} 글자 완료`, 'lok');
+
+    prog(10,'Data Sheet 텍스트 추출 중...');
+    log('Data Sheet PDF 텍스트 추출 중...');
+    const dsText = await pdfToText(files.ds);
+    log(`→ ${(files.ds.size/1024/1024).toFixed(1)} MB / ${dsText.length.toLocaleString()} 글자 완료`, 'lok');
+
+    prog(15,'PTR 양식 읽는 중...');
+    log('PTR 양식(Excel) 읽는 중...');
+    const tplBuf = await files.tpl.arrayBuffer();
+    const wb     = XLSX.read(tplBuf, {type:'array', cellStyles:true, cellFormula:true});
+    const tplWs  = wb.Sheets[wb.SheetNames[0]];
+
+    const params = {
+      date:     document.getElementById('fDate').value,
+      density:  document.getElementById('fDensity').value,
+      temp:     document.getElementById('fTemp').value,
+      humidity: document.getElementById('fHumidity').value,
+      staticP:  document.getElementById('fStaticP').value,
+    };
+
+    const outWb = XLSX.utils.book_new();
+
+    for (let i=0; i<tags.length; i++) {
+      const tag = tags[i];
+      prog(15+Math.round((i/tags.length)*80), `"${tag}" AI 분석 중...`);
+
+      const data = await extractData(apiKey, tag, gdText, dsText);
+
+      log(`  ├ FAN TYPE    : ${data.fanType       ||'미확인'}`);
+      log(`  ├ FLOW RATE   : ${data.airFlowRate_m3h??'?'} m³/h`);
+      log(`  ├ STATIC PRESS: ${data.staticPressure_Pa??'?'} Pa`);
+      log(`  ├ FAN RPM     : ${data.fanRPM??'?'} rpm`);
+      log(`  ├ MOTOR TYPE  : ${data.motorType      ||'미확인'}`);
+      log(`  ├ OUTPUT      : ${data.motorOutput_kW??'?'} kW`);
+      log(`  ├ VOLTAGE     : ${data.voltage_V??'?'} V`);
+      log(`  ├ CURRENT     : ${data.current_A??'?'} A`);
+      log(`  ├ POLE        : ${data.pole??'?'}`);
+      log(`  ├ PHASE       : ${data.phase??'?'}`);
+      log(`  ├ FREQUENCY   : ${data.frequency_Hz??'?'} Hz`);
+      log(`  ├ IP          : ${data.ip||'?'}`);
+      log(`  ├ MOTOR RPM   : ${data.motorRPM??'?'} rpm`);
+      log(`  └ MAKER       : ${data.maker||'미확인'}`);
+
+      const newWs = JSON.parse(JSON.stringify(tplWs));
+      fillSheet(newWs, tag, sns[i], data, params);
+      const sheetName = tag.replace(/[\/\\?*\[\]:]/g,'_').slice(0,31);
+      XLSX.utils.book_append_sheet(outWb, newWs, sheetName);
+      log(`"${tag}" Sheet 완성`, 'lok');
+    }
+
+    prog(100,`완료! Sheet ${tags.length}개 생성됨`);
+    log(`모든 작업 완료! → 아래 버튼으로 다운로드하세요`, 'lok');
+
+    const wbBuf = XLSX.write(outWb, {bookType:'xlsx', type:'array'});
+    resultBlob = new Blob([wbBuf], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    document.getElementById('btnDl').style.display='block';
+
+  } catch(e) {
+    log('오류: '+e.message, 'lerr');
+    document.getElementById('pbTxt').textContent='오류 발생';
+  } finally {
+    btn.disabled=false; btn.textContent='보고서 생성';
+    notifyParentHeight();
+  }
+}
+
+function download() {
+  if (!resultBlob) return;
+  const url = URL.createObjectURL(resultBlob);
+  const a = document.createElement('a');
+  a.href=url; a.download='offshore_hvac_ptr_report.xlsx';
+  a.click(); URL.revokeObjectURL(url);
+}
+</script>
+</body>
+</html>
