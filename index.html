@@ -3,7 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
   <title>QM AI 에이전트 포털</title>
+  <!-- index-clean-fuelcell-marine-shortcuts-v20260511 -->
   <style>
     :root {
       --navy: #344a8c;
@@ -597,34 +601,6 @@
       line-height: 1.8;
     }
 
-    .home-quick-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 14px;
-      margin-bottom: 18px;
-    }
-
-    .home-quick-card {
-      padding: 16px;
-      border: 1px solid #dbe3ec;
-      border-radius: 16px;
-      background: #ffffff;
-      box-shadow: 0 8px 18px rgba(31, 41, 55, 0.06);
-    }
-
-    .home-quick-card strong {
-      display: block;
-      margin-bottom: 6px;
-      font-size: 22px;
-      color: #22365e;
-    }
-
-    .home-quick-card span {
-      color: var(--muted);
-      font-size: 13px;
-      line-height: 1.6;
-    }
-
     .panel {
       border: 1px solid var(--line);
       border-radius: 14px;
@@ -1071,9 +1047,6 @@
         grid-template-columns: 1fr;
       }
 
-      .home-quick-grid {
-        grid-template-columns: 1fr;
-      }
 
       .home-hero h2 {
         font-size: 24px;
@@ -1131,13 +1104,6 @@
             <summary class="folder"><span class="node-icon">📁</span> QA</summary>
             <div class="subtree">
               <button class="tree-link" data-screen="qa_overview">🔗 QA 업무 FLOW</button>
-
-              <details>
-                <summary class="folder"><span class="node-icon">🧪</span> Test</summary>
-                <div class="subtree">
-                  <button type="button" class="tree-link" data-screen="qa_test_qr_embed">🌐 QR 생성기</button>
-                </div>
-              </details>
 
               <details>
                 <summary class="folder"><span class="node-icon">📂</span> 수입검사</summary>
@@ -1561,7 +1527,7 @@
                 </div>
                 <div class="mini-card">
                   <strong>2. 좌측 메뉴 선택</strong>
-                  <p>QA, 상선, 해군, FAN 등 원하는 파트를 선택해 업무 화면으로 이동합니다.</p>
+                  <p>QA, 해양, 산업공조, FAN, 퓨얼셀 등 원하는 파트를 선택해 업무 화면으로 이동합니다.</p>
                 </div>
                 <div class="mini-card">
                   <strong>3. 상세 기능 사용</strong>
@@ -1573,14 +1539,13 @@
           </div>
 
           <div class="panel" style="margin-top:16px;">
-            <h3>바로가기</h3>
+            <h3>실행 가능 바로가기</h3>
             <div class="qa-menu-grid">
               <div class="qa-process">
                 <div class="qa-process-head">QA 바로가기</div>
                 <div class="qa-process-body">
-                  <button type="button" data-screen="qa_equipment_checkout_embed">🌐 계측기 불출</button>
-                  <button type="button" data-screen="qa_equipment_return_embed">🌐 계측기 반납</button>
-                  <button type="button" data-screen="qa_test_qr_embed">🌐 QR 생성기</button>
+                  <button type="button" data-screen="qa_equipment_checkout_embed">🌐 계측기관리 / 계측기 불출</button>
+                  <button type="button" data-screen="qa_equipment_return_embed">🌐 계측기관리 / 계측기 반납</button>
                 </div>
               </div>
 
@@ -1597,6 +1562,22 @@
                   <button type="button" data-screen="fan_004_2">🌐 고객검사 / FAN TEST REPORT</button>
                 </div>
               </div>
+
+              <div class="qa-process">
+                <div class="qa-process-head">해양 바로가기</div>
+                <div class="qa-process-body">
+                  <button type="button" data-screen="marine_004_1">🌐 FAT 고객검사 / 성능 검사 및 외관 검사</button>
+                </div>
+              </div>
+
+              <div class="qa-process">
+                <div class="qa-process-head">퓨얼셀 바로가기</div>
+                <div class="qa-process-body">
+                  <button type="button" data-screen="fuelcell_005_1">🌐 공정간 검사 / 사전검사</button>
+                  <button type="button" data-screen="fuelcell_005_4">🌐 공정간 검사 / 압력검사</button>
+                  <button type="button" data-screen="fuelcell_006_1">🌐 완제품 검사 / 최종검사</button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -1604,12 +1585,6 @@
     }
 
     const QA_OVERVIEW_GROUPS = [
-      {
-        title: "Test",
-        items: [
-          { label: "🌐 QR 생성기", screen: "qa_test_qr_embed" }
-        ]
-      },
       {
         title: "수입검사",
         items: [
@@ -1728,28 +1703,6 @@
                 </table>
               </div>
             </div>
-          </div>
-        </div>
-      `;
-    }
-
-
-    function qrEmbedScreen() {
-      return `
-        <div class="screen-head">
-          <h1>QA / Test / QR 생성기</h1>
-          <p>URL을 입력하면 QR 코드를 생성하고 PNG, JPG, PDF 형식으로 저장할 수 있습니다.</p>
-        </div>
-        <div class="screen-body">
-          <div class="embedded-page-card">
-            <iframe
-              id="qrGeneratorFrame"
-              class="embedded-page-frame"
-              src="qr-generator-embedded.html"
-              title="QR 생성기"
-              loading="lazy"
-              onload="resizePortalFrame(this)">
-            </iframe>
           </div>
         </div>
       `;
@@ -3090,14 +3043,14 @@
     }
 
     const EXECUTABLE_SCREEN_KEYS = new Set([
-      "qa_test_qr_embed",
       "qa_equipment_checkout_embed",
       "qa_equipment_return_embed",
       "hvac_004_2",
       "fan_004_2",
       "marine_004_1",
       "fuelcell_005_1",
-      "fuelcell_005_4"
+      "fuelcell_005_4",
+      "fuelcell_006_1"
     ]);
 
     function isExecutableScreen(screenKey) {
@@ -3380,6 +3333,16 @@
         )
       };
 
+      screens["fuelcell_006_1"] = {
+        tab: "퓨얼셀 > 완제품 검사 > 최종검사",
+        html: () => fuelcellReportEmbedScreen(
+          "퓨얼셀 / 완제품 검사 / 최종검사",
+          "fuelcell_serial_report.html",
+          "fuelcellSerialReportFrame",
+          "퓨얼셀 최종검사 Serial List 성적서 생성 화면을 작업영역 안에서 바로 확인할 수 있습니다."
+        )
+      };
+
     }
 
     const screens = {
@@ -3388,11 +3351,6 @@
       qa_overview: {
         tab: "QA 업무 FLOW",
         html: () => qaOverviewScreen()
-      },
-
-      qa_test_qr_embed: {
-        tab: "QA > Test > QR 생성기",
-        html: () => qrEmbedScreen()
       },
 
       qa_equipment_checkout_embed: {
@@ -4023,17 +3981,6 @@
 
     window.addEventListener("message", function(event) {
       const data = event.data || {};
-      if (data.type !== "qr-generator-height") return;
-
-      const frame = document.getElementById("qrGeneratorFrame");
-      if (!frame) return;
-
-      const height = Math.max(980, Number(data.height) || 0);
-      frame.style.height = height + "px";
-    });
-
-    window.addEventListener("message", function(event) {
-      const data = event.data || {};
       if (data.type !== "offshore-hvac-ptr-height") return;
 
       const frame = document.getElementById("offshoreHvacPtrFrame");
@@ -4047,7 +3994,8 @@
       const data = event.data || {};
       const frameMap = {
         "fuelcell-photo-report-height": "fuelcellPhotoReportFrame",
-        "fuelcell-pressure-report-height": "fuelcellPressureReportFrame"
+        "fuelcell-pressure-report-height": "fuelcellPressureReportFrame",
+        "fuelcell-serial-report-height": "fuelcellSerialReportFrame"
       };
       const frameId = frameMap[data.type];
       if (!frameId) return;
