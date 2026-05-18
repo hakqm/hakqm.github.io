@@ -7,7 +7,7 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
   <title>QM AI 에이전트 포털</title>
-  <!-- index-clean-fuelcell-marine-shortcuts-v20260511 -->
+  <!-- index-modernized-ui-from-reference-v20260518 -->
   <style>
     :root {
       --navy: #344a8c;
@@ -601,6 +601,34 @@
       line-height: 1.8;
     }
 
+    .home-quick-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .home-quick-card {
+      padding: 16px;
+      border: 1px solid #dbe3ec;
+      border-radius: 16px;
+      background: #ffffff;
+      box-shadow: 0 8px 18px rgba(31, 41, 55, 0.06);
+    }
+
+    .home-quick-card strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 22px;
+      color: #22365e;
+    }
+
+    .home-quick-card span {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
     .panel {
       border: 1px solid var(--line);
       border-radius: 14px;
@@ -1047,6 +1075,9 @@
         grid-template-columns: 1fr;
       }
 
+      .home-quick-grid {
+        grid-template-columns: 1fr;
+      }
 
       .home-hero h2 {
         font-size: 24px;
@@ -1062,14 +1093,849 @@
         width: 100%;
       }
     }
+
+    /* =========================
+       Modern premium visual refresh
+       기존 구조/기능 유지 + 화면 장식 개선
+    ========================= */
+    :root {
+      --navy: #213a72;
+      --navy-dark: #111d3a;
+      --navy-deep: #0b1227;
+      --accent: #4fb7ff;
+      --accent-2: #74e0c0;
+      --gold: #f5b85b;
+      --line: #dbe5f2;
+      --line-strong: #c8d6eb;
+      --bg: #eef4fb;
+      --surface: rgba(255,255,255,.92);
+      --white: #ffffff;
+      --text: #172033;
+      --muted: #66748a;
+      --blue-soft: #eaf3ff;
+      --green-soft: #eafaf4;
+      --orange-soft: #fff5e7;
+      --shadow: 0 18px 44px rgba(15, 23, 42, 0.10);
+      --shadow-soft: 0 10px 24px rgba(15, 23, 42, 0.07);
+      --overlay: rgba(15, 23, 42, 0.58);
+      --radius-xl: 24px;
+      --radius-lg: 18px;
+      --radius-md: 14px;
+    }
+
+    body {
+      background:
+        radial-gradient(circle at 18% 10%, rgba(79,183,255,.20), transparent 28%),
+        radial-gradient(circle at 82% 18%, rgba(116,224,192,.16), transparent 26%),
+        linear-gradient(180deg, #f6f9ff 0%, var(--bg) 46%, #f8fbff 100%);
+      letter-spacing: -0.01em;
+    }
+
+    .app { grid-template-rows: 64px 1fr; }
+
+    .topbar {
+      min-height: 64px;
+      background:
+        linear-gradient(135deg, rgba(17,29,58,.98), rgba(33,58,114,.98) 58%, rgba(24,84,122,.96)),
+        var(--navy-dark);
+      border-bottom: 1px solid rgba(255,255,255,.12);
+      box-shadow: 0 16px 34px rgba(15, 23, 42, .20);
+      backdrop-filter: blur(16px);
+    }
+
+    .brand {
+      padding: 8px 12px 8px 9px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.10);
+      border: 1px solid rgba(255,255,255,.18);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.14);
+    }
+
+    .brand:hover {
+      transform: translateY(-1px);
+      background: rgba(255,255,255,.16);
+    }
+
+    .brand-logo {
+      width: 36px;
+      height: 36px;
+      border-radius: 13px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #08223c;
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: .2px;
+      background: linear-gradient(135deg, #ffffff, #9ee7ff 44%, #8ff1cf 100%);
+      box-shadow: 0 10px 22px rgba(79,183,255,.32);
+      flex-shrink: 0;
+    }
+
+    .brand-copy {
+      display: grid;
+      gap: 1px;
+      line-height: 1.1;
+    }
+
+    .brand-kicker {
+      color: rgba(255,255,255,.68);
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+    }
+
+    .brand-title {
+      font-size: 15px;
+      letter-spacing: .1px;
+    }
+
+    .brand-badge {
+      background: rgba(255,255,255,.16);
+      border: 1px solid rgba(255,255,255,.12);
+      color: rgba(255,255,255,.92);
+    }
+
+    .top-btn,
+    .btn,
+    .login-btn {
+      border-radius: 999px;
+      box-shadow: 0 8px 18px rgba(15,23,42,.08);
+    }
+
+    .top-btn-primary {
+      background: linear-gradient(135deg, #ffffff, #eaf6ff);
+      color: var(--navy-dark);
+    }
+
+    .top-btn-outline,
+    .user-chip {
+      border: 1px solid rgba(255,255,255,.20);
+      background: rgba(255,255,255,.11);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.10);
+    }
+
+    .content {
+      grid-template-columns: 324px 1fr;
+      background: transparent;
+    }
+
+    .sidebar {
+      background: rgba(248,251,255,.78);
+      border-right: 1px solid rgba(200,214,235,.9);
+      box-shadow: 12px 0 34px rgba(15, 23, 42, .045);
+      backdrop-filter: blur(18px);
+    }
+
+    .side-head {
+      background:
+        radial-gradient(circle at 10% 0%, rgba(79,183,255,.22), transparent 28%),
+        linear-gradient(160deg, #17264b, #213a72 72%, #1b5e7e);
+      padding: 16px 14px 14px;
+      border-bottom: 1px solid rgba(255,255,255,.13);
+      box-shadow: 0 16px 26px rgba(15, 23, 42, .13);
+    }
+
+    .search-box input {
+      min-height: 42px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.20);
+      background: rgba(255,255,255,.96);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.90), 0 10px 24px rgba(15,23,42,.10);
+    }
+
+    .menu-filter-btn {
+      padding: 8px 13px;
+      border-color: rgba(255,255,255,.22);
+    }
+
+    .menu-filter-btn.active {
+      box-shadow: 0 10px 24px rgba(255,255,255,.16);
+    }
+
+    .tree-wrap {
+      padding: 14px 12px 18px;
+    }
+
+    .tree-section-title {
+      margin: 8px 10px 12px;
+      color: #77849a;
+      letter-spacing: 1px;
+    }
+
+    details {
+      border-radius: 14px;
+    }
+
+    summary {
+      min-height: 40px;
+      border-radius: 14px;
+      color: #233555;
+    }
+
+    summary:hover,
+    .tree-link:hover,
+    .tree-home:hover {
+      background: rgba(226,238,255,.94);
+      transform: translateX(2px);
+    }
+
+    details[open] > summary,
+    details.has-active-path > summary,
+    .tree-link.active,
+    .tree-home.active {
+      background: linear-gradient(135deg, #dcecff, #eef6ff);
+      color: #153d73;
+      box-shadow: inset 4px 0 0 var(--accent), 0 8px 18px rgba(33,58,114,.08);
+    }
+
+    .node-icon {
+      width: 24px;
+      height: 24px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 9px;
+      background: rgba(33,58,114,.08);
+      font-size: 13px;
+    }
+
+    .subtree {
+      margin: 6px 0 9px 15px;
+      border-left: 1px solid #c9d8ed;
+      background: linear-gradient(90deg, rgba(233,242,255,.80), rgba(233,242,255,0));
+    }
+
+    .tree-link,
+    .tree-home {
+      min-height: 38px;
+      border-radius: 13px;
+      color: #253654;
+    }
+
+    .tree-link[data-executable="true"]::after {
+      color: #0f5f86;
+      background: #e6f8ff;
+      border-color: #bdeaff;
+    }
+
+    .tabs {
+      padding: 10px 16px 0;
+      background: transparent;
+      border-bottom: 0;
+    }
+
+    .tab {
+      border: 1px solid rgba(200,214,235,.9);
+      border-bottom: 1px solid rgba(200,214,235,.9);
+      border-radius: 999px;
+      background: rgba(255,255,255,.82);
+      box-shadow: 0 10px 22px rgba(15,23,42,.06);
+      padding: 9px 15px;
+    }
+
+    .workspace {
+      padding: 16px 18px 22px;
+    }
+
+    .screen {
+      border: 1px solid rgba(205,218,238,.96);
+      border-radius: 26px;
+      background: rgba(255,255,255,.88);
+      box-shadow: var(--shadow);
+    }
+
+    .screen-head {
+      padding: 22px 26px;
+      background:
+        linear-gradient(135deg, rgba(255,255,255,.98), rgba(239,247,255,.94)),
+        #fff;
+      border-bottom: 1px solid rgba(219,229,242,.96);
+    }
+
+    .screen-head h1 {
+      font-size: 28px;
+      letter-spacing: -0.03em;
+      color: #16284c;
+    }
+
+    .screen-body {
+      padding: 22px 26px 28px;
+      background:
+        radial-gradient(circle at right top, rgba(79,183,255,.06), transparent 34%),
+        linear-gradient(180deg, rgba(255,255,255,.6), rgba(249,251,255,.9));
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+      color: #41618e;
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--accent);
+      box-shadow: 0 0 0 6px rgba(79,183,255,.16);
+    }
+
+    .home-screen-title p {
+      max-width: 760px;
+    }
+
+    .home-hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 300px;
+      gap: 24px;
+      min-height: 300px;
+      padding: 28px;
+      margin-bottom: 18px;
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 28px;
+      background:
+        radial-gradient(circle at 16% 20%, rgba(116,224,192,.26), transparent 24%),
+        radial-gradient(circle at 84% 8%, rgba(79,183,255,.35), transparent 28%),
+        linear-gradient(135deg, #101a35 0%, #213a72 56%, #0c6c8a 100%);
+      box-shadow: 0 24px 54px rgba(15, 23, 42, .23);
+      color: #fff;
+    }
+
+    .home-hero::after {
+      right: -70px;
+      top: -80px;
+      width: 260px;
+      height: 260px;
+      background: rgba(255,255,255,.10);
+      border: 1px solid rgba(255,255,255,.12);
+    }
+
+    .home-hero::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(rgba(255,255,255,.18) 1px, transparent 1px);
+      background-size: 22px 22px;
+      mask-image: linear-gradient(120deg, rgba(0,0,0,.65), transparent 72%);
+      pointer-events: none;
+    }
+
+    .home-hero-content {
+      position: relative;
+      z-index: 1;
+      align-self: center;
+      max-width: 780px;
+    }
+
+    .home-hero-badge {
+      border-color: rgba(255,255,255,.20);
+      background: rgba(255,255,255,.14);
+      color: rgba(255,255,255,.92);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.12);
+    }
+
+    .home-hero h2 {
+      margin: 0 0 10px;
+      font-size: clamp(28px, 4vw, 44px);
+      line-height: 1.15;
+      color: #ffffff;
+      letter-spacing: -0.045em;
+    }
+
+    .home-hero p {
+      max-width: 760px;
+      color: rgba(255,255,255,.84);
+      font-size: 15px;
+    }
+
+    .home-hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 22px;
+    }
+
+    .home-hero-actions .btn {
+      border-color: rgba(255,255,255,.18);
+      background: rgba(255,255,255,.12);
+      color: #fff;
+    }
+
+    .home-hero-actions .btn.primary {
+      border-color: #fff;
+      background: #fff;
+      color: #132849;
+    }
+
+    .home-hero-visual {
+      position: relative;
+      z-index: 1;
+      min-height: 250px;
+      align-self: stretch;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .agent-core {
+      position: relative;
+      width: 156px;
+      height: 156px;
+      border-radius: 42px;
+      background:
+        linear-gradient(145deg, rgba(255,255,255,.96), rgba(201,239,255,.88));
+      box-shadow: 0 28px 52px rgba(0,0,0,.24), inset 0 1px 0 rgba(255,255,255,.90);
+      display: grid;
+      place-items: center;
+      color: #0c2340;
+      transform: rotate(-4deg);
+    }
+
+    .agent-core::before {
+      content: "AI";
+      position: absolute;
+      top: 15px;
+      left: 15px;
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: .7px;
+      color: #1b5e7e;
+    }
+
+    .agent-face {
+      width: 84px;
+      height: 48px;
+      border-radius: 24px;
+      background: linear-gradient(135deg, #17264b, #1b5e7e);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.16);
+      position: relative;
+    }
+
+    .agent-face::before,
+    .agent-face::after {
+      content: "";
+      position: absolute;
+      top: 18px;
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: #8ff1cf;
+      box-shadow: 0 0 16px rgba(143,241,207,.8);
+    }
+
+    .agent-face::before { left: 22px; }
+    .agent-face::after { right: 22px; }
+
+    .agent-ring {
+      position: absolute;
+      inset: -18px;
+      border: 1px solid rgba(255,255,255,.24);
+      border-radius: 54px;
+      transform: rotate(12deg);
+    }
+
+    .agent-card {
+      position: absolute;
+      right: 2px;
+      bottom: 18px;
+      width: 146px;
+      padding: 12px;
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 18px;
+      background: rgba(255,255,255,.13);
+      box-shadow: 0 18px 36px rgba(0,0,0,.16);
+      backdrop-filter: blur(18px);
+      color: #fff;
+    }
+
+    .agent-card strong {
+      display: block;
+      font-size: 13px;
+      margin-bottom: 6px;
+    }
+
+    .agent-card span {
+      display: block;
+      color: rgba(255,255,255,.72);
+      font-size: 11px;
+      line-height: 1.5;
+    }
+
+    .agent-spark {
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      border-radius: 999px;
+      background: #8ff1cf;
+      box-shadow: 0 0 30px rgba(143,241,207,.75);
+    }
+
+    .agent-spark.s1 { left: 22px; top: 34px; }
+    .agent-spark.s2 { right: 34px; top: 18px; width: 9px; height: 9px; background: #fff; }
+    .agent-spark.s3 { left: 58px; bottom: 20px; width: 10px; height: 10px; background: #f5b85b; }
+
+    .home-quick-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .home-quick-card {
+      position: relative;
+      overflow: hidden;
+      padding: 18px;
+      border-radius: 20px;
+      border: 1px solid rgba(205,218,238,.95);
+      background: rgba(255,255,255,.90);
+      box-shadow: var(--shadow-soft);
+      transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+    }
+
+    .home-quick-card:hover {
+      transform: translateY(-3px);
+      border-color: #b9d7ff;
+      box-shadow: 0 18px 36px rgba(15,23,42,.10);
+    }
+
+    .home-quick-card::after {
+      content: "";
+      position: absolute;
+      right: -32px;
+      top: -38px;
+      width: 96px;
+      height: 96px;
+      border-radius: 50%;
+      background: rgba(79,183,255,.10);
+    }
+
+    .home-quick-icon {
+      width: 42px;
+      height: 42px;
+      margin-bottom: 12px;
+      border-radius: 16px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #eaf4ff, #f3fbff);
+      border: 1px solid #d6e8fb;
+      font-size: 19px;
+    }
+
+    .home-quick-card strong {
+      font-size: 18px;
+      letter-spacing: -0.02em;
+    }
+
+    .panel {
+      border: 1px solid rgba(205,218,238,.95);
+      border-radius: 22px;
+      background: rgba(255,255,255,.92);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .panel h3 {
+      font-size: 19px;
+      letter-spacing: -0.02em;
+    }
+
+    .panel-title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .panel-title-row h3 { margin: 0; }
+
+    .panel-title-row span {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .mini-card {
+      border-radius: 18px;
+      border: 1px solid #e1eaf6;
+      background: linear-gradient(180deg, #ffffff, #f9fbff);
+      box-shadow: 0 8px 18px rgba(15,23,42,.04);
+    }
+
+    .home-guide-panel .mini-card {
+      display: grid;
+      grid-template-columns: 44px 1fr;
+      gap: 12px;
+      align-items: start;
+    }
+
+    .guide-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 16px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: #edf6ff;
+      border: 1px solid #d7e9fb;
+      font-size: 18px;
+    }
+
+    .workflow-preview {
+      display: grid;
+      gap: 12px;
+    }
+
+    .workflow-step {
+      display: grid;
+      grid-template-columns: 34px 1fr;
+      gap: 10px;
+      align-items: center;
+      padding: 12px;
+      border-radius: 16px;
+      background: #f8fbff;
+      border: 1px solid #e1eaf6;
+    }
+
+    .workflow-step b {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 34px;
+      height: 34px;
+      border-radius: 12px;
+      background: #213a72;
+      color: #fff;
+      font-size: 12px;
+    }
+
+    .workflow-step span {
+      color: #53627a;
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .callout {
+      border-radius: 18px;
+      border-color: #cde4ff;
+      background: linear-gradient(135deg, #f5fbff, #ffffff);
+      box-shadow: 0 10px 22px rgba(15,23,42,.05);
+    }
+
+    .warn-callout {
+      border-color: #ffd49a;
+      background: linear-gradient(135deg, #fff8ef, #ffffff);
+    }
+
+    .login-required-box {
+      border-radius: 20px;
+      border-color: #b9d7ff;
+      background: linear-gradient(135deg, #f8fbff, #eef7ff);
+    }
+
+    .shortcut-panel {
+      padding: 18px;
+    }
+
+    .qa-menu-grid,
+    .part-grid {
+      gap: 16px;
+    }
+
+    .qa-process,
+    .part-card {
+      border-radius: 20px;
+      border: 1px solid #dce7f6;
+      box-shadow: 0 8px 20px rgba(15,23,42,.045);
+    }
+
+    .qa-process-head,
+    .part-card-head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: linear-gradient(135deg, #f4f9ff, #ffffff);
+      color: #1d3765;
+      font-size: 15px;
+    }
+
+    .shortcut-icon {
+      width: 30px;
+      height: 30px;
+      border-radius: 12px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: #e9f4ff;
+      border: 1px solid #d4e8fb;
+    }
+
+    .qa-process-body button,
+    .qa-process-body a,
+    .part-card-body button {
+      position: relative;
+      min-height: 44px;
+      border-radius: 15px;
+      border-color: #dce7f6;
+      background: linear-gradient(180deg, #ffffff, #fbfdff);
+      box-shadow: 0 6px 14px rgba(15,23,42,.035);
+    }
+
+    .qa-process-body button::after,
+    .part-card-body button::after {
+      content: "→";
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #8aa0bd;
+      transition: .2s ease;
+    }
+
+    .qa-process-body button:hover,
+    .qa-process-body a:hover,
+    .part-card-body button:hover {
+      background: #eef7ff;
+      border-color: #b9d7ff;
+      transform: translateX(2px);
+    }
+
+    .qa-process-body button:hover::after,
+    .part-card-body button:hover::after {
+      right: 9px;
+      color: #1d6092;
+    }
+
+    .flow-step,
+    .kpi,
+    .embedded-page-card {
+      border-radius: 18px;
+      border-color: #dce7f6;
+      box-shadow: 0 8px 20px rgba(15,23,42,.045);
+    }
+
+    @media (max-width: 1200px) {
+      .home-hero { grid-template-columns: 1fr; }
+      .home-hero-visual { min-height: 220px; }
+    }
+
+    @media (max-width: 900px) {
+      .content { grid-template-columns: 1fr; }
+      .sidebar { backdrop-filter: none; }
+      .home-hero { padding: 22px; }
+    }
+
+    @media (max-width: 640px) {
+      .app { grid-template-rows: auto 1fr; }
+      .topbar { min-height: 58px; }
+      .brand-kicker,
+      .brand-badge { display: none; }
+      .brand-logo { width: 32px; height: 32px; }
+      .screen { border-radius: 20px; }
+      .screen-head,
+      .screen-body { padding-left: 16px; padding-right: 16px; }
+      .home-hero { border-radius: 22px; }
+      .home-hero-visual { display: none; }
+      .home-guide-panel .mini-card { grid-template-columns: 1fr; }
+      .panel-title-row { align-items: flex-start; flex-direction: column; }
+    }
+
+  
+
+    .brand-logo {
+      color: #13324d;
+      font-size: 11px;
+      letter-spacing: 0.4px;
+      background: linear-gradient(135deg, #ffffff, #dff2ff 52%, #d9f3eb 100%);
+      box-shadow: 0 8px 18px rgba(79,183,255,.18);
+    }
+
+    .agent-core::before { content: "HQ"; }
+
+    .automation-head .eyebrow { margin-bottom: 10px; }
+    .automation-head-bar { align-items: flex-start; }
+    .automation-status {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 10px 14px; border-radius: 999px;
+      border: 1px solid #d8e6f8;
+      background: linear-gradient(135deg, #f9fbff, #eef5ff);
+      color: #305487; font-size: 13px; font-weight: 800; white-space: nowrap;
+      box-shadow: 0 10px 20px rgba(15,23,42,.05);
+    }
+    .automation-status-dot {
+      width: 8px; height: 8px; border-radius: 999px; background: #7aa9e6;
+      box-shadow: 0 0 0 6px rgba(122,169,230,.12);
+    }
+    .automation-callout { margin-bottom: 18px; }
+    .automation-shell {
+      display: grid;
+      grid-template-columns: minmax(0, 1.25fr) minmax(320px, 0.75fr);
+      gap: 18px; align-items: start;
+    }
+    .summary-chip-row { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
+    .summary-chip {
+      display: inline-flex; align-items: center; min-height: 36px; padding: 8px 14px;
+      border-radius: 999px; border: 1px solid #d6e5f7; background: #f7fbff;
+      color: #274770; font-size: 12px; font-weight: 800;
+    }
+    .automation-summary-grid {
+      display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px;
+    }
+    .summary-info-card {
+      padding: 16px 18px; border-radius: 18px; border: 1px solid #e0ebf8;
+      background: linear-gradient(180deg, #ffffff, #f8fbff);
+      box-shadow: 0 10px 20px rgba(15,23,42,.04);
+    }
+    .summary-info-card-wide { grid-column: 1 / -1; }
+    .summary-info-card label {
+      display: block; margin-bottom: 8px; color: #6b7b90;
+      font-size: 12px; font-weight: 800; letter-spacing: .2px;
+    }
+    .summary-info-card p { margin: 0; color: #243654; font-size: 14px; line-height: 1.7; }
+    .automation-timeline { display: grid; gap: 12px; }
+    .automation-step {
+      display: grid; grid-template-columns: 44px 1fr; gap: 12px; align-items: start;
+      padding: 14px; border-radius: 18px; border: 1px solid #dfeaf8;
+      background: linear-gradient(180deg, #ffffff, #f8fbff);
+      box-shadow: 0 10px 20px rgba(15,23,42,.04);
+    }
+    .automation-step-no {
+      width: 44px; height: 44px; border-radius: 15px;
+      display: inline-flex; align-items: center; justify-content: center;
+      background: linear-gradient(135deg, #1f4f92, #24407c);
+      color: #fff; font-size: 15px; font-weight: 800;
+      box-shadow: 0 10px 20px rgba(33,58,114,.18);
+    }
+    .automation-step-body strong { display: block; margin-bottom: 6px; color: #1b365d; font-size: 15px; }
+    .automation-step-body p { margin: 0; color: #5d6d84; font-size: 13px; line-height: 1.65; }
+    .automation-note-box {
+      margin-top: 16px; padding: 16px 18px; border-radius: 18px;
+      border: 1px solid #d8e6f8; background: linear-gradient(135deg, #f8fbff, #eef5ff);
+    }
+    .automation-note-box strong { display: block; margin-bottom: 8px; color: #23406b; font-size: 14px; }
+    .automation-note-box p { margin: 0; color: #5d6d84; font-size: 13px; line-height: 1.65; }
+    @media (max-width: 1180px) { .automation-shell { grid-template-columns: 1fr; } }
+    @media (max-width: 860px) { .automation-summary-grid { grid-template-columns: 1fr; } }
+
   </style>
 </head>
 <body>
   <div class="app">
     <div class="topbar">
       <a class="brand" href="https://hakqm.github.io/" title="메인으로 이동">
-        <span class="brand-title">HAK QM AI AGENT</span>
-        <span class="brand-badge">메인</span>
+        <span class="brand-logo" aria-hidden="true">HQ</span>
+        <span class="brand-copy">
+          <span class="brand-kicker">HI AIR KOREA</span>
+          <span class="brand-title">HQAA</span>
+        </span>
+        <span class="brand-badge">Portal</span>
       </a>
 
       <div class="top-right">
@@ -1183,7 +2049,7 @@
         </div>
         <footer class="portal-footer">
           <strong>HI AIR KOREA</strong><br />
-          HAK QM AI AGENT<br />
+          HQAA<br />
           Copyright © 2026 HI AIR KOREA Co.,Ltd. All Rights Reserved.
         </footer>
       </section>
@@ -1501,48 +2367,87 @@
         `;
 
       return `
-        <div class="screen-head">
-          <h1>QM AI AGENT</h1>
-         </div>
+        <div class="screen-head home-screen-title">
+          <span class="eyebrow">HAK QUALITY PORTAL</span>
+          <h1>HQAA</h1>
+          <p><strong>HAK QM AI AGENT</strong>를 뜻하는 품질 업무 포털로, QA와 제품별 업무 화면 및 실행 메뉴를 한 곳에서 연결해 주는 통합 시작 화면입니다.</p>
+        </div>
         <div class="screen-body">
           <div class="home-hero">
-            <div class="home-hero-badge">🏠 HOME DASHBOARD</div>
-            <h2>업무 시작 화면</h2>
-            <p>
-              이 화면은 세부 업무 화면이 아니라 전체 메뉴를 안내하는 홈입니다.
-              좌측 트리 메뉴에서 원하는 파트와 업무를 선택하거나, 아래 바로가기에서 자주 사용하는 기능으로 이동할 수 있습니다.
-            </p>
+            <div class="home-hero-content">
+              <div class="home-hero-badge">✦ HOME DASHBOARD</div>
+              <h2>업무 시작 화면</h2>
+              <p>
+                이 화면은 세부 업무 화면이 아니라 전체 메뉴를 안내하는 홈입니다.
+                좌측 트리 메뉴에서 원하는 파트와 업무를 선택하거나, 검색과 필터를 사용해 필요한 화면으로 빠르게 이동할 수 있습니다.
+              </p>
+            </div>
+
+            <div class="home-hero-visual" aria-hidden="true">
+              <span class="agent-spark s1"></span>
+              <span class="agent-spark s2"></span>
+              <span class="agent-spark s3"></span>
+              <div class="agent-core">
+                <span class="agent-ring"></span>
+                <span class="agent-face"></span>
+              </div>
+            </div>
           </div>
 
           ${loginBox}
 
-
           <div class="panel-grid">
-            <div class="panel">
-              <h3>홈 사용 안내</h3>
+            <div class="panel home-guide-panel">
+              <div class="panel-title-row">
+                <h3>홈 사용 안내</h3>
+                <span>START GUIDE</span>
+              </div>
               <div class="card-list">
                 <div class="mini-card">
-                  <strong>1. 로그인</strong>
-                  <p>우측 상단 로그인 버튼을 눌러 이름 / 사번으로 로그인합니다.</p>
+                  <span class="guide-icon">👤</span>
+                  <div>
+                    <strong>1. 로그인</strong>
+                    <p>우측 상단 로그인 버튼을 눌러 이름 / 사번으로 로그인합니다.</p>
+                  </div>
                 </div>
                 <div class="mini-card">
-                  <strong>2. 좌측 메뉴 선택</strong>
-                  <p>QA, 해양, 산업공조, FAN, 퓨얼셀 등 원하는 파트를 선택해 업무 화면으로 이동합니다.</p>
+                  <span class="guide-icon">📁</span>
+                  <div>
+                    <strong>2. 좌측 메뉴 선택</strong>
+                    <p>QA, 해양, 산업공조, FAN, 퓨얼셀 등 원하는 파트를 선택해 업무 화면으로 이동합니다.</p>
+                  </div>
                 </div>
                 <div class="mini-card">
-                  <strong>3. 상세 기능 사용</strong>
-                  <p>계측기관리 메뉴에서 필요한 상세 페이지로 이동할 수 있습니다.</p>
+                  <span class="guide-icon">🔎</span>
+                  <div>
+                    <strong>3. 검색 / 필터 활용</strong>
+                    <p>메뉴 검색과 실행 메뉴 필터를 사용해 필요한 화면만 빠르게 찾아볼 수 있습니다.</p>
+                  </div>
                 </div>
               </div>
             </div>
 
+            <div class="panel">
+              <div class="panel-title-row">
+                <h3>사용 흐름</h3>
+                <span>WORKFLOW</span>
+              </div>
+              <div class="workflow-preview">
+                <div class="workflow-step"><b>01</b><span>로그인 후 사용자 기준으로 메뉴 접근을 준비합니다.</span></div>
+                <div class="workflow-step"><b>02</b><span>좌측 메뉴 또는 검색 기능으로 원하는 업무를 찾습니다.</span></div>
+                <div class="workflow-step"><b>03</b><span>실행 메뉴는 바로 열고, 미구현 메뉴는 업무 기준과 흐름을 먼저 확인합니다.</span></div>
+              </div>
+            </div>
           </div>
 
-          <div class="panel" style="margin-top:16px;">
-            <h3>실행 가능 바로가기</h3>
+          <div class="panel shortcut-panel" style="margin-top:16px;">
+            <div class="panel-title-row">
+              <h3>바로가기</h3>
+              <span>자주 사용하는 실행 메뉴</span>
+            </div>
             <div class="qa-menu-grid">
               <div class="qa-process">
-                <div class="qa-process-head">QA 바로가기</div>
+                <div class="qa-process-head"><span class="shortcut-icon">🧰</span> QA 바로가기</div>
                 <div class="qa-process-body">
                   <button type="button" data-screen="qa_equipment_checkout_embed">🌐 계측기관리 / 계측기 불출</button>
                   <button type="button" data-screen="qa_equipment_return_embed">🌐 계측기관리 / 계측기 반납</button>
@@ -1550,28 +2455,28 @@
               </div>
 
               <div class="qa-process">
-                <div class="qa-process-head">산업공조 바로가기</div>
+                <div class="qa-process-head"><span class="shortcut-icon">🏭</span> 산업공조 바로가기</div>
                 <div class="qa-process-body">
                   <button type="button" data-screen="hvac_004_2">🌐 공정간 검사 / 자재검사</button>
                 </div>
               </div>
 
               <div class="qa-process">
-                <div class="qa-process-head">FAN 바로가기</div>
+                <div class="qa-process-head"><span class="shortcut-icon">🌀</span> FAN 바로가기</div>
                 <div class="qa-process-body">
                   <button type="button" data-screen="fan_004_2">🌐 고객검사 / FAN TEST REPORT</button>
                 </div>
               </div>
 
               <div class="qa-process">
-                <div class="qa-process-head">해양 바로가기</div>
+                <div class="qa-process-head"><span class="shortcut-icon">⚓</span> 해양 바로가기</div>
                 <div class="qa-process-body">
                   <button type="button" data-screen="marine_004_1">🌐 FAT 고객검사 / 성능 검사 및 외관 검사</button>
                 </div>
               </div>
 
               <div class="qa-process">
-                <div class="qa-process-head">퓨얼셀 바로가기</div>
+                <div class="qa-process-head"><span class="shortcut-icon">🔋</span> 퓨얼셀 바로가기</div>
                 <div class="qa-process-body">
                   <button type="button" data-screen="fuelcell_005_1">🌐 공정간 검사 / 사전검사</button>
                   <button type="button" data-screen="fuelcell_005_4">🌐 공정간 검사 / 압력검사</button>
@@ -1851,45 +2756,77 @@
 
     function automationScreen(cfg) {
       return `
-        <div class="screen-head">
-          <h1>${cfg.title}</h1>
-          <p>${cfg.desc}</p>
+        <div class="screen-head automation-head">
+          <span class="eyebrow">${cfg.part} · ${cfg.process}</span>
+          <div class="screen-head-bar automation-head-bar">
+            <div class="screen-head-main">
+              <h1>${cfg.title}</h1>
+              <p>${cfg.desc}</p>
+            </div>
+            <div class="automation-status" aria-label="준비 중">
+              <span class="automation-status-dot"></span>
+              준비 중
+            </div>
+          </div>
         </div>
-        <div class="screen-body">
-          <div class="callout">
-            <strong>업무 개요:</strong> ${cfg.work}
+        <div class="screen-body automation-body">
+          <div class="callout automation-callout">
+            <strong>안내</strong> 현재 이 화면은 실행형 메뉴가 아니라 업무 기준과 흐름을 정리한 안내 화면입니다. 실제 자동 실행 기능은 추후 순차적으로 연결될 예정입니다.
           </div>
 
-          <div class="panel-grid">
-            <div class="panel">
-              <h3>업무 정보</h3>
-              <div class="table-wrap">
-                <table>
-                  <tr><th>항목</th><th>내용</th></tr>
-                  <tr><td>프로세스 ID</td><td>${cfg.pid}</td></tr>
-                  <tr><td>파트</td><td>${cfg.part}</td></tr>
-                  <tr><td>프로세스</td><td>${cfg.process}</td></tr>
-                  <tr><td>세부 업무</td><td>${cfg.task}</td></tr>
-                  <tr><td>입력 자료</td><td>${cfg.inputs}</td></tr>
-                  <tr><td>출력물/결과</td><td>${cfg.output}</td></tr>
-                  <tr><td>연관 시스템</td><td>${cfg.system}</td></tr>
-                </table>
+          <div class="automation-shell">
+            <div class="panel automation-summary-panel">
+              <div class="panel-title-row">
+                <h3>업무 요약</h3>
+                <span>SUMMARY</span>
               </div>
 
-              <div class="action-row">
-                <button class="btn primary">AI 자동화 실행</button>
-                <button class="btn">자료 불러오기</button>
-                <button class="btn">결과 미리보기</button>
+              <div class="summary-chip-row">
+                <span class="summary-chip">${cfg.pid}</span>
+                <span class="summary-chip">${cfg.part}</span>
+                <span class="summary-chip">${cfg.process}</span>
+                <span class="summary-chip">${cfg.task}</span>
+              </div>
+
+              <div class="automation-summary-grid">
+                <div class="summary-info-card summary-info-card-wide">
+                  <label>업무 개요</label>
+                  <p>${cfg.work}</p>
+                </div>
+                <div class="summary-info-card">
+                  <label>입력 자료</label>
+                  <p>${cfg.inputs}</p>
+                </div>
+                <div class="summary-info-card">
+                  <label>출력물 / 결과</label>
+                  <p>${cfg.output}</p>
+                </div>
+                <div class="summary-info-card">
+                  <label>연관 시스템</label>
+                  <p>${cfg.system}</p>
+                </div>
+                <div class="summary-info-card">
+                  <label>현재 상태</label>
+                  <p>설명 화면 제공</p>
+                </div>
               </div>
             </div>
 
-            <div class="panel">
-              <h3>처리 흐름</h3>
-              <div class="flow-box">
-                <div class="flow-step"><strong>1. 호출</strong>${cfg.trigger}</div>
-                <div class="flow-step"><strong>2. 수집</strong>${cfg.collect}</div>
-                <div class="flow-step"><strong>3. 처리</strong>${cfg.auto}</div>
-                <div class="flow-step"><strong>4. 결과</strong>${cfg.result}</div>
+            <div class="panel automation-flow-panel">
+              <div class="panel-title-row">
+                <h3>처리 흐름</h3>
+                <span>WORKFLOW</span>
+              </div>
+              <div class="automation-timeline">
+                <div class="automation-step"><div class="automation-step-no">1</div><div class="automation-step-body"><strong>호출</strong><p>${cfg.trigger}</p></div></div>
+                <div class="automation-step"><div class="automation-step-no">2</div><div class="automation-step-body"><strong>수집</strong><p>${cfg.collect}</p></div></div>
+                <div class="automation-step"><div class="automation-step-no">3</div><div class="automation-step-body"><strong>처리</strong><p>${cfg.auto}</p></div></div>
+                <div class="automation-step"><div class="automation-step-no">4</div><div class="automation-step-body"><strong>결과</strong><p>${cfg.result}</p></div></div>
+              </div>
+
+              <div class="automation-note-box">
+                <strong>현재 안내 범위</strong>
+                <p>이 페이지는 업무 설명과 기준 흐름을 우선 제공하며, 실제 실행 버튼은 연동 완료 후 활성화됩니다.</p>
               </div>
             </div>
           </div>
@@ -4043,11 +4980,30 @@
       updateActivePathState();
     }
 
+    function getScreenHtml(item) {
+      try {
+        return typeof item.html === "function" ? item.html() : item.html;
+      } catch (error) {
+        console.error(error);
+        return `
+          <div class="screen-head">
+            <h1>화면 표시 오류</h1>
+            <p>화면을 불러오는 중 오류가 발생했습니다.</p>
+          </div>
+          <div class="screen-body">
+            <div class="callout warn-callout">
+              화면 렌더링 중 문제가 발생했습니다. 새로고침 후 다시 시도해주세요.
+            </div>
+          </div>
+        `;
+      }
+    }
+
     function refreshCurrentScreen() {
       const item = screens[currentScreenKey];
       if (!item) return;
 
-      screenEl.innerHTML = typeof item.html === "function" ? item.html() : item.html;
+      screenEl.innerHTML = getScreenHtml(item);
       tabTitle.textContent = item.tab;
       setActiveMenu(currentScreenKey);
     }
@@ -4057,7 +5013,7 @@
       if (!item) return;
 
       currentScreenKey = key;
-      screenEl.innerHTML = typeof item.html === "function" ? item.html() : item.html;
+      screenEl.innerHTML = getScreenHtml(item);
       tabTitle.textContent = item.tab;
       setActiveMenu(key);
     }
