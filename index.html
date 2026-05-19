@@ -1924,7 +1924,215 @@
     @media (max-width: 1180px) { .automation-shell { grid-template-columns: 1fr; } }
     @media (max-width: 860px) { .automation-summary-grid { grid-template-columns: 1fr; } }
 
-  </style>
+    /* 알림 기능 - HQAA 홈 전용 */
+    .notice-panel {
+      min-height: 100%;
+    }
+
+    .notice-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .notice-status {
+      color: #6b7280;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .notice-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .notice-item {
+      position: relative;
+      padding: 13px 14px;
+      border: 1px solid #e1eaf6;
+      border-radius: 16px;
+      background: linear-gradient(180deg, #ffffff, #f9fbff);
+      box-shadow: 0 8px 18px rgba(15,23,42,.04);
+    }
+
+    .notice-item-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 7px;
+    }
+
+    .notice-title-wrap {
+      min-width: 0;
+    }
+
+    .notice-title {
+      display: block;
+      color: #22365e;
+      font-size: 14px;
+      font-weight: 900;
+      line-height: 1.45;
+      word-break: keep-all;
+    }
+
+    .notice-meta {
+      display: block;
+      margin-top: 3px;
+      color: #7b8798;
+      font-size: 11px;
+      line-height: 1.5;
+    }
+
+    .notice-category {
+      flex: 0 0 auto;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 48px;
+      padding: 5px 8px;
+      border-radius: 999px;
+      background: #eaf2ff;
+      color: #164886;
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    .notice-category.notice-cat-update { background: #eef8ef; color: #2d6b39; }
+    .notice-category.notice-cat-check { background: #fff4e8; color: #8a5317; }
+    .notice-category.notice-cat-important { background: #fef3f2; color: #b42318; }
+
+    .notice-body {
+      margin: 0;
+      color: #4c5e75;
+      font-size: 13px;
+      line-height: 1.7;
+      word-break: keep-all;
+      white-space: normal;
+    }
+
+    .notice-actions {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    .notice-mini-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 34px;
+      padding: 8px 11px;
+      border: 1px solid #cbd6e6;
+      border-radius: 12px;
+      background: #ffffff;
+      color: #24314f;
+      font-size: 12px;
+      font-weight: 900;
+      cursor: pointer;
+      transition: .2s ease;
+    }
+
+    .notice-mini-btn:hover {
+      background: #f5f8ff;
+      border-color: #b8c8e4;
+    }
+
+    .notice-mini-btn.primary {
+      border-color: var(--navy);
+      background: var(--navy);
+      color: #ffffff;
+    }
+
+    .notice-mini-btn.danger {
+      border-color: #fda29b;
+      background: #fff5f5;
+      color: #b42318;
+    }
+
+    .notice-empty {
+      padding: 16px;
+      border: 1px dashed #bfd3f7;
+      border-radius: 14px;
+      background: #f8fbff;
+      color: #667085;
+      font-size: 13px;
+      line-height: 1.7;
+      text-align: center;
+    }
+
+    .notice-admin-bar {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 12px;
+    }
+
+    .notice-admin-hint {
+      margin-top: 10px;
+      color: #7b8798;
+      font-size: 11.5px;
+      line-height: 1.6;
+    }
+
+    .notice-editor {
+      display: grid;
+      gap: 8px;
+      margin-top: 12px;
+      padding: 12px;
+      border: 1px solid #dbe7f3;
+      border-radius: 16px;
+      background: #f8fbff;
+    }
+
+    .notice-editor-title {
+      color: #22365e;
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .notice-input,
+    .notice-textarea,
+    .notice-select {
+      width: 100%;
+      border: 1px solid #cfd9e5;
+      border-radius: 12px;
+      background: #ffffff;
+      color: #1f2937;
+      font-size: 13px;
+      outline: none;
+    }
+
+    .notice-input,
+    .notice-select {
+      height: 38px;
+      padding: 0 11px;
+    }
+
+    .notice-textarea {
+      min-height: 86px;
+      padding: 10px 11px;
+      resize: vertical;
+      line-height: 1.6;
+    }
+
+    .notice-input:focus,
+    .notice-textarea:focus,
+    .notice-select:focus {
+      border-color: var(--navy);
+      box-shadow: 0 0 0 4px rgba(52,74,140,.08);
+    }
+
+    .notice-editor-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+</style>
 </head>
 <body>
   <div class="app">
@@ -2088,6 +2296,8 @@
     let pendingAction = null;
     let currentScreenKey = "home";
     let menuViewMode = "all";
+    let noticeCache = [];
+    let noticeRequestRunning = false;
 
     const screenEl = document.getElementById("screen");
     const tabTitle = document.getElementById("tabTitle");
@@ -2348,6 +2558,261 @@
       }
     }
 
+
+
+    function isAdminUser() {
+      return currentUserData && String(currentUserData.role || "").toLowerCase() === "admin";
+    }
+
+    function getAdminQueryParams() {
+      if (!currentUserData) return "";
+      return [
+        `user_id=${encodeURIComponent(currentUserData.user_id || "")}`,
+        `user_name=${encodeURIComponent(currentUserData.name || "")}`,
+        `emp_no=${encodeURIComponent(currentUserData.emp_no || "")}`
+      ].join("&");
+    }
+
+    function escapeHtml(value) {
+      return String(value == null ? "" : value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function escapeNoticeBody(value) {
+      return escapeHtml(value).replace(/\n/g, "<br />");
+    }
+
+    function noticeCategoryClass(category) {
+      const text = String(category || "").trim();
+      if (text === "업데이트") return "notice-cat-update";
+      if (text === "점검") return "notice-cat-check";
+      if (text === "중요") return "notice-cat-important";
+      return "";
+    }
+
+    function renderNoticeItem(notice) {
+      const noticeId = escapeHtml(notice.notice_id || "");
+      const title = escapeHtml(notice.title || "제목 없음");
+      const body = escapeNoticeBody(notice.body || "내용 없음");
+      const category = escapeHtml(notice.category || "안내");
+      const meta = escapeHtml(notice.updated_at || notice.created_at || "");
+      const writer = escapeHtml(notice.updated_by || notice.created_by || "");
+      const adminButtons = isAdminUser()
+        ? `
+          <div class="notice-actions">
+            <button type="button" class="notice-mini-btn" data-notice-action="edit" data-notice-id="${noticeId}">수정</button>
+            <button type="button" class="notice-mini-btn danger" data-notice-action="delete" data-notice-id="${noticeId}">삭제</button>
+          </div>
+        `
+        : "";
+
+      return `
+        <div class="notice-item">
+          <div class="notice-item-head">
+            <div class="notice-title-wrap">
+              <strong class="notice-title">${title}</strong>
+              <span class="notice-meta">${meta}${writer ? ` · ${writer}` : ""}</span>
+            </div>
+            <span class="notice-category ${noticeCategoryClass(notice.category)}">${category}</span>
+          </div>
+          <p class="notice-body">${body}</p>
+          ${adminButtons}
+        </div>
+      `;
+    }
+
+    function renderNotices() {
+      const listEl = document.getElementById("noticeList");
+      const statusEl = document.getElementById("noticeStatus");
+      if (!listEl || !statusEl) return;
+
+      if (!noticeCache.length) {
+        listEl.innerHTML = `<div class="notice-empty">등록된 알림이 없습니다.</div>`;
+        statusEl.textContent = "표시할 알림이 없습니다.";
+        return;
+      }
+
+      listEl.innerHTML = noticeCache.map(renderNoticeItem).join("");
+      statusEl.textContent = `최근 알림 ${noticeCache.length}건`;
+    }
+
+    async function loadNotices() {
+      const listEl = document.getElementById("noticeList");
+      const statusEl = document.getElementById("noticeStatus");
+      if (!listEl || !statusEl || noticeRequestRunning) return;
+
+      noticeRequestRunning = true;
+      statusEl.textContent = "알림을 불러오는 중입니다.";
+
+      try {
+        const url = `${WEB_APP_URL}?action=getNotices&limit=5`;
+        const result = await jsonpRequest(url, "noticeListCallback");
+
+        if (!result.success) {
+          noticeCache = [];
+          statusEl.textContent = result.message || "알림을 불러오지 못했습니다.";
+          listEl.innerHTML = `<div class="notice-empty">${escapeHtml(result.message || "알림을 불러오지 못했습니다.")}</div>`;
+          return;
+        }
+
+        noticeCache = Array.isArray(result.notices) ? result.notices : [];
+        renderNotices();
+      } catch (error) {
+        console.error(error);
+        statusEl.textContent = "알림 연결 오류";
+        listEl.innerHTML = `<div class="notice-empty">Apps Script 연결을 확인해주세요.</div>`;
+      } finally {
+        noticeRequestRunning = false;
+      }
+    }
+
+    function openNoticeEditor(notice = null) {
+      if (!isAdminUser()) {
+        alert("관리자 권한이 필요합니다.");
+        return;
+      }
+
+      const editor = document.getElementById("noticeEditor");
+      const titleEl = document.getElementById("noticeEditorTitle");
+      const idInput = document.getElementById("noticeId");
+      const titleInput = document.getElementById("noticeTitle");
+      const bodyInput = document.getElementById("noticeBody");
+      const categorySelect = document.getElementById("noticeCategory");
+
+      if (!editor || !titleInput || !bodyInput || !categorySelect || !idInput) return;
+
+      idInput.value = notice ? notice.notice_id || "" : "";
+      titleInput.value = notice ? notice.title || "" : "";
+      bodyInput.value = notice ? notice.body || "" : "";
+      categorySelect.value = notice ? notice.category || "안내" : "안내";
+      titleEl.textContent = notice ? "알림 수정" : "알림 등록";
+      editor.classList.remove("hidden");
+      setTimeout(() => titleInput.focus(), 30);
+    }
+
+    function closeNoticeEditor() {
+      const editor = document.getElementById("noticeEditor");
+      if (editor) editor.classList.add("hidden");
+    }
+
+    async function saveNotice() {
+      if (!isAdminUser()) {
+        alert("관리자 권한이 필요합니다.");
+        return;
+      }
+
+      const noticeId = document.getElementById("noticeId")?.value.trim() || "";
+      const title = document.getElementById("noticeTitle")?.value.trim() || "";
+      const body = document.getElementById("noticeBody")?.value.trim() || "";
+      const category = document.getElementById("noticeCategory")?.value || "안내";
+
+      if (!title) {
+        alert("알림 제목을 입력해주세요.");
+        return;
+      }
+
+      const action = noticeId ? "updateNotice" : "addNotice";
+      const params = [
+        `action=${encodeURIComponent(action)}`,
+        getAdminQueryParams(),
+        noticeId ? `notice_id=${encodeURIComponent(noticeId)}` : "",
+        `title=${encodeURIComponent(title)}`,
+        `body=${encodeURIComponent(body)}`,
+        `category=${encodeURIComponent(category)}`,
+        `active=Y`
+      ].filter(Boolean).join("&");
+
+      try {
+        const result = await jsonpRequest(`${WEB_APP_URL}?${params}`, "noticeSaveCallback");
+        if (!result.success) {
+          alert(result.message || "알림 저장에 실패했습니다.");
+          return;
+        }
+
+        alert(result.message || "알림이 저장되었습니다.");
+        closeNoticeEditor();
+        loadNotices();
+      } catch (error) {
+        console.error(error);
+        alert("알림 저장 중 오류가 발생했습니다.");
+      }
+    }
+
+    async function deleteNotice(noticeId) {
+      if (!isAdminUser()) {
+        alert("관리자 권한이 필요합니다.");
+        return;
+      }
+
+      if (!noticeId) return;
+      if (!confirm("이 알림을 삭제할까요?")) return;
+
+      const params = [
+        `action=deleteNotice`,
+        getAdminQueryParams(),
+        `notice_id=${encodeURIComponent(noticeId)}`
+      ].join("&");
+
+      try {
+        const result = await jsonpRequest(`${WEB_APP_URL}?${params}`, "noticeDeleteCallback");
+        if (!result.success) {
+          alert(result.message || "알림 삭제에 실패했습니다.");
+          return;
+        }
+
+        alert(result.message || "알림이 삭제되었습니다.");
+        loadNotices();
+      } catch (error) {
+        console.error(error);
+        alert("알림 삭제 중 오류가 발생했습니다.");
+      }
+    }
+
+    function handleNoticeAction(button) {
+      const action = button.dataset.noticeAction;
+
+      if (action === "refresh") {
+        loadNotices();
+        return;
+      }
+
+      if (action === "new") {
+        openNoticeEditor();
+        return;
+      }
+
+      if (action === "cancel") {
+        closeNoticeEditor();
+        return;
+      }
+
+      if (action === "save") {
+        saveNotice();
+        return;
+      }
+
+      if (action === "edit") {
+        const notice = noticeCache.find((item) => String(item.notice_id) === String(button.dataset.noticeId));
+        if (notice) openNoticeEditor(notice);
+        return;
+      }
+
+      if (action === "delete") {
+        deleteNotice(button.dataset.noticeId);
+      }
+    }
+
+    function afterScreenRender(key) {
+      if (key === "home") {
+        setTimeout(loadNotices, 0);
+      }
+    }
+
+
     function homeScreen() {
       const loginBox = currentUserData
         ? `
@@ -2427,16 +2892,42 @@
               </div>
             </div>
 
-            <div class="panel">
+            <div class="panel notice-panel">
               <div class="panel-title-row">
-                <h3>사용 흐름</h3>
-                <span>WORKFLOW</span>
+                <h3>알림</h3>
+                <span>NOTICE</span>
               </div>
-              <div class="workflow-preview">
-                <div class="workflow-step"><b>01</b><span>로그인 후 사용자 기준으로 메뉴 접근을 준비합니다.</span></div>
-                <div class="workflow-step"><b>02</b><span>좌측 메뉴 또는 검색 기능으로 원하는 업무를 찾습니다.</span></div>
-                <div class="workflow-step"><b>03</b><span>실행 메뉴는 바로 열고, 미구현 메뉴는 업무 기준과 흐름을 먼저 확인합니다.</span></div>
+              <div class="notice-toolbar">
+                <div id="noticeStatus" class="notice-status">알림을 불러오는 중입니다.</div>
+                <button type="button" class="notice-mini-btn" data-notice-action="refresh">새로고침</button>
               </div>
+              <div id="noticeList" class="notice-list">
+                <div class="notice-empty">등록된 알림을 불러오는 중입니다.</div>
+              </div>
+              ${isAdminUser() ? `
+                <div class="notice-admin-bar">
+                  <button type="button" class="notice-mini-btn primary" data-notice-action="new">알림 등록</button>
+                </div>
+                <div id="noticeEditor" class="notice-editor hidden">
+                  <div id="noticeEditorTitle" class="notice-editor-title">알림 등록</div>
+                  <input type="hidden" id="noticeId" />
+                  <input type="text" id="noticeTitle" class="notice-input" maxlength="80" placeholder="알림 제목" />
+                  <textarea id="noticeBody" class="notice-textarea" maxlength="600" placeholder="알림 내용을 입력하세요."></textarea>
+                  <select id="noticeCategory" class="notice-select">
+                    <option value="안내">안내</option>
+                    <option value="업데이트">업데이트</option>
+                    <option value="점검">점검</option>
+                    <option value="중요">중요</option>
+                  </select>
+                  <div class="notice-editor-row">
+                    <button type="button" class="notice-mini-btn primary" data-notice-action="save">저장</button>
+                    <button type="button" class="notice-mini-btn" data-notice-action="cancel">취소</button>
+                  </div>
+                </div>
+                <div class="notice-admin-hint">관리자 권한(admin)으로 로그인한 사용자만 알림 등록, 수정, 삭제가 가능합니다.</div>
+              ` : `
+                <div class="notice-admin-hint">알림 등록·수정·삭제는 관리자 권한 사용자만 가능합니다.</div>
+              `}
             </div>
           </div>
 
@@ -5050,6 +5541,7 @@
       screenEl.innerHTML = getScreenHtml(item);
       tabTitle.textContent = item.tab;
       setActiveMenu(currentScreenKey);
+      afterScreenRender(currentScreenKey);
     }
 
     function openScreen(key) {
@@ -5060,6 +5552,7 @@
       screenEl.innerHTML = getScreenHtml(item);
       tabTitle.textContent = item.tab;
       setActiveMenu(key);
+      afterScreenRender(key);
     }
 
     function isSameAction(actionA, actionB) {
@@ -5120,6 +5613,12 @@
 
     function bindScreenEvents() {
       screenEl.addEventListener("click", (event) => {
+        const noticeButton = event.target.closest("button[data-notice-action]");
+        if (noticeButton) {
+          handleNoticeAction(noticeButton);
+          return;
+        }
+
         const actionButton = event.target.closest("button[data-screen], button[data-url], button[data-action]");
         if (!actionButton) return;
 
