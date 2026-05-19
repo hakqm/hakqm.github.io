@@ -2668,6 +2668,33 @@
       `;
     }
 
+    function merchantReportQrEmbedScreen(titleText) {
+      return `
+        <div class="screen-head">
+          <div class="screen-head-bar">
+            <div class="screen-head-main">
+              <h1>${titleText}</h1>
+              <p>상선 성적서 Cover 발행, 스캔파일 자동분류, 검사현황 기록 화면을 작업영역 안에서 바로 확인할 수 있습니다.</p>
+            </div>
+            <div class="screen-head-actions">
+              <a class="btn primary" href="merchant_report_qr.html" target="_blank" rel="noopener noreferrer">새 창으로 열기</a>
+            </div>
+          </div>
+        </div>
+        <div class="screen-body">
+          <div class="embedded-page-card">
+            <iframe
+              class="embedded-page-frame"
+              src="merchant_report_qr.html"
+              title="${titleText}"
+              loading="lazy"
+              onload="prepareEmbeddedPortalFrame(this)">
+            </iframe>
+          </div>
+        </div>
+      `;
+    }
+
     function offshoreHvacPtrEmbedScreen(titleText) {
       return `
         <div class="screen-head">
@@ -3987,7 +4014,8 @@
       "marine_004_1",
       "fuelcell_005_1",
       "fuelcell_005_4",
-      "fuelcell_006_1"
+      "fuelcell_006_1",
+      "merchant_003_6"
     ]);
 
     function isExecutableScreen(screenKey) {
@@ -3998,8 +4026,12 @@
       return isExecutableScreen(screenKey) ? "🌐" : "🔗";
     }
 
+    const CUSTOM_SCREEN_LABELS = {
+      "merchant_003_6": "6. 검사 결과 실적 등록 / 성적서 QR 자동분류"
+    };
+
     function decorateScreenLabel(screenKey, label) {
-      const safeLabel = String(label || "").trim();
+      const safeLabel = String(CUSTOM_SCREEN_LABELS[screenKey] || label || "").trim();
       if (!safeLabel) return safeLabel;
       if (/^[🌐🔗]\s*/.test(safeLabel)) return safeLabel;
       return `${getMenuIconByScreen(screenKey)} ${safeLabel}`;
@@ -4278,6 +4310,11 @@
           "fuelcellSerialReportFrame",
           "퓨얼셀 최종검사 Serial List 성적서 생성 화면을 작업영역 안에서 바로 확인할 수 있습니다."
         )
+      };
+
+      screens["merchant_003_6"] = {
+        tab: "상선 > 고객검사 > 검사 결과 실적 등록",
+        html: () => merchantReportQrEmbedScreen("상선 / 고객검사 / 검사 결과 실적 등록")
       };
 
     }
