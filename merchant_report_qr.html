@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>상선 성적서 QR 자동분류 — HAK QM AI AGENT</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --blue-50:  #eff6ff;
+      --blue-100: #dbeafe;
+      --blue-200: #bfdbfe;
+      --blue-500: #3b82f6;
+      --blue-600: #2563eb;
+      --blue-700: #1d4ed8;
+      --blue-900: #1e3a5f;
+      --slate-50:  #f8fafc;
+      --slate-100: #f1f5f9;
+      --slate-200: #e2e8f0;
+      --slate-400: #94a3b8;
+      --slate-500: #64748b;
+      --slate-600: #475569;
+      --slate-700: #334155;
+      --slate-800: #1e293b;
+      --slate-900: #0f172a;
+      --green-50:  #f0fdf4;
+      --green-100: #dcfce7;
+      --green-600: #16a34a;
+      --green-700: #15803d;
+      --amber-50:  #fffbeb;
+      --amber-100: #fef3c7;
+      --amber-600: #d97706;
+      --amber-700: #b45309;
+      --violet-50:  #f5f3ff;
+      --violet-100: #ede9fe;
+      --violet-600: #7c3aed;
+      --violet-700: #6d28d9;
+      --white: #ffffff;
+      --radius-xl: 16px;
+      --radius-lg: 12px;
+      --radius-md: 8px;
+      --radius-sm: 6px;
+      --shadow-xs: 0 1px 2px rgba(0,0,0,.06);
+      --shadow-sm: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.06);
+      --shadow-md: 0 4px 12px rgba(0,0,0,.08), 0 2px 4px rgba(0,0,0,.04);
+    }
+
+    body {
+      font-family: 'Segoe UI', 'Malgun Gothic', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--slate-50);
+      color: var(--slate-800);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    /* ─── 상단 상태 배너 ─── */
+    .status-bar {
+      background: var(--blue-900);
+      color: var(--blue-200);
+      font-size: 12px;
+      letter-spacing: .3px;
+      padding: 7px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .status-bar .left { display: flex; align-items: center; gap: 8px; }
+    .status-bar .dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: #4ade80;
+      box-shadow: 0 0 6px #4ade8099;
+      flex-shrink: 0;
+    }
+    .status-bar .right { color: var(--slate-400); font-size: 11px; }
+
+    /* ─── 헤더 ─── */
+    .header {
+      background: var(--white);
+      border-bottom: 1px solid var(--slate-200);
+      padding: 28px 24px 24px;
+    }
+    .header-inner {
+      max-width: 900px;
+      margin: 0 auto;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .header-logo {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .header-icon {
+      width: 46px; height: 46px;
+      border-radius: var(--radius-lg);
+      background: var(--blue-600);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .header-icon svg { width: 24px; height: 24px; color: var(--white); }
+    .header-titles { display: flex; flex-direction: column; gap: 2px; }
+    .header-org {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--blue-600);
+    }
+    .header-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--slate-900);
+      line-height: 1.3;
+    }
+    .badge-wrap { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .2px;
+    }
+    .badge-version {
+      background: var(--blue-100);
+      color: var(--blue-700);
+      border: 1px solid var(--blue-200);
+    }
+    .badge-stable {
+      background: var(--green-100);
+      color: var(--green-700);
+      border: 1px solid #bbf7d0;
+    }
+
+    /* ─── 메인 컨텐츠 ─── */
+    .main {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 32px 24px 64px;
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+    }
+
+    /* ─── 핵심 설명 ─── */
+    .intro-box {
+      background: var(--white);
+      border: 1px solid var(--slate-200);
+      border-left: 4px solid var(--blue-500);
+      border-radius: var(--radius-lg);
+      padding: 18px 20px;
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+    }
+    .intro-icon {
+      flex-shrink: 0;
+      width: 36px; height: 36px;
+      background: var(--blue-50);
+      border-radius: var(--radius-md);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .intro-icon svg { width: 18px; height: 18px; color: var(--blue-600); }
+    .intro-text { font-size: 14px; color: var(--slate-600); line-height: 1.7; }
+    .intro-text strong { color: var(--slate-800); }
+
+    /* ─── 섹션 헤더 ─── */
+    .section-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: var(--slate-400);
+      margin-bottom: 14px;
+    }
+
+    /* ─── 실행 패널 ─── */
+    .panels {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+    }
+    .panel {
+      background: var(--white);
+      border: 1px solid var(--slate-200);
+      border-radius: var(--radius-xl);
+      padding: 22px 22px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      box-shadow: var(--shadow-sm);
+      transition: box-shadow .2s, border-color .2s, transform .15s;
+    }
+    .panel:hover {
+      box-shadow: var(--shadow-md);
+      border-color: var(--blue-200);
+    }
+    .panel-top { display: flex; align-items: flex-start; gap: 12px; }
+    .panel-icon-wrap {
+      flex-shrink: 0;
+      width: 40px; height: 40px;
+      border-radius: var(--radius-md);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .panel-icon-wrap svg { width: 20px; height: 20px; }
+    .icon-blue   { background: var(--blue-50);   color: var(--blue-600); }
+    .icon-green  { background: var(--green-50);  color: var(--green-600); }
+    .icon-amber  { background: var(--amber-50);  color: var(--amber-600); }
+    .icon-violet { background: var(--violet-50); color: var(--violet-600); }
+    .panel-meta { flex: 1; }
+    .panel-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--slate-900);
+      line-height: 1.3;
+      margin-bottom: 4px;
+    }
+    .panel-desc {
+      font-size: 13px;
+      color: var(--slate-500);
+      line-height: 1.6;
+    }
+    .panel-divider {
+      border: none;
+      border-top: 1px solid var(--slate-100);
+    }
+    .run-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      width: 100%;
+      padding: 10px 16px;
+      border: none;
+      border-radius: var(--radius-md);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .15s, transform .1s;
+      text-decoration: none;
+      letter-spacing: .2px;
+    }
+    .run-btn:active { transform: scale(.98); }
+    .run-btn svg { width: 15px; height: 15px; }
+    .btn-blue   { background: var(--blue-600);   color: var(--white); }
+    .btn-blue:hover   { background: var(--blue-700); }
+    .btn-green  { background: var(--green-600);  color: var(--white); }
+    .btn-green:hover  { background: var(--green-700); }
+    .btn-amber  { background: var(--amber-600);  color: var(--white); }
+    .btn-amber:hover  { background: var(--amber-700); }
+
+    /* ─── 운영 흐름 ─── */
+    .flow-wrap {
+      background: var(--white);
+      border: 1px solid var(--slate-200);
+      border-radius: var(--radius-xl);
+      padding: 24px;
+      box-shadow: var(--shadow-xs);
+    }
+    .flow-steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 0;
+      position: relative;
+    }
+    .flow-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: 16px 12px;
+      position: relative;
+    }
+    .flow-step:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      top: 31px;
+      right: -1px;
+      width: 2px;
+      height: 20px;
+      background: var(--slate-200);
+    }
+    @media (max-width: 600px) {
+      .flow-step:not(:last-child)::after { display: none; }
+    }
+    .flow-num {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: var(--blue-600);
+      color: var(--white);
+      font-size: 14px;
+      font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 10px;
+      flex-shrink: 0;
+    }
+    .flow-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--slate-800);
+      margin-bottom: 4px;
+    }
+    .flow-sub {
+      font-size: 11.5px;
+      color: var(--slate-400);
+      line-height: 1.5;
+    }
+
+    /* ─── 운영 기준 안내 ─── */
+    .notice-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 10px;
+    }
+    .notice-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      background: var(--white);
+      border: 1px solid var(--slate-200);
+      border-radius: var(--radius-lg);
+      padding: 14px 16px;
+      font-size: 13px;
+      color: var(--slate-600);
+      line-height: 1.6;
+      box-shadow: var(--shadow-xs);
+    }
+    .notice-item svg {
+      flex-shrink: 0;
+      width: 16px; height: 16px;
+      margin-top: 2px;
+      color: var(--blue-500);
+    }
+
+    /* ─── 향후 고도화 ─── */
+    .roadmap-wrap {
+      background: var(--slate-100);
+      border: 1px solid var(--slate-200);
+      border-radius: var(--radius-xl);
+      padding: 24px;
+    }
+    .roadmap-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .roadmap-item {
+      background: var(--white);
+      border: 1px solid var(--slate-200);
+      border-radius: var(--radius-lg);
+      padding: 14px 16px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 13px;
+      color: var(--slate-600);
+    }
+    .roadmap-item svg {
+      flex-shrink: 0;
+      width: 15px; height: 15px;
+      margin-top: 2px;
+      color: var(--slate-400);
+    }
+    .roadmap-item .tag {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: .3px;
+      padding: 1px 6px;
+      border-radius: 4px;
+      background: var(--slate-200);
+      color: var(--slate-500);
+      margin-bottom: 3px;
+    }
+
+    /* ─── 버전 박스 ─── */
+    .version-box {
+      background: var(--white);
+      border: 1px solid var(--slate-200);
+      border-radius: var(--radius-xl);
+      padding: 22px 24px;
+      box-shadow: var(--shadow-xs);
+    }
+    .version-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .version-title { font-size: 14px; font-weight: 700; color: var(--slate-800); }
+    .version-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .v-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 12px;
+      background: var(--blue-50);
+      border: 1px solid var(--blue-100);
+      border-radius: 20px;
+      font-size: 12px;
+      color: var(--blue-700);
+      font-weight: 500;
+    }
+    .v-chip svg { width: 12px; height: 12px; }
+
+    /* ─── 푸터 ─── */
+    .footer {
+      background: var(--white);
+      border-top: 1px solid var(--slate-200);
+      padding: 18px 24px;
+      text-align: center;
+      font-size: 12px;
+      color: var(--slate-400);
+    }
+    .footer a {
+      color: var(--blue-600);
+      text-decoration: none;
+    }
+    .footer a:hover { text-decoration: underline; }
+
+    /* ─── 실행 확인 다이얼로그 오버레이 ─── */
+    .overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, .45);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .overlay.active { display: flex; }
+    .dialog {
+      background: var(--white);
+      border-radius: var(--radius-xl);
+      padding: 28px 28px 22px;
+      max-width: 400px;
+      width: 100%;
+      box-shadow: 0 20px 48px rgba(0,0,0,.16);
+      animation: dlg-in .18s ease;
+    }
+    @keyframes dlg-in {
+      from { opacity: 0; transform: translateY(8px) scale(.97); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .dialog-icon {
+      width: 44px; height: 44px;
+      border-radius: var(--radius-lg);
+      background: var(--blue-50);
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 14px;
+    }
+    .dialog-icon svg { width: 22px; height: 22px; color: var(--blue-600); }
+    .dialog-title { font-size: 16px; font-weight: 700; color: var(--slate-900); margin-bottom: 6px; }
+    .dialog-body { font-size: 13px; color: var(--slate-500); line-height: 1.65; margin-bottom: 20px; }
+    .dialog-body strong { color: var(--slate-700); }
+    .dialog-btns { display: flex; gap: 10px; }
+    .dialog-btns button {
+      flex: 1;
+      padding: 10px;
+      border-radius: var(--radius-md);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: background .15s;
+    }
+    .btn-cancel {
+      background: var(--slate-100);
+      color: var(--slate-600);
+    }
+    .btn-cancel:hover { background: var(--slate-200); }
+    .btn-confirm {
+      background: var(--blue-600);
+      color: var(--white);
+    }
+    .btn-confirm:hover { background: var(--blue-700); }
+
+    /* ─── 설치 안내 박스 ─── */
+    .install-box {
+      background: var(--blue-50);
+      border: 1px solid var(--blue-200);
+      border-radius: var(--radius-xl);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .install-desc {
+      font-size: 14px;
+      color: var(--slate-600);
+      line-height: 1.75;
+    }
+    .install-desc strong { color: var(--slate-800); }
+    .install-download-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 11px 22px;
+      background: var(--blue-600);
+      color: var(--white);
+      border-radius: var(--radius-md);
+      font-size: 14px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: background .15s, transform .1s;
+      align-self: flex-start;
+    }
+    .install-download-btn:hover { background: var(--blue-700); }
+    .install-download-btn:active { transform: scale(.98); }
+    .install-download-btn svg { width: 16px; height: 16px; flex-shrink: 0; }
+    .install-steps-wrap { display: flex; flex-direction: column; gap: 10px; }
+    .install-steps-title {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: var(--slate-500);
+      text-transform: uppercase;
+    }
+    .install-steps {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+    }
+    .install-step {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      background: var(--white);
+      border: 1px solid var(--blue-200);
+      border-radius: var(--radius-md);
+      padding: 6px 12px;
+      font-size: 12.5px;
+      color: var(--slate-700);
+    }
+    .install-step-num {
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      background: var(--blue-600);
+      color: var(--white);
+      font-size: 11px;
+      font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .install-arrow {
+      color: var(--slate-400);
+      font-size: 16px;
+      line-height: 1;
+    }
+    .install-notes {
+      background: var(--white);
+      border: 1px solid var(--blue-100);
+      border-radius: var(--radius-lg);
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+    }
+    .install-note {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-size: 12.5px;
+      color: var(--slate-500);
+      line-height: 1.6;
+    }
+    .install-note strong { color: var(--slate-700); }
+    .install-note svg {
+      flex-shrink: 0;
+      width: 14px; height: 14px;
+      margin-top: 2px;
+      color: var(--amber-600);
+    }
+  </style>
+</head>
+<body>
+
+<!-- 실행 확인 다이얼로그 -->
+<div class="overlay" id="overlay" role="dialog" aria-modal="true" aria-labelledby="dlgTitle">
+  <div class="dialog">
+    <div class="dialog-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M5 3l14 9-14 9V3z"/>
+      </svg>
+    </div>
+    <div class="dialog-title" id="dlgTitle">로컬 프로그램 실행</div>
+    <div class="dialog-body" id="dlgBody">
+      <strong id="dlgApp"></strong>을(를) 실행합니다.<br>
+      이 기능은 <strong>성적서 자동분류 프로그램이 설치된 PC</strong>에서만 정상 동작합니다.<br><br>
+      브라우저에서 외부 앱 실행 허용 여부를 물을 수 있습니다.
+    </div>
+    <div class="dialog-btns">
+      <button class="btn-cancel" id="btnCancel">취소</button>
+      <button class="btn-confirm" id="btnConfirm">실행</button>
+    </div>
+  </div>
+</div>
+
+<!-- 상태 배너 -->
+<div class="status-bar">
+  <div class="left">
+    <span class="dot"></span>
+    HAK QM AI AGENT Portal &nbsp;·&nbsp; 상선 성적서 QR 자동분류 시스템
+  </div>
+  <div class="right">custom protocol 방식 &nbsp;|&nbsp; 설치 PC 전용</div>
+</div>
+
+<!-- 헤더 -->
+<header class="header">
+  <div class="header-inner">
+    <div class="header-logo">
+      <div class="header-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+          <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+        </svg>
+      </div>
+      <div class="header-titles">
+        <div class="header-org">HAK QM AI AGENT</div>
+        <div class="header-title">상선 성적서 QR 자동분류</div>
+        <div class="badge-wrap">
+          <span class="badge badge-version">v0.1 기본 운영형</span>
+          <span class="badge badge-stable">● 운영 중</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- 메인 -->
+<main class="main">
+
+  <!-- 핵심 설명 -->
+  <div class="intro-box">
+    <div class="intro-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
+        <line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+    </div>
+    <div class="intro-text">
+      이 페이지는 <strong>상선 성적서 Cover 발행</strong>과 <strong>스캔본 자동분류</strong>를 로컬 프로그램으로 실행하는 화면입니다.
+      성적서 Cover 발행 → 고객사 표지와 함께 스캔 → QR 기준 자동분류 → 검사현황 기록 순서로 운영됩니다.
+    </div>
+  </div>
+
+  <!-- 실행 패널 -->
+  <section>
+    <div class="section-label">실행 패널</div>
+    <div class="panels">
+
+      <!-- Cover 발행 -->
+      <div class="panel">
+        <div class="panel-top">
+          <div class="panel-icon-wrap icon-blue">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="12" y1="18" x2="12" y2="12"/>
+              <line x1="9" y1="15" x2="15" y2="15"/>
+            </svg>
+          </div>
+          <div class="panel-meta">
+            <div class="panel-title">성적서 Cover 발행</div>
+            <div class="panel-desc">고객사, 시리즈, 호선, 품목 정보를 입력하고 QR이 포함된 성적서 Cover를 생성합니다.</div>
+          </div>
+        </div>
+        <hr class="panel-divider" />
+        <button class="run-btn btn-blue" onclick="requestRun('hakqm-cover://run', '성적서 Cover 발행')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="5 3 19 12 5 21 5 3"/>
+          </svg>
+          실행
+        </button>
+      </div>
+
+      <!-- 스캔파일 자동분류 -->
+      <div class="panel">
+        <div class="panel-top">
+          <div class="panel-icon-wrap icon-green">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+            </svg>
+          </div>
+          <div class="panel-meta">
+            <div class="panel-title">스캔파일 자동분류</div>
+            <div class="panel-desc">01_scan_inbox 폴더의 PDF를 QR 기준으로 분류하고 검사현황 엑셀에 기록합니다.</div>
+          </div>
+        </div>
+        <hr class="panel-divider" />
+        <button class="run-btn btn-green" onclick="requestRun('hakqm-sort://run', '스캔파일 자동분류')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="5 3 19 12 5 21 5 3"/>
+          </svg>
+          실행
+        </button>
+      </div>
+
+      <!-- 환경점검 -->
+      <div class="panel">
+        <div class="panel-top">
+          <div class="panel-icon-wrap icon-amber">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              <polyline points="9 12 11 14 15 10"/>
+            </svg>
+          </div>
+          <div class="panel-meta">
+            <div class="panel-title">환경점검</div>
+            <div class="panel-desc">폴더, 마스터 엑셀, 라이브러리, Excel 실행 가능 여부를 점검합니다.</div>
+          </div>
+        </div>
+        <hr class="panel-divider" />
+        <button class="run-btn btn-amber" onclick="requestRun('hakqm-check://run', '환경점검')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="5 3 19 12 5 21 5 3"/>
+          </svg>
+          실행
+        </button>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- 처음 사용하는 경우 (설치 안내) -->
+  <section>
+    <div class="section-label">처음 사용하는 경우</div>
+    <div class="install-box">
+      <div class="install-desc">
+        이 기능은 PC에 <strong>로컬 프로그램이 설치되어 있어야</strong> 실행됩니다.<br>
+        처음 사용하는 경우 아래 설치파일을 다운로드한 뒤 압축을 풀고 <strong>register_protocol.bat</strong>을 1회 실행해주세요.<br>
+        설치 후에는 포털 버튼으로 바로 실행할 수 있습니다.
+      </div>
+      <a class="install-download-btn" href="downloads/HAKQM_Marine_Report_v0.1.1.zip" download>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        설치파일 다운로드
+      </a>
+      <div class="install-steps-wrap">
+        <div class="install-steps-title">설치 순서</div>
+        <div class="install-steps">
+          <div class="install-step">
+            <div class="install-step-num">1</div>
+            설치파일 다운로드
+          </div>
+          <span class="install-arrow">›</span>
+          <div class="install-step">
+            <div class="install-step-num">2</div>
+            압축 해제
+          </div>
+          <span class="install-arrow">›</span>
+          <div class="install-step">
+            <div class="install-step-num">3</div>
+            register_protocol.bat 1회 실행
+          </div>
+          <span class="install-arrow">›</span>
+          <div class="install-step">
+            <div class="install-step-num">4</div>
+            환경점검 실행
+          </div>
+          <span class="install-arrow">›</span>
+          <div class="install-step">
+            <div class="install-step-num">5</div>
+            포털에서 Cover 발행 또는 자동분류 실행
+          </div>
+        </div>
+      </div>
+      <div class="install-notes">
+        <div class="install-note">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          이미 설치된 PC는 다시 다운로드하지 않아도 됩니다.
+        </div>
+        <div class="install-note">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          프로그램이 실행되지 않으면 <strong>register_protocol.bat</strong>을 다시 실행하세요.
+        </div>
+        <div class="install-note">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          설치 후에도 실행되지 않으면 <strong>환경점검</strong>을 먼저 실행하세요.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 운영 흐름 -->
+  <section>
+    <div class="section-label">운영 흐름</div>
+    <div class="flow-wrap">
+      <div class="flow-steps">
+        <div class="flow-step">
+          <div class="flow-num">1</div>
+          <div class="flow-title">Cover 발행</div>
+          <div class="flow-sub">QR 포함 성적서<br>표지 생성</div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-num">2</div>
+          <div class="flow-title">고객사 표지와 함께 스캔</div>
+          <div class="flow-sub">01_scan_inbox<br>폴더에 저장</div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-num">3</div>
+          <div class="flow-title">QR 기준 자동분류</div>
+          <div class="flow-sub">PDF를 호선·품목<br>기준으로 정렬</div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-num">4</div>
+          <div class="flow-title">검사현황 기록</div>
+          <div class="flow-sub">04_master_excel/<br>검사현황.xlsx 갱신</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 운영 기준 안내 -->
+  <section>
+    <div class="section-label">운영 기준 안내</div>
+    <div class="notice-grid">
+      <div class="notice-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+        이 기능은 <strong style="margin:0 2px;">성적서 자동분류 프로그램이 설치된 PC</strong>에서만 실행됩니다.
+      </div>
+      <div class="notice-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+        </svg>
+        최초 1회 <strong style="margin:0 2px;">register_protocol.bat</strong>을 실행해야 포털 버튼으로 프로그램을 열 수 있습니다.
+      </div>
+      <div class="notice-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+        </svg>
+        스캔 PDF는 지정된 <strong style="margin:0 2px;">01_scan_inbox</strong> 폴더에 저장되어야 합니다.
+      </div>
+      <div class="notice-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+        </svg>
+        검사현황은 <strong style="margin:0 2px;">04_master_excel/검사현황.xlsx</strong>에 기록됩니다.
+      </div>
+      <div class="notice-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/>
+          <line x1="9" y1="9" x2="15" y2="15"/>
+        </svg>
+        오류 파일은 <strong style="margin:0 2px;">03_error</strong> 폴더에서 확인합니다.
+      </div>
+      <div class="notice-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+          <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+        버튼 클릭 시 브라우저에서 <strong style="margin:0 2px;">외부 앱 실행 허용 여부</strong>를 물을 수 있습니다.
+      </div>
+    </div>
+  </section>
+
+  <!-- v0.1 기능 및 향후 고도화 -->
+  <section>
+    <div class="section-label">버전 정보</div>
+    <div class="version-box">
+      <div class="version-header">
+        <span class="badge badge-version">v0.1 기본 운영형</span>
+        <span class="version-title">현재 기능</span>
+      </div>
+      <div class="version-list">
+        <span class="v-chip">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          Cover 발행
+        </span>
+        <span class="v-chip">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          V3 QR 생성
+        </span>
+        <span class="v-chip">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          스캔 PDF 자동분류
+        </span>
+        <span class="v-chip">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          시리즈관리.xlsx 기준 폴더 생성
+        </span>
+        <span class="v-chip">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          검사현황.xlsx 기록
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-label">향후 고도화 예정</div>
+    <div class="roadmap-wrap">
+      <div class="roadmap-grid">
+        <div class="roadmap-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/>
+            <line x1="8" y1="12" x2="16" y2="12"/>
+          </svg>
+          <div>
+            <div class="tag">GUI</div><br>
+            실행파일에서 시리즈·호선 추가
+          </div>
+        </div>
+        <div class="roadmap-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/>
+            <line x1="8" y1="12" x2="16" y2="12"/>
+          </svg>
+          <div>
+            <div class="tag">자동화</div><br>
+            성적서 PDF 자동 병합
+          </div>
+        </div>
+        <div class="roadmap-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/>
+            <line x1="8" y1="12" x2="16" y2="12"/>
+          </svg>
+          <div>
+            <div class="tag">확장</div><br>
+            커버 종류 및 셀 매핑 확장
+          </div>
+        </div>
+        <div class="roadmap-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/>
+            <line x1="8" y1="12" x2="16" y2="12"/>
+          </svg>
+          <div>
+            <div class="tag">관리</div><br>
+            추가 요구사항 버전 관리
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- 푸터 -->
+<footer class="footer">
+  HAK QM AI AGENT Portal &nbsp;·&nbsp; <a href="index.html">← 포털 메인으로</a>
+  &nbsp;|&nbsp; 상선 성적서 QR 자동분류 v0.1
+</footer>
+
+<script>
+  let pendingUrl = '';
+  let pendingLabel = '';
+
+  const overlay   = document.getElementById('overlay');
+  const dlgApp    = document.getElementById('dlgApp');
+  const btnConfirm = document.getElementById('btnConfirm');
+  const btnCancel  = document.getElementById('btnCancel');
+
+  function requestRun(url, label) {
+    pendingUrl   = url;
+    pendingLabel = label;
+    dlgApp.textContent = label;
+    overlay.classList.add('active');
+    btnConfirm.focus();
+  }
+
+  function closeDialog() {
+    overlay.classList.remove('active');
+    pendingUrl   = '';
+    pendingLabel = '';
+  }
+
+  btnConfirm.addEventListener('click', function () {
+    if (pendingUrl) {
+      window.location.href = pendingUrl;
+    }
+    closeDialog();
+  });
+
+  btnCancel.addEventListener('click', closeDialog);
+
+  overlay.addEventListener('click', function (e) {
+    if (e.target === overlay) closeDialog();
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') closeDialog();
+  });
+</script>
+</body>
+</html>
