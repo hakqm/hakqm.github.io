@@ -230,7 +230,6 @@
 
     .status-available { background: var(--ok-bg); color: var(--ok-text); }
     .status-checkedout { background: var(--warn-bg); color: var(--warn-text); }
-    .status-inspection { background: #fff4e8; color: #b54708; }
     .status-loading { background: var(--info-bg); color: var(--info-text); }
 
     .compact-grid {
@@ -460,100 +459,10 @@
 
     .login-btn-secondary:hover { background: #dfe7f1; }
 
-    .inspection-modal-card {
-      max-width: 520px;
-    }
-
-    .inspection-info {
-      padding: 12px 14px;
-      border: 1px solid #dbe7f3;
-      border-radius: var(--radius-md);
-      background: #f8fbff;
-      color: #475467;
-      font-size: 13px;
-      line-height: 1.6;
-    }
-
-    .inspection-field {
-      display: grid;
-      gap: 7px;
-    }
-
-    .inspection-label {
-      color: var(--primary-dark);
-      font-size: 13px;
-      font-weight: 800;
-    }
-
-    .required-mark { color: #b42318; }
-
-    .inspection-file,
-    .inspection-textarea {
-      width: 100%;
-      padding: 12px 13px;
-      border: 1px solid #cfd9e5;
-      border-radius: var(--radius-md);
-      background: #ffffff;
-      outline: none;
-      font-size: 14px;
-    }
-
-    .inspection-file:focus,
-    .inspection-textarea:focus {
-      border-color: var(--primary);
-      box-shadow: 0 0 0 4px rgba(31, 58, 95, 0.08);
-    }
-
-    .inspection-textarea {
-      min-height: 92px;
-      resize: vertical;
-      line-height: 1.6;
-    }
-
-    .condition-options {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-    }
-
-    .condition-option {
-      display: flex;
-      align-items: flex-start;
-      gap: 8px;
-      padding: 12px;
-      border: 1px solid #d9e2ec;
-      border-radius: var(--radius-md);
-      background: #ffffff;
-      cursor: pointer;
-    }
-
-    .condition-option input { margin-top: 2px; }
-    .condition-option strong { display: block; color: var(--primary-dark); font-size: 14px; }
-    .condition-option span { display: block; margin-top: 3px; color: var(--subtext); font-size: 12px; line-height: 1.5; }
-
-    .photo-preview {
-      display: none;
-      width: 100%;
-      max-height: 180px;
-      object-fit: contain;
-      border: 1px solid #e5e7eb;
-      border-radius: var(--radius-md);
-      background: #f8fafc;
-    }
-
-    .photo-preview.show { display: block; }
-
-    .inspection-help {
-      color: var(--subtext);
-      font-size: 12px;
-      line-height: 1.6;
-    }
-
     @media (max-width: 640px) {
       .hero-top { align-items: stretch; }
       .item-actions { flex-direction: column; }
       .action-btn { width: 100%; min-width: auto; }
-      .condition-options { grid-template-columns: 1fr; }
     }
 
     @media (max-width: 480px) {
@@ -679,53 +588,6 @@
     </div>
   </div>
 
-  <div id="returnInspectionModal" class="modal hidden" aria-hidden="true">
-    <div class="modal-card inspection-modal-card" role="dialog" aria-modal="true" aria-labelledby="returnInspectionTitle">
-      <div class="modal-head">
-        <div>
-          <h3 id="returnInspectionTitle" class="modal-title">반납 전 장비 상태 확인</h3>
-          <p class="modal-desc">반납 사진과 이상유무를 등록해야 반납 처리가 완료됩니다.</p>
-        </div>
-        <button type="button" id="closeReturnInspectionBtn" class="modal-close" aria-label="닫기">×</button>
-      </div>
-      <div class="modal-body">
-        <div id="returnEquipmentInfo" class="inspection-info">장비 정보를 불러오는 중입니다.</div>
-
-        <div class="inspection-field">
-          <label for="returnPhotoInput" class="inspection-label">장비 상태 사진 <span class="required-mark">*</span></label>
-          <input type="file" id="returnPhotoInput" class="inspection-file" accept="image/*" capture="environment" />
-          <img id="returnPhotoPreview" class="photo-preview" alt="반납 사진 미리보기" />
-          <div class="inspection-help">PC에서는 사진 파일을 첨부하고, 휴대폰에서는 카메라 촬영 화면이 열립니다. 장비 전체와 표시부가 보이게 촬영해주세요.</div>
-        </div>
-
-        <div class="inspection-field">
-          <div class="inspection-label">장비 상태 <span class="required-mark">*</span></div>
-          <div class="condition-options">
-            <label class="condition-option">
-              <input type="radio" name="returnCondition" value="OK" checked />
-              <span><strong>이상 없음</strong><span>정상 반납 처리</span></span>
-            </label>
-            <label class="condition-option">
-              <input type="radio" name="returnCondition" value="NG" />
-              <span><strong>이상 있음</strong><span>점검 필요 상태로 반납</span></span>
-            </label>
-          </div>
-        </div>
-
-        <div class="inspection-field">
-          <label for="returnNoteInput" class="inspection-label">특이사항</label>
-          <textarea id="returnNoteInput" class="inspection-textarea" placeholder="이상 있음 선택 시 파손, 오염, 작동 이상 등 내용을 입력해주세요."></textarea>
-          <div class="inspection-help">이상 있음 선택 시 특이사항은 필수입니다.</div>
-        </div>
-
-        <div class="login-row">
-          <button type="button" id="submitReturnInspectionBtn" class="login-btn">반납 처리</button>
-          <button type="button" id="cancelReturnInspectionBtn" class="login-btn login-btn-secondary">닫기</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <script>
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwn9I60-14GHDQk_rNF_uJYBpig-Bovl7Qqje_eGGjcFmZJZfqQgtpUg6necytvlQQ-/exec";
 
@@ -756,17 +618,6 @@
     const loginNameInput = document.getElementById("loginName");
     const loginEmpNoInput = document.getElementById("loginEmpNo");
     const equipmentListEl = document.getElementById("equipmentList");
-    const returnInspectionModal = document.getElementById("returnInspectionModal");
-    const closeReturnInspectionBtn = document.getElementById("closeReturnInspectionBtn");
-    const cancelReturnInspectionBtn = document.getElementById("cancelReturnInspectionBtn");
-    const submitReturnInspectionBtn = document.getElementById("submitReturnInspectionBtn");
-    const returnEquipmentInfo = document.getElementById("returnEquipmentInfo");
-    const returnPhotoInput = document.getElementById("returnPhotoInput");
-    const returnPhotoPreview = document.getElementById("returnPhotoPreview");
-    const returnNoteInput = document.getElementById("returnNoteInput");
-
-    let pendingReturnEqCode = "";
-    let isReturnInspectionSubmitting = false;
 
     function setLoginSubmitting(isSubmitting) {
       isLoginSubmitting = isSubmitting;
@@ -815,7 +666,6 @@
     function getStatusMeta(status) {
       if (status === "available") return { badgeClass: "status-badge status-available", badgeText: "사용 가능" };
       if (status === "checked_out") return { badgeClass: "status-badge status-checkedout", badgeText: "불출 중" };
-      if (status === "inspection_required") return { badgeClass: "status-badge status-inspection", badgeText: "점검 필요" };
       return { badgeClass: "status-badge status-loading", badgeText: "상태 확인 중" };
     }
 
@@ -1000,248 +850,6 @@
       });
     }
 
-    function delay(ms) {
-      return new Promise((resolve) => setTimeout(resolve, ms));
-    }
-
-    function getDeviceType() {
-      const ua = navigator.userAgent || "";
-      const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(ua) || navigator.maxTouchPoints > 1;
-      return isMobile ? "mobile" : "pc";
-    }
-
-    function getSelectedReturnCondition() {
-      const checked = document.querySelector('input[name="returnCondition"]:checked');
-      return checked ? checked.value : "";
-    }
-
-    function setReturnInspectionSubmitting(isSubmitting) {
-      isReturnInspectionSubmitting = isSubmitting;
-      submitReturnInspectionBtn.disabled = isSubmitting;
-      cancelReturnInspectionBtn.disabled = isSubmitting;
-      closeReturnInspectionBtn.disabled = isSubmitting;
-      returnPhotoInput.disabled = isSubmitting;
-      returnNoteInput.disabled = isSubmitting;
-      document.querySelectorAll('input[name="returnCondition"]').forEach((input) => {
-        input.disabled = isSubmitting;
-      });
-      submitReturnInspectionBtn.textContent = isSubmitting ? "반납 처리 중..." : "반납 처리";
-    }
-
-    function resetReturnInspectionForm() {
-      returnPhotoInput.value = "";
-      returnPhotoPreview.removeAttribute("src");
-      returnPhotoPreview.classList.remove("show");
-      returnNoteInput.value = "";
-      const okRadio = document.querySelector('input[name="returnCondition"][value="OK"]');
-      if (okRadio) okRadio.checked = true;
-      setReturnInspectionSubmitting(false);
-    }
-
-    function openReturnInspectionModal(eqCode) {
-      const equipment = getEquipmentByCode(eqCode);
-      const statusData = equipmentStatusMap[eqCode] || {};
-
-      pendingReturnEqCode = eqCode;
-      resetReturnInspectionForm();
-
-      returnEquipmentInfo.innerHTML = `
-        <strong>${eqCode}</strong><br>
-        ${equipment ? equipment.eq_name : "소음 계측기"}<br>
-        현재 사용자: ${formatUserDisplay(statusData.current_user_team || "", statusData.current_user_name || "")}
-      `;
-
-      returnInspectionModal.classList.remove("hidden");
-      returnInspectionModal.setAttribute("aria-hidden", "false");
-      setTimeout(() => returnPhotoInput.focus(), 50);
-    }
-
-    function closeReturnInspectionModal() {
-      if (isReturnInspectionSubmitting) return;
-      returnInspectionModal.classList.add("hidden");
-      returnInspectionModal.setAttribute("aria-hidden", "true");
-      pendingReturnEqCode = "";
-      resetReturnInspectionForm();
-    }
-
-    function readFileAsDataUrl(file) {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(String(reader.result || ""));
-        reader.onerror = () => reject(new Error("사진 파일을 읽을 수 없습니다."));
-        reader.readAsDataURL(file);
-      });
-    }
-
-    function loadImage(dataUrl) {
-      return new Promise((resolve, reject) => {
-        const image = new Image();
-        image.onload = () => resolve(image);
-        image.onerror = () => reject(new Error("사진 미리보기를 생성할 수 없습니다."));
-        image.src = dataUrl;
-      });
-    }
-
-    async function compressImageForUpload(file) {
-      const originalDataUrl = await readFileAsDataUrl(file);
-
-      try {
-        const image = await loadImage(originalDataUrl);
-        const maxSide = 1280;
-        let width = image.naturalWidth || image.width;
-        let height = image.naturalHeight || image.height;
-
-        if (!width || !height) return originalDataUrl;
-
-        const scale = Math.min(1, maxSide / Math.max(width, height));
-        width = Math.round(width * scale);
-        height = Math.round(height * scale);
-
-        const canvas = document.createElement("canvas");
-        canvas.width = width;
-        canvas.height = height;
-
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(image, 0, 0, width, height);
-
-        return canvas.toDataURL("image/jpeg", 0.78);
-      } catch (error) {
-        return originalDataUrl;
-      }
-    }
-
-    function splitDataUrl(dataUrl, fallbackMimeType) {
-      const match = String(dataUrl || "").match(/^data:([^;]+);base64,(.*)$/);
-      if (match) {
-        return {
-          mimeType: match[1] || fallbackMimeType || "image/jpeg",
-          base64: match[2] || ""
-        };
-      }
-
-      return {
-        mimeType: fallbackMimeType || "image/jpeg",
-        base64: String(dataUrl || "")
-      };
-    }
-
-    function validateReturnInspectionForm() {
-      const eqCode = pendingReturnEqCode;
-      const condition = getSelectedReturnCondition();
-      const note = returnNoteInput.value.trim();
-      const file = returnPhotoInput.files && returnPhotoInput.files[0];
-
-      if (!eqCode) return "반납할 장비 정보가 없습니다.";
-      if (!condition) return "장비 상태를 선택해주세요.";
-      if (!file) return "반납 사진을 첨부 또는 촬영해주세요.";
-      if (condition === "NG" && !note) return "이상 있음 선택 시 특이사항을 입력해주세요.";
-      return "";
-    }
-
-    async function postReturnInspectionNoCors(payload) {
-      const formBody = new URLSearchParams();
-      Object.keys(payload).forEach((key) => formBody.append(key, payload[key] == null ? "" : String(payload[key])));
-
-      await fetch(WEB_APP_URL, {
-        method: "POST",
-        mode: "no-cors",
-        body: formBody
-      });
-    }
-
-    async function loadSingleEquipmentStatus(eqCode) {
-      const result = await jsonpRequest(
-        `${WEB_APP_URL}?action=getEquipmentStatus&eq_code=${encodeURIComponent(eqCode)}&no_cache=1&_=${Date.now()}`,
-        "singleStatusCallback"
-      );
-
-      if (result && result.success && result.equipment) {
-        updateSingleEquipmentStatus(eqCode, result.equipment);
-        return result.equipment.status || "";
-      }
-
-      return "";
-    }
-
-    async function waitForReturnStatus(eqCode) {
-      const retryDelays = [1200, 1500, 2000, 3000, 4000, 5000];
-
-      for (let i = 0; i < retryDelays.length; i++) {
-        await delay(retryDelays[i]);
-
-        try {
-          const status = await loadSingleEquipmentStatus(eqCode);
-          if (status === "available" || status === "inspection_required") {
-            return status;
-          }
-        } catch (error) {
-          console.error(error);
-        }
-      }
-
-      return "";
-    }
-
-    async function submitReturnInspection() {
-      if (!currentUserData) {
-        alert("로그인 정보가 없습니다. 다시 로그인해주세요.");
-        closeReturnInspectionModal();
-        openLoginModal();
-        return;
-      }
-
-      if (isReturnInspectionSubmitting) return;
-
-      const validationMessage = validateReturnInspectionForm();
-      if (validationMessage) {
-        alert(validationMessage);
-        return;
-      }
-
-      const eqCode = pendingReturnEqCode;
-      const condition = getSelectedReturnCondition();
-      const note = returnNoteInput.value.trim();
-      const file = returnPhotoInput.files[0];
-
-      touchLoginActivity();
-      setReturnInspectionSubmitting(true);
-      setActionButtonLoading("return", eqCode, true);
-
-      try {
-        const dataUrl = await compressImageForUpload(file);
-        const photoPayload = splitDataUrl(dataUrl, file.type || "image/jpeg");
-
-        await postReturnInspectionNoCors({
-          action: "returnWithInspection",
-          eq_code: eqCode,
-          user_name: currentUserData.name,
-          return_condition: condition,
-          return_note: note,
-          return_device_type: getDeviceType(),
-          photo_name: file.name || "return_photo.jpg",
-          photo_mime_type: photoPayload.mimeType,
-          photo_base64: photoPayload.base64
-        });
-
-        const updatedStatus = await waitForReturnStatus(eqCode);
-        if (updatedStatus === "available" || updatedStatus === "inspection_required") {
-          closeReturnInspectionModal();
-          alert(condition === "OK"
-            ? `${eqCode} 반납 점검 및 반납이 완료되었습니다.`
-            : `${eqCode} 반납이 완료되었고, 장비 상태가 점검 필요로 변경되었습니다.`);
-          return;
-        }
-
-        alert("반납 요청은 전송했지만 상태 변경을 확인하지 못했습니다. 구글시트와 구글드라이브 저장 여부를 확인해주세요.");
-      } catch (error) {
-        console.error(error);
-        alert("반납 처리 중 오류가 발생했습니다. 사진 용량을 줄이거나 네트워크 상태를 확인해주세요.");
-      } finally {
-        setReturnInspectionSubmitting(false);
-        setActionButtonLoading("return", eqCode, false);
-      }
-    }
-
     async function login() {
       const name = loginNameInput.value.trim();
       const empNo = loginEmpNoInput.value.trim();
@@ -1315,12 +923,7 @@
 
         const checkoutBtn = article.querySelector(`button[data-action="checkout"][data-eq-code="${item.eq_code}"]`);
         const returnBtn = article.querySelector(`button[data-action="return"][data-eq-code="${item.eq_code}"]`);
-        const isInspectionRequired = statusData.status === "inspection_required";
 
-        if (checkoutBtn && isInspectionRequired) {
-          checkoutBtn.disabled = true;
-          checkoutBtn.textContent = "점검 필요";
-        }
         if (checkoutBtn && actionLoadingMap[`checkout_${item.eq_code}`]) checkoutBtn.disabled = true;
         if (returnBtn && actionLoadingMap[`return_${item.eq_code}`]) returnBtn.disabled = true;
 
@@ -1332,7 +935,7 @@
       try {
         const eqCodes = EQUIPMENT_LIST.map(item => item.eq_code).join(",");
         const result = await jsonpRequest(
-          `${WEB_APP_URL}?action=getEquipmentStatuses&eq_codes=${encodeURIComponent(eqCodes)}&no_cache=1&_=${Date.now()}`,
+          `${WEB_APP_URL}?action=getEquipmentStatuses&eq_codes=${encodeURIComponent(eqCodes)}`,
           "selectedStatusCallback"
         );
 
@@ -1452,21 +1055,33 @@
       if (!currentUserData && !skipLoginCheck) {
         pendingAction = { action: "return", eqCode };
         openLoginModal();
-        alert("로그인이 필요합니다. 로그인 후 반납 점검창이 자동으로 열립니다.");
+        alert("로그인이 필요합니다. 로그인 후 반납이 자동으로 진행됩니다.");
         return;
       }
 
       const loadingKey = `return_${eqCode}`;
       if (actionLoadingMap[loadingKey]) return;
 
-      const statusData = equipmentStatusMap[eqCode] || {};
-      if (statusData.status && statusData.status !== "checked_out") {
-        alert("현재 불출 중인 장비만 반납할 수 있습니다.");
-        return;
-      }
-
       touchLoginActivity();
-      openReturnInspectionModal(eqCode);
+      setActionButtonLoading("return", eqCode, true);
+
+      try {
+        const url = `${WEB_APP_URL}?action=return&eq_code=${encodeURIComponent(eqCode)}&user_name=${encodeURIComponent(currentUserData.name)}`;
+        const result = await jsonpRequest(url, "returnCallback");
+
+        if (!result.success) {
+          alert(result.message || "반납 처리에 실패했습니다.");
+          return;
+        }
+
+        updateSingleEquipmentStatus(eqCode, result.equipment);
+        alert(`${eqCode} 반납이 완료되었습니다.`);
+      } catch (error) {
+        console.error(error);
+        alert("반납 처리 중 오류가 발생했습니다.");
+      } finally {
+        setActionButtonLoading("return", eqCode, false);
+      }
     }
 
     function openCertificate(eqCode, skipLoginCheck = false) {
@@ -1510,27 +1125,6 @@
       });
 
       submitLoginBtn.addEventListener("click", login);
-      closeReturnInspectionBtn.addEventListener("click", closeReturnInspectionModal);
-      cancelReturnInspectionBtn.addEventListener("click", closeReturnInspectionModal);
-      submitReturnInspectionBtn.addEventListener("click", submitReturnInspection);
-
-      returnPhotoInput.addEventListener("change", async () => {
-        const file = returnPhotoInput.files && returnPhotoInput.files[0];
-        if (!file) {
-          returnPhotoPreview.removeAttribute("src");
-          returnPhotoPreview.classList.remove("show");
-          return;
-        }
-
-        try {
-          const dataUrl = await readFileAsDataUrl(file);
-          returnPhotoPreview.src = dataUrl;
-          returnPhotoPreview.classList.add("show");
-        } catch (error) {
-          returnPhotoPreview.removeAttribute("src");
-          returnPhotoPreview.classList.remove("show");
-        }
-      });
 
       loginModal.addEventListener("click", (event) => {
         if (event.target === loginModal) {
@@ -1539,28 +1133,16 @@
         }
       });
 
-      returnInspectionModal.addEventListener("click", (event) => {
-        if (event.target === returnInspectionModal) {
-          closeReturnInspectionModal();
-        }
-      });
-
       document.addEventListener("keydown", (event) => {
-        const loginModalOpened = !loginModal.classList.contains("hidden");
-        const returnModalOpened = !returnInspectionModal.classList.contains("hidden");
+        const modalOpened = !loginModal.classList.contains("hidden");
 
-        if (event.key === "Escape" && returnModalOpened) {
-          closeReturnInspectionModal();
-          return;
-        }
-
-        if (event.key === "Escape" && loginModalOpened) {
+        if (event.key === "Escape" && modalOpened) {
           clearPendingAction();
           closeLoginModal();
           return;
         }
 
-        if (event.key === "Enter" && loginModalOpened) {
+        if (event.key === "Enter" && modalOpened) {
           const activeElement = document.activeElement;
           if (activeElement === loginNameInput || activeElement === loginEmpNoInput) {
             login();
