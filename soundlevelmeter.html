@@ -1149,6 +1149,39 @@
       });
     }
 
+    async function loadSingleEquipmentStatus(eqCode) {
+      const result = await jsonpRequest(
+        `${WEB_APP_URL}?action=getEquipmentStatus&eq_code=${encodeURIComponent(eqCode)}&no_cache=1&_=${Date.now()}`,
+        "singleStatusCallback"
+      );
+
+      if (result && result.success && result.equipment) {
+        updateSingleEquipmentStatus(eqCode, result.equipment);
+        return result.equipment.status || "";
+      }
+
+      return "";
+    }
+
+    async function waitForReturnStatus(eqCode) {
+      const retryDelays = [1200, 1500, 2000, 3000, 4000, 5000];
+
+      for (let i = 0; i < retryDelays.length; i++) {
+        await delay(retryDelays[i]);
+
+        try {
+          const status = await loadSingleEquipmentStatus(eqCode);
+          if (status === "available" || status === "inspection_required") {
+            return status;
+          }
+        } catch (error) {
+          console.error(error);
+        }
+      }
+
+      return "";
+    }
+
     async function submitReturnInspection() {
       if (!currentUserData) {
         alert("로그인 정보가 없습니다. 다시 로그인해주세요.");
@@ -1190,10 +1223,7 @@
           photo_base64: photoPayload.base64
         });
 
-        await delay(2600);
-        await loadSelectedEquipmentStatus();
-
-        const updatedStatus = (equipmentStatusMap[eqCode] || {}).status || "";
+        const updatedStatus = await waitForReturnStatus(eqCode);
         if (updatedStatus === "available" || updatedStatus === "inspection_required") {
           closeReturnInspectionModal();
           alert(condition === "OK"
@@ -1202,7 +1232,7 @@
           return;
         }
 
-        alert("반납 요청은 전송했지만 상태 변경을 확인하지 못했습니다. 잠시 후 새로고침하거나 구글시트를 확인해주세요.");
+        alert("반납 요청은 전송했지만 상태 변경을 확인하지 못했습니다. 구글시트와 구글드라이브 저장 여부를 확인해주세요.");
       } catch (error) {
         console.error(error);
         alert("반납 처리 중 오류가 발생했습니다. 사진 용량을 줄이거나 네트워크 상태를 확인해주세요.");
@@ -1302,7 +1332,7 @@
       try {
         const eqCodes = EQUIPMENT_LIST.map(item => item.eq_code).join(",");
         const result = await jsonpRequest(
-          `${WEB_APP_URL}?action=getEquipmentStatuses&eq_codes=${encodeURIComponent(eqCodes)}`,
+          `${WEB_APP_URL}?action=getEquipmentStatuses&eq_codes=${encodeURIComponent(eqCodes)}&no_cache=1&_=${Date.now()}`,
           "selectedStatusCallback"
         );
 
