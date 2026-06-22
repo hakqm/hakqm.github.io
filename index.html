@@ -2133,6 +2133,25 @@
     }
 
 
+    .common-schedule-link {
+      border: 1px solid #cfe0ff !important;
+      background: #ffffff !important;
+      color: #163b78 !important;
+      font-weight: 900 !important;
+      box-shadow: 0 6px 14px rgba(52, 74, 140, 0.08);
+    }
+
+    .common-schedule-link:hover,
+    .common-schedule-link.active {
+      background: #d8e6ff !important;
+      box-shadow: inset 3px 0 0 var(--navy), 0 8px 18px rgba(52, 74, 140, 0.12) !important;
+    }
+
+    .common-work-tree {
+      background: linear-gradient(90deg, rgba(233,240,255,.96), rgba(247,251,255,.7)) !important;
+      border-left-color: #8fb5f4 !important;
+    }
+
     .shared-work-menu {
       margin: 10px 0 8px;
       border: 1px solid #c7d7f2;
@@ -2203,9 +2222,9 @@
           <button class="tree-home active" data-screen="home">🏠 Home</button>
 
           <details class="shared-work-menu" open>
-            <summary class="folder"><span class="node-icon">🗓️</span> 공용 업무</summary>
-            <div class="subtree">
-              <button type="button" class="tree-link" data-screen="schedule_manager_embed">🌐 스케쥴 관리</button>
+            <summary class="folder"><span class="node-icon">🌐</span> 공용 업무</summary>
+            <div class="subtree common-work-tree">
+              <button type="button" class="tree-link common-schedule-link" data-screen="schedule_manager_embed" data-badge="none">📅 검사/업무 스케쥴 관리</button>
             </div>
           </details>
 
@@ -4884,8 +4903,8 @@
       home: { tab: "Home", html: () => homeScreen() },
 
       schedule_manager_embed: {
-        tab: "공용 업무 > 스케쥴 관리",
-        html: () => scheduleManagerEmbedScreen("공용 업무 / 스케쥴 관리")
+        tab: "공용 업무 > 검사/업무 스케쥴 관리",
+        html: () => scheduleManagerEmbedScreen("공용 업무 / 검사·업무 스케쥴 관리")
       },
 
       qa_overview: {
