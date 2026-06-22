@@ -402,6 +402,38 @@
       line-height: 1.6;
     }
 
+
+    .common-work-section {
+      margin-bottom: 10px;
+      border: 1px solid #cfe0ff;
+      background: linear-gradient(180deg, #f7fbff, #eef5ff);
+      box-shadow: 0 8px 18px rgba(52, 74, 140, 0.08);
+    }
+
+    .common-work-section > summary {
+      background: #eaf2ff;
+      color: #163b78;
+    }
+
+    .common-work-tree {
+      background: linear-gradient(90deg, rgba(233,240,255,.96), rgba(247,251,255,.7));
+      border-left-color: #8fb5f4;
+    }
+
+    .common-schedule-link {
+      border: 1px solid #cfe0ff !important;
+      background: #ffffff !important;
+      color: #163b78 !important;
+      font-weight: 900 !important;
+      box-shadow: 0 6px 14px rgba(52, 74, 140, 0.08);
+    }
+
+    .common-schedule-link:hover,
+    .common-schedule-link.active {
+      background: #d8e6ff !important;
+      box-shadow: inset 3px 0 0 var(--navy), 0 8px 18px rgba(52, 74, 140, 0.12) !important;
+    }
+
     .main {
       display: flex;
       flex-direction: column;
@@ -2132,6 +2164,796 @@
       justify-content: flex-end;
     }
 
+
+    /* =========================
+       Schedule Manager UI
+    ========================= */
+    .schedule-head {
+      background:
+        radial-gradient(circle at 88% 0%, rgba(52, 74, 140, 0.12), transparent 34%),
+        linear-gradient(180deg, #f9fbff 0%, #f3f6fb 100%);
+    }
+
+    .schedule-head h1 {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .schedule-shell {
+      display: grid;
+      gap: 16px;
+    }
+
+    .schedule-topline {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+
+    .schedule-user-context {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      color: #526176;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .schedule-user-context span {
+      display: inline-flex;
+      align-items: center;
+      min-height: 30px;
+      padding: 6px 10px;
+      border: 1px solid #dbe5f2;
+      border-radius: 999px;
+      background: #ffffff;
+    }
+
+    .schedule-kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .schedule-kpi-card {
+      position: relative;
+      overflow: hidden;
+      padding: 16px;
+      border: 1px solid #dfe7f1;
+      border-radius: 18px;
+      background: #ffffff;
+      box-shadow: 0 8px 20px rgba(31, 41, 55, 0.06);
+    }
+
+    .schedule-kpi-card::after {
+      content: "";
+      position: absolute;
+      right: -26px;
+      top: -26px;
+      width: 82px;
+      height: 82px;
+      border-radius: 50%;
+      background: rgba(52, 74, 140, 0.06);
+    }
+
+    .schedule-kpi-card strong {
+      position: relative;
+      z-index: 1;
+      display: block;
+      margin-bottom: 5px;
+      color: #22365e;
+      font-size: 28px;
+      line-height: 1;
+    }
+
+    .schedule-kpi-card span {
+      position: relative;
+      z-index: 1;
+      color: #667085;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .schedule-control-panel {
+      border: 1px solid #dbe3ec;
+      border-radius: 18px;
+      background: #ffffff;
+      box-shadow: 0 8px 20px rgba(31, 41, 55, 0.06);
+      overflow: hidden;
+    }
+
+    .schedule-control-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      padding: 14px 16px;
+      border-bottom: 1px solid #e6ebf2;
+      background: linear-gradient(180deg, #ffffff, #f8fafc);
+    }
+
+    .schedule-segments {
+      display: inline-flex;
+      gap: 4px;
+      padding: 4px;
+      border: 1px solid #d9e3f0;
+      border-radius: 999px;
+      background: #f3f6fb;
+    }
+
+    .schedule-segment-btn {
+      border: 0;
+      border-radius: 999px;
+      padding: 9px 14px;
+      background: transparent;
+      color: #526176;
+      font-size: 13px;
+      font-weight: 900;
+      cursor: pointer;
+      transition: 0.18s ease;
+    }
+
+    .schedule-segment-btn:hover {
+      color: #26386a;
+      background: #e9f1ff;
+    }
+
+    .schedule-segment-btn.active {
+      color: #ffffff;
+      background: var(--navy);
+      box-shadow: 0 6px 14px rgba(52, 74, 140, 0.18);
+    }
+
+    .schedule-week-nav {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .schedule-week-title {
+      min-width: 190px;
+      padding: 8px 12px;
+      border: 1px solid #dbe3ec;
+      border-radius: 999px;
+      background: #ffffff;
+      color: #22365e;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .schedule-icon-btn {
+      min-width: 38px;
+      height: 38px;
+      border: 1px solid #cbd5e1;
+      border-radius: 12px;
+      background: #ffffff;
+      color: #26386a;
+      font-weight: 900;
+      cursor: pointer;
+      transition: 0.18s ease;
+    }
+
+    .schedule-icon-btn:hover {
+      border-color: var(--navy);
+      background: #f5f8ff;
+    }
+
+    .schedule-filter-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr 1.6fr auto;
+      gap: 10px;
+      padding: 14px 16px 16px;
+    }
+
+    .schedule-filter-field {
+      display: grid;
+      gap: 6px;
+    }
+
+    .schedule-filter-field label {
+      color: #667085;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .schedule-input,
+    .schedule-select,
+    .schedule-textarea {
+      width: 100%;
+      border: 1px solid #cfd9e5;
+      border-radius: 12px;
+      background: #ffffff;
+      color: #1f2937;
+      font-size: 13px;
+      outline: none;
+      transition: 0.18s ease;
+    }
+
+    .schedule-input,
+    .schedule-select {
+      height: 40px;
+      padding: 0 11px;
+    }
+
+    .schedule-textarea {
+      min-height: 88px;
+      padding: 10px 11px;
+      resize: vertical;
+      line-height: 1.6;
+    }
+
+    .schedule-input:focus,
+    .schedule-select:focus,
+    .schedule-textarea:focus {
+      border-color: var(--navy);
+      box-shadow: 0 0 0 4px rgba(52,74,140,.08);
+    }
+
+    .schedule-board {
+      border: 1px solid #dbe3ec;
+      border-radius: 18px;
+      background: #ffffff;
+      box-shadow: 0 8px 20px rgba(31, 41, 55, 0.06);
+      overflow: hidden;
+    }
+
+    .schedule-board-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      padding: 16px 18px;
+      border-bottom: 1px solid #e6ebf2;
+      background: #ffffff;
+    }
+
+    .schedule-board-title strong {
+      display: block;
+      color: #22365e;
+      font-size: 17px;
+    }
+
+    .schedule-board-title span {
+      display: block;
+      margin-top: 3px;
+      color: #667085;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .schedule-status-text {
+      color: #667085;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .schedule-calendar {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(180px, 1fr));
+      min-width: 1180px;
+    }
+
+    .schedule-calendar-wrap {
+      overflow-x: auto;
+      background: #f8fafc;
+    }
+
+    .schedule-day-col {
+      min-height: 430px;
+      border-right: 1px solid #e2e8f0;
+      background: #f8fafc;
+    }
+
+    .schedule-day-col:last-child {
+      border-right: 0;
+    }
+
+    .schedule-day-head {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      padding: 12px 12px 10px;
+      border-bottom: 1px solid #e2e8f0;
+      background: rgba(248, 250, 252, 0.96);
+      backdrop-filter: blur(8px);
+    }
+
+    .schedule-day-head strong {
+      display: block;
+      color: #22365e;
+      font-size: 14px;
+    }
+
+    .schedule-day-head span {
+      display: block;
+      margin-top: 2px;
+      color: #667085;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .schedule-day-head.today {
+      background: #eef4ff;
+    }
+
+    .schedule-day-head.today strong {
+      color: #164886;
+    }
+
+    .schedule-day-body {
+      display: grid;
+      align-content: start;
+      gap: 10px;
+      padding: 12px;
+    }
+
+    .schedule-card {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid #dbe3ec;
+      border-radius: 14px;
+      background: #ffffff;
+      box-shadow: 0 6px 16px rgba(31, 41, 55, 0.05);
+    }
+
+    .schedule-card::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      background: #64748b;
+    }
+
+    .schedule-card[data-category="INSPECTION"]::before { background: #2563eb; }
+    .schedule-card[data-category="CUSTOMER"]::before { background: #16a34a; }
+    .schedule-card[data-category="AUDIT"]::before { background: #d97706; }
+    .schedule-card[data-category="BUSINESS_TRIP"]::before { background: #7c3aed; }
+    .schedule-card[data-category="INTERNAL"]::before { background: #64748b; }
+    .schedule-card[data-category="ETC"]::before { background: #475569; }
+
+    .schedule-card-inner {
+      padding: 12px 12px 12px 14px;
+    }
+
+    .schedule-card-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .schedule-card-title {
+      color: #1f2937;
+      font-size: 13px;
+      font-weight: 900;
+      line-height: 1.45;
+      word-break: keep-all;
+    }
+
+    .schedule-card-time {
+      color: #344a8c;
+      font-size: 11px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .schedule-meta-row {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      flex-wrap: wrap;
+      margin-top: 7px;
+    }
+
+    .schedule-pill {
+      display: inline-flex;
+      align-items: center;
+      max-width: 100%;
+      min-height: 24px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: #f1f5f9;
+      color: #475569;
+      font-size: 11px;
+      font-weight: 900;
+      line-height: 1.2;
+    }
+
+    .schedule-pill.part { background: #e9f1ff; color: #24436f; }
+    .schedule-pill.status { background: #ecfdf3; color: #027a48; }
+    .schedule-pill.status.cancel { background: #fef3f2; color: #b42318; }
+    .schedule-pill.status.hold { background: #fff7ed; color: #b54708; }
+    .schedule-pill.priority { background: #fff7ed; color: #b54708; }
+    .schedule-pill.confirm { background: #f3f4f6; color: #4b5563; }
+
+    .schedule-card-memo {
+      margin-top: 8px;
+      color: #667085;
+      font-size: 12px;
+      line-height: 1.5;
+      word-break: keep-all;
+    }
+
+    .schedule-card-actions {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    .schedule-mini-btn {
+      border: 1px solid #d1d9e6;
+      border-radius: 9px;
+      background: #ffffff;
+      color: #334155;
+      padding: 6px 9px;
+      font-size: 11px;
+      font-weight: 900;
+      cursor: pointer;
+      transition: 0.18s ease;
+    }
+
+    .schedule-mini-btn:hover {
+      border-color: var(--navy);
+      color: var(--navy);
+      background: #f5f8ff;
+    }
+
+    .schedule-mini-btn.danger:hover {
+      border-color: #fda29b;
+      color: #b42318;
+      background: #fef3f2;
+    }
+
+    .schedule-empty {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 140px;
+      border: 1px dashed #cbd5e1;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.55);
+      color: #667085;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 800;
+      line-height: 1.6;
+    }
+
+    .schedule-list-wrap {
+      overflow: auto;
+    }
+
+    .schedule-table {
+      min-width: 960px;
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      background: #ffffff;
+    }
+
+    .schedule-table th,
+    .schedule-table td {
+      border-bottom: 1px solid #e6ebf2;
+      padding: 12px 10px;
+      text-align: left;
+      vertical-align: top;
+      font-size: 13px;
+    }
+
+    .schedule-table th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: #f6f8fc;
+      color: #33445f;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .schedule-table-title {
+      color: #1f2937;
+      font-weight: 900;
+      line-height: 1.5;
+    }
+
+    .schedule-table-sub {
+      margin-top: 4px;
+      color: #667085;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .schedule-loading {
+      padding: 36px 18px;
+      color: #667085;
+      text-align: center;
+      font-size: 14px;
+      font-weight: 900;
+    }
+
+    .schedule-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 1200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      background: rgba(15, 23, 42, 0.56);
+    }
+
+    .schedule-modal-card {
+      width: 100%;
+      max-width: 760px;
+      max-height: min(92vh, 860px);
+      overflow: hidden;
+      border: 1px solid #e5e7eb;
+      border-radius: 24px;
+      background: #ffffff;
+      box-shadow: 0 24px 56px rgba(15, 23, 42, 0.24);
+    }
+
+    .schedule-modal-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 18px 20px;
+      border-bottom: 1px solid #e6ebf2;
+      background: linear-gradient(180deg, #ffffff, #f8fafc);
+    }
+
+    .schedule-modal-title {
+      margin: 0;
+      color: #22365e;
+      font-size: 19px;
+    }
+
+    .schedule-modal-desc {
+      margin: 5px 0 0;
+      color: #667085;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .schedule-modal-close {
+      width: 36px;
+      height: 36px;
+      border: none;
+      border-radius: 999px;
+      background: #eef2f6;
+      color: #334155;
+      font-size: 24px;
+      line-height: 1;
+      cursor: pointer;
+    }
+
+    .schedule-modal-body {
+      max-height: calc(92vh - 150px);
+      overflow: auto;
+      padding: 18px 20px 20px;
+    }
+
+    .schedule-form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .schedule-form-field {
+      display: grid;
+      gap: 6px;
+    }
+
+    .schedule-form-field.full {
+      grid-column: 1 / -1;
+    }
+
+    .schedule-form-field label {
+      color: #526176;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .schedule-admin-fields {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      padding: 12px;
+      border: 1px solid #dbeafe;
+      border-radius: 16px;
+      background: #f8fbff;
+    }
+
+    .schedule-modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+
+
+    .schedule-head-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+      padding: 6px 10px;
+      border: 1px solid #cfe0ff;
+      border-radius: 999px;
+      background: #ffffff;
+      color: #24436f;
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: .2px;
+    }
+
+    .schedule-view-note {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: center;
+      padding: 14px 16px;
+      border: 1px solid #dbeafe;
+      border-radius: 18px;
+      background: linear-gradient(135deg, #f8fbff 0%, #eef5ff 100%);
+      color: #24436f;
+      box-shadow: 0 8px 18px rgba(52, 74, 140, 0.06);
+    }
+
+    .schedule-view-note strong {
+      display: block;
+      margin-bottom: 4px;
+      color: #22365e;
+      font-size: 14px;
+    }
+
+    .schedule-view-note span {
+      color: #667085;
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.6;
+    }
+
+    .schedule-note-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 98px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: var(--navy);
+      color: #ffffff;
+      font-size: 12px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .schedule-quick-helper {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+      padding: 12px;
+      border: 1px solid #dbeafe;
+      border-radius: 16px;
+      background: #f8fbff;
+    }
+
+    .schedule-quick-helper strong {
+      display: block;
+      color: #22365e;
+      font-size: 13px;
+      margin-bottom: 3px;
+    }
+
+    .schedule-quick-helper span {
+      color: #667085;
+      font-size: 12px;
+      line-height: 1.5;
+      font-weight: 700;
+    }
+
+    .schedule-quick-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .schedule-form-section-title {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 2px;
+      color: #22365e;
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .schedule-form-section-title::before {
+      content: "";
+      display: inline-block;
+      width: 6px;
+      height: 18px;
+      border-radius: 999px;
+      background: var(--navy);
+    }
+
+    .schedule-advanced-fields {
+      grid-column: 1 / -1;
+      border: 1px solid #dbe3ec;
+      border-radius: 16px;
+      background: #ffffff;
+      overflow: hidden;
+    }
+
+    .schedule-advanced-fields summary {
+      padding: 12px 14px;
+      border-radius: 0;
+      background: #f8fafc;
+      color: #33445f;
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .schedule-advanced-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      padding: 14px;
+    }
+
+    @media (max-width: 1100px) {
+      .schedule-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .schedule-filter-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .schedule-filter-grid .btn { grid-column: 1 / -1; }
+    }
+
+    @media (max-width: 720px) {
+      .schedule-kpi-grid,
+      .schedule-filter-grid,
+      .schedule-form-grid,
+      .schedule-admin-fields,
+      .schedule-advanced-grid,
+      .schedule-view-note {
+        grid-template-columns: 1fr;
+      }
+
+      .schedule-control-top {
+        align-items: stretch;
+      }
+
+      .schedule-segments,
+      .schedule-week-nav {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .schedule-week-title {
+        flex: 1;
+        min-width: 0;
+      }
+    }
+
 </style>
 </head>
 <body>
@@ -2173,6 +2995,15 @@
         <div class="tree-wrap">
           <div class="tree-section-title">Menu</div>
           <button class="tree-home active" data-screen="home">🏠 Home</button>
+
+
+          <details open class="common-work-section">
+            <summary class="folder"><span class="node-icon">🌐</span> 공용 업무</summary>
+            <div class="subtree common-work-tree">
+              <button type="button" class="tree-link common-schedule-link" data-screen="schedule_manager" data-badge="none">📅 검사/업무 스케쥴 관리</button>
+              <span class="tree-note">전 파트 공용 · 개인 직접 입력 · 주간 보드</span>
+            </div>
+          </details>
 
           <details>
             <summary class="folder"><span class="node-icon">📁</span> QA</summary>
@@ -2290,6 +3121,7 @@
     const LOGIN_STORAGE_KEY = "hak_login_user";
     const LOGIN_EXPIRE_MINUTES = 30;
     const LOGIN_EXPIRE_MS = LOGIN_EXPIRE_MINUTES * 60 * 1000;
+    const SCHEDULE_LAST_DRAFT_KEY = "hak_schedule_last_input";
 
     let currentUserData = null;
     let isLoginSubmitting = false;
@@ -2298,6 +3130,35 @@
     let menuViewMode = "all";
     let noticeCache = [];
     let noticeRequestRunning = false;
+
+    const SCHEDULE_PARTS = ["QA", "상선/해군", "해양", "산업공조", "FAN", "FUELCELL"];
+    const SCHEDULE_ADMIN_PARTS = [...SCHEDULE_PARTS, "팀장"];
+    const SCHEDULE_STATUS = ["예정", "확정", "진행", "완료", "취소", "보류"];
+    const SCHEDULE_PRIORITY = ["일반", "중요", "긴급"];
+    const SCHEDULE_VISIBILITY = ["팀", "파트", "개인"];
+    const SCHEDULE_CATEGORY_FALLBACK = [
+      { category: "INSPECTION", display_name: "검사", color: "blue", sort_order: 1 },
+      { category: "CUSTOMER", display_name: "고객검사", color: "green", sort_order: 2 },
+      { category: "AUDIT", display_name: "업체감사", color: "orange", sort_order: 3 },
+      { category: "BUSINESS_TRIP", display_name: "출장검사", color: "purple", sort_order: 4 },
+      { category: "INTERNAL", display_name: "내부업무", color: "gray", sort_order: 5 },
+      { category: "ETC", display_name: "기타", color: "slate", sort_order: 6 }
+    ];
+
+    let scheduleState = {
+      view: "personal",
+      period: "week",
+      anchorDate: new Date(),
+      part: "전체",
+      category: "",
+      status: "",
+      nameKeyword: "",
+      keyword: "",
+      schedules: [],
+      categories: [],
+      loading: false,
+      lastError: ""
+    };
 
     const screenEl = document.getElementById("screen");
     const tabTitle = document.getElementById("tabTitle");
@@ -2806,9 +3667,1146 @@
       }
     }
 
+
+    /* =========================
+       검사/업무 스케쥴 화면
+    ========================= */
+    function pad2(num) {
+      return String(num).padStart(2, "0");
+    }
+
+    function formatDateYmd(date) {
+      return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`;
+    }
+
+    function parseYmd(value) {
+      const text = String(value || "").trim();
+      if (!text) return new Date();
+      const parts = text.split("-").map((item) => Number(item));
+      if (parts.length !== 3 || parts.some((item) => Number.isNaN(item))) return new Date();
+      return new Date(parts[0], parts[1] - 1, parts[2]);
+    }
+
+    function addDays(date, days) {
+      const next = new Date(date);
+      next.setDate(next.getDate() + days);
+      return next;
+    }
+
+    function getWeekStart(date) {
+      const base = new Date(date);
+      base.setHours(0, 0, 0, 0);
+      const mondayBasedDay = (base.getDay() + 6) % 7;
+      base.setDate(base.getDate() - mondayBasedDay);
+      return base;
+    }
+
+    function getWeekDays() {
+      const start = getWeekStart(scheduleState.anchorDate);
+      return Array.from({ length: 7 }, (_, idx) => addDays(start, idx));
+    }
+
+    function getScheduleUserQueryParams() {
+      if (!currentUserData) return "";
+      return [
+        `user_id=${encodeURIComponent(currentUserData.user_id || "")}`,
+        `user_name=${encodeURIComponent(currentUserData.name || "")}`,
+        `emp_no=${encodeURIComponent(currentUserData.emp_no || "")}`
+      ].join("&");
+    }
+
+    function scheduleApiUrl(action, params = {}) {
+      const query = [
+        `action=${encodeURIComponent(action)}`,
+        getScheduleUserQueryParams(),
+        ...Object.entries(params).map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value == null ? "" : value)}`)
+      ].filter(Boolean).join("&");
+      return `${WEB_APP_URL}?${query}`;
+    }
+
+    function getScheduleCategoryLabel(category) {
+      const item = scheduleState.categories.find((entry) => String(entry.category) === String(category))
+        || SCHEDULE_CATEGORY_FALLBACK.find((entry) => String(entry.category) === String(category));
+      return item ? item.display_name : (category || "기타");
+    }
+
+    function buildScheduleCategoryOptions(selectedValue = "", includeAll = true) {
+      const categories = scheduleState.categories.length ? scheduleState.categories : SCHEDULE_CATEGORY_FALLBACK;
+      const rows = includeAll ? [`<option value="">전체</option>`] : [];
+      categories.forEach((item) => {
+        rows.push(`<option value="${escapeHtml(item.category)}" ${String(selectedValue) === String(item.category) ? "selected" : ""}>${escapeHtml(item.display_name)}</option>`);
+      });
+      return rows.join("");
+    }
+
+    function buildScheduleSelectOptions(items, selectedValue = "", includeAllText = "") {
+      const rows = includeAllText ? [`<option value="">${escapeHtml(includeAllText)}</option>`] : [];
+      items.forEach((item) => {
+        rows.push(`<option value="${escapeHtml(item)}" ${String(selectedValue) === String(item) ? "selected" : ""}>${escapeHtml(item)}</option>`);
+      });
+      return rows.join("");
+    }
+
+    function getSchedulePartForState() {
+      if (scheduleState.view === "part") {
+        if (scheduleState.part && scheduleState.part !== "전체" && SCHEDULE_PARTS.includes(scheduleState.part)) {
+          return scheduleState.part;
+        }
+        const loginPart = currentUserData && currentUserData.part ? currentUserData.part : "";
+        return SCHEDULE_PARTS.includes(loginPart) ? loginPart : "QA";
+      }
+      return scheduleState.part || "전체";
+    }
+
+    function getMonthStart(date) {
+      const base = new Date(date);
+      base.setHours(0, 0, 0, 0);
+      return new Date(base.getFullYear(), base.getMonth(), 1);
+    }
+
+    function getMonthEnd(date) {
+      const base = new Date(date);
+      base.setHours(0, 0, 0, 0);
+      return new Date(base.getFullYear(), base.getMonth() + 1, 0);
+    }
+
+    function getYearStart(date) {
+      const base = new Date(date);
+      base.setHours(0, 0, 0, 0);
+      return new Date(base.getFullYear(), 0, 1);
+    }
+
+    function getYearEnd(date) {
+      const base = new Date(date);
+      base.setHours(0, 0, 0, 0);
+      return new Date(base.getFullYear(), 11, 31);
+    }
+
+    function getScheduleRange() {
+      if (scheduleState.period === "month") {
+        return { start: getMonthStart(scheduleState.anchorDate), end: getMonthEnd(scheduleState.anchorDate) };
+      }
+      if (scheduleState.period === "year") {
+        return { start: getYearStart(scheduleState.anchorDate), end: getYearEnd(scheduleState.anchorDate) };
+      }
+      const days = getWeekDays();
+      return { start: days[0], end: days[6] };
+    }
+
+    function getSchedulePeriodLabel() {
+      if (scheduleState.period === "month") return "월별";
+      if (scheduleState.period === "year") return "년도별";
+      return "주별";
+    }
+
+    function getScheduleRangeTitle() {
+      const range = getScheduleRange();
+      if (scheduleState.period === "month") {
+        return `${range.start.getFullYear()}년 ${pad2(range.start.getMonth() + 1)}월`;
+      }
+      if (scheduleState.period === "year") {
+        return `${range.start.getFullYear()}년`;
+      }
+      return `${formatDateYmd(range.start)} ~ ${formatDateYmd(range.end)}`;
+    }
+
+    function getScheduleWeekTitle() {
+      return getScheduleRangeTitle();
+    }
+
+    function moveScheduleAnchor(direction) {
+      if (scheduleState.period === "month") {
+        const next = new Date(scheduleState.anchorDate);
+        next.setMonth(next.getMonth() + direction);
+        scheduleState.anchorDate = next;
+        return;
+      }
+      if (scheduleState.period === "year") {
+        const next = new Date(scheduleState.anchorDate);
+        next.setFullYear(next.getFullYear() + direction);
+        scheduleState.anchorDate = next;
+        return;
+      }
+      scheduleState.anchorDate = addDays(scheduleState.anchorDate, direction * 7);
+    }
+
+    function matchesScheduleKeyword(item, keyword) {
+      const needle = String(keyword || "").trim().toLowerCase();
+      if (!needle) return true;
+      const text = [
+        item.part,
+        item.category,
+        getScheduleCategoryLabel(item.category),
+        item.title,
+        item.project_no,
+        item.item_code,
+        item.qty,
+        item.customer,
+        item.location,
+        item.main_user_name,
+        item.memo
+      ].join(" ").toLowerCase();
+      return text.indexOf(needle) !== -1;
+    }
+
+    function scheduleScreen() {
+      const userPart = currentUserData && currentUserData.part ? currentUserData.part : "파트 미지정";
+      const userRole = currentUserData && currentUserData.role ? currentUserData.role : "user";
+      const userName = currentUserData && currentUserData.name ? currentUserData.name : "로그인 사용자";
+
+      return `
+        <div class="screen-head schedule-head">
+          <div class="screen-head-bar">
+            <div class="screen-head-main">
+              <div class="schedule-head-badge">COMMON WORKSPACE · TEAM SCHEDULE</div>
+              <h1>📅 공용 업무 스케쥴</h1>
+            </div>
+            <div class="screen-head-actions">
+              <button type="button" class="btn primary" data-schedule-action="new">+ 빠른 등록</button>
+            </div>
+          </div>
+        </div>
+        <div class="screen-body">
+          <div class="schedule-shell">
+            <div class="schedule-topline">
+              <div class="schedule-user-context">
+                <span>${escapeHtml(userName)}</span>
+                <span>${escapeHtml(userPart)}</span>
+                <span>권한 ${escapeHtml(userRole)}</span>
+              </div>
+              <div class="schedule-status-text" id="scheduleTopStatus">스케쥴 데이터를 준비 중입니다.</div>
+            </div>
+
+            <div class="schedule-kpi-grid" id="scheduleKpiGrid">
+              ${renderScheduleKpis([])}
+            </div>
+
+            <div class="schedule-control-panel">
+              <div class="schedule-control-top">
+                <div class="schedule-segments" role="tablist" aria-label="스케쥴 보기 범위">
+                  <button type="button" class="schedule-segment-btn ${scheduleState.view === "personal" ? "active" : ""}" data-schedule-view="personal">내 일정</button>
+                  <button type="button" class="schedule-segment-btn ${scheduleState.view === "part" ? "active" : ""}" data-schedule-view="part">파트별</button>
+                  <button type="button" class="schedule-segment-btn ${scheduleState.view === "team" ? "active" : ""}" data-schedule-view="team">전체 팀</button>
+                </div>
+
+                <div class="schedule-segments" role="tablist" aria-label="스케쥴 기간">
+                  <button type="button" class="schedule-segment-btn ${scheduleState.period === "week" ? "active" : ""}" data-schedule-period="week">주별</button>
+                  <button type="button" class="schedule-segment-btn ${scheduleState.period === "month" ? "active" : ""}" data-schedule-period="month">월별</button>
+                  <button type="button" class="schedule-segment-btn ${scheduleState.period === "year" ? "active" : ""}" data-schedule-period="year">년도별</button>
+                </div>
+
+                <div class="schedule-week-nav">
+                  <button type="button" class="schedule-icon-btn" data-schedule-action="prev-week" aria-label="이전 주">‹</button>
+                  <span class="schedule-week-title" id="scheduleWeekTitle">${escapeHtml(getScheduleWeekTitle())}</span>
+                  <button type="button" class="schedule-icon-btn" data-schedule-action="next-week" aria-label="다음 주">›</button>
+                  <button type="button" class="schedule-icon-btn" data-schedule-action="this-week">오늘</button>
+                </div>
+              </div>
+
+              <div class="schedule-filter-grid">
+                <div class="schedule-filter-field">
+                  <label for="schedulePartFilter">파트</label>
+                  <select id="schedulePartFilter" class="schedule-select">
+                    <option value="전체">전체</option>
+                    ${buildScheduleSelectOptions(SCHEDULE_PARTS, getSchedulePartForState())}
+                  </select>
+                </div>
+                <div class="schedule-filter-field">
+                  <label for="scheduleNameFilter">담당자명</label>
+                  <input type="text" id="scheduleNameFilter" class="schedule-input" placeholder="이름 입력 시 해당자만 표시" value="${escapeHtml(scheduleState.nameKeyword)}" />
+                </div>
+                <div class="schedule-filter-field">
+                  <label for="scheduleCategoryFilter">구분</label>
+                  <select id="scheduleCategoryFilter" class="schedule-select">
+                    ${buildScheduleCategoryOptions(scheduleState.category, true)}
+                  </select>
+                </div>
+                <div class="schedule-filter-field">
+                  <label for="scheduleStatusFilter">상태</label>
+                  <select id="scheduleStatusFilter" class="schedule-select">
+                    <option value="">전체</option>
+                    ${buildScheduleSelectOptions(SCHEDULE_STATUS, scheduleState.status)}
+                  </select>
+                </div>
+                <div class="schedule-filter-field">
+                  <label for="scheduleKeywordFilter">상세 검색</label>
+                  <input type="text" id="scheduleKeywordFilter" class="schedule-input" placeholder="호선, 품명, 장소, 메모 검색" value="${escapeHtml(scheduleState.keyword)}" />
+                </div>
+                <div class="schedule-filter-field">
+                  <label>&nbsp;</label>
+                  <button type="button" class="btn primary" data-schedule-action="reload">조회</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="schedule-board">
+              <div class="schedule-board-head">
+                <div class="schedule-board-title">
+                  <strong id="scheduleBoardTitle">주간 스케쥴</strong>
+                  <span id="scheduleBoardDesc">월요일부터 일요일까지의 업무를 카드형 보드로 표시합니다.</span>
+                </div>
+                <span class="schedule-status-text" id="scheduleLoadStatus">대기 중</span>
+              </div>
+              <div id="scheduleContent">
+                <div class="schedule-loading">스케쥴을 불러오는 중입니다...</div>
+              </div>
+            </div>
+          </div>
+
+          <div id="scheduleModal" class="schedule-modal hidden" aria-hidden="true"></div>
+        </div>
+      `;
+    }
+
+    function renderScheduleKpis(schedules) {
+      const activeSchedules = schedules.filter((item) => item.status !== "취소");
+      const todayText = formatDateYmd(new Date());
+      const todayCount = activeSchedules.filter((item) => item.date === todayText).length;
+      const importantCount = activeSchedules.filter((item) => item.priority === "중요" || item.priority === "긴급").length;
+      const unconfirmedCount = activeSchedules.filter((item) => item.confirm_status === "미확인").length;
+
+      return `
+        <div class="schedule-kpi-card"><strong>${activeSchedules.length}</strong><span>표시 기간 일정</span></div>
+        <div class="schedule-kpi-card"><strong>${todayCount}</strong><span>오늘 일정</span></div>
+        <div class="schedule-kpi-card"><strong>${importantCount}</strong><span>중요/긴급</span></div>
+        <div class="schedule-kpi-card"><strong>${unconfirmedCount}</strong><span>미확인 일정</span></div>
+      `;
+    }
+
+    function initScheduleScreen() {
+      if (!currentUserData) return;
+
+      if (!currentUserData.part && scheduleState.view === "part") {
+        scheduleState.part = "QA";
+      }
+
+      bindScheduleInputs();
+      updateScheduleViewButtons();
+      loadScheduleCategories().then(() => {
+        refreshScheduleFilterOptions();
+        loadSchedules();
+      });
+    }
+
+    function bindScheduleInputs() {
+      const screen = document.getElementById("screen");
+      if (!screen) return;
+
+      screen.querySelectorAll("[data-schedule-view]").forEach((button) => {
+        button.addEventListener("click", () => {
+          scheduleState.view = button.dataset.scheduleView || "personal";
+          if (scheduleState.view === "part" && (!scheduleState.part || scheduleState.part === "전체" || !SCHEDULE_PARTS.includes(scheduleState.part))) {
+            const loginPart = currentUserData && currentUserData.part ? currentUserData.part : "";
+            scheduleState.part = SCHEDULE_PARTS.includes(loginPart) ? loginPart : "QA";
+          }
+          updateScheduleViewButtons();
+          syncScheduleFilterStateFromUi();
+          loadSchedules();
+        });
+      });
+
+      screen.querySelectorAll("[data-schedule-period]").forEach((button) => {
+        button.addEventListener("click", () => {
+          scheduleState.period = button.dataset.schedulePeriod || "week";
+          updateScheduleViewButtons();
+          loadSchedules();
+        });
+      });
+
+      const partFilter = document.getElementById("schedulePartFilter");
+      if (partFilter) {
+        partFilter.addEventListener("change", () => {
+          scheduleState.part = partFilter.value || "전체";
+          loadSchedules();
+        });
+      }
+
+      const categoryFilter = document.getElementById("scheduleCategoryFilter");
+      if (categoryFilter) {
+        categoryFilter.addEventListener("change", () => {
+          scheduleState.category = categoryFilter.value || "";
+          loadSchedules();
+        });
+      }
+
+      const statusFilter = document.getElementById("scheduleStatusFilter");
+      if (statusFilter) {
+        statusFilter.addEventListener("change", () => {
+          scheduleState.status = statusFilter.value || "";
+          loadSchedules();
+        });
+      }
+
+      const nameFilter = document.getElementById("scheduleNameFilter");
+      if (nameFilter) {
+        nameFilter.addEventListener("keydown", (event) => {
+          if (event.key === "Enter") {
+            scheduleState.nameKeyword = nameFilter.value.trim();
+            loadSchedules();
+          }
+        });
+      }
+
+      const keywordFilter = document.getElementById("scheduleKeywordFilter");
+      if (keywordFilter) {
+        keywordFilter.addEventListener("keydown", (event) => {
+          if (event.key === "Enter") {
+            scheduleState.keyword = keywordFilter.value.trim();
+            loadSchedules();
+          }
+        });
+      }
+    }
+
+    async function loadScheduleCategories() {
+      try {
+        const result = await jsonpRequest(scheduleApiUrl("getScheduleCategories"), "scheduleCategoriesCallback");
+        if (result && result.success && Array.isArray(result.categories)) {
+          scheduleState.categories = result.categories;
+          return;
+        }
+        scheduleState.categories = SCHEDULE_CATEGORY_FALLBACK.slice();
+      } catch (error) {
+        console.error(error);
+        scheduleState.categories = SCHEDULE_CATEGORY_FALLBACK.slice();
+      }
+    }
+
+    function refreshScheduleFilterOptions() {
+      const categoryFilter = document.getElementById("scheduleCategoryFilter");
+      if (categoryFilter) categoryFilter.innerHTML = buildScheduleCategoryOptions(scheduleState.category, true);
+
+      const partFilter = document.getElementById("schedulePartFilter");
+      if (partFilter) {
+        partFilter.value = getSchedulePartForState();
+      }
+    }
+
+    function syncScheduleFilterStateFromUi() {
+      const partFilter = document.getElementById("schedulePartFilter");
+      const categoryFilter = document.getElementById("scheduleCategoryFilter");
+      const statusFilter = document.getElementById("scheduleStatusFilter");
+      const nameFilter = document.getElementById("scheduleNameFilter");
+      const keywordFilter = document.getElementById("scheduleKeywordFilter");
+
+      if (partFilter) scheduleState.part = partFilter.value || "전체";
+      if (categoryFilter) scheduleState.category = categoryFilter.value || "";
+      if (statusFilter) scheduleState.status = statusFilter.value || "";
+      if (nameFilter) scheduleState.nameKeyword = nameFilter.value.trim();
+      if (keywordFilter) scheduleState.keyword = keywordFilter.value.trim();
+    }
+
+    function updateScheduleViewButtons() {
+      document.querySelectorAll("[data-schedule-view]").forEach((button) => {
+        button.classList.toggle("active", button.dataset.scheduleView === scheduleState.view);
+      });
+
+      document.querySelectorAll("[data-schedule-period]").forEach((button) => {
+        button.classList.toggle("active", button.dataset.schedulePeriod === scheduleState.period);
+      });
+
+      const partFilter = document.getElementById("schedulePartFilter");
+      if (partFilter) {
+        if (scheduleState.view === "personal") {
+          const loginPart = currentUserData && currentUserData.part ? currentUserData.part : "";
+          partFilter.value = SCHEDULE_PARTS.includes(loginPart) ? loginPart : "전체";
+          partFilter.disabled = true;
+        } else {
+          partFilter.disabled = false;
+          if (scheduleState.view === "team") partFilter.value = scheduleState.part || "전체";
+          if (scheduleState.view === "part") partFilter.value = getSchedulePartForState();
+        }
+      }
+
+      const weekTitle = document.getElementById("scheduleWeekTitle");
+      if (weekTitle) weekTitle.textContent = getScheduleRangeTitle();
+
+      const boardTitle = document.getElementById("scheduleBoardTitle");
+      const boardDesc = document.getElementById("scheduleBoardDesc");
+      if (boardTitle && boardDesc) {
+        const periodLabel = getSchedulePeriodLabel();
+        const hasNameFilter = !!String(scheduleState.nameKeyword || "").trim();
+        if (hasNameFilter) {
+          boardTitle.textContent = `${scheduleState.nameKeyword} ${periodLabel} 스케쥴`;
+          boardDesc.textContent = "담당자명으로 검색한 일정만 표시합니다.";
+        } else if (scheduleState.view === "personal") {
+          boardTitle.textContent = `내 ${periodLabel} 스케쥴`;
+          boardDesc.textContent = "로그인한 사용자의 담당 일정만 표시합니다.";
+        } else if (scheduleState.view === "part") {
+          boardTitle.textContent = `${getSchedulePartForState()} 파트 ${periodLabel} 스케쥴`;
+          boardDesc.textContent = "선택한 파트의 검사/업무 일정을 표시합니다.";
+        } else {
+          boardTitle.textContent = `전체 팀 ${periodLabel} 스케쥴`;
+          boardDesc.textContent = "전체 파트의 검사/업무 일정을 표시합니다.";
+        }
+      }
+    }
+
+    async function loadSchedules() {
+      if (!currentUserData || scheduleState.loading) return;
+
+      syncScheduleFilterStateFromUi();
+      updateScheduleViewButtons();
+
+      const range = getScheduleRange();
+      const nameKeyword = String(scheduleState.nameKeyword || "").trim();
+      const params = {
+        from_date: formatDateYmd(range.start),
+        to_date: formatDateYmd(range.end)
+      };
+
+      if (nameKeyword) {
+        params.keyword = nameKeyword;
+      } else if (scheduleState.view === "personal") {
+        params.main_user_id = currentUserData.user_id || "";
+      } else if (scheduleState.view === "part") {
+        params.part = getSchedulePartForState();
+      } else if (scheduleState.part && scheduleState.part !== "전체") {
+        params.part = scheduleState.part;
+      }
+
+      if (scheduleState.category) params.category = scheduleState.category;
+      if (scheduleState.status) params.status = scheduleState.status;
+      if (!nameKeyword && scheduleState.keyword) params.keyword = scheduleState.keyword;
+
+      scheduleState.loading = true;
+      scheduleState.lastError = "";
+      renderScheduleLoading("스케쥴을 불러오는 중입니다...");
+
+      try {
+        const result = await jsonpRequest(scheduleApiUrl("getSchedules", params), "scheduleListCallback");
+        if (!result.success) {
+          scheduleState.schedules = [];
+          scheduleState.lastError = result.message || "스케쥴 조회에 실패했습니다.";
+          renderScheduleError(scheduleState.lastError);
+          return;
+        }
+
+        let schedules = Array.isArray(result.schedules) ? result.schedules : [];
+        if (nameKeyword) {
+          const lowerName = nameKeyword.toLowerCase();
+          schedules = schedules.filter((item) => String(item.main_user_name || "").toLowerCase().indexOf(lowerName) !== -1);
+        }
+        if (scheduleState.keyword) {
+          schedules = schedules.filter((item) => matchesScheduleKeyword(item, scheduleState.keyword));
+        }
+        scheduleState.schedules = schedules;
+        renderScheduleBoard();
+      } catch (error) {
+        console.error(error);
+        scheduleState.schedules = [];
+        scheduleState.lastError = "Apps Script 연결 오류가 발생했습니다.";
+        renderScheduleError(scheduleState.lastError);
+      } finally {
+        scheduleState.loading = false;
+      }
+    }
+
+    function renderScheduleLoading(message) {
+      const content = document.getElementById("scheduleContent");
+      const status = document.getElementById("scheduleLoadStatus");
+      const topStatus = document.getElementById("scheduleTopStatus");
+      const weekTitle = document.getElementById("scheduleWeekTitle");
+      if (weekTitle) weekTitle.textContent = getScheduleWeekTitle();
+      if (status) status.textContent = message;
+      if (topStatus) topStatus.textContent = message;
+      if (content) content.innerHTML = `<div class="schedule-loading">${escapeHtml(message)}</div>`;
+    }
+
+    function renderScheduleError(message) {
+      const content = document.getElementById("scheduleContent");
+      const status = document.getElementById("scheduleLoadStatus");
+      const topStatus = document.getElementById("scheduleTopStatus");
+      if (status) status.textContent = "조회 실패";
+      if (topStatus) topStatus.textContent = message;
+      if (content) {
+        content.innerHTML = `
+          <div class="schedule-loading">
+            ${escapeHtml(message)}<br />
+            <button type="button" class="btn" data-schedule-action="reload" style="margin-top:12px;">다시 조회</button>
+          </div>
+        `;
+      }
+    }
+
+    function renderScheduleBoard() {
+      const content = document.getElementById("scheduleContent");
+      const status = document.getElementById("scheduleLoadStatus");
+      const topStatus = document.getElementById("scheduleTopStatus");
+      const weekTitle = document.getElementById("scheduleWeekTitle");
+      const kpiGrid = document.getElementById("scheduleKpiGrid");
+
+      const rangeTitle = getScheduleRangeTitle();
+      if (weekTitle) weekTitle.textContent = rangeTitle;
+      if (kpiGrid) kpiGrid.innerHTML = renderScheduleKpis(scheduleState.schedules);
+      if (status) status.textContent = `조회 완료 · ${scheduleState.schedules.length}건`;
+      if (topStatus) topStatus.textContent = `${rangeTitle} 기준 ${scheduleState.schedules.length}건 표시 중`;
+      if (!content) return;
+
+      const hasNameFilter = !!String(scheduleState.nameKeyword || "").trim();
+      if (scheduleState.period !== "week" || scheduleState.view === "personal" || hasNameFilter) {
+        content.innerHTML = renderSchedulePersonalList(scheduleState.schedules);
+      } else {
+        content.innerHTML = renderScheduleWeekCalendar(scheduleState.schedules);
+      }
+    }
+
+    function renderScheduleWeekCalendar(schedules) {
+      const days = getWeekDays();
+      const todayText = formatDateYmd(new Date());
+      const weekdayNames = ["월", "화", "수", "목", "금", "토", "일"];
+
+      return `
+        <div class="schedule-calendar-wrap">
+          <div class="schedule-calendar">
+            ${days.map((day, idx) => {
+              const ymd = formatDateYmd(day);
+              const daySchedules = schedules.filter((item) => item.date === ymd);
+              return `
+                <div class="schedule-day-col">
+                  <div class="schedule-day-head ${ymd === todayText ? "today" : ""}">
+                    <strong>${weekdayNames[idx]}</strong>
+                    <span>${ymd}${ymd === todayText ? " · 오늘" : ""}</span>
+                  </div>
+                  <div class="schedule-day-body">
+                    ${daySchedules.length ? daySchedules.map(renderScheduleCard).join("") : `<div class="schedule-empty">등록된 일정이 없습니다.</div>`}
+                  </div>
+                </div>
+              `;
+            }).join("")}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderSchedulePersonalList(schedules) {
+      if (!schedules.length) {
+        return `<div class="schedule-loading">선택한 기간에 표시할 스케쥴이 없습니다.</div>`;
+      }
+
+      return `
+        <div class="schedule-list-wrap">
+          <table class="schedule-table">
+            <thead>
+              <tr>
+                <th>일자</th>
+                <th>시간</th>
+                <th>구분/상태</th>
+                <th>업무 내용</th>
+                <th>장소/고객</th>
+                <th>관리</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${schedules.map((item) => `
+                <tr>
+                  <td>${escapeHtml(item.date || "-")}</td>
+                  <td>${escapeHtml(renderScheduleTimeText(item))}</td>
+                  <td>
+                    <span class="schedule-pill part">${escapeHtml(getScheduleCategoryLabel(item.category))}</span>
+                    <span class="schedule-pill status ${getScheduleStatusClass(item.status)}">${escapeHtml(item.status || "예정")}</span>
+                  </td>
+                  <td>
+                    <div class="schedule-table-title">${escapeHtml(item.title || "-")}</div>
+                    <div class="schedule-table-sub">${escapeHtml([item.project_no, item.item_code, item.qty].filter(Boolean).join(" · ") || item.memo || "-")}</div>
+                  </td>
+                  <td>${escapeHtml([item.location, item.customer].filter(Boolean).join(" · ") || "-")}</td>
+                  <td>${renderScheduleActions(item)}</td>
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    function renderScheduleCard(item) {
+      const timeText = renderScheduleTimeText(item);
+      const detailText = [item.project_no, item.item_code, item.qty].filter(Boolean).join(" · ");
+      const placeText = [item.location, item.customer].filter(Boolean).join(" · ");
+      const memoText = item.memo || placeText || "";
+
+      return `
+        <div class="schedule-card" data-category="${escapeHtml(item.category || "ETC")}">
+          <div class="schedule-card-inner">
+            <div class="schedule-card-top">
+              <div class="schedule-card-title">${escapeHtml(item.title || "제목 없음")}</div>
+              <div class="schedule-card-time">${escapeHtml(timeText)}</div>
+            </div>
+            <div class="schedule-meta-row">
+              <span class="schedule-pill part">${escapeHtml(item.part || "-")}</span>
+              <span class="schedule-pill">${escapeHtml(getScheduleCategoryLabel(item.category))}</span>
+              <span class="schedule-pill status ${getScheduleStatusClass(item.status)}">${escapeHtml(item.status || "예정")}</span>
+              ${item.priority && item.priority !== "일반" ? `<span class="schedule-pill priority">${escapeHtml(item.priority)}</span>` : ""}
+            </div>
+            <div class="schedule-meta-row">
+              <span class="schedule-pill">담당 ${escapeHtml(item.main_user_name || "-")}</span>
+              ${item.confirm_status ? `<span class="schedule-pill confirm">${escapeHtml(item.confirm_status)}</span>` : ""}
+            </div>
+            ${detailText ? `<div class="schedule-card-memo">${escapeHtml(detailText)}</div>` : ""}
+            ${memoText ? `<div class="schedule-card-memo">${escapeHtml(memoText)}</div>` : ""}
+            ${renderScheduleActions(item)}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderScheduleTimeText(item) {
+      const start = item.start_time || "";
+      const end = item.end_time || "";
+      if (start && end) return `${start}~${end}`;
+      if (start) return start;
+      if (end) return `~${end}`;
+      return "종일";
+    }
+
+    function getScheduleStatusClass(status) {
+      if (status === "취소") return "cancel";
+      if (status === "보류") return "hold";
+      return "";
+    }
+
+    function canEditSchedule(item) {
+      if (!currentUserData || !item) return false;
+      if (isAdminUser()) return true;
+      return String(item.main_user_id || "") === String(currentUserData.user_id || "")
+        || String(item.created_by_user_id || "") === String(currentUserData.user_id || "");
+    }
+
+    function renderScheduleActions(item) {
+      if (!canEditSchedule(item)) return "";
+      const scheduleId = escapeHtml(item.schedule_id || "");
+      return `
+        <div class="schedule-card-actions">
+          <button type="button" class="schedule-mini-btn" data-schedule-action="edit" data-schedule-id="${scheduleId}">수정</button>
+          ${item.status !== "취소" ? `<button type="button" class="schedule-mini-btn danger" data-schedule-action="cancel" data-schedule-id="${scheduleId}">취소</button>` : ""}
+        </div>
+      `;
+    }
+
+    function handleScheduleAction(button) {
+      const action = button.dataset.scheduleAction;
+      if (!action) return;
+
+      if (action === "new") {
+        openScheduleModal();
+        return;
+      }
+
+      if (action === "close-modal") {
+        closeScheduleModal();
+        return;
+      }
+
+      if (action === "save") {
+        saveScheduleFromModal();
+        return;
+      }
+
+      if (action === "load-last") {
+        loadLastScheduleDraftIntoForm();
+        return;
+      }
+
+      if (action === "reset-basic") {
+        resetScheduleFormBasic();
+        return;
+      }
+
+      if (action === "reload") {
+        loadSchedules();
+        return;
+      }
+
+      if (action === "prev-week") {
+        moveScheduleAnchor(-1);
+        loadSchedules();
+        return;
+      }
+
+      if (action === "next-week") {
+        moveScheduleAnchor(1);
+        loadSchedules();
+        return;
+      }
+
+      if (action === "this-week") {
+        scheduleState.anchorDate = new Date();
+        loadSchedules();
+        return;
+      }
+
+      if (action === "edit") {
+        const item = scheduleState.schedules.find((entry) => String(entry.schedule_id) === String(button.dataset.scheduleId));
+        if (item) openScheduleModal(item);
+        return;
+      }
+
+      if (action === "cancel") {
+        cancelScheduleById(button.dataset.scheduleId);
+      }
+    }
+
+
+    function getLastScheduleDraft() {
+      try {
+        const raw = localStorage.getItem(SCHEDULE_LAST_DRAFT_KEY);
+        return raw ? JSON.parse(raw) : null;
+      } catch (error) {
+        return null;
+      }
+    }
+
+    function saveLastScheduleDraft(params) {
+      try {
+        const copy = Object.assign({}, params);
+        delete copy.schedule_id;
+        delete copy.date;
+        localStorage.setItem(SCHEDULE_LAST_DRAFT_KEY, JSON.stringify(copy));
+      } catch (error) {
+        console.warn("최근 스케쥴 입력값 저장 실패", error);
+      }
+    }
+
+    function setScheduleFormValue(id, value) {
+      const el = document.getElementById(id);
+      if (!el || value == null || value === "") return;
+      el.value = value;
+    }
+
+    function loadLastScheduleDraftIntoForm() {
+      const draft = getLastScheduleDraft();
+      if (!draft) {
+        alert("불러올 최근 입력값이 없습니다.");
+        return;
+      }
+
+      setScheduleFormValue("scheduleFormCategory", draft.category);
+      setScheduleFormValue("scheduleFormTitle", draft.title);
+      setScheduleFormValue("scheduleFormProjectNo", draft.project_no);
+      setScheduleFormValue("scheduleFormItemCode", draft.item_code);
+      setScheduleFormValue("scheduleFormQty", draft.qty);
+      setScheduleFormValue("scheduleFormCustomer", draft.customer);
+      setScheduleFormValue("scheduleFormLocation", draft.location);
+      setScheduleFormValue("scheduleFormSubUsers", draft.sub_user_names);
+      setScheduleFormValue("scheduleFormStartTime", draft.start_time);
+      setScheduleFormValue("scheduleFormEndTime", draft.end_time);
+      setScheduleFormValue("scheduleFormStatus", draft.status);
+      setScheduleFormValue("scheduleFormPriority", draft.priority);
+      setScheduleFormValue("scheduleFormVisibility", draft.visibility);
+      setScheduleFormValue("scheduleFormMemo", draft.memo);
+
+      const title = document.getElementById("scheduleFormTitle");
+      if (title) title.dataset.manual = title.value.trim() ? "Y" : "";
+    }
+
+    function resetScheduleFormBasic() {
+      setScheduleFormValue("scheduleFormDate", formatDateYmd(new Date()));
+      setScheduleFormValue("scheduleFormCategory", "INSPECTION");
+      setScheduleFormValue("scheduleFormStatus", "예정");
+      setScheduleFormValue("scheduleFormPriority", "일반");
+      setScheduleFormValue("scheduleFormVisibility", "팀");
+    }
+
+    function bindScheduleModalHelpers(isEdit) {
+      const title = document.getElementById("scheduleFormTitle");
+      const project = document.getElementById("scheduleFormProjectNo");
+      const item = document.getElementById("scheduleFormItemCode");
+      const qty = document.getElementById("scheduleFormQty");
+
+      if (title) {
+        title.dataset.manual = isEdit || title.value.trim() ? "Y" : "";
+        title.addEventListener("input", () => {
+          title.dataset.manual = title.value.trim() ? "Y" : "";
+        });
+      }
+
+      const autoTitle = () => {
+        if (!title || title.dataset.manual === "Y") return;
+        const text = [project?.value.trim(), item?.value.trim(), qty?.value.trim()].filter(Boolean).join(" ");
+        if (text) title.value = text;
+      };
+
+      [project, item, qty].forEach((el) => {
+        if (el) el.addEventListener("input", autoTitle);
+      });
+    }
+
+    function openScheduleModal(item = null) {
+      const modal = document.getElementById("scheduleModal");
+      if (!modal) return;
+
+      const isEdit = !!item;
+      const loginPart = currentUserData && currentUserData.part ? currentUserData.part : "QA";
+      const loginName = currentUserData && currentUserData.name ? currentUserData.name : "";
+      const loginUserId = currentUserData && currentUserData.user_id ? currentUserData.user_id : "";
+      const lastDraft = !isEdit ? getLastScheduleDraft() : null;
+      const defaultDate = item ? item.date || "" : formatDateYmd(scheduleState.anchorDate || new Date());
+      const defaultCategory = item ? item.category || "INSPECTION" : (lastDraft && lastDraft.category) || "INSPECTION";
+      const defaultLocation = item ? item.location || "" : (lastDraft && lastDraft.location) || "";
+      const defaultCustomer = item ? item.customer || "" : (lastDraft && lastDraft.customer) || "";
+      const defaultStartTime = item ? item.start_time || "" : (lastDraft && lastDraft.start_time) || "";
+      const defaultEndTime = item ? item.end_time || "" : (lastDraft && lastDraft.end_time) || "";
+      const defaultStatus = item ? item.status || "예정" : "예정";
+      const defaultPriority = item ? item.priority || "일반" : "일반";
+      const defaultVisibility = item ? item.visibility || "팀" : "팀";
+      const adminFields = isAdminUser()
+        ? `
+          <div class="schedule-admin-fields">
+            <div class="schedule-form-field">
+              <label for="scheduleFormPart">담당 파트</label>
+              <select id="scheduleFormPart" class="schedule-select">
+                ${buildScheduleSelectOptions(SCHEDULE_ADMIN_PARTS, item ? item.part : loginPart)}
+              </select>
+            </div>
+            <div class="schedule-form-field">
+              <label for="scheduleFormMainUserId">담당자 ID</label>
+              <input type="text" id="scheduleFormMainUserId" class="schedule-input" value="${escapeHtml(item ? item.main_user_id || "" : loginUserId)}" />
+            </div>
+            <div class="schedule-form-field">
+              <label for="scheduleFormMainUserName">담당자명</label>
+              <input type="text" id="scheduleFormMainUserName" class="schedule-input" value="${escapeHtml(item ? item.main_user_name || "" : loginName)}" />
+            </div>
+            ${isEdit ? `
+              <div class="schedule-form-field">
+                <label for="scheduleFormConfirmStatus">확인 상태</label>
+                <select id="scheduleFormConfirmStatus" class="schedule-select">
+                  ${buildScheduleSelectOptions(["미확인", "확인", "수정요청"], item.confirm_status || "미확인")}
+                </select>
+              </div>
+            ` : ""}
+          </div>
+        `
+        : "";
+
+      modal.innerHTML = `
+        <div class="schedule-modal-card" role="dialog" aria-modal="true" aria-labelledby="scheduleModalTitle">
+          <div class="schedule-modal-head">
+            <div>
+              <h3 id="scheduleModalTitle" class="schedule-modal-title">${isEdit ? "스케쥴 수정" : "빠른 스케쥴 등록"}</h3>
+              <p class="schedule-modal-desc">필수 항목은 날짜, 구분, 스케쥴명입니다. 나머지는 필요할 때만 상세 입력을 열어 작성하세요.</p>
+            </div>
+            <button type="button" class="schedule-modal-close" data-schedule-action="close-modal" aria-label="닫기">×</button>
+          </div>
+          <div class="schedule-modal-body">
+            <input type="hidden" id="scheduleFormId" value="${escapeHtml(item ? item.schedule_id || "" : "")}" />
+
+            ${!isEdit ? `
+              <div class="schedule-quick-helper">
+                <div>
+                  <strong>입력 최소화 지원</strong>
+                  <span>본인 정보와 파트는 자동 적용됩니다. 반복 업무는 최근 입력값을 불러와 빠르게 작성할 수 있습니다.</span>
+                </div>
+                <div class="schedule-quick-actions">
+                  <button type="button" class="btn" data-schedule-action="load-last">최근 입력 불러오기</button>
+                  <button type="button" class="btn" data-schedule-action="reset-basic">기본값</button>
+                </div>
+              </div>
+            ` : ""}
+
+            <div class="schedule-form-grid">
+              ${adminFields}
+              <div class="schedule-form-section-title">핵심 입력</div>
+              <div class="schedule-form-field">
+                <label for="scheduleFormDate">날짜 *</label>
+                <input type="date" id="scheduleFormDate" class="schedule-input" value="${escapeHtml(defaultDate)}" />
+              </div>
+              <div class="schedule-form-field">
+                <label for="scheduleFormCategory">구분 *</label>
+                <select id="scheduleFormCategory" class="schedule-select">
+                  ${buildScheduleCategoryOptions(defaultCategory, false)}
+                </select>
+              </div>
+              <div class="schedule-form-field full">
+                <label for="scheduleFormTitle">스케쥴명 *</label>
+                <input type="text" id="scheduleFormTitle" class="schedule-input" placeholder="예: HSHI-8191 PCD 검사" value="${escapeHtml(item ? item.title || "" : "")}" />
+              </div>
+              <div class="schedule-form-field">
+                <label for="scheduleFormStartTime">시작 시간</label>
+                <input type="time" id="scheduleFormStartTime" class="schedule-input" value="${escapeHtml(defaultStartTime)}" />
+              </div>
+              <div class="schedule-form-field">
+                <label for="scheduleFormEndTime">종료 시간</label>
+                <input type="time" id="scheduleFormEndTime" class="schedule-input" value="${escapeHtml(defaultEndTime)}" />
+              </div>
+              <div class="schedule-form-field">
+                <label for="scheduleFormLocation">장소</label>
+                <input type="text" id="scheduleFormLocation" class="schedule-input" placeholder="예: 검사장, 부산, 협력업체" value="${escapeHtml(defaultLocation)}" />
+              </div>
+              <div class="schedule-form-field">
+                <label for="scheduleFormCustomer">고객/업체</label>
+                <input type="text" id="scheduleFormCustomer" class="schedule-input" value="${escapeHtml(defaultCustomer)}" />
+              </div>
+              <div class="schedule-form-field full">
+                <label for="scheduleFormMemo">메모</label>
+                <textarea id="scheduleFormMemo" class="schedule-textarea" placeholder="필요한 참고사항을 입력하세요.">${escapeHtml(item ? item.memo || "" : "")}</textarea>
+              </div>
+
+              <details class="schedule-advanced-fields">
+                <summary>상세 입력 열기 · 호선 / 품목 / 수량 / 상태</summary>
+                <div class="schedule-advanced-grid">
+                  <div class="schedule-form-field">
+                    <label for="scheduleFormProjectNo">프로젝트/호선</label>
+                    <input type="text" id="scheduleFormProjectNo" class="schedule-input" placeholder="예: HSHI-8191" value="${escapeHtml(item ? item.project_no || "" : "")}" />
+                  </div>
+                  <div class="schedule-form-field">
+                    <label for="scheduleFormItemCode">품목/Item</label>
+                    <input type="text" id="scheduleFormItemCode" class="schedule-input" placeholder="예: PCD, AHU, ACAP" value="${escapeHtml(item ? item.item_code || "" : "")}" />
+                  </div>
+                  <div class="schedule-form-field">
+                    <label for="scheduleFormQty">수량</label>
+                    <input type="text" id="scheduleFormQty" class="schedule-input" placeholder="예: 6EA" value="${escapeHtml(item ? item.qty || "" : "")}" />
+                  </div>
+                  <div class="schedule-form-field">
+                    <label for="scheduleFormSubUsers">동행/참조자</label>
+                    <input type="text" id="scheduleFormSubUsers" class="schedule-input" placeholder="쉼표로 구분" value="${escapeHtml(item ? item.sub_user_names || "" : "")}" />
+                  </div>
+                  <div class="schedule-form-field">
+                    <label for="scheduleFormStatus">상태</label>
+                    <select id="scheduleFormStatus" class="schedule-select">
+                      ${buildScheduleSelectOptions(SCHEDULE_STATUS, defaultStatus)}
+                    </select>
+                  </div>
+                  <div class="schedule-form-field">
+                    <label for="scheduleFormPriority">우선순위</label>
+                    <select id="scheduleFormPriority" class="schedule-select">
+                      ${buildScheduleSelectOptions(SCHEDULE_PRIORITY, defaultPriority)}
+                    </select>
+                  </div>
+                  <div class="schedule-form-field">
+                    <label for="scheduleFormVisibility">공개 범위</label>
+                    <select id="scheduleFormVisibility" class="schedule-select">
+                      ${buildScheduleSelectOptions(SCHEDULE_VISIBILITY, defaultVisibility)}
+                    </select>
+                  </div>
+                </div>
+              </details>
+            </div>
+            <div class="schedule-modal-actions">
+              <button type="button" class="btn" data-schedule-action="close-modal">닫기</button>
+              <button type="button" class="btn primary" data-schedule-action="save">저장</button>
+            </div>
+          </div>
+        </div>
+      `;
+
+      modal.classList.remove("hidden");
+      modal.setAttribute("aria-hidden", "false");
+      bindScheduleModalHelpers(isEdit);
+      setTimeout(() => document.getElementById("scheduleFormTitle")?.focus(), 50);
+    }
+
+    function closeScheduleModal() {
+      const modal = document.getElementById("scheduleModal");
+      if (!modal) return;
+      modal.classList.add("hidden");
+      modal.setAttribute("aria-hidden", "true");
+      modal.innerHTML = "";
+    }
+
+    function readScheduleForm() {
+      const getValue = (id) => document.getElementById(id)?.value.trim() || "";
+      const params = {
+        schedule_id: getValue("scheduleFormId"),
+        date: getValue("scheduleFormDate"),
+        category: getValue("scheduleFormCategory"),
+        title: getValue("scheduleFormTitle"),
+        project_no: getValue("scheduleFormProjectNo"),
+        item_code: getValue("scheduleFormItemCode"),
+        qty: getValue("scheduleFormQty"),
+        customer: getValue("scheduleFormCustomer"),
+        location: getValue("scheduleFormLocation"),
+        sub_user_names: getValue("scheduleFormSubUsers"),
+        start_time: getValue("scheduleFormStartTime"),
+        end_time: getValue("scheduleFormEndTime"),
+        status: getValue("scheduleFormStatus") || "예정",
+        priority: getValue("scheduleFormPriority") || "일반",
+        visibility: getValue("scheduleFormVisibility") || "팀",
+        memo: getValue("scheduleFormMemo")
+      };
+
+      if (isAdminUser()) {
+        params.part = getValue("scheduleFormPart") || (currentUserData && currentUserData.part) || "";
+        params.main_user_id = getValue("scheduleFormMainUserId") || (currentUserData && currentUserData.user_id) || "";
+        params.main_user_name = getValue("scheduleFormMainUserName") || (currentUserData && currentUserData.name) || "";
+        params.confirm_status = getValue("scheduleFormConfirmStatus") || "미확인";
+      }
+
+      return params;
+    }
+
+    async function saveScheduleFromModal() {
+      const params = readScheduleForm();
+      if (!params.date) {
+        alert("날짜를 입력해주세요.");
+        return;
+      }
+      if (!params.category) {
+        alert("구분을 선택해주세요.");
+        return;
+      }
+      if (!params.title) {
+        alert("스케쥴명을 입력해주세요.");
+        return;
+      }
+
+      const isEdit = !!params.schedule_id;
+      const action = isEdit ? "updateSchedule" : "createSchedule";
+      const saveButton = document.querySelector('[data-schedule-action="save"]');
+      if (saveButton) {
+        saveButton.disabled = true;
+        saveButton.textContent = "저장 중...";
+      }
+
+      try {
+        const result = await jsonpRequest(scheduleApiUrl(action, params), "scheduleSaveCallback");
+        if (!result.success) {
+          alert(result.message || "스케쥴 저장에 실패했습니다.");
+          return;
+        }
+
+        saveLastScheduleDraft(params);
+        alert(result.message || "스케쥴이 저장되었습니다.");
+        closeScheduleModal();
+        scheduleState.anchorDate = parseYmd(params.date);
+        loadSchedules();
+      } catch (error) {
+        console.error(error);
+        alert("스케쥴 저장 중 오류가 발생했습니다.");
+      } finally {
+        if (saveButton) {
+          saveButton.disabled = false;
+          saveButton.textContent = "저장";
+        }
+      }
+    }
+
+    async function cancelScheduleById(scheduleId) {
+      if (!scheduleId) return;
+      if (!confirm("이 스케쥴을 취소할까요?")) return;
+
+      try {
+        const result = await jsonpRequest(scheduleApiUrl("cancelSchedule", { schedule_id: scheduleId }), "scheduleCancelCallback");
+        if (!result.success) {
+          alert(result.message || "스케쥴 취소에 실패했습니다.");
+          return;
+        }
+
+        alert(result.message || "스케쥴이 취소되었습니다.");
+        loadSchedules();
+      } catch (error) {
+        console.error(error);
+        alert("스케쥴 취소 중 오류가 발생했습니다.");
+      }
+    }
+
     function afterScreenRender(key) {
       if (key === "home") {
         setTimeout(loadNotices, 0);
+      }
+
+      if (key === "schedule_manager") {
+        setTimeout(initScheduleScreen, 0);
       }
     }
 
@@ -4505,6 +6503,7 @@
     }
 
     const EXECUTABLE_SCREEN_KEYS = new Set([
+      "schedule_manager",
       "qa_equipment_checkout_embed",
       "qa_equipment_return_embed",
       "hvac_004_2",
@@ -4819,6 +6818,12 @@
 
     const screens = {
       home: { tab: "Home", html: () => homeScreen() },
+
+
+      schedule_manager: {
+        tab: "품질경영팀 > 검사/업무 스케쥴 관리",
+        html: () => scheduleScreen()
+      },
 
       qa_overview: {
         tab: "QA 업무 FLOW",
@@ -5616,6 +7621,12 @@
         const noticeButton = event.target.closest("button[data-notice-action]");
         if (noticeButton) {
           handleNoticeAction(noticeButton);
+          return;
+        }
+
+        const scheduleButton = event.target.closest("button[data-schedule-action]");
+        if (scheduleButton) {
+          handleScheduleAction(scheduleButton);
           return;
         }
 
