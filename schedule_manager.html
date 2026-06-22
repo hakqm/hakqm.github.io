@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <title>검사/업무 스케쥴 관리</title>
+  <style>
+    :root {
+      --navy:#22365e;
+      --navy2:#344a8c;
+      --bg:#f4f6fb;
+      --card:#ffffff;
+      --line:#d9e1ec;
+      --muted:#64748b;
+      --text:#172033;
+      --blue:#2563eb;
+      --blue-soft:#eff6ff;
+      --green:#16a34a;
+      --green-soft:#f0fdf4;
+      --orange:#d97706;
+      --orange-soft:#fff7ed;
+      --red:#dc2626;
+      --red-soft:#fef2f2;
+      --purple:#7c3aed;
+      --purple-soft:#f5f3ff;
+      --gray-soft:#f8fafc;
+      --shadow:0 12px 28px rgba(15,23,42,.08);
+      --shadow-sm:0 6px 16px rgba(15,23,42,.06);
+      --radius:18px;
+    }
+
+    *{box-sizing:border-box;}
+    html,body{margin:0;min-height:100%;font-family:"Segoe UI","Apple SD Gothic Neo","Malgun Gothic",sans-serif;background:var(--bg);color:var(--text);}
+    button,input,select,textarea{font:inherit;}
+    button{cursor:pointer;}
+    .hidden{display:none!important;}
+
+    .app-shell{max-width:1440px;margin:0 auto;padding:22px;}
+    .top-panel{display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center;margin-bottom:16px;}
+    .title-block h1{margin:0;font-size:26px;letter-spacing:-.02em;color:var(--navy);}
+    .title-meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px;color:var(--muted);font-size:13px;}
+    .chip{display:inline-flex;align-items:center;gap:6px;min-height:30px;padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:#fff;color:#334155;font-weight:700;font-size:12px;}
+    .chip.primary{background:#eef4ff;color:#193f82;border-color:#cfe0ff;}
+    .top-actions{display:flex;gap:8px;justify-content:flex-end;align-items:center;flex-wrap:wrap;}
+
+    .btn{border:1px solid #c9d4e4;background:#fff;color:#26364f;border-radius:12px;padding:10px 14px;font-weight:800;transition:.16s ease;}
+    .btn:hover{background:#f8fbff;border-color:#aebfd8;}
+    .btn.primary{background:var(--navy2);border-color:var(--navy2);color:#fff;}
+    .btn.primary:hover{background:#26386a;}
+    .btn.danger{background:var(--red);border-color:var(--red);color:#fff;}
+    .btn.small{padding:8px 11px;font-size:12px;border-radius:10px;}
+    .btn.ghost{background:transparent;}
+    .btn:disabled{opacity:.55;cursor:not-allowed;}
+
+    .filter-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:14px;margin-bottom:16px;}
+    .filter-grid{display:grid;grid-template-columns:1.3fr 1.2fr 1fr 1fr 1fr auto;gap:10px;align-items:end;}
+    .field{display:flex;flex-direction:column;gap:6px;min-width:0;}
+    .field label{font-size:12px;color:#52627a;font-weight:800;}
+    .control{width:100%;border:1px solid #cdd7e5;border-radius:12px;background:#fff;min-height:42px;padding:0 12px;color:#172033;outline:none;}
+    textarea.control{min-height:88px;padding:11px 12px;resize:vertical;line-height:1.6;}
+    .control:focus{border-color:var(--navy2);box-shadow:0 0 0 4px rgba(52,74,140,.08);}
+    .seg{display:flex;gap:6px;flex-wrap:wrap;}
+    .seg button{border:1px solid #cbd5e1;background:#fff;color:#334155;border-radius:999px;padding:9px 13px;font-weight:900;font-size:13px;}
+    .seg button.active{background:var(--navy2);border-color:var(--navy2);color:#fff;box-shadow:0 7px 14px rgba(52,74,140,.18);}
+    .nav-row{display:flex;gap:8px;align-items:center;justify-content:flex-end;}
+    .range-title{font-weight:900;color:var(--navy);font-size:16px;text-align:center;min-width:190px;}
+
+    .kpi-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-bottom:16px;}
+    .kpi{background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px 15px;box-shadow:var(--shadow-sm);}
+    .kpi .label{color:var(--muted);font-size:12px;font-weight:800;margin-bottom:6px;}
+    .kpi .value{font-size:26px;line-height:1;font-weight:900;color:var(--navy);}
+    .kpi .sub{margin-top:7px;font-size:12px;color:#78879b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+    .board{background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);overflow:hidden;}
+    .board-head{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:16px 18px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#ffffff,#f8fafc);}
+    .board-head h2{margin:0;color:var(--navy);font-size:18px;letter-spacing:-.01em;}
+    .board-head .status{color:var(--muted);font-size:13px;font-weight:700;}
+
+    .week-grid{display:grid;grid-template-columns:repeat(7,minmax(180px,1fr));border-top:0;overflow:auto;}
+    .day-col{min-height:520px;border-right:1px solid #e5ebf3;background:#fbfdff;}
+    .day-col:last-child{border-right:0;}
+    .day-head{position:sticky;top:0;z-index:2;background:#f5f8fc;border-bottom:1px solid #e2e8f0;padding:12px;}
+    .day-name{font-size:12px;color:#52627a;font-weight:900;margin-bottom:5px;}
+    .day-date{display:flex;align-items:center;justify-content:space-between;gap:8px;font-weight:900;color:var(--navy);}
+    .day-date .num{font-size:20px;}
+    .today-pill{font-size:10px;padding:4px 7px;border-radius:999px;background:#e0edff;color:#174ea6;font-weight:900;}
+    .day-body{display:grid;gap:9px;padding:10px;align-content:start;}
+    .empty-day{color:#9aa6b5;font-size:12px;text-align:center;padding:20px 6px;border:1px dashed #d8e1ec;border-radius:14px;background:#fff;}
+
+    .task-card{border:1px solid #dbe5f1;background:#fff;border-radius:14px;padding:11px;box-shadow:0 5px 14px rgba(15,23,42,.045);transition:.16s ease;}
+    .task-card:hover{transform:translateY(-1px);box-shadow:0 9px 20px rgba(15,23,42,.08);border-color:#bfd0e6;}
+    .task-top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start;margin-bottom:7px;}
+    .task-title{font-weight:900;color:#162640;line-height:1.35;font-size:14px;word-break:keep-all;}
+    .task-time{font-size:11px;color:#475569;background:#f1f5f9;border-radius:999px;padding:4px 7px;white-space:nowrap;font-weight:800;}
+    .task-meta{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:7px;}
+    .badge{display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:4px 7px;font-size:11px;font-weight:900;line-height:1;}
+    .b-inspection{background:#eaf2ff;color:#1554ad;}
+    .b-customer{background:#ecfdf3;color:#027a48;}
+    .b-audit{background:#fff4e8;color:#b45309;}
+    .b-trip{background:#f5f3ff;color:#6d28d9;}
+    .b-internal{background:#f1f5f9;color:#475569;}
+    .b-etc{background:#f8fafc;color:#475569;border:1px solid #e2e8f0;}
+    .b-status{background:#f8fafc;color:#475569;border:1px solid #e2e8f0;}
+    .b-done{background:#eefdf5;color:#047857;}
+    .b-cancel{background:#fef2f2;color:#b91c1c;}
+    .task-line{font-size:12px;color:#64748b;line-height:1.55;margin-top:7px;word-break:break-word;}
+
+    .table-wrap{overflow:auto;}
+    table{width:100%;border-collapse:separate;border-spacing:0;font-size:13px;}
+    thead th{position:sticky;top:0;background:#f6f8fc;color:#33445f;font-size:12px;text-transform:uppercase;z-index:2;}
+    th,td{padding:11px 10px;border-bottom:1px solid #e7edf5;text-align:left;vertical-align:top;line-height:1.55;}
+    tbody tr:hover td{background:#fbfdff;}
+    .month-section{padding:16px 18px;border-bottom:1px solid #edf1f6;}
+    .month-title{font-size:15px;font-weight:900;color:var(--navy);margin-bottom:10px;}
+    .year-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;padding:16px;}
+    .month-card{border:1px solid #dde6f2;border-radius:16px;background:#fff;padding:14px;min-height:118px;}
+    .month-card .m{font-weight:900;color:var(--navy);margin-bottom:10px;}
+    .month-card .count{font-size:28px;font-weight:900;color:var(--navy2);line-height:1;}
+    .month-card .hint{color:#748297;font-size:12px;margin-top:7px;}
+
+    .modal{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;background:rgba(15,23,42,.55);padding:18px;}
+    .modal-card{width:100%;max-width:760px;max-height:92vh;overflow:auto;background:#fff;border-radius:24px;box-shadow:0 28px 70px rgba(15,23,42,.28);border:1px solid #e2e8f0;}
+    .modal-head{position:sticky;top:0;background:#fff;z-index:2;display:flex;justify-content:space-between;gap:16px;align-items:center;padding:18px 20px;border-bottom:1px solid #e5ebf3;}
+    .modal-head h3{margin:0;color:var(--navy);font-size:20px;}
+    .modal-close{width:36px;height:36px;border:0;border-radius:50%;background:#eef2f7;color:#334155;font-size:22px;line-height:1;}
+    .modal-body{padding:18px 20px 22px;}
+    .form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
+    .form-grid .full{grid-column:1 / -1;}
+    .advanced{margin-top:14px;border:1px solid #e2e8f0;border-radius:16px;overflow:hidden;}
+    .advanced summary{cursor:pointer;padding:13px 14px;background:#f8fafc;font-weight:900;color:#334155;}
+    .advanced .inner{padding:14px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;}
+    .modal-actions{display:flex;gap:8px;justify-content:space-between;align-items:center;flex-wrap:wrap;margin-top:16px;padding-top:14px;border-top:1px solid #e7edf5;}
+    .left-actions,.right-actions{display:flex;gap:8px;flex-wrap:wrap;}
+
+    .login-panel{max-width:520px;margin:70px auto;background:#fff;border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow);padding:28px;}
+    .login-panel h1{margin:0 0 10px;color:var(--navy);font-size:24px;}
+    .login-panel p{margin:0 0 18px;color:var(--muted);line-height:1.7;font-size:14px;}
+    .login-grid{display:grid;gap:10px;}
+    .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:1100;background:#13263f;color:#fff;padding:12px 16px;border-radius:999px;font-weight:800;font-size:13px;box-shadow:0 10px 26px rgba(15,23,42,.24);}
+    .loading{padding:38px;text-align:center;color:#64748b;font-weight:800;}
+
+    @media(max-width:1180px){.filter-grid{grid-template-columns:1fr 1fr;}.kpi-grid{grid-template-columns:repeat(3,1fr);}.week-grid{grid-template-columns:repeat(7,220px);}.year-grid{grid-template-columns:repeat(3,1fr);}}
+    @media(max-width:760px){.app-shell{padding:14px;}.top-panel{grid-template-columns:1fr;}.top-actions{justify-content:flex-start;}.filter-grid{grid-template-columns:1fr;}.kpi-grid{grid-template-columns:repeat(2,1fr);}.form-grid,.advanced .inner{grid-template-columns:1fr;}.range-title{text-align:left;}.nav-row{justify-content:flex-start;}.year-grid{grid-template-columns:1fr;}}
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script>
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwn9I60-14GHDQk_rNF_uJYBpig-Bovl7Qqje_eGGjcFmZJZfqQgtpUg6necytvlQQ-/exec";
+    const LOGIN_STORAGE_KEY = "hak_login_user";
+    const LOGIN_EXPIRE_MS = 30 * 60 * 1000;
+    const LAST_INPUT_KEY = "hak_schedule_last_input";
+    const PARTS = ["QA", "상선/해군", "해양", "산업공조", "FAN", "FUELCELL"];
+    const DEFAULT_CATEGORIES = [
+      { category:"INSPECTION", display_name:"검사", color:"blue" },
+      { category:"CUSTOMER", display_name:"고객검사", color:"green" },
+      { category:"AUDIT", display_name:"업체감사", color:"orange" },
+      { category:"BUSINESS_TRIP", display_name:"출장검사", color:"purple" },
+      { category:"INTERNAL", display_name:"내부업무", color:"gray" },
+      { category:"ETC", display_name:"기타", color:"slate" }
+    ];
+
+    const state = {
+      user:null,
+      categories:[],
+      schedules:[],
+      loading:false,
+      scope:"mine",
+      period:"week",
+      cursor:new Date(),
+      part:"",
+      personKeyword:"",
+      category:"",
+      status:"",
+      editSchedule:null
+    };
+
+    const root = document.getElementById("root");
+
+    function pad(n){ return String(n).padStart(2,"0"); }
+    function ymd(d){ return d.getFullYear() + "-" + pad(d.getMonth()+1) + "-" + pad(d.getDate()); }
+    function parseDate(s){ const d = new Date(String(s || "").replace(/-/g,"/")); return isNaN(d.getTime()) ? null : d; }
+    function cloneDate(d){ return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
+    function escapeHtml(v){ return String(v == null ? "" : v).replace(/[&<>'"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;","\"":"&quot;"}[c])); }
+    function weekdayName(d){ return ["일","월","화","수","목","금","토"][d.getDay()]; }
+    function mondayOf(d){ const x=cloneDate(d); const day=x.getDay(); const diff=day===0 ? -6 : 1-day; x.setDate(x.getDate()+diff); return x; }
+    function lastDayOfMonth(year, month){ return new Date(year, month+1, 0); }
+    function isAdmin(){ return state.user && String(state.user.role || "").toLowerCase() === "admin"; }
+
+    function getPeriodRange(){
+      const d = cloneDate(state.cursor);
+      if(state.period === "year") return { from:new Date(d.getFullYear(),0,1), to:new Date(d.getFullYear(),11,31) };
+      if(state.period === "month") return { from:new Date(d.getFullYear(),d.getMonth(),1), to:lastDayOfMonth(d.getFullYear(),d.getMonth()) };
+      const from = mondayOf(d); const to = cloneDate(from); to.setDate(to.getDate()+6); return { from, to };
+    }
+
+    function getRangeTitle(){
+      const r = getPeriodRange();
+      if(state.period === "year") return `${state.cursor.getFullYear()}년`;
+      if(state.period === "month") return `${state.cursor.getFullYear()}년 ${pad(state.cursor.getMonth()+1)}월`;
+      return `${ymd(r.from)} ~ ${ymd(r.to)}`;
+    }
+
+    function jsonp(action, params={}){
+      return new Promise((resolve,reject)=>{
+        const cb = "hakScheduleCb_" + Date.now() + "_" + Math.random().toString(36).slice(2);
+        const query = new URLSearchParams({ action, callback:cb });
+        Object.keys(params).forEach(k => {
+          if(params[k] !== undefined && params[k] !== null && params[k] !== "") query.append(k, params[k]);
+        });
+        const script = document.createElement("script");
+        const timer = setTimeout(() => {
+          cleanup(); reject(new Error("요청 시간이 초과되었습니다."));
+        }, 20000);
+        function cleanup(){ clearTimeout(timer); delete window[cb]; script.remove(); }
+        window[cb] = (data) => { cleanup(); resolve(data); };
+        script.onerror = () => { cleanup(); reject(new Error("서버 연결에 실패했습니다.")); };
+        script.src = WEB_APP_URL + "?" + query.toString();
+        document.body.appendChild(script);
+      });
+    }
+
+    function loadSavedUser(){
+      const saved = localStorage.getItem(LOGIN_STORAGE_KEY);
+      if(!saved) return null;
+      try{
+        const parsed = JSON.parse(saved);
+        if(!parsed.user || !parsed.lastActivity) return null;
+        if(Date.now() - parsed.lastActivity > LOGIN_EXPIRE_MS){ localStorage.removeItem(LOGIN_STORAGE_KEY); return null; }
+        parsed.lastActivity = Date.now();
+        localStorage.setItem(LOGIN_STORAGE_KEY, JSON.stringify(parsed));
+        return parsed.user;
+      }catch(e){ localStorage.removeItem(LOGIN_STORAGE_KEY); return null; }
+    }
+
+    function saveUser(user){
+      state.user = user;
+      localStorage.setItem(LOGIN_STORAGE_KEY, JSON.stringify({ user, lastActivity:Date.now() }));
+    }
+
+    function userParams(){
+      return {
+        user_id: state.user.user_id,
+        user_name: state.user.name,
+        emp_no: state.user.emp_no
+      };
+    }
+
+    function categoryName(code){
+      const item = (state.categories.length ? state.categories : DEFAULT_CATEGORIES).find(c => c.category === code);
+      return item ? item.display_name : code || "기타";
+    }
+
+    function categoryBadgeClass(code){
+      if(code === "INSPECTION") return "b-inspection";
+      if(code === "CUSTOMER") return "b-customer";
+      if(code === "AUDIT") return "b-audit";
+      if(code === "BUSINESS_TRIP") return "b-trip";
+      if(code === "INTERNAL") return "b-internal";
+      return "b-etc";
+    }
+
+    function statusBadgeClass(status){
+      if(status === "완료") return "b-done";
+      if(status === "취소") return "b-cancel";
+      return "b-status";
+    }
+
+    function toast(msg){
+      const old = document.querySelector(".toast"); if(old) old.remove();
+      const el = document.createElement("div"); el.className="toast"; el.textContent=msg;
+      document.body.appendChild(el); setTimeout(()=>el.remove(),2600);
+    }
+
+    function renderLogin(){
+      root.innerHTML = `
+        <div class="login-panel">
+          <h1>스케쥴 관리 로그인</h1>
+          <p>HAK QM 포털과 동일한 이름/사번으로 로그인합니다. 이미 포털에서 로그인했다면 새로고침 후 자동 연동됩니다.</p>
+          <div class="login-grid">
+            <input id="loginName" class="control" placeholder="이름" />
+            <input id="loginEmpNo" class="control" placeholder="사번" />
+            <button id="loginBtn" class="btn primary">로그인</button>
+          </div>
+        </div>`;
+      document.getElementById("loginBtn").addEventListener("click", doLogin);
+      document.getElementById("loginEmpNo").addEventListener("keydown", e => { if(e.key === "Enter") doLogin(); });
+    }
+
+    async function doLogin(){
+      const name = document.getElementById("loginName").value.trim();
+      const emp_no = document.getElementById("loginEmpNo").value.trim();
+      if(!name || !emp_no){ toast("이름과 사번을 입력해주세요."); return; }
+      const btn = document.getElementById("loginBtn"); btn.disabled = true; btn.textContent = "로그인 중...";
+      try{
+        const res = await jsonp("login", { name, emp_no });
+        if(!res.success) throw new Error(res.message || "로그인 실패");
+        saveUser(res.user);
+        await initApp();
+      }catch(err){ toast(err.message); }
+      finally{ btn.disabled = false; btn.textContent = "로그인"; }
+    }
+
+    function renderShell(){
+      const partOptions = PARTS.map(p => `<option value="${escapeHtml(p)}" ${state.part===p?"selected":""}>${escapeHtml(p)}</option>`).join("");
+      const categoryOptions = (state.categories.length ? state.categories : DEFAULT_CATEGORIES).map(c => `<option value="${escapeHtml(c.category)}" ${state.category===c.category?"selected":""}>${escapeHtml(c.display_name)}</option>`).join("");
+      root.innerHTML = `
+        <div class="app-shell">
+          <div class="top-panel">
+            <div class="title-block">
+              <h1>검사/업무 스케쥴 관리</h1>
+              <div class="title-meta">
+                <span class="chip primary">${escapeHtml(state.user.name)}님</span>
+                <span class="chip">${escapeHtml(state.user.part || "파트 미지정")}</span>
+                <span class="chip">${escapeHtml(state.user.role || "user")}</span>
+              </div>
+            </div>
+            <div class="top-actions">
+              <button id="reloadBtn" class="btn">새로고침</button>
+              <button id="newBtn" class="btn primary">+ 스케쥴 등록</button>
+            </div>
+          </div>
+
+          <div class="filter-card">
+            <div class="filter-grid">
+              <div class="field">
+                <label>보기 범위</label>
+                <div class="seg" id="scopeSeg">
+                  <button data-scope="mine" class="${state.scope==="mine"?"active":""}">내 일정</button>
+                  <button data-scope="part" class="${state.scope==="part"?"active":""}">파트</button>
+                  <button data-scope="team" class="${state.scope==="team"?"active":""}">전체 팀</button>
+                </div>
+              </div>
+              <div class="field">
+                <label>기간</label>
+                <div class="seg" id="periodSeg">
+                  <button data-period="week" class="${state.period==="week"?"active":""}">주별</button>
+                  <button data-period="month" class="${state.period==="month"?"active":""}">월별</button>
+                  <button data-period="year" class="${state.period==="year"?"active":""}">년도별</button>
+                </div>
+              </div>
+              <div class="field ${state.scope==="part" ? "" : "hidden"}" id="partField">
+                <label>파트</label>
+                <select id="partFilter" class="control"><option value="">내 파트</option>${partOptions}</select>
+              </div>
+              <div class="field">
+                <label>담당자명 검색</label>
+                <input id="personFilter" class="control" value="${escapeHtml(state.personKeyword)}" placeholder="예: 황지석" />
+              </div>
+              <div class="field">
+                <label>구분 / 상태</label>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                  <select id="categoryFilter" class="control"><option value="">전체</option>${categoryOptions}</select>
+                  <select id="statusFilter" class="control">
+                    <option value="" ${state.status===""?"selected":""}>전체</option>
+                    ${["예정","확정","진행","완료","취소","보류"].map(s=>`<option value="${s}" ${state.status===s?"selected":""}>${s}</option>`).join("")}
+                  </select>
+                </div>
+              </div>
+              <div class="field">
+                <label>이동</label>
+                <div class="nav-row">
+                  <button id="prevBtn" class="btn small">‹</button>
+                  <button id="todayBtn" class="btn small">오늘</button>
+                  <button id="nextBtn" class="btn small">›</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="kpi-grid" id="kpiGrid"></div>
+          <div class="board">
+            <div class="board-head">
+              <h2 id="boardTitle">${escapeHtml(getRangeTitle())}</h2>
+              <div class="status" id="boardStatus">불러오는 중...</div>
+            </div>
+            <div id="scheduleView" class="loading">스케쥴을 불러오는 중입니다.</div>
+          </div>
+        </div>`;
+
+      bindShellEvents();
+    }
+
+    function bindShellEvents(){
+      document.getElementById("reloadBtn").onclick = loadSchedules;
+      document.getElementById("newBtn").onclick = () => openForm(null);
+      document.getElementById("prevBtn").onclick = () => movePeriod(-1);
+      document.getElementById("nextBtn").onclick = () => movePeriod(1);
+      document.getElementById("todayBtn").onclick = () => { state.cursor = new Date(); loadSchedules(); };
+      document.querySelectorAll("#scopeSeg button").forEach(btn => btn.onclick = () => { state.scope = btn.dataset.scope; if(state.scope!=="part") state.part=""; loadSchedules(true); });
+      document.querySelectorAll("#periodSeg button").forEach(btn => btn.onclick = () => { state.period = btn.dataset.period; loadSchedules(true); });
+      const partFilter = document.getElementById("partFilter"); if(partFilter) partFilter.onchange = () => { state.part = partFilter.value; loadSchedules(); };
+      const categoryFilter = document.getElementById("categoryFilter"); categoryFilter.onchange = () => { state.category = categoryFilter.value; loadSchedules(); };
+      const statusFilter = document.getElementById("statusFilter"); statusFilter.onchange = () => { state.status = statusFilter.value; loadSchedules(); };
+      const personFilter = document.getElementById("personFilter");
+      let timer = null;
+      personFilter.addEventListener("input", () => {
+        clearTimeout(timer);
+        timer = setTimeout(() => { state.personKeyword = personFilter.value.trim(); loadSchedules(); }, 350);
+      });
+    }
+
+    function movePeriod(delta){
+      const d = cloneDate(state.cursor);
+      if(state.period === "year") d.setFullYear(d.getFullYear()+delta);
+      else if(state.period === "month") d.setMonth(d.getMonth()+delta);
+      else d.setDate(d.getDate() + delta*7);
+      state.cursor = d; loadSchedules();
+    }
+
+    async function loadCategories(){
+      try{
+        const res = await jsonp("getScheduleCategories", userParams());
+        state.categories = res.success && Array.isArray(res.categories) ? res.categories : DEFAULT_CATEGORIES;
+      }catch(e){ state.categories = DEFAULT_CATEGORIES; }
+    }
+
+    async function loadSchedules(repaintShell=false){
+      if(repaintShell) renderShell();
+      const statusEl = document.getElementById("boardStatus");
+      const viewEl = document.getElementById("scheduleView");
+      const titleEl = document.getElementById("boardTitle");
+      if(statusEl) statusEl.textContent = "불러오는 중...";
+      if(titleEl) titleEl.textContent = getRangeTitle();
+      if(viewEl) viewEl.innerHTML = `<div class="loading">스케쥴을 불러오는 중입니다.</div>`;
+      const r = getPeriodRange();
+      const params = Object.assign({}, userParams(), { from_date:ymd(r.from), to_date:ymd(r.to) });
+      if(state.scope === "mine" && !state.personKeyword) params.main_user_id = state.user.user_id;
+      if(state.scope === "part") params.part = state.part || state.user.part;
+      if(state.category) params.category = state.category;
+      if(state.status) params.status = state.status;
+      try{
+        const res = await jsonp("getSchedules", params);
+        if(!res.success) throw new Error(res.message || "스케쥴을 불러오지 못했습니다.");
+        let list = Array.isArray(res.schedules) ? res.schedules : [];
+        if(state.personKeyword){
+          const key = state.personKeyword.toLowerCase();
+          list = list.filter(s => String(s.main_user_name || "").toLowerCase().includes(key));
+        }
+        if(state.scope === "part" && !state.part && state.user.part) {
+          list = list.filter(s => s.part === state.user.part);
+        }
+        state.schedules = list;
+        renderKpis();
+        renderSchedules();
+      }catch(err){
+        if(statusEl) statusEl.textContent = "오류";
+        if(viewEl) viewEl.innerHTML = `<div class="loading">${escapeHtml(err.message)}</div>`;
+      }
+    }
+
+    function renderKpis(){
+      const total = state.schedules.length;
+      const pending = state.schedules.filter(s => ["예정","확정","진행"].includes(s.status)).length;
+      const done = state.schedules.filter(s => s.status === "완료").length;
+      const cancel = state.schedules.filter(s => s.status === "취소").length;
+      const people = new Set(state.schedules.map(s => s.main_user_name).filter(Boolean)).size;
+      document.getElementById("kpiGrid").innerHTML = `
+        <div class="kpi"><div class="label">전체 일정</div><div class="value">${total}</div><div class="sub">${escapeHtml(getRangeTitle())}</div></div>
+        <div class="kpi"><div class="label">진행 예정</div><div class="value">${pending}</div><div class="sub">예정/확정/진행</div></div>
+        <div class="kpi"><div class="label">완료</div><div class="value">${done}</div><div class="sub">완료 처리</div></div>
+        <div class="kpi"><div class="label">취소</div><div class="value">${cancel}</div><div class="sub">취소 일정</div></div>
+        <div class="kpi"><div class="label">담당자</div><div class="value">${people}</div><div class="sub">검색 결과 기준</div></div>`;
+    }
+
+    function renderSchedules(){
+      const status = document.getElementById("boardStatus");
+      status.textContent = `${state.schedules.length}건`;
+      if(state.period === "week") renderWeek();
+      else if(state.period === "month") renderMonth();
+      else renderYear();
+    }
+
+    function sortedSchedules(){
+      return [...state.schedules].sort((a,b)=>`${a.date} ${a.start_time||"99:99"}`.localeCompare(`${b.date} ${b.start_time||"99:99"}`));
+    }
+
+    function cardHtml(s){
+      const time = s.start_time || s.end_time ? `${s.start_time || ""}${s.end_time ? "~" + s.end_time : ""}` : "시간 미정";
+      const sub = [s.project_no, s.item_code, s.qty].filter(Boolean).join(" · ");
+      return `<div class="task-card" data-id="${escapeHtml(s.schedule_id)}">
+        <div class="task-top"><div class="task-title">${escapeHtml(s.title)}</div><div class="task-time">${escapeHtml(time)}</div></div>
+        <div class="task-meta">
+          <span class="badge ${categoryBadgeClass(s.category)}">${escapeHtml(categoryName(s.category))}</span>
+          <span class="badge ${statusBadgeClass(s.status)}">${escapeHtml(s.status || "예정")}</span>
+        </div>
+        <div class="task-line">${escapeHtml(s.main_user_name || "-")} · ${escapeHtml(s.part || "-")}${s.location ? " · " + escapeHtml(s.location) : ""}</div>
+        ${sub ? `<div class="task-line">${escapeHtml(sub)}</div>` : ""}
+      </div>`;
+    }
+
+    function bindTaskClicks(){
+      document.querySelectorAll(".task-card").forEach(el => {
+        el.addEventListener("click", () => {
+          const item = state.schedules.find(s => s.schedule_id === el.dataset.id);
+          if(item) openForm(item);
+        });
+      });
+    }
+
+    function renderWeek(){
+      const r = getPeriodRange();
+      const days = [];
+      for(let i=0;i<7;i++){ const d=cloneDate(r.from); d.setDate(d.getDate()+i); days.push(d); }
+      const today = ymd(new Date());
+      document.getElementById("scheduleView").innerHTML = `<div class="week-grid">${days.map(d => {
+        const date = ymd(d);
+        const list = sortedSchedules().filter(s => s.date === date);
+        return `<div class="day-col">
+          <div class="day-head"><div class="day-name">${weekdayName(d)}요일</div><div class="day-date"><span class="num">${pad(d.getMonth()+1)}.${pad(d.getDate())}</span>${date===today?`<span class="today-pill">TODAY</span>`:""}</div></div>
+          <div class="day-body">${list.length ? list.map(cardHtml).join("") : `<div class="empty-day">등록된 일정 없음</div>`}</div>
+        </div>`;
+      }).join("")}</div>`;
+      bindTaskClicks();
+    }
+
+    function renderMonth(){
+      const rows = sortedSchedules();
+      document.getElementById("scheduleView").innerHTML = `<div class="table-wrap"><table>
+        <thead><tr><th>일자</th><th>시간</th><th>구분</th><th>스케쥴</th><th>담당</th><th>파트</th><th>상태</th><th>장소/고객</th></tr></thead>
+        <tbody>${rows.length ? rows.map(s => `<tr class="task-row" data-id="${escapeHtml(s.schedule_id)}"><td>${escapeHtml(s.date)}</td><td>${escapeHtml((s.start_time||"") + (s.end_time?"~"+s.end_time:""))}</td><td><span class="badge ${categoryBadgeClass(s.category)}">${escapeHtml(categoryName(s.category))}</span></td><td><strong>${escapeHtml(s.title)}</strong><br><span style="color:#64748b">${escapeHtml([s.project_no,s.item_code,s.qty].filter(Boolean).join(" · "))}</span></td><td>${escapeHtml(s.main_user_name)}</td><td>${escapeHtml(s.part)}</td><td><span class="badge ${statusBadgeClass(s.status)}">${escapeHtml(s.status)}</span></td><td>${escapeHtml([s.location,s.customer].filter(Boolean).join(" / "))}</td></tr>`).join("") : `<tr><td colspan="8" style="text-align:center;color:#94a3b8;padding:34px;">등록된 일정이 없습니다.</td></tr>`}</tbody>
+      </table></div>`;
+      document.querySelectorAll(".task-row").forEach(el => el.onclick = () => { const item = state.schedules.find(s => s.schedule_id === el.dataset.id); if(item) openForm(item); });
+    }
+
+    function renderYear(){
+      const months = Array.from({length:12},(_,i)=>i+1);
+      document.getElementById("scheduleView").innerHTML = `<div class="year-grid">${months.map(m => {
+        const list = state.schedules.filter(s => Number(String(s.date).slice(5,7)) === m);
+        const people = new Set(list.map(s=>s.main_user_name).filter(Boolean)).size;
+        return `<div class="month-card"><div class="m">${m}월</div><div class="count">${list.length}</div><div class="hint">담당자 ${people}명 · 완료 ${list.filter(s=>s.status==="완료").length}건</div></div>`;
+      }).join("")}</div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>일자</th><th>구분</th><th>스케쥴</th><th>담당</th><th>파트</th><th>상태</th></tr></thead>
+        <tbody>${sortedSchedules().map(s=>`<tr class="task-row" data-id="${escapeHtml(s.schedule_id)}"><td>${escapeHtml(s.date)}</td><td>${escapeHtml(categoryName(s.category))}</td><td><strong>${escapeHtml(s.title)}</strong></td><td>${escapeHtml(s.main_user_name)}</td><td>${escapeHtml(s.part)}</td><td>${escapeHtml(s.status)}</td></tr>`).join("") || `<tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:34px;">등록된 일정이 없습니다.</td></tr>`}</tbody>
+      </table></div>`;
+      document.querySelectorAll(".task-row").forEach(el => el.onclick = () => { const item = state.schedules.find(s => s.schedule_id === el.dataset.id); if(item) openForm(item); });
+    }
+
+    function scheduleToFormData(s){
+      return {
+        schedule_id:s.schedule_id || "", date:s.date || ymd(new Date()), category:s.category || "INSPECTION", title:s.title || "",
+        start_time:s.start_time || "", end_time:s.end_time || "", location:s.location || "", customer:s.customer || "",
+        memo:s.memo || "", project_no:s.project_no || "", item_code:s.item_code || "", qty:s.qty || "", sub_user_names:s.sub_user_names || "",
+        status:s.status || "예정", priority:s.priority || "일반", visibility:s.visibility || "팀", part:s.part || state.user.part || "",
+        main_user_id:s.main_user_id || state.user.user_id, main_user_name:s.main_user_name || state.user.name
+      };
+    }
+
+    function openForm(schedule){
+      state.editSchedule = schedule;
+      const data = schedule ? scheduleToFormData(schedule) : scheduleToFormData({ date:ymd(state.cursor), category:"INSPECTION" });
+      const canEdit = !schedule || isAdmin() || schedule.main_user_id === state.user.user_id || schedule.created_by_user_id === state.user.user_id;
+      const cats = (state.categories.length ? state.categories : DEFAULT_CATEGORIES).map(c => `<option value="${escapeHtml(c.category)}" ${data.category===c.category?"selected":""}>${escapeHtml(c.display_name)}</option>`).join("");
+      const partOpts = PARTS.map(p => `<option value="${escapeHtml(p)}" ${data.part===p?"selected":""}>${escapeHtml(p)}</option>`).join("");
+      const modal = document.createElement("div");
+      modal.className = "modal";
+      modal.innerHTML = `<div class="modal-card">
+        <div class="modal-head"><h3>${schedule ? "스케쥴 상세/수정" : "스케쥴 등록"}</h3><button class="modal-close" type="button">×</button></div>
+        <div class="modal-body">
+          ${!canEdit ? `<div class="chip" style="margin-bottom:12px;">조회만 가능합니다.</div>` : ""}
+          <div class="form-grid">
+            <div class="field"><label>날짜</label><input id="fDate" type="date" class="control" value="${escapeHtml(data.date)}" ${!canEdit?"disabled":""}></div>
+            <div class="field"><label>구분</label><select id="fCategory" class="control" ${!canEdit?"disabled":""}>${cats}</select></div>
+            <div class="field full"><label>스케쥴명</label><input id="fTitle" class="control" value="${escapeHtml(data.title)}" placeholder="예: HMD-2880 ACAP 검사" ${!canEdit?"disabled":""}></div>
+            <div class="field"><label>시작 시간</label><input id="fStart" type="time" class="control" value="${escapeHtml(data.start_time)}" ${!canEdit?"disabled":""}></div>
+            <div class="field"><label>종료 시간</label><input id="fEnd" type="time" class="control" value="${escapeHtml(data.end_time)}" ${!canEdit?"disabled":""}></div>
+            <div class="field"><label>장소</label><input id="fLocation" class="control" value="${escapeHtml(data.location)}" ${!canEdit?"disabled":""}></div>
+            <div class="field"><label>고객/업체</label><input id="fCustomer" class="control" value="${escapeHtml(data.customer)}" ${!canEdit?"disabled":""}></div>
+            <div class="field full"><label>메모</label><textarea id="fMemo" class="control" ${!canEdit?"disabled":""}>${escapeHtml(data.memo)}</textarea></div>
+          </div>
+          <details class="advanced">
+            <summary>상세 입력</summary>
+            <div class="inner">
+              <div class="field"><label>프로젝트/호선</label><input id="fProject" class="control" value="${escapeHtml(data.project_no)}" ${!canEdit?"disabled":""}></div>
+              <div class="field"><label>품목/Item</label><input id="fItem" class="control" value="${escapeHtml(data.item_code)}" ${!canEdit?"disabled":""}></div>
+              <div class="field"><label>수량</label><input id="fQty" class="control" value="${escapeHtml(data.qty)}" placeholder="예: 2EA" ${!canEdit?"disabled":""}></div>
+              <div class="field"><label>동행/참조자</label><input id="fSub" class="control" value="${escapeHtml(data.sub_user_names)}" ${!canEdit?"disabled":""}></div>
+              <div class="field"><label>상태</label><select id="fStatus" class="control" ${!canEdit?"disabled":""}>${["예정","확정","진행","완료","취소","보류"].map(s=>`<option value="${s}" ${data.status===s?"selected":""}>${s}</option>`).join("")}</select></div>
+              <div class="field"><label>우선순위</label><select id="fPriority" class="control" ${!canEdit?"disabled":""}>${["일반","중요","긴급"].map(s=>`<option value="${s}" ${data.priority===s?"selected":""}>${s}</option>`).join("")}</select></div>
+              <div class="field"><label>공개 범위</label><select id="fVisibility" class="control" ${!canEdit?"disabled":""}>${["팀","파트","개인"].map(s=>`<option value="${s}" ${data.visibility===s?"selected":""}>${s}</option>`).join("")}</select></div>
+              <div class="field"><label>파트</label><select id="fPart" class="control" ${(!canEdit || !isAdmin())?"disabled":""}>${partOpts}</select></div>
+              <div class="field"><label>담당자 ID</label><input id="fMainId" class="control" value="${escapeHtml(data.main_user_id)}" ${(!canEdit || !isAdmin())?"disabled":""}></div>
+              <div class="field"><label>담당자명</label><input id="fMainName" class="control" value="${escapeHtml(data.main_user_name)}" ${(!canEdit || !isAdmin())?"disabled":""}></div>
+            </div>
+          </details>
+          <div class="modal-actions">
+            <div class="left-actions">
+              ${!schedule ? `<button type="button" id="loadLastBtn" class="btn">최근 입력 불러오기</button>` : ""}
+              ${schedule && canEdit ? `<button type="button" id="cancelScheduleBtn" class="btn danger">일정 취소</button>` : ""}
+            </div>
+            <div class="right-actions">
+              <button type="button" class="btn closeBtn">닫기</button>
+              ${canEdit ? `<button type="button" id="saveScheduleBtn" class="btn primary">저장</button>` : ""}
+            </div>
+          </div>
+        </div>
+      </div>`;
+      document.body.appendChild(modal);
+      modal.querySelector(".modal-close").onclick = () => modal.remove();
+      modal.querySelector(".closeBtn").onclick = () => modal.remove();
+      const loadLastBtn = modal.querySelector("#loadLastBtn"); if(loadLastBtn) loadLastBtn.onclick = () => loadLastInput(modal);
+      const saveBtn = modal.querySelector("#saveScheduleBtn"); if(saveBtn) saveBtn.onclick = () => saveSchedule(modal, schedule);
+      const cancelBtn = modal.querySelector("#cancelScheduleBtn"); if(cancelBtn) cancelBtn.onclick = () => cancelSchedule(schedule, modal);
+    }
+
+    function collectForm(modal){
+      return {
+        date:modal.querySelector("#fDate").value,
+        category:modal.querySelector("#fCategory").value,
+        title:modal.querySelector("#fTitle").value.trim(),
+        start_time:modal.querySelector("#fStart").value,
+        end_time:modal.querySelector("#fEnd").value,
+        location:modal.querySelector("#fLocation").value.trim(),
+        customer:modal.querySelector("#fCustomer").value.trim(),
+        memo:modal.querySelector("#fMemo").value.trim(),
+        project_no:modal.querySelector("#fProject").value.trim(),
+        item_code:modal.querySelector("#fItem").value.trim(),
+        qty:modal.querySelector("#fQty").value.trim(),
+        sub_user_names:modal.querySelector("#fSub").value.trim(),
+        status:modal.querySelector("#fStatus").value,
+        priority:modal.querySelector("#fPriority").value,
+        visibility:modal.querySelector("#fVisibility").value,
+        part:modal.querySelector("#fPart").value,
+        main_user_id:modal.querySelector("#fMainId").value.trim(),
+        main_user_name:modal.querySelector("#fMainName").value.trim()
+      };
+    }
+
+    function loadLastInput(modal){
+      const saved = localStorage.getItem(LAST_INPUT_KEY);
+      if(!saved){ toast("최근 입력값이 없습니다."); return; }
+      try{
+        const data = JSON.parse(saved);
+        const set = (id, value) => { const el = modal.querySelector(id); if(el && value != null) el.value = value; };
+        set("#fCategory", data.category); set("#fTitle", data.title); set("#fStart", data.start_time); set("#fEnd", data.end_time);
+        set("#fLocation", data.location); set("#fCustomer", data.customer); set("#fMemo", data.memo); set("#fProject", data.project_no);
+        set("#fItem", data.item_code); set("#fQty", data.qty); set("#fSub", data.sub_user_names); set("#fPriority", data.priority); set("#fVisibility", data.visibility);
+        toast("최근 입력값을 불러왔습니다.");
+      }catch(e){ toast("최근 입력값을 불러오지 못했습니다."); }
+    }
+
+    async function saveSchedule(modal, schedule){
+      const data = collectForm(modal);
+      if(!data.date || !data.category || !data.title){ toast("날짜, 구분, 스케쥴명은 필수입니다."); return; }
+      const btn = modal.querySelector("#saveScheduleBtn"); btn.disabled=true; btn.textContent="저장 중...";
+      try{
+        const action = schedule ? "updateSchedule" : "createSchedule";
+        const params = Object.assign({}, userParams(), data);
+        if(schedule) params.schedule_id = schedule.schedule_id;
+        const res = await jsonp(action, params);
+        if(!res.success) throw new Error(res.message || "저장 실패");
+        localStorage.setItem(LAST_INPUT_KEY, JSON.stringify(data));
+        modal.remove();
+        toast(res.message || "저장되었습니다.");
+        await loadSchedules();
+      }catch(err){ toast(err.message); }
+      finally{ btn.disabled=false; btn.textContent="저장"; }
+    }
+
+    async function cancelSchedule(schedule, modal){
+      if(!confirm("이 스케쥴을 취소 처리할까요?")) return;
+      try{
+        const res = await jsonp("cancelSchedule", Object.assign({}, userParams(), { schedule_id:schedule.schedule_id }));
+        if(!res.success) throw new Error(res.message || "취소 실패");
+        modal.remove(); toast("스케쥴이 취소되었습니다."); await loadSchedules();
+      }catch(err){ toast(err.message); }
+    }
+
+    async function initApp(){
+      if(!state.user){ state.user = loadSavedUser(); }
+      if(!state.user){ renderLogin(); return; }
+      if(!state.part && state.user.part && PARTS.includes(state.user.part)) state.part = state.user.part;
+      renderShell();
+      await loadCategories();
+      renderShell();
+      await loadSchedules();
+    }
+
+    initApp();
+  </script>
+</body>
+</html>
