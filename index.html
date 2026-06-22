@@ -2341,6 +2341,7 @@
 
   <script>
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwn9I60-14GHDQk_rNF_uJYBpig-Bovl7Qqje_eGGjcFmZJZfqQgtpUg6necytvlQQ-/exec";
+    window.HAK_WEB_APP_URL = WEB_APP_URL;
     const LOGIN_STORAGE_KEY = "hak_login_user";
     const LOGIN_EXPIRE_MINUTES = 30;
     const LOGIN_EXPIRE_MS = LOGIN_EXPIRE_MINUTES * 60 * 1000;
@@ -3202,7 +3203,7 @@
               <h1>${titleText}</h1>
             </div>
             <div class="screen-head-actions">
-              <a class="btn primary" href="schedule_manager.html?api=${encodeURIComponent(WEB_APP_URL)}&v=20260622-2" target="_blank" rel="noopener noreferrer">새 창으로 열기</a>
+              <a class="btn primary" href="schedule_manager.html?api=${encodeURIComponent(WEB_APP_URL)}&v=20260622-3" target="_blank" rel="noopener noreferrer">새 창으로 열기</a>
             </div>
           </div>
         </div>
@@ -3210,7 +3211,7 @@
           <div class="embedded-page-card">
             <iframe
               class="embedded-page-frame"
-              src="schedule_manager.html?api=${encodeURIComponent(WEB_APP_URL)}&v=20260622-2"
+              src="schedule_manager.html?api=${encodeURIComponent(WEB_APP_URL)}&v=20260622-3"
               title="${titleText}"
               loading="lazy"
               onload="resizePortalFrame(this)">
