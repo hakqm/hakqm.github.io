@@ -136,27 +136,27 @@
     .month-card{border:1px solid var(--line);border-radius:18px;background:#fff;padding:16px;box-shadow:var(--shadow-sm);}
     .month-card .m{font-weight:950;color:#203a69;margin-bottom:8px;}.month-card .count{font-size:30px;font-weight:950;color:#203f82;}.month-card .hint{margin-top:8px;color:#667085;font-size:12px;font-weight:800;}
 
-    .modal{position:fixed;inset:0;z-index:50;display:flex;align-items:flex-start;justify-content:center;background:rgba(15,23,42,.55);padding:34px 24px 54px;overflow:auto;}
-    .modal-card{width:min(860px, calc(100vw - 48px));max-height:calc(100vh - 88px);overflow:hidden;background:#fff;border-radius:28px;box-shadow:0 30px 80px rgba(15,23,42,.30);border:1px solid #e5e7eb;margin-top:0;display:flex;flex-direction:column;}
-    .modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;padding:26px 34px 20px;border-bottom:1px solid #e5e7eb;background:linear-gradient(180deg,#fff,#f8fafc);}
+    .modal{position:fixed;inset:0;z-index:50;display:flex;align-items:flex-start;justify-content:center;background:rgba(15,23,42,.55);padding:24px 28px 72px;overflow:auto;}
+    .modal-card{width:min(920px, calc(100vw - 72px));max-height:calc(100vh - 64px);overflow:hidden;background:#fff;border-radius:30px;box-shadow:0 30px 80px rgba(15,23,42,.30);border:1px solid #e5e7eb;margin-top:0;display:flex;flex-direction:column;}
+    .modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;padding:28px 42px 22px;border-bottom:1px solid #e5e7eb;background:linear-gradient(180deg,#fff,#f8fafc);}
     .modal-head h3{margin:0;color:#203a69;font-size:22px;letter-spacing:-.02em;line-height:1.35;}.modal-close{border:0;background:#eef2f7;border-radius:999px;width:38px;height:38px;font-size:22px;color:#334155;flex:0 0 auto;}
-    .modal-body{padding:26px 34px 30px;overflow:auto;}
-    .form-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:19px 22px;}.form-grid .full{grid-column:1/-1;}
-    .form-grid .field,.advanced .field{display:flex;flex-direction:column;gap:8px;}
+    .modal-body{padding:30px 42px 38px;overflow:auto;}
+    .form-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px 28px;}.form-grid .full{grid-column:1/-1;}
+    .form-grid .field,.advanced .field{display:flex;flex-direction:column;gap:10px;}
     .form-grid label,.advanced label{font-size:12px;font-weight:900;color:#40526d;}
-    .modal .control{min-height:50px;border-radius:14px;}
-    .modal textarea.control{min-height:112px;resize:vertical;line-height:1.6;padding-top:13px;}
-    .modal-actions{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-top:24px;padding-top:20px;border-top:1px solid #e5e7eb;}
+    .modal .control{min-height:54px;border-radius:15px;}
+    .modal textarea.control{min-height:128px;resize:vertical;line-height:1.65;padding-top:15px;}
+    .modal-actions{display:flex;justify-content:space-between;align-items:center;gap:18px;flex-wrap:wrap;margin-top:30px;padding-top:24px;border-top:1px solid #e5e7eb;}
     .left-actions,.right-actions{display:flex;gap:10px;flex-wrap:wrap;}
     .right-actions{margin-left:auto;}
-    details.advanced{margin-top:22px;border:1px solid #e1e8f2;border-radius:20px;background:#f8fafc;overflow:hidden;}
-    details.advanced summary{font-weight:950;color:#203a69;cursor:pointer;padding:16px 18px;background:#f3f6fb;}
-    details.advanced .inner{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px 22px;padding:20px 18px 22px;}
+    details.advanced{margin-top:28px;border:1px solid #e1e8f2;border-radius:22px;background:#f8fafc;overflow:hidden;}
+    details.advanced summary{font-weight:950;color:#203a69;cursor:pointer;padding:18px 22px;background:#f3f6fb;}
+    details.advanced .inner{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:22px 28px;padding:24px 24px 28px;}
     .toast{position:fixed;right:24px;bottom:24px;z-index:80;background:#172b50;color:#fff;padding:12px 16px;border-radius:14px;font-weight:900;box-shadow:0 12px 24px rgba(15,23,42,.2);}
     .login-panel{max-width:520px;margin:80px auto;background:#fff;border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow);padding:28px;}.login-panel h1{margin:0 0 8px;color:#203a69;}.login-panel p{color:#667085;line-height:1.7;}.login-grid{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;margin-top:18px;}
 
     @media(max-width:1000px){.app-shell{padding:0 16px 28px;}.page-hero{margin:0 -16px 18px;padding:22px 18px 26px;}.page-hero-inner,.filter-top{align-items:stretch;flex-direction:column;}.filter-grid{grid-template-columns:1fr 1fr;}.kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr));}.year-grid{grid-template-columns:repeat(2,minmax(0,1fr));}.title-block h1{font-size:27px;}.login-grid{grid-template-columns:1fr;}}
-    @media(max-width:640px){.filter-grid,.form-grid,details.advanced .inner{grid-template-columns:1fr;}.kpi-grid,.year-grid{grid-template-columns:1fr;}.top-actions{justify-content:flex-start;}.range-title{min-width:0;width:100%;}.nav-row{justify-content:flex-start;}.seg{width:100%;}.seg button{flex:1;}.login-panel{margin:36px 12px;}.modal{padding:16px 12px 32px;}.modal-card{width:100%;max-height:calc(100vh - 48px);border-radius:22px;}.modal-head{padding:20px 20px 16px;}.modal-body{padding:20px;}}
+    @media(max-width:640px){.filter-grid,.form-grid,details.advanced .inner{grid-template-columns:1fr;}.kpi-grid,.year-grid{grid-template-columns:1fr;}.top-actions{justify-content:flex-start;}.range-title{min-width:0;width:100%;}.nav-row{justify-content:flex-start;}.seg{width:100%;}.seg button{flex:1;}.login-panel{margin:36px 12px;}.modal{padding:14px 12px 36px;}.modal-card{width:100%;max-height:calc(100vh - 42px);border-radius:22px;}.modal-head{padding:22px 22px 16px;}.modal-body{padding:24px 22px 28px;}}
 
   </style>
 </head>
@@ -248,7 +248,7 @@
     }
 
     function scheduleApiErrorMessage(){
-      return "스케쥴 API가 연결되지 않았습니다. index.html의 WEB_APP_URL이 스케쥴 기능이 반영된 최신 Apps Script 웹 앱 URL인지 확인해주세요. 기존 웹 앱을 '새 버전'으로 배포하지 않고 '새 배포'로 만들었다면 URL이 바뀌었을 수 있습니다.";
+      return "스케쥴 API가 연결되지 않았습니다. 현재 연결된 Apps Script 웹 앱이 스케쥴 기능이 없는 구버전으로 응답하고 있습니다. index.html의 WEB_APP_URL을 최신 배포 URL로 맞추고, 기존 웹 앱을 새 버전으로 배포했는지 확인해주세요.";
     }
 
     async function refreshUserFromServerIfNeeded(){
