@@ -138,7 +138,7 @@
     .week-wrap { display: flex; min-width: 700px; }
     .week-time-col { width: 52px; flex: 0 0 52px; background: #f8fafc; border-right: 1px solid var(--line); }
     .week-time-head { height: 60px; border-bottom: 1px solid var(--line); }
-    .week-time-slot { height: 48px; border-bottom: 1px solid var(--line2); display: flex; align-items: flex-start; justify-content: flex-end; padding: 2px 6px 0 0; font-size: 10.5px; color: #94a3b8; font-weight: 850; }
+    .week-time-slot { height: 52px; border-bottom: 1px solid var(--line2); display: flex; align-items: flex-start; justify-content: flex-end; padding: 2px 6px 0 0; font-size: 10.5px; color: #94a3b8; font-weight: 850; }
     .week-days { display: grid; grid-template-columns: repeat(7, 1fr); flex: 1; min-width: 0; }
     .week-day-col { border-right: 1px solid var(--line2); min-width: 0; }
     .week-day-col:last-child { border-right: 0; }
@@ -253,10 +253,10 @@
     .time-menu button { display: block; width: 100%; border: 0; background: transparent; border-radius: 7px; padding: 7px 10px; text-align: left; font-size: 12.5px; font-weight: 800; color: #334155; cursor: pointer; }
     .time-menu button:hover, .time-menu button.active { background: #eef4ff; color: var(--navy); }
 
-    /* ── Status badge quick-select ────────────────────────────── */
-    .quick-status { border: 1px solid #cbd7ea; border-radius: 8px; background: #fff; color: #334155; font-size: 11.5px; font-weight: 800; padding: 2px 6px; cursor: pointer; outline: none; height: 24px; }
-    .quick-status:focus { border-color: var(--blue); }
-    .quick-status.is-pending { border-color: #f59e0b; background: #fff7ed; color: #92400e; }
+    /* ── Status pills (direct-click status buttons) ─────────── */
+    .status-pill { border: 1px solid #e2e8f0; border-radius: 999px; background: transparent; padding: 3px 9px; font-size: 11.5px; font-weight: 800; cursor: pointer; transition: .12s; line-height: 1.4; }
+    .status-pill:hover:not(.active) { filter: brightness(.9); background: #f8fafc; }
+    .status-pill.active { font-weight: 950; }
 
     /* ── Toast ────────────────────────────────────────────────── */
     .toast { position: fixed; right: 20px; bottom: 20px; z-index: 200; background: #172b50; color: #fff; padding: 11px 16px; border-radius: 12px; font-size: 13px; font-weight: 800; box-shadow: 0 8px 24px rgba(15,23,42,.22); pointer-events: none; }
@@ -337,7 +337,7 @@
     schedules: [],
     loading: false,
     view: "month",    /* month | week | list */
-    scope: "team",    /* mine | part | team */
+    scope: "mine",    /* mine | part | team */
     cursor: new Date(),
     filterPart: "",
     filterPerson: "",
@@ -636,7 +636,6 @@
             </select>
             <div class="scope-bar-right">
               <div class="kpi-strip" id="kpiStrip"></div>
-              <button class="topbar-btn" id="savePendingBtn" style="display:none">상태 저장</button>
             </div>
           </div>
           <div class="cal-wrap" id="calWrap"></div>
@@ -660,8 +659,7 @@
     let st=null; personSearch.addEventListener("input",()=>{ clearTimeout(st); st=setTimeout(()=>{ state.filterPerson=personSearch.value.trim(); reloadAndRender(); },350); });
     document.getElementById("catSel").onchange=e=>{ state.filterCategory=e.target.value; reloadAndRender(); };
     document.getElementById("statusSel").onchange=e=>{ state.filterStatus=e.target.value; reloadAndRender(); };
-    const savePendingBtn=document.getElementById("savePendingBtn");
-    if(savePendingBtn) savePendingBtn.onclick=savePendingChanges;
+    /* 상태 저장은 팝오버에서 즉시 처리 - 별도 save 버튼 없음 */
   }
 
   function updateViewSeg() {
@@ -704,15 +702,15 @@
         <div class="mini-cal-grid" id="miniCalGrid"></div>
       </div>
       <div class="side-section">
-        <div class="side-section-title">파트별 일정</div>
+        <div class="side-section-title">파트별 일정 <span style="font-size:10px;color:#cbd5e1;font-weight:700;letter-spacing:0;">(클릭 = 숨기기/표시)</span></div>
         ${PARTS.map(p=>{
           const col=PART_DOT_COLORS[p]||"#94a3b8";
           const count=partCounts[p]||0;
           const dimmed=state.hiddenParts.has(p);
-          return `<div class="legend-item ${dimmed?"dimmed":""}" data-legend-part="${esc(p)}">
+          return `<div class="legend-item ${dimmed?"dimmed":""}" data-legend-part="${esc(p)}" title="${esc(p)} 파트 일정 ${dimmed?"표시":"숨기기"}">
             <span class="legend-dot" style="background:${col}"></span>
             <span class="legend-label">${esc(p)}</span>
-            <span class="legend-count">${count}</span>
+            <span class="legend-count">${dimmed?"숨김":count}</span>
           </div>`;
         }).join("")}
       </div>`;
@@ -823,12 +821,14 @@
     const isMine=state.scope==="mine"&&!state.filterPerson;
     if(!isMine) { renderWeekOverview(days); return; }
 
-    /* Time-based week grid */
-    const hours=Array.from({length:24},(_,i)=>i);
+    /* Time-based week grid — 08:00 to 20:00 */
+    const HOUR_START=8, HOUR_END=20;
+    const SLOT_H=52; /* px per hour */
+    const hours=Array.from({length:HOUR_END-HOUR_START+1},(_,i)=>i+HOUR_START);
     let html=`<div class="week-wrap">
       <div class="week-time-col">
         <div class="week-time-head"></div>
-        ${hours.map(h=>`<div class="week-time-slot">${pad(h)}:00</div>`).join("")}
+        ${hours.map(h=>`<div class="week-time-slot" style="height:${SLOT_H}px;">${pad(h)}:00</div>`).join("")}
       </div>
       <div class="week-days">`;
 
@@ -836,8 +836,17 @@
       const dStr=ymd(dt);
       const isToday=dStr===today;
       const events=schedulesForDate(dStr).sort((a,b)=>(a.start_time||"").localeCompare(b.start_time||""));
-      const allDay=events.filter(s=>!s.start_time);
-      const timed=events.filter(s=>!!s.start_time);
+      /* 시간 범위 밖(08:00 이전 or 20:00 이후)이거나 시간 없는 일정 → 종일 표시 */
+      const allDay=events.filter(s=>{
+        if(!s.start_time) return true;
+        const [h]=s.start_time.split(":").map(Number);
+        return h<HOUR_START||h>=HOUR_END;
+      });
+      const timed=events.filter(s=>{
+        if(!s.start_time) return false;
+        const [h]=s.start_time.split(":").map(Number);
+        return h>=HOUR_START&&h<HOUR_END;
+      });
 
       html+=`<div class="week-day-col">
         <div class="week-dh ${isToday?"today":""}">
@@ -851,14 +860,15 @@
           </div>`).join("")}
           ${allDay.length===0?`<div style="color:#cbd5e1;font-size:10px;padding:2px 4px;">종일 없음</div>`:""}
         </div>
-        <div class="week-timed" style="position:relative;height:${24*48}px;">
-          ${hours.map(h=>`<div class="week-slot" style="position:absolute;top:${h*48}px;left:0;right:0;"></div>`).join("")}
+        <div class="week-timed" style="position:relative;height:${(HOUR_END-HOUR_START)*SLOT_H}px;">
+          ${hours.slice(0,-1).map((h,i)=>`<div class="week-slot" style="position:absolute;top:${i*SLOT_H}px;height:${SLOT_H}px;left:0;right:0;border-bottom:1px solid var(--line2);"></div>`).join("")}
           ${timed.map(s=>{
-            const st=s.start_time||"00:00", en=s.end_time||"";
-            const [sh,sm]=(st+":00").split(":").map(Number);
-            const [eh,em]=en?(en+":00").split(":").map(Number):[sh+1,0];
-            const top=sh*48+sm*0.8;
-            const height=Math.max(22,(eh*60+em-(sh*60+sm))*0.8);
+            const st=s.start_time||"08:00", en=s.end_time||"";
+            const [sh,sm]=st.split(":").map(Number);
+            const [eh,em]=en?en.split(":").map(Number):[Math.min(sh+1,HOUR_END),0];
+            const clampSh=Math.max(sh,HOUR_START), clampEh=Math.min(eh,HOUR_END);
+            const top=(clampSh-HOUR_START)*SLOT_H+sm*(SLOT_H/60);
+            const height=Math.max(24,(clampEh*60+em-(clampSh*60+sm))*(SLOT_H/60));
             const col=eventColor(s);
             return `<div class="timed-event" data-sid="${esc(s.schedule_id)}"
               style="top:${top}px;height:${height}px;background:${col}22;border-left:3px solid ${col};color:${col};">
@@ -1035,9 +1045,19 @@
       ${s.customer?`<div class="popover-row"><span class="popover-row-icon">🏢</span><span class="popover-row-text">${esc(s.customer)}</span></div>`:""}
       ${s.memo?`<div class="popover-row"><span class="popover-row-icon">📝</span><span class="popover-row-text">${esc(s.memo)}</span></div>`:""}
       <div class="popover-row"><span class="popover-row-icon">🔖</span><span class="popover-row-text">
-        ${editable
-          ? `<select class="quick-status ${state.pendingStatusChanges[s.schedule_id]?"is-pending":""}" data-sid="${esc(s.schedule_id)}">${STATUS_OPTIONS.map(v=>`<option ${eff===v?"selected":""}>${v}</option>`).join("")}</select>`
-          : `<span class="badge b-status">${esc(eff)}</span>`}
+        <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:2px;">
+          ${STATUS_OPTIONS.map(v=>{
+            const active=eff===v;
+            const colors={예정:"#475569",확정:"#2563eb",진행:"#059669",완료:"#16a34a",취소:"#dc2626",보류:"#d97706"};
+            const col=colors[v]||"#475569";
+            if(editable){
+              return `<button class="status-pill ${active?"active":""}" data-status="${esc(v)}" data-sid="${esc(s.schedule_id)}"
+                style="${active?`background:${col};color:#fff;border-color:${col};`:`color:${col};border-color:${col}40;`}">
+                ${esc(v)}</button>`;
+            }
+            return active?`<span class="status-pill active" style="background:${col};color:#fff;border-color:${col};">${esc(v)}</span>`:"";
+          }).join("")}
+        </div>
       </span></div>
     </div>
     <div class="popover-actions">
@@ -1056,7 +1076,29 @@
     pop.querySelector(".popover-close").onclick=closePopover;
     const editBtn=pop.querySelector("#pEditBtn"); if(editBtn) editBtn.onclick=()=>{ closePopover(); openForm(s); };
     const cancelBtn=pop.querySelector("#pCancelBtn"); if(cancelBtn) cancelBtn.onclick=()=>{ closePopover(); doCancel(s); };
-    const qsel=pop.querySelector(".quick-status"); if(qsel) qsel.onchange=e=>{ queueStatus(s.schedule_id,e.target.value,qsel); };
+    /* 상태 직접 저장 — 클릭하면 즉시 서버에 반영 */
+    pop.querySelectorAll(".status-pill[data-status][data-sid]").forEach(btn=>{
+      btn.onclick=async(ev)=>{
+        ev.stopPropagation();
+        const newStatus=btn.dataset.status;
+        if(newStatus===eff) return; /* 변경 없음 */
+        /* 낙관적 UI 업데이트 */
+        pop.querySelectorAll(".status-pill").forEach(b=>b.classList.remove("active"));
+        btn.classList.add("active");
+        btn.textContent="저장 중…";
+        try{
+          const r=await jsonp("updateSchedule",Object.assign({},userParams(),{schedule_id:s.schedule_id,status:newStatus}));
+          if(!r.success) throw new Error(r.message||"저장 실패");
+          s.status=newStatus; /* state 업데이트 */
+          toast(`상태가 "${newStatus}"로 저장되었습니다.`);
+          closePopover();
+          renderCalendar(); updateKpi();
+        }catch(e){
+          toast(e.message);
+          btn.textContent=newStatus; /* 원복 */
+        }
+      };
+    });
     setTimeout(()=>document.addEventListener("mousedown",e=>{ if(!pop.contains(e.target)) closePopover(); },{once:true}),0);
   }
 
@@ -1274,8 +1316,7 @@
       }
     } catch(e){}
 
-    /* default scope: team to show all 32 people */
-    if(!state.user.part||state.scope==="mine") state.scope="team";
+    /* default scope: mine (개인 일정 먼저) */
 
     renderShell();
     showBusy("데이터 불러오는 중...");
