@@ -1396,8 +1396,8 @@
       display: grid;
       grid-template-columns: minmax(0, 1fr) 300px;
       gap: 24px;
-      min-height: 300px;
-      padding: 28px;
+      min-height: 160px;
+      padding: 18px 24px;
       margin-bottom: 18px;
       border: 1px solid rgba(255,255,255,.18);
       border-radius: 28px;
@@ -1443,17 +1443,17 @@
     }
 
     .home-hero h2 {
-      margin: 0 0 10px;
-      font-size: clamp(28px, 4vw, 44px);
-      line-height: 1.15;
+      margin: 0 0 8px;
+      font-size: clamp(20px, 2.8vw, 30px);
+      line-height: 1.2;
       color: #ffffff;
-      letter-spacing: -0.045em;
+      letter-spacing: -0.035em;
     }
 
     .home-hero p {
       max-width: 760px;
       color: rgba(255,255,255,.84);
-      font-size: 15px;
+      font-size: 13.5px;
     }
 
     .home-hero-actions {
@@ -2179,6 +2179,295 @@
       background: linear-gradient(90deg, rgba(224,238,255,.9), rgba(224,238,255,0));
     }
 
+    /* === 상단 날짜/시간 === */
+    .topbar-datetime {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 1px;
+      padding: 5px 12px;
+      border-radius: 10px;
+      background: rgba(255,255,255,.09);
+      border: 1px solid rgba(255,255,255,.14);
+      cursor: default;
+      user-select: none;
+    }
+    .topbar-date {
+      font-size: 10.5px;
+      color: rgba(255,255,255,.72);
+      font-weight: 700;
+      letter-spacing: .4px;
+      white-space: nowrap;
+    }
+    .topbar-time {
+      font-size: 13px;
+      color: #fff;
+      font-weight: 900;
+      letter-spacing: .5px;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    /* === 식수 신청 모달 === */
+    .meal-modal-card { max-width: 480px; }
+    .meal-modal-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .meal-step { display: grid; gap: 14px; }
+    .meal-btn-row { display: flex; gap: 10px; }
+    .meal-btn {
+      flex: 1;
+      min-height: 54px;
+      border-radius: 14px;
+      border: 1px solid #dce7f6;
+      background: #f8fbff;
+      color: #1b365d;
+      font-size: 15px;
+      font-weight: 900;
+      cursor: pointer;
+      transition: .2s ease;
+    }
+    .meal-btn:hover { background: #eef5ff; border-color: #b9d7ff; }
+    .meal-btn.meal-yes-sel { background: #1e7b44; border-color: #1e7b44; color: #fff; }
+    .meal-btn.meal-no-sel { border-color: #fda29b; background: #fff5f5; color: #b42318; }
+    .meal-btn.meal-submit { background: var(--navy); border-color: var(--navy); color: #fff; }
+    .meal-btn.meal-submit:hover { background: var(--navy-dark); }
+    .meal-timer {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: #fff4e8;
+      border: 1px solid #fcd9b8;
+      color: #8a5317;
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+    .meal-guest-input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #cfd9e5;
+      border-radius: 12px;
+      font-size: 14px;
+      outline: none;
+      box-sizing: border-box;
+    }
+    .meal-guest-input:focus { border-color: var(--navy); box-shadow: 0 0 0 4px rgba(52,74,140,.08); }
+    .meal-info-p { margin: 0; color: #53627a; font-size: 13.5px; line-height: 1.7; }
+
+    /* === 홈 현황 스트립 === */
+    .home-stat-strip {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+    .home-stat-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      border: 1px solid rgba(205,218,238,.95);
+      border-radius: 20px;
+      background: rgba(255,255,255,.92);
+      box-shadow: var(--shadow-soft);
+    }
+    .home-stat-icon {
+      width: 46px;
+      height: 46px;
+      border-radius: 16px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+    .hsi-meal { background: linear-gradient(135deg, #fff8ef, #fff); border: 1px solid #fcd9b8; }
+    .hsi-notice { background: linear-gradient(135deg, #eaf3ff, #fff); border: 1px solid #cde4ff; }
+    .hsi-schedule { background: linear-gradient(135deg, #eafaf4, #fff); border: 1px solid #bff0df; }
+    .home-stat-body { flex: 1; min-width: 0; }
+    .home-stat-body strong { display: block; font-size: 18px; color: #16284c; letter-spacing: -0.03em; line-height: 1.2; }
+    .home-stat-body span { color: var(--muted); font-size: 12px; }
+
+    /* === 식수 현황 패널 === */
+    .meal-count-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .meal-count-item {
+      text-align: center;
+      padding: 14px 8px;
+      border-radius: 16px;
+      border: 1px solid #e1eaf6;
+      background: linear-gradient(180deg, #ffffff, #f9fbff);
+    }
+    .meal-count-item strong {
+      display: block;
+      font-size: 28px;
+      font-weight: 900;
+      color: #16284c;
+      margin-bottom: 4px;
+      letter-spacing: -0.03em;
+    }
+    .meal-count-item span { font-size: 12px; color: var(--muted); }
+    .meal-count-item.mci-applying strong { color: #2d6b39; }
+    .meal-count-item.mci-not strong { color: #b42318; }
+    .meal-count-item.mci-pending strong { color: #8a5317; }
+    .meal-my-row {
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid #e1eaf6;
+      background: linear-gradient(180deg, #f9fbff, #f4f7fd);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .home-action-btn {
+      display: inline-flex;
+      align-items: center;
+      min-height: 34px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: none;
+      background: var(--navy);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 900;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: .2s ease;
+      flex-shrink: 0;
+    }
+    .home-action-btn:hover { background: var(--navy-dark); }
+    .home-action-btn.hab-green { background: #1e7b44; }
+    .home-action-btn.hab-green:hover { background: #185e35; }
+
+    @media (max-width: 900px) {
+      .home-stat-strip { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (max-width: 640px) {
+      .topbar-datetime { display: none; }
+      .home-stat-strip { grid-template-columns: 1fr; }
+      .meal-count-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    /* === 회의실 현황 === */
+    .room-section { margin-top: 18px; }
+    .room-section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .room-section-head h3 { margin: 0; font-size: 19px; color: #22365e; letter-spacing: -0.02em; }
+    .room-section-head span { color: var(--muted); font-size: 12px; font-weight: 800; }
+    .room-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+    }
+    .room-card {
+      border: 1px solid #e1eaf6;
+      border-radius: 18px;
+      background: #fff;
+      overflow: hidden;
+      box-shadow: 0 8px 18px rgba(15,23,42,.04);
+      transition: transform .2s ease, box-shadow .2s ease;
+    }
+    .room-card:hover { transform: translateY(-2px); box-shadow: 0 14px 28px rgba(15,23,42,.07); }
+    .room-card-head {
+      padding: 12px 14px 10px;
+      border-bottom: 1px solid #e9eef5;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .room-number {
+      width: 28px; height: 28px; border-radius: 10px;
+      background: linear-gradient(135deg, #213a72, #1b5e7e);
+      color: #fff; font-size: 13px; font-weight: 900;
+      display: inline-flex; align-items: center; justify-content: center;
+    }
+    .room-name { display: block; font-size: 13px; font-weight: 900; color: #1d3765; }
+    .room-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 9px; border-radius: 999px;
+      font-size: 11px; font-weight: 900;
+    }
+    .rb-free   { background: #eef8ef; color: #2d6b39; border: 1px solid #c3e6cb; }
+    .rb-busy   { background: #fef3f2; color: #b42318; border: 1px solid #fda29b; }
+    .rb-booked { background: #fff4e8; color: #8a5317; border: 1px solid #fcd9b8; }
+    .room-card-body { padding: 10px 14px 12px; }
+    .room-res-list { display: grid; gap: 5px; margin-bottom: 10px; min-height: 32px; }
+    .room-res-item {
+      padding: 5px 8px; border-radius: 10px;
+      background: #f5f8ff; border: 1px solid #e0eaf8;
+      font-size: 11px; line-height: 1.5; color: #3d5278;
+    }
+    .room-res-time { font-weight: 900; display: block; }
+    .room-res-title { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .room-res-cancel {
+      float: right; margin-top: 2px;
+      padding: 1px 6px; border-radius: 6px;
+      background: #fef3f2; border: 1px solid #fda29b;
+      color: #b42318; font-size: 10px; font-weight: 900;
+      cursor: pointer;
+    }
+    .room-res-cancel:hover { background: #fda29b; color: #fff; }
+    .room-empty-note { color: #a0aec0; font-size: 11px; text-align: center; padding: 6px 0; }
+    .room-reserve-btn {
+      width: 100%; padding: 9px 8px; border-radius: 12px;
+      border: 1px solid #c9d8f0;
+      background: linear-gradient(180deg, #ffffff, #f5f9ff);
+      color: #1d3765; font-size: 12px; font-weight: 900;
+      cursor: pointer; transition: .2s ease;
+    }
+    .room-reserve-btn:hover { background: #eef5ff; border-color: #b9d7ff; }
+
+    /* === 회의실 예약 모달 === */
+    .room-modal-card { max-width: 500px; }
+    .room-form { display: grid; gap: 12px; }
+    .room-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .room-form-group { display: grid; gap: 4px; }
+    .room-form-label { font-size: 12px; font-weight: 900; color: #33445f; }
+    .room-form-input,
+    .room-form-select,
+    .room-form-textarea {
+      width: 100%; border: 1px solid #cfd9e5; border-radius: 12px;
+      padding: 10px 12px; font-size: 13px; font: inherit;
+      color: #1f2937; outline: none; box-sizing: border-box;
+    }
+    .room-form-textarea { min-height: 76px; resize: vertical; line-height: 1.6; }
+    .room-form-input:focus,
+    .room-form-select:focus,
+    .room-form-textarea:focus {
+      border-color: var(--navy);
+      box-shadow: 0 0 0 4px rgba(52,74,140,.08);
+    }
+    .room-form-note {
+      padding: 10px 12px; border-radius: 12px;
+      background: #f5f8ff; border: 1px solid #dce8f8;
+      font-size: 12px; color: #53627a; line-height: 1.6;
+    }
+    .room-form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 4px; }
+
+    @media (max-width: 1280px) { .room-grid { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 900px)  { .room-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 640px)  {
+      .room-grid { grid-template-columns: 1fr; }
+      .room-form-row { grid-template-columns: 1fr; }
+    }
+
 </style>
   <link rel="prefetch" href="schedule_manager.html" />
 </head>
@@ -2195,6 +2484,10 @@
       </a>
 
       <div class="top-right">
+        <div class="topbar-datetime" title="오늘 날짜와 시간">
+          <span class="topbar-date" id="topbarDate">----.--.--</span>
+          <span class="topbar-time" id="topbarTime">--:--:--</span>
+        </div>
         <div id="userChip" class="user-chip hidden">
           <span id="userChipText">로그인됨</span>
         </div>
@@ -2226,6 +2519,8 @@
             <summary class="folder"><span class="node-icon">🌐</span> 공용 업무</summary>
             <div class="subtree common-work-tree">
               <button type="button" class="tree-link common-schedule-link" data-screen="schedule_manager_embed" data-badge="none">📅 검사/업무 스케쥴 관리</button>
+              <button type="button" class="tree-link" data-badge="none" data-sidebar-action="open-meal">🍱 중식 신청</button>
+              <button type="button" class="tree-link" data-badge="none" data-sidebar-action="open-room-modal">🏢 회의실 예약</button>
             </div>
           </details>
 
@@ -2316,6 +2611,101 @@
           Copyright © 2026 HI AIR KOREA Co.,Ltd. All Rights Reserved.
         </footer>
       </section>
+    </div>
+  </div>
+
+  <!-- 회의실 예약 모달 -->
+  <div id="roomModal" class="modal hidden" aria-hidden="true">
+    <div class="modal-card room-modal-card" role="dialog" aria-modal="true" aria-labelledby="roomModalTitle">
+      <div class="modal-head">
+        <div>
+          <h3 id="roomModalTitle" class="modal-title">🏢 회의실 예약</h3>
+          <p class="modal-desc">품질 회의실 1~5번 예약</p>
+        </div>
+        <button type="button" id="closeRoomModal" class="modal-close" aria-label="닫기">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="room-form">
+          <div class="room-form-row">
+            <div class="room-form-group">
+              <label class="room-form-label">회의실 선택 *</label>
+              <select id="roomSelect" class="room-form-select">
+                <option value="1">품질 회의실 1번</option>
+                <option value="2">품질 회의실 2번</option>
+                <option value="3">품질 회의실 3번</option>
+                <option value="4">품질 회의실 4번</option>
+                <option value="5">품질 회의실 5번</option>
+              </select>
+            </div>
+            <div class="room-form-group">
+              <label class="room-form-label">날짜 *</label>
+              <input type="date" id="roomDate" class="room-form-input" />
+            </div>
+          </div>
+          <div class="room-form-row">
+            <div class="room-form-group">
+              <label class="room-form-label">시작 시간 *</label>
+              <input type="time" id="roomStartTime" class="room-form-input" />
+            </div>
+            <div class="room-form-group">
+              <label class="room-form-label">종료 시간 *</label>
+              <input type="time" id="roomEndTime" class="room-form-input" />
+            </div>
+          </div>
+          <div class="room-form-group">
+            <label class="room-form-label">회의 내용/목적 *</label>
+            <textarea id="roomContent" class="room-form-textarea" placeholder="회의 내용 또는 목적을 입력하세요." maxlength="200"></textarea>
+          </div>
+          <div class="room-form-group">
+            <label class="room-form-label">담당자 이름 *</label>
+            <input type="text" id="roomManager" class="room-form-input" placeholder="담당자 이름" maxlength="20" />
+          </div>
+          <div class="room-form-note" id="roomBookerNote">예약자: —</div>
+          <div class="room-form-actions">
+            <button type="button" class="btn" id="cancelRoomModalBtn">취소</button>
+            <button type="button" class="btn primary" id="submitRoomBtn">예약하기</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 식수 신청 모달 -->
+  <div id="mealModal" class="modal hidden" aria-hidden="true">
+    <div class="modal-card meal-modal-card" role="dialog" aria-modal="true" aria-labelledby="mealModalTitle">
+      <div class="modal-head">
+        <div class="meal-modal-head">
+          <div>
+            <h3 id="mealModalTitle" class="modal-title">🍱 오늘 중식 신청</h3>
+            <p class="modal-desc" id="mealModalDateDesc">오늘 날짜 중식 여부를 선택해주세요.</p>
+          </div>
+          <div class="meal-timer">⏱ <span id="mealTimerDisplay">5:00</span> 후 미신청 처리</div>
+        </div>
+      </div>
+      <div class="modal-body">
+        <!-- Step 1: 신청 여부 -->
+        <div id="mealStep1" class="meal-step">
+          <p class="meal-info-p">오늘 중식을 신청하시겠습니까?<br>응답하지 않으면 <strong>미신청</strong>으로 자동 처리됩니다.</p>
+          <div class="meal-btn-row">
+            <button type="button" class="meal-btn" id="mealBtnYes">✓ 신청</button>
+            <button type="button" class="meal-btn meal-no-sel" id="mealBtnNo">✗ 미신청</button>
+          </div>
+        </div>
+        <!-- Step 2: 외부 손님 여부 -->
+        <div id="mealStep2" class="meal-step hidden">
+          <p class="meal-info-p">외부 손님이 있으십니까?</p>
+          <div class="meal-btn-row">
+            <button type="button" class="meal-btn" id="mealGuestNone">없음</button>
+            <button type="button" class="meal-btn" id="mealGuestHas">있음</button>
+          </div>
+          <div id="mealGuestCountWrap" class="hidden">
+            <input type="number" id="mealGuestCount" class="meal-guest-input" placeholder="외부 손님 인원 수 (명)" min="1" max="99" />
+          </div>
+          <div class="meal-btn-row">
+            <button type="button" class="meal-btn meal-submit" id="mealSubmitBtn">완료 — 중식 신청</button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -2416,6 +2806,7 @@
       }));
       updateLoginUI();
       if (currentScreenKey === "home") refreshCurrentScreen();
+      checkAndShowMealModal();
     }
 
     function clearLoginData() {
@@ -2694,6 +3085,8 @@
 
       listEl.innerHTML = noticeCache.map(renderNoticeItem).join("");
       statusEl.textContent = `최근 알림 ${noticeCache.length}건`;
+      const noticeCountEl = document.getElementById("homeNoticeCount");
+      if (noticeCountEl) noticeCountEl.textContent = noticeCache.length;
     }
 
     async function loadNotices() {
@@ -2862,48 +3255,538 @@
       }
     }
 
+    /* =============================================
+       상단 날짜/시간 시계
+    ============================================= */
+    function startDatetimeClock() {
+      const DAYS = ["일", "월", "화", "수", "목", "금", "토"];
+      function tick() {
+        const now = new Date();
+        const y = now.getFullYear();
+        const m = String(now.getMonth() + 1).padStart(2, "0");
+        const d = String(now.getDate()).padStart(2, "0");
+        const day = DAYS[now.getDay()];
+        const h = String(now.getHours()).padStart(2, "0");
+        const min = String(now.getMinutes()).padStart(2, "0");
+        const sec = String(now.getSeconds()).padStart(2, "0");
+        const dateEl = document.getElementById("topbarDate");
+        const timeEl = document.getElementById("topbarTime");
+        if (dateEl) dateEl.textContent = `${y}.${m}.${d} (${day})`;
+        if (timeEl) timeEl.textContent = `${h}:${min}:${sec}`;
+      }
+      tick();
+      setInterval(tick, 1000);
+    }
+
+    /* =============================================
+       식수 신청 기능
+    ============================================= */
+    let mealTimerInterval = null;
+    let mealTimerSeconds = 300;
+    let mealGuestSelected = false;
+
+    function getTodayStr() {
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = String(now.getMonth() + 1).padStart(2, "0");
+      const d = String(now.getDate()).padStart(2, "0");
+      return `${y}-${m}-${d}`;
+    }
+
+    function getMealLocalData() {
+      const saved = localStorage.getItem(`hak_meal_${getTodayStr()}`);
+      if (!saved) return null;
+      try { return JSON.parse(saved); } catch (e) { return null; }
+    }
+
+    function saveMealLocalData(data) {
+      localStorage.setItem(`hak_meal_${getTodayStr()}`, JSON.stringify({ ...data, date: getTodayStr() }));
+    }
+
+    function updateHomeMealStatus() {
+      const data = getMealLocalData();
+      const status = (!data || !data.responded) ? "미응답"
+        : (data.applying ? "신청" : "미신청");
+      const guestSuffix = (data && data.applying && data.guestCount > 0)
+        ? ` (외부 손님 ${data.guestCount}명)` : "";
+
+      const el1 = document.getElementById("homeMealMyStatus");
+      const el2 = document.getElementById("mealMyStatusDetail");
+      if (el1) el1.textContent = status;
+      if (el2) el2.textContent = status + guestSuffix;
+    }
+
+    function checkAndShowMealModal() {
+      if (!currentUserData) return;
+      const data = getMealLocalData();
+      if (data && data.responded) return;
+      setTimeout(openMealModal, 1500);
+    }
+
+    function openMealModal() {
+      const modal = document.getElementById("mealModal");
+      if (!modal) return;
+
+      const descEl = document.getElementById("mealModalDateDesc");
+      if (descEl) descEl.textContent = getTodayStr() + " 중식 신청 — 응답해주세요.";
+
+      const step1 = document.getElementById("mealStep1");
+      const step2 = document.getElementById("mealStep2");
+      if (step1) step1.classList.remove("hidden");
+      if (step2) step2.classList.add("hidden");
+
+      const gcWrap = document.getElementById("mealGuestCountWrap");
+      if (gcWrap) gcWrap.classList.add("hidden");
+
+      const guestNone = document.getElementById("mealGuestNone");
+      const guestHas = document.getElementById("mealGuestHas");
+      if (guestNone) { guestNone.classList.remove("meal-yes-sel"); guestNone.classList.remove("meal-no-sel"); }
+      if (guestHas) { guestHas.classList.remove("meal-yes-sel"); guestHas.classList.remove("meal-no-sel"); }
+
+      const gcInput = document.getElementById("mealGuestCount");
+      if (gcInput) gcInput.value = "";
+
+      mealGuestSelected = false;
+
+      modal.classList.remove("hidden");
+      modal.setAttribute("aria-hidden", "false");
+      startMealTimer();
+    }
+
+    function closeMealModal() {
+      clearMealTimer();
+      const modal = document.getElementById("mealModal");
+      if (modal) {
+        modal.classList.add("hidden");
+        modal.setAttribute("aria-hidden", "true");
+      }
+    }
+
+    function startMealTimer() {
+      clearMealTimer();
+      mealTimerSeconds = 300;
+      updateMealTimerDisplay();
+      mealTimerInterval = setInterval(function () {
+        mealTimerSeconds--;
+        updateMealTimerDisplay();
+        if (mealTimerSeconds <= 0) {
+          clearMealTimer();
+          closeMealModal();
+          submitMealChoice(false, 0, true);
+          alert("응답 시간이 초과되어 미신청으로 처리되었습니다.");
+        }
+      }, 1000);
+    }
+
+    function clearMealTimer() {
+      if (mealTimerInterval) {
+        clearInterval(mealTimerInterval);
+        mealTimerInterval = null;
+      }
+    }
+
+    function updateMealTimerDisplay() {
+      const el = document.getElementById("mealTimerDisplay");
+      if (!el) return;
+      const m = Math.floor(mealTimerSeconds / 60);
+      const s = mealTimerSeconds % 60;
+      el.textContent = `${m}:${String(s).padStart(2, "0")}`;
+    }
+
+    async function submitMealChoice(applying, guestCount, isAuto) {
+      saveMealLocalData({
+        responded: true,
+        applying: applying,
+        guestCount: guestCount || 0,
+        isAuto: !!isAuto,
+        submittedAt: new Date().toISOString()
+      });
+      updateHomeMealStatus();
+
+      if (currentUserData) {
+        try {
+          const params = [
+            "action=submitMeal",
+            `date=${encodeURIComponent(getTodayStr())}`,
+            `user_id=${encodeURIComponent(currentUserData.user_id || "")}`,
+            `user_name=${encodeURIComponent(currentUserData.name || "")}`,
+            `emp_no=${encodeURIComponent(currentUserData.emp_no || "")}`,
+            `team=${encodeURIComponent(currentUserData.team || "")}`,
+            `applying=${applying ? "Y" : "N"}`,
+            `guest_count=${encodeURIComponent(guestCount || 0)}`,
+            `is_auto=${isAuto ? "Y" : "N"}`
+          ].join("&");
+          await jsonpRequest(`${WEB_APP_URL}?${params}`, "mealSubmitCallback");
+        } catch (e) {
+          console.error("식수 신청 전송 오류:", e);
+        }
+      }
+
+      if (currentScreenKey === "home") {
+        setTimeout(loadMealSummary, 200);
+      }
+    }
+
+    async function loadMealSummary() {
+      try {
+        const today = getTodayStr();
+        const url = `${WEB_APP_URL}?action=getMealSummary&date=${encodeURIComponent(today)}`;
+        const result = await jsonpRequest(url, "mealSummaryCallback");
+        if (result && result.success) {
+          const s = result.summary || {};
+          const applyEl = document.getElementById("mealCountApplying");
+          const notEl = document.getElementById("mealCountNotApplying");
+          const pendEl = document.getElementById("mealCountPending");
+          if (applyEl) applyEl.textContent = s.applying != null ? s.applying : "-";
+          if (notEl)   notEl.textContent   = s.not_applying != null ? s.not_applying : "-";
+          if (pendEl)  pendEl.textContent  = s.pending != null ? s.pending : "-";
+        }
+      } catch (e) {
+        console.error("식수 현황 로드 오류:", e);
+      }
+    }
+
+    /* =============================================
+       회의실 예약 기능
+    ============================================= */
+    const ROOM_NAMES = ["", "품질 회의실 1", "품질 회의실 2", "품질 회의실 3", "품질 회의실 4", "품질 회의실 5"];
+    let roomStatusCache = [];
+
+    function getRoomCurrentStatus(reservations) {
+      const now = new Date();
+      const hhmm = `${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}`;
+      for (const r of reservations) {
+        if (r.start_time <= hhmm && r.end_time > hhmm) return "busy";
+      }
+      return reservations.length > 0 ? "booked" : "free";
+    }
+
+    function renderRoomCard(roomNo, reservations, isToday) {
+      const status = (isToday !== false) ? getRoomCurrentStatus(reservations) : (reservations.length > 0 ? "booked" : "free");
+      const badgeClass = status === "busy" ? "rb-busy" : status === "booked" ? "rb-booked" : "rb-free";
+      const badgeText = status === "busy" ? "● 사용 중" : status === "booked" ? "◆ 예약 있음" : "○ 사용 가능";
+
+      const resList = reservations.length === 0
+        ? `<div class="room-empty-note">예약 없음</div>`
+        : reservations.map(r => {
+            const isMine = currentUserData && r.booked_by_empno === String(currentUserData.emp_no || "");
+            const cancelBtn = isMine
+              ? `<button class="room-res-cancel" data-action="cancel-room" data-res-id="${escapeHtml(r.reservation_id)}">취소</button>`
+              : "";
+            return `<div class="room-res-item">
+              ${cancelBtn}
+              <span class="room-res-time">${escapeHtml(r.start_time)}~${escapeHtml(r.end_time)}</span>
+              <span class="room-res-title">${escapeHtml(r.content)}</span>
+              <span style="font-size:10px;color:#7b8798;">담당: ${escapeHtml(r.manager_name)}</span>
+            </div>`;
+          }).join("");
+
+      return `
+        <div class="room-card">
+          <div class="room-card-head">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;">
+              <span class="room-number">${roomNo}</span>
+              <span class="room-badge ${badgeClass}">${badgeText}</span>
+            </div>
+            <span class="room-name">${ROOM_NAMES[roomNo]}</span>
+          </div>
+          <div class="room-card-body">
+            <div class="room-res-list">${resList}</div>
+            <button type="button" class="room-reserve-btn" data-action="open-room-modal" data-room="${roomNo}">+ 예약하기</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderRoomGrid(roomsData, targetDate, isToday) {
+      const grid = document.getElementById("roomGrid");
+      if (!grid) return;
+
+      const roomMap = {};
+      for (let i = 1; i <= 5; i++) roomMap[i] = [];
+      (roomsData || []).forEach(res => {
+        const rn = parseInt(res.room_no, 10);
+        if (rn >= 1 && rn <= 5) roomMap[rn].push(res);
+      });
+
+      grid.innerHTML = [1,2,3,4,5].map(no => renderRoomCard(no, roomMap[no], isToday)).join("");
+    }
+
+    async function loadRoomStatus(dateStr) {
+      const today = getTodayStr();
+      const targetDate = dateStr || (document.getElementById("roomViewDate")?.value) || today;
+      const isToday = targetDate === today;
+      try {
+        const url = `${WEB_APP_URL}?action=getRoomStatus&date=${encodeURIComponent(targetDate)}`;
+        const result = await jsonpRequest(url, "roomStatusCallback");
+        if (result && result.success) {
+          roomStatusCache = result.reservations || [];
+          renderRoomGrid(roomStatusCache, targetDate, isToday);
+        } else {
+          renderRoomGrid([], targetDate, isToday);
+        }
+      } catch (e) {
+        console.error("회의실 현황 로드 오류:", e);
+        renderRoomGrid([], targetDate, isToday);
+      }
+    }
+
+    function openRoomModal(preselectedRoom) {
+      const modal = document.getElementById("roomModal");
+      if (!modal) return;
+
+      const today = getTodayStr();
+      const roomSelect = document.getElementById("roomSelect");
+      const roomDate = document.getElementById("roomDate");
+      const roomStartTime = document.getElementById("roomStartTime");
+      const roomEndTime = document.getElementById("roomEndTime");
+      const roomContent = document.getElementById("roomContent");
+      const roomManager = document.getElementById("roomManager");
+      const bookerNote = document.getElementById("roomBookerNote");
+
+      if (roomSelect) roomSelect.value = String(preselectedRoom || "1");
+      if (roomDate) roomDate.value = today;
+      if (roomStartTime) roomStartTime.value = "09:00";
+      if (roomEndTime) roomEndTime.value = "10:00";
+      if (roomContent) roomContent.value = "";
+      if (roomManager && currentUserData) roomManager.value = currentUserData.name || "";
+      if (bookerNote && currentUserData) {
+        bookerNote.textContent = `예약자: ${currentUserData.name} (사번: ${currentUserData.emp_no || "-"}, ${currentUserData.team || "-"})`;
+      }
+
+      modal.classList.remove("hidden");
+      modal.setAttribute("aria-hidden", "false");
+      setTimeout(() => { if (roomContent) roomContent.focus(); }, 50);
+    }
+
+    function closeRoomModal() {
+      const modal = document.getElementById("roomModal");
+      if (modal) {
+        modal.classList.add("hidden");
+        modal.setAttribute("aria-hidden", "true");
+      }
+    }
+
+    async function submitRoomReservation() {
+      if (!currentUserData) {
+        alert("로그인이 필요합니다.");
+        return;
+      }
+
+      const roomNo    = document.getElementById("roomSelect")?.value || "1";
+      const date      = document.getElementById("roomDate")?.value || "";
+      const startTime = document.getElementById("roomStartTime")?.value || "";
+      const endTime   = document.getElementById("roomEndTime")?.value || "";
+      const content   = document.getElementById("roomContent")?.value.trim() || "";
+      const manager   = document.getElementById("roomManager")?.value.trim() || "";
+
+      if (!date)      { alert("날짜를 선택해주세요."); return; }
+      if (!startTime) { alert("시작 시간을 입력해주세요."); return; }
+      if (!endTime)   { alert("종료 시간을 입력해주세요."); return; }
+      if (startTime >= endTime) { alert("종료 시간은 시작 시간보다 이후여야 합니다."); return; }
+      if (!content)   { alert("회의 내용을 입력해주세요."); return; }
+      if (!manager)   { alert("담당자 이름을 입력해주세요."); return; }
+
+      const submitBtn = document.getElementById("submitRoomBtn");
+      if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = "예약 중..."; }
+
+      try {
+        const params = [
+          "action=addRoomReservation",
+          `room_no=${encodeURIComponent(roomNo)}`,
+          `date=${encodeURIComponent(date)}`,
+          `start_time=${encodeURIComponent(startTime)}`,
+          `end_time=${encodeURIComponent(endTime)}`,
+          `content=${encodeURIComponent(content)}`,
+          `manager_name=${encodeURIComponent(manager)}`,
+          `booked_by_name=${encodeURIComponent(currentUserData.name || "")}`,
+          `booked_by_empno=${encodeURIComponent(currentUserData.emp_no || "")}`,
+          `booked_by_team=${encodeURIComponent(currentUserData.team || "")}`
+        ].join("&");
+
+        const result = await jsonpRequest(`${WEB_APP_URL}?${params}`, "roomReserveCallback");
+        if (!result.success) {
+          alert(result.message || "예약에 실패했습니다.");
+          return;
+        }
+
+        alert(result.message || "예약이 완료되었습니다.");
+        closeRoomModal();
+        if (currentScreenKey === "home") setTimeout(loadRoomStatus, 300);
+      } catch (e) {
+        console.error("회의실 예약 오류:", e);
+        alert("예약 중 오류가 발생했습니다.");
+      } finally {
+        if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = "예약하기"; }
+      }
+    }
+
+    async function cancelRoomReservation(reservationId) {
+      if (!reservationId) return;
+      if (!confirm("이 예약을 취소하시겠습니까?")) return;
+
+      try {
+        const params = [
+          "action=cancelRoomReservation",
+          `reservation_id=${encodeURIComponent(reservationId)}`,
+          `emp_no=${encodeURIComponent(currentUserData.emp_no || "")}`
+        ].join("&");
+
+        const result = await jsonpRequest(`${WEB_APP_URL}?${params}`, "roomCancelCallback");
+        if (!result.success) {
+          alert(result.message || "취소에 실패했습니다.");
+          return;
+        }
+        alert(result.message || "예약이 취소되었습니다.");
+        if (currentScreenKey === "home") setTimeout(loadRoomStatus, 300);
+      } catch (e) {
+        console.error("예약 취소 오류:", e);
+        alert("취소 중 오류가 발생했습니다.");
+      }
+    }
+
+    function bindRoomModalEvents() {
+      const closeBtn   = document.getElementById("closeRoomModal");
+      const cancelBtn  = document.getElementById("cancelRoomModalBtn");
+      const submitBtn  = document.getElementById("submitRoomBtn");
+      const modal      = document.getElementById("roomModal");
+
+      if (closeBtn)  closeBtn.addEventListener("click", closeRoomModal);
+      if (cancelBtn) cancelBtn.addEventListener("click", closeRoomModal);
+      if (submitBtn) submitBtn.addEventListener("click", submitRoomReservation);
+      if (modal) {
+        modal.addEventListener("click", (e) => { if (e.target === modal) closeRoomModal(); });
+      }
+    }
+
+    function bindMealModalEvents() {
+      const yesBtn   = document.getElementById("mealBtnYes");
+      const noBtn    = document.getElementById("mealBtnNo");
+      const gNoneBtn = document.getElementById("mealGuestNone");
+      const gHasBtn  = document.getElementById("mealGuestHas");
+      const submitBtn = document.getElementById("mealSubmitBtn");
+
+      if (yesBtn) {
+        yesBtn.addEventListener("click", function () {
+          clearMealTimer();
+          const step1 = document.getElementById("mealStep1");
+          const step2 = document.getElementById("mealStep2");
+          if (step1) step1.classList.add("hidden");
+          if (step2) step2.classList.remove("hidden");
+        });
+      }
+
+      if (noBtn) {
+        noBtn.addEventListener("click", function () {
+          closeMealModal();
+          submitMealChoice(false, 0, false);
+          alert("미신청으로 처리되었습니다.");
+        });
+      }
+
+      if (gNoneBtn) {
+        gNoneBtn.addEventListener("click", function () {
+          mealGuestSelected = false;
+          gNoneBtn.classList.add("meal-yes-sel");
+          if (gHasBtn) gHasBtn.classList.remove("meal-yes-sel");
+          const gcWrap = document.getElementById("mealGuestCountWrap");
+          if (gcWrap) gcWrap.classList.add("hidden");
+        });
+      }
+
+      if (gHasBtn) {
+        gHasBtn.addEventListener("click", function () {
+          mealGuestSelected = true;
+          gHasBtn.classList.add("meal-yes-sel");
+          if (gNoneBtn) gNoneBtn.classList.remove("meal-yes-sel");
+          const gcWrap = document.getElementById("mealGuestCountWrap");
+          if (gcWrap) gcWrap.classList.remove("hidden");
+          setTimeout(function () {
+            const gcInput = document.getElementById("mealGuestCount");
+            if (gcInput) gcInput.focus();
+          }, 50);
+        });
+      }
+
+      if (submitBtn) {
+        submitBtn.addEventListener("click", function () {
+          let guestCount = 0;
+          if (mealGuestSelected) {
+            const gcInput = document.getElementById("mealGuestCount");
+            guestCount = parseInt((gcInput && gcInput.value) || "0", 10) || 0;
+            if (guestCount <= 0) {
+              alert("외부 손님 인원 수를 입력해주세요.");
+              return;
+            }
+          }
+          closeMealModal();
+          submitMealChoice(true, guestCount, false);
+          const msg = mealGuestSelected
+            ? `중식 신청 완료! (외부 손님 ${guestCount}명 포함)`
+            : "중식 신청이 완료되었습니다.";
+          alert(msg);
+        });
+      }
+    }
+
     function afterScreenRender(key) {
       if (key === "home") {
         setTimeout(loadNotices, 0);
+        setTimeout(loadMealSummary, 100);
+        setTimeout(loadRoomStatus, 200);
+        updateHomeMealStatus();
+
+        const roomViewDateBtn = document.getElementById("roomViewDateBtn");
+        const roomViewDateInput = document.getElementById("roomViewDate");
+        if (roomViewDateBtn && roomViewDateInput) {
+          roomViewDateBtn.addEventListener("click", () => {
+            loadRoomStatus(roomViewDateInput.value || getTodayStr());
+          });
+          roomViewDateInput.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") loadRoomStatus(roomViewDateInput.value || getTodayStr());
+          });
+        }
       }
     }
 
 
     function homeScreen() {
-      const loginBox = currentUserData
-        ? `
-          <div class="callout">
-            <strong>${currentUserData.name}</strong>님 로그인 상태입니다.<br />
-            좌측 메뉴에서 원하는 업무를 선택하면 바로 이동할 수 있습니다.
-          </div>
-        `
-        : `
-          <div class="callout warn-callout">
-            현재는 로그인 전 상태입니다. 좌측 메뉴 또는 버튼을 누르면 로그인 창이 열립니다.
-          </div>
-          <div class="login-required-box">
-            <strong>로그인 후 메뉴를 사용할 수 있습니다.</strong>
-            <button class="btn primary" type="button" data-action="open-login">로그인하기</button>
-          </div>
-        `;
+      const today = getTodayStr();
+      const mealData = getMealLocalData();
+      let myMealStatus = "미응답";
+      let myMealApplying = false;
+      let myGuestCount = 0;
+      if (mealData && mealData.responded) {
+        myMealStatus = mealData.applying ? "신청" : "미신청";
+        myMealApplying = mealData.applying;
+        myGuestCount = mealData.guestCount || 0;
+      }
+
+      const greeting = (() => {
+        const h = new Date().getHours();
+        if (h < 12) return "좋은 아침이에요";
+        if (h < 18) return "좋은 오후에요";
+        return "좋은 저녁이에요";
+      })();
+
+      const heroName = currentUserData
+        ? `, <strong style="color:#fff;font-size:inherit;">${currentUserData.name}</strong>님`
+        : "";
 
       return `
         <div class="screen-head home-screen-title">
           <span class="eyebrow">HAK QM AI AGENT PORTAL</span>
           <h1>HQAA</h1>
-          <p><strong>HAK QM AI AGENT</strong>를 뜻하는 품질 업무 포털로, QA와 제품별 업무 화면 및 실행 메뉴를 한 곳에서 연결해 주는 통합 시작 화면입니다.</p>
+          <p>HAK QM AI AGENT 품질 업무 포털입니다.</p>
         </div>
         <div class="screen-body">
+
           <div class="home-hero">
             <div class="home-hero-content">
               <div class="home-hero-badge">✦ HOME DASHBOARD</div>
-              <h2>업무 시작 화면</h2>
-              <p>
-                이 화면은 세부 업무 화면이 아니라 전체 메뉴를 안내하는 홈입니다.
-                좌측 트리 메뉴에서 원하는 파트와 업무를 선택하거나, 검색과 필터를 사용해 필요한 화면으로 빠르게 이동할 수 있습니다.
-              </p>
+              <h2>${greeting}${heroName}</h2>
+              <p>좌측 메뉴에서 원하는 업무 화면으로 바로 이동할 수 있습니다.<br>아래 현황 패널에서 오늘의 주요 정보를 한눈에 확인하세요.</p>
             </div>
-
             <div class="home-hero-visual" aria-hidden="true">
               <span class="agent-spark s1"></span>
               <span class="agent-spark s2"></span>
@@ -2915,39 +3798,81 @@
             </div>
           </div>
 
-          ${loginBox}
-
-          <div class="panel-grid">
-            <div class="panel home-guide-panel">
-              <div class="panel-title-row">
-                <h3>홈 사용 안내</h3>
-                <span>START GUIDE</span>
-              </div>
-              <div class="card-list">
-                <div class="mini-card">
-                  <span class="guide-icon">👤</span>
-                  <div>
-                    <strong>1. 로그인</strong>
-                    <p>우측 상단 로그인 버튼을 눌러 이름 / 사번으로 로그인합니다.</p>
-                  </div>
-                </div>
-                <div class="mini-card">
-                  <span class="guide-icon">📁</span>
-                  <div>
-                    <strong>2. 좌측 메뉴 선택</strong>
-                    <p>QA, 해양, 산업공조, FAN, 퓨얼셀 등 원하는 파트를 선택해 업무 화면으로 이동합니다.</p>
-                  </div>
-                </div>
-                <div class="mini-card">
-                  <span class="guide-icon">🔎</span>
-                  <div>
-                    <strong>3. 검색 / 필터 활용</strong>
-                    <p>메뉴 검색과 실행 메뉴 필터를 사용해 필요한 화면만 빠르게 찾아볼 수 있습니다.</p>
-                  </div>
-                </div>
+          ${!currentUserData ? `
+            <div class="callout warn-callout" style="margin-bottom:14px;">
+              로그인 전 상태입니다. 우측 상단 <strong>로그인</strong> 버튼을 눌러 로그인해주세요.
+              <div style="margin-top:10px;">
+                <button class="btn primary" type="button" data-action="open-login">로그인하기</button>
               </div>
             </div>
+          ` : ""}
 
+          <!-- 빠른 현황 스트립 -->
+          <div class="home-stat-strip">
+            <div class="home-stat-card">
+              <div class="home-stat-icon hsi-meal">🍱</div>
+              <div class="home-stat-body">
+                <strong id="homeMealMyStatus">${myMealStatus}</strong>
+                <span>오늘 내 중식 신청</span>
+              </div>
+              ${currentUserData ? `<button type="button" class="home-action-btn" data-action="open-meal">변경</button>` : ""}
+            </div>
+            <div class="home-stat-card">
+              <div class="home-stat-icon hsi-notice">🔔</div>
+              <div class="home-stat-body">
+                <strong id="homeNoticeCount">-</strong>
+                <span>최근 알림 건수</span>
+              </div>
+            </div>
+            <div class="home-stat-card">
+              <div class="home-stat-icon hsi-schedule">📅</div>
+              <div class="home-stat-body">
+                <strong>스케줄</strong>
+                <span>검사/업무 스케줄</span>
+              </div>
+              <button type="button" class="home-action-btn hab-green" data-screen="schedule_manager_embed">열기</button>
+            </div>
+          </div>
+
+          <!-- 메인 2단 패널 -->
+          <div class="panel-grid">
+
+            <!-- 식수 현황 패널 -->
+            <div class="panel">
+              <div class="panel-title-row">
+                <h3>오늘의 중식 신청 현황</h3>
+                <span id="mealTodayLabel">${today}</span>
+              </div>
+              <div class="meal-count-grid">
+                <div class="meal-count-item mci-applying">
+                  <strong id="mealCountApplying">-</strong>
+                  <span>신청</span>
+                </div>
+                <div class="meal-count-item mci-not">
+                  <strong id="mealCountNotApplying">-</strong>
+                  <span>미신청</span>
+                </div>
+                <div class="meal-count-item mci-pending">
+                  <strong id="mealCountPending">-</strong>
+                  <span>미응답</span>
+                </div>
+              </div>
+              <div class="meal-my-row">
+                <div>
+                  <span style="font-size:12px;color:var(--muted);">내 신청 상태</span>
+                  <strong id="mealMyStatusDetail" style="display:block;margin-top:2px;font-size:15px;">${myMealStatus}${myMealApplying && myGuestCount > 0 ? ` (외부 손님 ${myGuestCount}명)` : ""}</strong>
+                </div>
+                ${currentUserData
+                  ? `<button type="button" class="home-action-btn" data-action="open-meal">신청 / 변경</button>`
+                  : `<span style="color:var(--muted);font-size:12px;">로그인 후 신청 가능</span>`
+                }
+              </div>
+              <p style="margin:12px 0 0;font-size:12px;color:var(--muted);line-height:1.6;">
+                매일 자정 이후 중식 신청 팝업이 자동으로 표시됩니다. 미응답 시 5분 후 미신청으로 자동 처리됩니다.
+              </p>
+            </div>
+
+            <!-- 알림 패널 -->
             <div class="panel notice-panel">
               <div class="panel-title-row">
                 <h3>알림</h3>
@@ -2985,60 +3910,23 @@
                 <div class="notice-admin-hint">알림 등록·수정·삭제는 관리자 권한 사용자만 가능합니다.</div>
               `}
             </div>
+
           </div>
 
-          <div class="panel shortcut-panel" style="margin-top:16px;">
-            <div class="panel-title-row">
-              <h3>바로가기</h3>
-              <span>자주 사용하는 실행 메뉴</span>
+          <!-- 회의실 예약 현황 -->
+          <div class="room-section">
+            <div class="room-section-head">
+              <h3>회의실 예약 현황</h3>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <input type="date" id="roomViewDate" value="${today}" style="border:1px solid #cdd5e2;border-radius:8px;padding:4px 8px;font-size:12px;color:#22365e;background:#fff;cursor:pointer;" title="날짜 선택" />
+                <button type="button" id="roomViewDateBtn" style="padding:4px 10px;border:1px solid #4fb7ff;border-radius:8px;font-size:12px;color:#213a72;background:#eaf4ff;cursor:pointer;font-weight:800;">조회</button>
+              </div>
             </div>
-            <div class="qa-menu-grid">
-              <div class="qa-process">
-                <div class="qa-process-head"><span class="shortcut-icon">🧰</span> QA 바로가기</div>
-                <div class="qa-process-body">
-                  <button type="button" data-screen="qa_equipment_checkout_embed">🌐 계측기관리 / 계측기 불출</button>
-                  <button type="button" data-screen="qa_equipment_return_embed">🌐 계측기관리 / 계측기 반납</button>
-                </div>
-              </div>
-
-              <div class="qa-process">
-                <div class="qa-process-head"><span class="shortcut-icon">🚢</span> 상선 바로가기</div>
-                <div class="qa-process-body">
-                  <button type="button" data-screen="merchant_003_6">🌐 고객검사 / 검사 결과 실적 등록</button>
-                </div>
-              </div>
-
-              <div class="qa-process">
-                <div class="qa-process-head"><span class="shortcut-icon">🏭</span> 산업공조 바로가기</div>
-                <div class="qa-process-body">
-                  <button type="button" data-screen="hvac_004_2">🌐 공정간 검사 / 자재검사</button>
-                </div>
-              </div>
-
-              <div class="qa-process">
-                <div class="qa-process-head"><span class="shortcut-icon">🌀</span> FAN 바로가기</div>
-                <div class="qa-process-body">
-                  <button type="button" data-screen="fan_004_2">🌐 고객검사 / FAN TEST REPORT</button>
-                </div>
-              </div>
-
-              <div class="qa-process">
-                <div class="qa-process-head"><span class="shortcut-icon">⚓</span> 해양 바로가기</div>
-                <div class="qa-process-body">
-                  <button type="button" data-screen="marine_004_1">🌐 FAT 고객검사 / 성능 검사 및 외관 검사</button>
-                </div>
-              </div>
-
-              <div class="qa-process">
-                <div class="qa-process-head"><span class="shortcut-icon">🔋</span> 퓨얼셀 바로가기</div>
-                <div class="qa-process-body">
-                  <button type="button" data-screen="fuelcell_005_1">🌐 공정간 검사 / 사전검사</button>
-                  <button type="button" data-screen="fuelcell_005_4">🌐 공정간 검사 / 압력검사</button>
-                  <button type="button" data-screen="fuelcell_006_1">🌐 완제품 검사 / 최종검사</button>
-                </div>
-              </div>
+            <div class="room-grid" id="roomGrid">
+              <div style="grid-column:1/-1;text-align:center;padding:20px;color:var(--muted);font-size:13px;">회의실 현황을 불러오는 중입니다...</div>
             </div>
           </div>
+
         </div>
       `;
     }
@@ -5687,7 +6575,21 @@
         const link = event.target.closest(".tree-link");
         if (!link) return;
 
-        const { screen, url } = link.dataset;
+        const { screen, url, sidebarAction } = link.dataset;
+
+        if (sidebarAction === "open-meal") {
+          if (!currentUserData) { openLoginFromScreen(); return; }
+          if (currentScreenKey !== "home") openScreen("home");
+          setTimeout(() => openMealModal(), currentScreenKey !== "home" ? 300 : 0);
+          return;
+        }
+
+        if (sidebarAction === "open-room-modal") {
+          if (!currentUserData) { openLoginFromScreen(); return; }
+          if (currentScreenKey !== "home") openScreen("home");
+          setTimeout(() => openRoomModal(1), currentScreenKey !== "home" ? 300 : 0);
+          return;
+        }
 
         if (screen) {
           openScreenWithAuth(screen);
@@ -5713,6 +6615,33 @@
 
         if (actionButton.dataset.action === "open-login") {
           openLoginFromScreen();
+          return;
+        }
+
+        if (actionButton.dataset.action === "open-meal") {
+          if (currentUserData) {
+            openMealModal();
+          } else {
+            openLoginFromScreen();
+            alert("중식 신청은 로그인 후 이용 가능합니다.");
+          }
+          return;
+        }
+
+        if (actionButton.dataset.action === "open-room-modal") {
+          if (currentUserData) {
+            openRoomModal(actionButton.dataset.room || "1");
+          } else {
+            openLoginFromScreen();
+            alert("회의실 예약은 로그인 후 이용 가능합니다.");
+          }
+          return;
+        }
+
+        if (actionButton.dataset.action === "cancel-room") {
+          if (currentUserData) {
+            cancelRoomReservation(actionButton.dataset.resId);
+          }
           return;
         }
 
@@ -5901,8 +6830,12 @@
       bindMenuEvents();
       bindScreenEvents();
       bindModalEvents();
+      bindMealModalEvents();
+      bindRoomModalEvents();
       syncLoginStateAcrossPages();
       startAutoLogoutWatcher();
+      startDatetimeClock();
+      checkAndShowMealModal();
 
       document.querySelectorAll("details").forEach((detailsEl) => {
         detailsEl.dataset.originalOpen = detailsEl.open ? "true" : "false";
