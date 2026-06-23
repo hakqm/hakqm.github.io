@@ -596,6 +596,33 @@
       document.body.appendChild(el); setTimeout(()=>el.remove(),2600);
     }
 
+    function setInlineSaving(message){
+      const el = document.getElementById("inlineSaving");
+      if(!el) return;
+      const text = el.querySelector("span:last-child");
+      if(message){
+        if(text) text.textContent = message;
+        el.classList.add("active");
+      }else{
+        el.classList.remove("active");
+        if(text) text.textContent = "처리 중...";
+      }
+    }
+
+    function showBusy(message){
+      hideBusy();
+      const el = document.createElement("div");
+      el.className = "busy-mask";
+      el.id = "globalBusyMask";
+      el.innerHTML = `<div class="busy-card"><span class="saving-spinner"></span><span>${escapeHtml(message || "처리 중...")}</span></div>`;
+      document.body.appendChild(el);
+    }
+
+    function hideBusy(){
+      const el = document.getElementById("globalBusyMask");
+      if(el) el.remove();
+    }
+
     function renderLogin(){
       root.innerHTML = `
         <div class="login-panel">
@@ -1156,9 +1183,20 @@
       const changes = Object.entries(state.pendingStatusChanges);
       if(!changes.length){ toast("저장할 상태 변경이 없습니다."); return; }
       const btn = document.getElementById("saveStatusChangesBtn");
+      let safetyTimer = null;
+      const resetSavingUi = () => {
+        hideBusy();
+        setInlineSaving("");
+        if(btn){ btn.disabled = false; }
+        updatePendingStatusUi();
+      };
       if(btn){ btn.disabled = true; btn.textContent = "저장 중..."; }
       setInlineSaving("상태 변경 저장 중...");
       showBusy("상태 변경 저장 중...");
+      safetyTimer = setTimeout(() => {
+        resetSavingUi();
+        toast("저장 응답이 지연되어 화면을 복구했습니다. 잠시 후 조회를 눌러 확인해주세요.");
+      }, Math.max(18000, changes.length * 7000));
       const failed = [];
       let savedCount = 0;
       try{
@@ -1187,10 +1225,8 @@
           setTimeout(() => loadSchedules(), 250);
         }
       }finally{
-        hideBusy();
-        setInlineSaving("");
-        if(btn){ btn.disabled = false; }
-        updatePendingStatusUi();
+        if(safetyTimer) clearTimeout(safetyTimer);
+        resetSavingUi();
       }
     }
 
@@ -1264,11 +1300,6 @@
       await loadCategories();
       renderShell();
       await loadSchedules();
-      let resizeTimer = null;
-      window.addEventListener("resize", () => {
-        clearTimeout(resizeTimer);
-        resizeTimer = setTimeout(() => { if(state.user && state.period === "week") renderSchedules(); }, 180);
-      });
     }
 
     initApp();
