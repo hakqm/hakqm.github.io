@@ -2637,9 +2637,15 @@
                 <option value="5">품질 회의실 5번</option>
               </select>
             </div>
+          </div>
+          <div class="room-form-row">
             <div class="room-form-group">
-              <label class="room-form-label">날짜 *</label>
+              <label class="room-form-label">시작 날짜 *</label>
               <input type="date" id="roomDate" class="room-form-input" />
+            </div>
+            <div class="room-form-group">
+              <label class="room-form-label">종료 날짜 <span style="font-size:11px;color:#94a3b8;">(당일이면 동일 날짜)</span></label>
+              <input type="date" id="roomEndDate" class="room-form-input" />
             </div>
           </div>
           <div class="room-form-row">
@@ -2683,12 +2689,19 @@
         </div>
       </div>
       <div class="modal-body">
+        <!-- 09:00 이후 잠금 메시지 -->
+        <div id="mealLockMsg" class="meal-step hidden" style="text-align:center;padding:20px 0;">
+          <div style="font-size:28px;margin-bottom:8px;">🔒</div>
+          <p style="font-weight:900;color:#22365e;font-size:15px;margin-bottom:6px;">신청이 마감되었습니다</p>
+          <p id="mealLockDetail" style="font-size:13px;color:#667085;line-height:1.6;"></p>
+        </div>
         <!-- Step 1: 신청 여부 -->
         <div id="mealStep1" class="meal-step">
           <p class="meal-info-p">오늘 중식을 신청하시겠습니까?<br>응답하지 않으면 <strong>미신청</strong>으로 자동 처리됩니다.</p>
           <div class="meal-btn-row">
             <button type="button" class="meal-btn" id="mealBtnYes">✓ 신청</button>
             <button type="button" class="meal-btn meal-no-sel" id="mealBtnNo">✗ 미신청</button>
+            <button type="button" class="meal-btn" id="mealBtnLeave" style="background:#f0f9f4;color:#166534;border-color:#bbf7d0;">🌴 연차</button>
           </div>
         </div>
         <!-- Step 2: 외부 손님 여부 -->
@@ -3323,15 +3336,43 @@
       setTimeout(openMealModal, 1500);
     }
 
+    function isMealLocked() {
+      const now = new Date();
+      return now.getHours() >= 9; /* 09:00 이후 잠금 */
+    }
+
     function openMealModal() {
       const modal = document.getElementById("mealModal");
       if (!modal) return;
 
       const descEl = document.getElementById("mealModalDateDesc");
-      if (descEl) descEl.textContent = getTodayStr() + " 중식 신청 — 응답해주세요.";
+      if (descEl) descEl.textContent = getTodayStr() + " 중식 신청";
 
-      const step1 = document.getElementById("mealStep1");
-      const step2 = document.getElementById("mealStep2");
+      /* 09:00 이후 잠금 처리 */
+      const lockMsg  = document.getElementById("mealLockMsg");
+      const lockDetail = document.getElementById("mealLockDetail");
+      const step1    = document.getElementById("mealStep1");
+      const step2    = document.getElementById("mealStep2");
+      const timerEl  = document.querySelector(".meal-timer");
+
+      if (isMealLocked()) {
+        clearMealTimer();
+        if (timerEl) timerEl.style.display = "none";
+        if (lockMsg) lockMsg.classList.remove("hidden");
+        if (step1)   step1.classList.add("hidden");
+        if (step2)   step2.classList.add("hidden");
+        const data = getMealLocalData();
+        const myStatus = data && data.responded
+          ? (data.applying ? "✓ 신청" : (data.isLeave ? "🌴 연차" : "✗ 미신청"))
+          : "미응답 (미신청 처리)";
+        if (lockDetail) lockDetail.textContent = `오전 9시 이후에는 당일 식수 신청 변경이 불가합니다.\n내 신청 상태: ${myStatus}`;
+        modal.classList.remove("hidden");
+        modal.setAttribute("aria-hidden", "false");
+        return;
+      }
+
+      if (lockMsg) lockMsg.classList.add("hidden");
+      if (timerEl) timerEl.style.display = "";
       if (step1) step1.classList.remove("hidden");
       if (step2) step2.classList.add("hidden");
 
@@ -3393,12 +3434,14 @@
       el.textContent = `${m}:${String(s).padStart(2, "0")}`;
     }
 
-    async function submitMealChoice(applying, guestCount, isAuto) {
+    async function submitMealChoice(applying, guestCount, isAuto, reason) {
       saveMealLocalData({
         responded: true,
         applying: applying,
         guestCount: guestCount || 0,
         isAuto: !!isAuto,
+        isLeave: reason === "연차",
+        reason: reason || "",
         submittedAt: new Date().toISOString()
       });
       updateHomeMealStatus();
@@ -3414,7 +3457,8 @@
             `team=${encodeURIComponent(currentUserData.team || "")}`,
             `applying=${applying ? "Y" : "N"}`,
             `guest_count=${encodeURIComponent(guestCount || 0)}`,
-            `is_auto=${isAuto ? "Y" : "N"}`
+            `is_auto=${isAuto ? "Y" : "N"}`,
+            `reason=${encodeURIComponent(reason || "")}`
           ].join("&");
           await jsonpRequest(`${WEB_APP_URL}?${params}`, "mealSubmitCallback");
         } catch (e) {
@@ -3473,8 +3517,12 @@
             const cancelBtn = isMine
               ? `<button class="room-res-cancel" data-action="cancel-room" data-res-id="${escapeHtml(r.reservation_id)}">취소</button>`
               : "";
+            const dateRange = r.end_date && r.end_date !== r.start_date
+              ? `${escapeHtml(r.start_date)} ~ ${escapeHtml(r.end_date)}`
+              : escapeHtml(r.start_date || r.date || "");
             return `<div class="room-res-item">
               ${cancelBtn}
+              ${r.end_date && r.end_date !== r.start_date ? `<span style="font-size:10px;background:#fef3c7;color:#92400e;border-radius:4px;padding:1px 5px;font-weight:800;">장기 ${dateRange}</span>` : ""}
               <span class="room-res-time">${escapeHtml(r.start_time)}~${escapeHtml(r.end_time)}</span>
               <span class="room-res-title">${escapeHtml(r.content)}</span>
               <span style="font-size:10px;color:#7b8798;">담당: ${escapeHtml(r.manager_name)}</span>
@@ -3544,14 +3592,22 @@
       const roomManager = document.getElementById("roomManager");
       const bookerNote = document.getElementById("roomBookerNote");
 
+      const roomEndDate = document.getElementById("roomEndDate");
       if (roomSelect) roomSelect.value = String(preselectedRoom || "1");
       if (roomDate) roomDate.value = today;
+      if (roomEndDate) roomEndDate.value = today;
       if (roomStartTime) roomStartTime.value = "09:00";
       if (roomEndTime) roomEndTime.value = "10:00";
       if (roomContent) roomContent.value = "";
       if (roomManager && currentUserData) roomManager.value = currentUserData.name || "";
       if (bookerNote && currentUserData) {
         bookerNote.textContent = `예약자: ${currentUserData.name} (사번: ${currentUserData.emp_no || "-"}, ${currentUserData.team || "-"})`;
+      }
+      /* 시작 날짜 변경 시 종료 날짜 자동 맞춤 */
+      if (roomDate && roomEndDate) {
+        roomDate.addEventListener("change", () => {
+          if (roomEndDate.value < roomDate.value) roomEndDate.value = roomDate.value;
+        });
       }
 
       modal.classList.remove("hidden");
@@ -3574,18 +3630,20 @@
       }
 
       const roomNo    = document.getElementById("roomSelect")?.value || "1";
-      const date      = document.getElementById("roomDate")?.value || "";
+      const startDate = document.getElementById("roomDate")?.value || "";
+      const endDate   = document.getElementById("roomEndDate")?.value || startDate;
       const startTime = document.getElementById("roomStartTime")?.value || "";
       const endTime   = document.getElementById("roomEndTime")?.value || "";
       const content   = document.getElementById("roomContent")?.value.trim() || "";
       const manager   = document.getElementById("roomManager")?.value.trim() || "";
 
-      if (!date)      { alert("날짜를 선택해주세요."); return; }
-      if (!startTime) { alert("시작 시간을 입력해주세요."); return; }
-      if (!endTime)   { alert("종료 시간을 입력해주세요."); return; }
+      if (!startDate)  { alert("시작 날짜를 선택해주세요."); return; }
+      if (endDate < startDate) { alert("종료 날짜는 시작 날짜 이후여야 합니다."); return; }
+      if (!startTime)  { alert("시작 시간을 입력해주세요."); return; }
+      if (!endTime)    { alert("종료 시간을 입력해주세요."); return; }
       if (startTime >= endTime) { alert("종료 시간은 시작 시간보다 이후여야 합니다."); return; }
-      if (!content)   { alert("회의 내용을 입력해주세요."); return; }
-      if (!manager)   { alert("담당자 이름을 입력해주세요."); return; }
+      if (!content)    { alert("회의 내용을 입력해주세요."); return; }
+      if (!manager)    { alert("담당자 이름을 입력해주세요."); return; }
 
       const submitBtn = document.getElementById("submitRoomBtn");
       if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = "예약 중..."; }
@@ -3594,7 +3652,8 @@
         const params = [
           "action=addRoomReservation",
           `room_no=${encodeURIComponent(roomNo)}`,
-          `date=${encodeURIComponent(date)}`,
+          `start_date=${encodeURIComponent(startDate)}`,
+          `end_date=${encodeURIComponent(endDate)}`,
           `start_time=${encodeURIComponent(startTime)}`,
           `end_time=${encodeURIComponent(endTime)}`,
           `content=${encodeURIComponent(content)}`,
@@ -3662,6 +3721,7 @@
     function bindMealModalEvents() {
       const yesBtn   = document.getElementById("mealBtnYes");
       const noBtn    = document.getElementById("mealBtnNo");
+      const leaveBtn = document.getElementById("mealBtnLeave");
       const gNoneBtn = document.getElementById("mealGuestNone");
       const gHasBtn  = document.getElementById("mealGuestHas");
       const submitBtn = document.getElementById("mealSubmitBtn");
@@ -3679,8 +3739,16 @@
       if (noBtn) {
         noBtn.addEventListener("click", function () {
           closeMealModal();
-          submitMealChoice(false, 0, false);
+          submitMealChoice(false, 0, false, "");
           alert("미신청으로 처리되었습니다.");
+        });
+      }
+
+      if (leaveBtn) {
+        leaveBtn.addEventListener("click", function () {
+          closeMealModal();
+          submitMealChoice(false, 0, false, "연차");
+          alert("연차로 처리되었습니다. (미신청)");
         });
       }
 
@@ -3838,7 +3906,7 @@
           <div class="panel-grid">
 
             <!-- 식수 현황 패널 -->
-            <div class="panel">
+            <div class="panel" id="mealSection">
               <div class="panel-title-row">
                 <h3>오늘의 중식 신청 현황</h3>
                 <span id="mealTodayLabel">${today}</span>
@@ -3914,7 +3982,7 @@
           </div>
 
           <!-- 회의실 예약 현황 -->
-          <div class="room-section">
+          <div class="room-section" id="roomSection">
             <div class="room-section-head">
               <h3>회의실 예약 현황</h3>
               <div style="display:flex;align-items:center;gap:8px;">
@@ -6578,16 +6646,22 @@
         const { screen, url, sidebarAction } = link.dataset;
 
         if (sidebarAction === "open-meal") {
-          if (!currentUserData) { openLoginFromScreen(); return; }
+          const delay = currentScreenKey !== "home" ? 350 : 0;
           if (currentScreenKey !== "home") openScreen("home");
-          setTimeout(() => openMealModal(), currentScreenKey !== "home" ? 300 : 0);
+          setTimeout(() => {
+            const el = document.getElementById("mealSection");
+            if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+          }, delay);
           return;
         }
 
         if (sidebarAction === "open-room-modal") {
-          if (!currentUserData) { openLoginFromScreen(); return; }
+          const delay = currentScreenKey !== "home" ? 350 : 0;
           if (currentScreenKey !== "home") openScreen("home");
-          setTimeout(() => openRoomModal(1), currentScreenKey !== "home" ? 300 : 0);
+          setTimeout(() => {
+            const el = document.getElementById("roomSection");
+            if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+          }, delay);
           return;
         }
 
