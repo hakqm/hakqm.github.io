@@ -85,6 +85,13 @@
     .control{width:100%;border:1px solid #cdd7e5;border-radius:14px;background:#fff;min-height:46px;padding:0 14px;color:#172033;outline:none;}
     textarea.control{min-height:92px;padding:12px 14px;resize:vertical;line-height:1.6;}
     .control:focus{border-color:#203f82;box-shadow:0 0 0 4px rgba(52,74,140,.08);}
+    .time-input-wrap{position:relative;display:flex;align-items:center;}
+    .time-input-wrap .control{padding-right:42px;font-variant-numeric:tabular-nums;}
+    .time-pick-btn{position:absolute;right:8px;width:30px;height:30px;border:0;border-radius:10px;background:#eef4ff;color:#203f82;font-weight:950;display:inline-flex;align-items:center;justify-content:center;}
+    .time-pick-btn:hover{background:#dbeafe;}
+    .time-menu{position:fixed;z-index:90;width:142px;max-height:220px;overflow:auto;padding:6px;border:1px solid #cbd7ea;border-radius:14px;background:#fff;box-shadow:0 18px 42px rgba(15,23,42,.18);display:grid;gap:3px;}
+    .time-menu button{border:0;background:#fff;border-radius:9px;padding:8px 10px;color:#203a69;font-size:13px;font-weight:900;text-align:left;}
+    .time-menu button:hover{background:#eef4ff;}
     .seg{display:inline-flex;gap:4px;flex-wrap:wrap;padding:4px;border:1px solid #d9e3f0;border-radius:999px;background:#f3f6fb;}
     .seg button{border:0;background:transparent;color:#526176;border-radius:999px;padding:10px 15px;font-weight:950;font-size:13px;box-shadow:none;}
     .seg button:hover{background:#e9f1ff;color:#26386a;}
@@ -133,8 +140,8 @@
     .compact-title{font-weight:950;color:#1f2937;}
     .compact-sub{margin-top:3px;color:#64748b;font-size:12px;font-weight:750;}
 
-    .task-card{position:relative;overflow:hidden;border:1px solid #dbe3ec;border-radius:15px;background:#fff;box-shadow:0 7px 16px rgba(31,41,55,.06);padding:12px 12px 12px 16px;transition:.16s ease;}
-    .task-card:hover{transform:translateY(-2px);box-shadow:0 12px 22px rgba(31,41,55,.11);border-color:#c7d7f2;}
+    .task-card{position:relative;overflow:hidden;border:1px solid #dbe3ec;border-radius:14px;background:#fff;box-shadow:0 6px 13px rgba(31,41,55,.055);padding:11px 12px 11px 15px;transition:.16s ease;min-height:0;width:100%;text-align:left;}
+    .task-card:hover{transform:translateY(-1px);box-shadow:0 10px 18px rgba(31,41,55,.10);border-color:#c7d7f2;}
     .task-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:#64748b;}
     .task-card[data-category="INSPECTION"]::before{background:#2563eb;}
     .task-card[data-category="CUSTOMER"]::before{background:#16a34a;}
@@ -142,13 +149,19 @@
     .task-card[data-category="BUSINESS_TRIP"]::before{background:#7c3aed;}
     .task-card[data-category="INTERNAL"]::before{background:#64748b;}
     .task-card[data-category="ETC"]::before{background:#475569;}
-    .task-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px;}
-    .task-title{color:#1f2937;font-size:13px;font-weight:950;line-height:1.45;word-break:keep-all;}
-    .task-time{color:#203f82;font-size:11px;font-weight:950;white-space:nowrap;}
-    .task-meta{display:flex;gap:5px;flex-wrap:wrap;margin:7px 0;}
-    .task-line{margin-top:6px;color:#667085;font-size:12px;line-height:1.45;word-break:keep-all;}
+    .task-block{display:grid;gap:6px;min-width:0;}
+    .task-title-row{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;min-width:0;}
+    .task-primary{color:#0f172a;font-size:13px;font-weight:950;line-height:1.25;letter-spacing:-.01em;word-break:keep-all;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
+    .task-count{display:inline-flex;align-items:center;justify-content:center;min-width:23px;height:19px;padding:0 7px;border-radius:999px;background:#eef2ff;color:#203a69;font-size:10.5px;font-weight:950;flex:0 0 auto;}
+    .task-time-line{display:block;color:#203f82;font-size:11.5px;font-weight:950;line-height:1.2;}
+    .task-kind{display:flex;align-items:center;gap:6px;color:#334155;font-size:11.5px;font-weight:900;line-height:1.35;min-width:0;}
+    .task-kind-text{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;}
+    .task-person{color:#334155;font-size:11.5px;font-weight:900;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .task-person strong{color:#203a69;font-weight:950;}
+    .task-place{color:#64748b;font-size:11.5px;font-weight:850;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .task-extra{color:#94a3b8;font-size:10.5px;font-weight:800;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
-    .badge{display:inline-flex;align-items:center;min-height:24px;padding:4px 8px;border-radius:999px;font-size:11px;font-weight:950;line-height:1.2;background:#f1f5f9;color:#475569;}
+    .badge{display:inline-flex;align-items:center;min-height:22px;padding:3px 7px;border-radius:999px;font-size:10.5px;font-weight:950;line-height:1.2;background:#f1f5f9;color:#475569;}
     .b-blue{background:#eaf2ff;color:#164886;}.b-green{background:#ecfdf3;color:#027a48;}.b-orange{background:#fff7ed;color:#b54708;}.b-purple{background:#f5f3ff;color:#6d28d9;}.b-gray{background:#f1f5f9;color:#475569;}.b-red{background:#fef3f2;color:#b42318;}.b-slate{background:#f1f5f9;color:#334155;}
 
     .table-wrap{overflow:auto;background:#fff;}
@@ -161,9 +174,20 @@
     .month-card{border:1px solid var(--line);border-radius:18px;background:#fff;padding:16px;box-shadow:var(--shadow-sm);}
     .month-card .m{font-weight:950;color:#203a69;margin-bottom:8px;}.month-card .count{font-size:30px;font-weight:950;color:#203f82;}.month-card .hint{margin-top:8px;color:#667085;font-size:12px;font-weight:800;}
 
-    .quick-status{min-width:82px;height:28px;border:1px solid #cbd7ea;border-radius:999px;background:#ffffff;color:#203a69;font-size:11px;font-weight:950;padding:0 24px 0 9px;outline:none;cursor:pointer;}
+    .quick-status{min-width:70px;height:26px;border:1px solid #cbd7ea;border-radius:999px;background:#ffffff;color:#203a69;font-size:11px;font-weight:950;padding:0 20px 0 8px;outline:none;cursor:pointer;}
     .quick-status:hover{border-color:#8fb0e8;background:#f8fbff;}
     .quick-status:disabled{opacity:.72;cursor:not-allowed;background:#f1f5f9;}
+    .quick-status.is-pending{border-color:#f59e0b;background:#fff7ed;color:#92400e;}
+    .task-kind .quick-status{min-width:58px;height:24px;border-radius:8px;font-size:11px;padding-left:5px;padding-right:18px;background:#f8fbff;}
+    .board-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end;}
+    .status-save-btn{padding:9px 13px;border-radius:12px;font-size:12px;box-shadow:0 10px 18px rgba(32,63,130,.16);}
+    .saving-strip{display:none;align-items:center;gap:8px;min-height:28px;padding:6px 10px;border:1px solid #bfdbfe;border-radius:999px;background:#eff6ff;color:#1d4ed8;font-size:12px;font-weight:950;}
+    .saving-strip.active{display:inline-flex;}
+    .saving-spinner{width:13px;height:13px;border:2px solid rgba(29,78,216,.22);border-top-color:#1d4ed8;border-radius:50%;animation:spin .8s linear infinite;}
+    @keyframes spin{to{transform:rotate(360deg);}}
+    .busy-mask{position:fixed;inset:0;z-index:120;display:flex;align-items:center;justify-content:center;background:rgba(15,23,42,.28);backdrop-filter:blur(2px);}
+    .busy-card{display:flex;align-items:center;gap:12px;padding:16px 20px;border-radius:18px;background:#fff;color:#203a69;font-weight:950;box-shadow:0 18px 46px rgba(15,23,42,.28);border:1px solid #dbe6f5;}
+    .busy-card .saving-spinner{width:18px;height:18px;}
 
     .modal{position:fixed;inset:0;z-index:50;display:flex;align-items:flex-start;justify-content:center;background:rgba(15,23,42,.55);padding:18px 24px 48px;overflow:auto;}
     .modal-card{width:min(760px, calc(100vw - 80px));max-height:calc(100vh - 42px);overflow:hidden;background:#fff;border-radius:24px;box-shadow:0 28px 72px rgba(15,23,42,.30);border:1px solid #e5e7eb;margin-top:0;display:flex;flex-direction:column;}
@@ -186,6 +210,26 @@
 
     @media(max-width:1000px){.app-shell{padding:0 16px 28px;}.page-hero{margin:0 -16px 18px;padding:22px 18px 26px;}.page-hero-inner,.filter-top{align-items:stretch;flex-direction:column;}.filter-grid{grid-template-columns:1fr 1fr;}.kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr));}.part-summary-grid{grid-template-columns:repeat(2,minmax(0,1fr));}.year-grid{grid-template-columns:repeat(2,minmax(0,1fr));}.title-block h1{font-size:27px;}.login-grid{grid-template-columns:1fr;}}
     @media(max-width:640px){.filter-grid,.form-grid,details.advanced .inner{grid-template-columns:1fr;}.kpi-grid,.part-summary-grid,.year-grid{grid-template-columns:1fr;}.top-actions{justify-content:flex-start;}.range-title{min-width:0;width:100%;}.nav-row{justify-content:flex-start;}.seg{width:100%;}.seg button{flex:1;}.login-panel{margin:36px 12px;}.modal{padding:12px;}.modal-card{width:100%;max-height:calc(100vh - 24px);border-radius:20px;}.modal-head{padding:16px 18px 12px;}.modal-body{padding:18px 18px 0;}.modal-actions{margin-left:-18px;margin-right:-18px;padding-left:18px;padding-right:18px;}}
+
+    @media(max-width:720px){
+      .app-shell{padding:0 10px 24px;}
+      .page-hero{margin:0 -10px 14px;padding:18px 14px 22px;}
+      .title-block h1{font-size:23px;}
+      .filter-top{gap:12px;}
+      .filter-left{gap:10px;}
+      .filter-block{width:100%;align-items:flex-start;flex-direction:column;}
+      .filter-grid{grid-template-columns:1fr;gap:10px;padding:12px;}
+      .week-grid{display:block;min-width:0;background:#f8fafc;padding:12px;}
+      .day-col{min-height:0;border:1px solid #e2e8f0;border-radius:16px;margin-bottom:12px;overflow:hidden;background:#fff;}
+      .day-col:last-child{border-right:1px solid #e2e8f0;}
+      .day-head{position:static;background:#f8fafc;}
+      .day-body{padding:10px;gap:8px;}
+      .empty-day{min-height:64px;}
+      .task-card{max-width:none;width:100%;}
+      .matrix-table,.compact-table,table{min-width:760px;}
+      .part-summary-grid{grid-template-columns:1fr;}
+      .toast{left:12px;right:12px;bottom:16px;}
+    }
 
   </style>
 </head>
@@ -224,7 +268,8 @@
       category:"",
       status:"",
       keyword:"",
-      editSchedule:null
+      editSchedule:null,
+      pendingStatusChanges:{}
     };
 
     const root = document.getElementById("root");
@@ -250,6 +295,74 @@
       if(start && end) return start + "-" + end;
       return start || end || "";
     }
+    function normalizeTimeInput(value){
+      let text = String(value || "").trim();
+      if(!text) return "";
+      let isPm = /오후|pm/i.test(text);
+      text = text.replace(/오전|오후|AM|PM/gi, "").trim();
+      const m = text.match(/^(\d{1,2})(?::?(\d{2}))?$/);
+      if(m){
+        let h = Number(m[1]);
+        const min = m[2] == null ? "00" : m[2];
+        if(isPm && h < 12) h += 12;
+        if(!isPm && h === 24) h = 0;
+        if(h >= 0 && h <= 23) return pad(h) + ":" + min;
+      }
+      return formatScheduleTime(text);
+    }
+    function createTimeOptions(){
+      const options = [];
+      for(let h=0; h<24; h++){
+        for(const m of [0,30]) options.push(pad(h) + ":" + pad(m));
+      }
+      return options;
+    }
+    const TIME_OPTIONS = createTimeOptions();
+
+    function openTimeMenu(input){
+      closeTimeMenu();
+      const rect = input.getBoundingClientRect();
+      const menu = document.createElement("div");
+      menu.className = "time-menu";
+      const current = normalizeTimeInput(input.value);
+      menu.innerHTML = TIME_OPTIONS.map(t => `<button type="button" data-time="${t}">${t}</button>`).join("");
+      document.body.appendChild(menu);
+      const width = Math.max(142, rect.width);
+      menu.style.width = Math.min(width, 220) + "px";
+      const left = Math.min(rect.left, window.innerWidth - Math.min(width, 220) - 10);
+      const top = Math.min(rect.bottom + 6, window.innerHeight - 230);
+      menu.style.left = Math.max(10, left) + "px";
+      menu.style.top = Math.max(10, top) + "px";
+      menu.querySelectorAll("button").forEach(btn => {
+        if(btn.dataset.time === current) btn.style.background = "#eaf2ff";
+        btn.onclick = () => { input.value = btn.dataset.time; closeTimeMenu(); input.focus(); };
+      });
+      setTimeout(() => {
+        document.addEventListener("mousedown", handleOutsideTimeMenu, { once:false });
+      }, 0);
+    }
+
+    function handleOutsideTimeMenu(ev){
+      if(ev.target.closest(".time-menu") || ev.target.closest(".time-pick-btn")) return;
+      closeTimeMenu();
+    }
+
+    function closeTimeMenu(){
+      const old = document.querySelector(".time-menu");
+      if(old) old.remove();
+      document.removeEventListener("mousedown", handleOutsideTimeMenu);
+    }
+
+    function bindTimeInput(input){
+      if(!input) return;
+      input.addEventListener("input", () => {
+        let v = input.value.replace(/[^0-9:]/g, "");
+        if(/^\d{3,4}$/.test(v)) v = v.slice(0, v.length-2) + ":" + v.slice(-2);
+        input.value = v.slice(0,5);
+      });
+      input.addEventListener("blur", () => { input.value = normalizeTimeInput(input.value); });
+    }
+
     function normalizeSchedule(s){
       return Object.assign({}, s, {
         start_time: formatScheduleTime(s.start_time),
@@ -363,16 +476,87 @@
 
     const STATUS_OPTIONS = ["예정","확정","진행","완료","취소","보류"];
 
+    function effectiveStatus(s){
+      if(!s) return "예정";
+      return state.pendingStatusChanges[s.schedule_id] || s.status || "예정";
+    }
+
+    function normalizeTextForCompare(value){
+      return String(value || "").toLowerCase().replace(/[\s\-_/·.]/g, "");
+    }
+
+    function buildExtraInfo(s){
+      const titleKey = normalizeTextForCompare(s.title);
+      const primaryKey = normalizeTextForCompare(primaryScheduleTitle(s));
+      const extras = [];
+      [s.item_code, s.qty].forEach(v => {
+        const text = String(v || "").trim();
+        const key = normalizeTextForCompare(text);
+        if(text && key && titleKey.indexOf(key) === -1 && primaryKey.indexOf(key) === -1) extras.push(text);
+      });
+      return extras.join(" · ");
+    }
+
+    function normalizeProjectLabel(value){
+      const text = String(value || "").trim();
+      if(!text) return "";
+      const m = text.match(/[A-Za-z]{2,6}[-/ ]?\d{2,6}/);
+      if(m) return m[0].replace(/[ /]+/g,"-").toUpperCase();
+      return text.replace(/\s+/g," ");
+    }
+
+    function primaryScheduleTitle(s){
+      const project = normalizeProjectLabel(s.project_no);
+      if(project) return project;
+      const title = String(s.title || "").trim();
+      const fromTitle = normalizeProjectLabel(title);
+      if(fromTitle) return fromTitle;
+      return title;
+    }
+
+    function scheduleGroupKey(s){
+      return [
+        s.date,
+        formatScheduleTime(s.start_time),
+        formatScheduleTime(s.end_time),
+        s.category,
+        normalizeTextForCompare(primaryScheduleTitle(s)),
+        normalizeTextForCompare(s.item_code),
+        normalizeTextForCompare(s.qty),
+        normalizeTextForCompare(s.customer),
+        normalizeTextForCompare(s.location),
+        normalizeTextForCompare(s.main_user_id),
+        effectiveStatus(s)
+      ].map(v => String(v || "").trim()).join("|");
+    }
+
+    function groupSchedulesForDisplay(list){
+      const map = new Map();
+      list.forEach(item => {
+        const key = scheduleGroupKey(item);
+        if(!map.has(key)){
+          map.set(key, Object.assign({}, item, { schedule_ids:[item.schedule_id], group_count:1 }));
+        }else{
+          const group = map.get(key);
+          group.schedule_ids.push(item.schedule_id);
+          group.group_count += 1;
+        }
+      });
+      return Array.from(map.values());
+    }
+
     function canEditSchedule(s){
       return !s || isAdmin() || s.main_user_id === state.user.user_id || s.created_by_user_id === state.user.user_id;
     }
 
     function statusControlHtml(s){
-      const current = s.status || "예정";
+      const current = effectiveStatus(s);
       if(!canEditSchedule(s)){
         return `<span class="badge ${statusBadgeClass(current)}">${escapeHtml(current)}</span>`;
       }
-      return `<select class="quick-status" data-id="${escapeHtml(s.schedule_id)}" title="상태 바로 변경">${STATUS_OPTIONS.map(v=>`<option value="${v}" ${current===v?"selected":""}>${v}</option>`).join("")}</select>`;
+      const ids = (s.schedule_ids || [s.schedule_id]).filter(Boolean);
+      const isPending = ids.some(id => state.pendingStatusChanges[id] !== undefined);
+      return `<select class="quick-status ${isPending ? "is-pending" : ""}" data-ids="${escapeHtml(ids.join("|"))}" title="상태 변경 후 저장 버튼으로 일괄 반영">${STATUS_OPTIONS.map(v=>`<option value="${v}" ${current===v?"selected":""}>${v}</option>`).join("")}</select>`;
     }
 
     function toast(msg){
@@ -496,7 +680,11 @@
           <div class="board">
             <div class="board-head">
               <h2 id="boardTitle">${escapeHtml(getRangeTitle())}</h2>
-              <div class="status" id="boardStatus">불러오는 중...</div>
+              <div class="board-actions">
+                <div class="saving-strip" id="inlineSaving"><span class="saving-spinner"></span><span>처리 중...</span></div>
+                <button id="saveStatusChangesBtn" class="btn primary status-save-btn hidden" type="button">상태 변경 저장</button>
+                <div class="status" id="boardStatus">불러오는 중...</div>
+              </div>
             </div>
             <div id="scheduleView" class="loading">스케쥴을 불러오는 중입니다.</div>
           </div>
@@ -508,6 +696,7 @@
     function bindShellEvents(){
       document.getElementById("reloadBtn").onclick = loadSchedules;
       document.getElementById("newBtn").onclick = () => openForm(null);
+      const saveStatusBtn = document.getElementById("saveStatusChangesBtn"); if(saveStatusBtn) saveStatusBtn.onclick = savePendingStatusChanges;
       document.getElementById("prevBtn").onclick = () => movePeriod(-1);
       document.getElementById("nextBtn").onclick = () => movePeriod(1);
       document.getElementById("todayBtn").onclick = () => { state.cursor = new Date(); loadSchedules(); };
@@ -607,6 +796,7 @@
       if(state.period === "week") renderWeek();
       else if(state.period === "month") renderMonth();
       else renderYear();
+      updatePendingStatusUi();
     }
 
     function sortedSchedules(){
@@ -615,20 +805,23 @@
 
     function cardHtml(s){
       const time = displayTime(s);
-      const sub = [s.project_no, s.item_code, s.qty].filter(Boolean).join(" · ");
-      return `<div class="task-card" data-category="${escapeHtml(s.category)}" data-id="${escapeHtml(s.schedule_id)}">
-        <div class="task-top"><div class="task-title">${escapeHtml(s.title)}</div>${time ? `<div class="task-time">${escapeHtml(time)}</div>` : ""}</div>
-        <div class="task-meta">
-          <span class="badge ${categoryBadgeClass(s.category)}">${escapeHtml(categoryName(s.category))}</span>
-          ${statusControlHtml(s)}
+      const sub = buildExtraInfo(s);
+      const place = String(s.location || "").trim();
+      const title = primaryScheduleTitle(s);
+      return `<div class="task-card" data-category="${escapeHtml(s.category)}" data-id="${escapeHtml(s.schedule_id)}" title="${escapeHtml(s.title || title)}">
+        <div class="task-block">
+          <div class="task-title-row"><div class="task-primary">${escapeHtml(title || "일정")}</div>${s.group_count > 1 ? `<span class="task-count">×${s.group_count}</span>` : ""}</div>
+          ${time ? `<div class="task-time-line">${escapeHtml(time)}</div>` : ""}
+          <div class="task-kind"><span class="task-kind-text"><span>${escapeHtml(categoryName(s.category))}</span><span>/</span></span>${statusControlHtml(s)}</div>
+          <div class="task-person"><strong>${escapeHtml(s.main_user_name || "-")}</strong> · ${escapeHtml(s.part || "-")}</div>
+          ${place ? `<div class="task-place">${escapeHtml(place)}</div>` : ""}
+          ${sub ? `<div class="task-extra">${escapeHtml(sub)}</div>` : ""}
         </div>
-        <div class="task-line">${escapeHtml(s.main_user_name || "-")} · ${escapeHtml(s.part || "-")}${s.location ? " · " + escapeHtml(s.location) : ""}</div>
-        ${sub ? `<div class="task-line">${escapeHtml(sub)}</div>` : ""}
       </div>`;
     }
 
     function compactScheduleInfo(s){
-      return [s.project_no, s.item_code, s.qty].filter(Boolean).join(" · ");
+      return buildExtraInfo(s);
     }
 
     function partSortValue(part){
@@ -653,7 +846,7 @@
         <thead><tr><th>일자</th><th>시간</th><th>구분</th><th>스케쥴</th><th>담당</th><th>파트</th><th>상태</th><th>장소/고객</th></tr></thead>
         <tbody>${rows.length ? rows.map(s => {
           const sub = compactScheduleInfo(s);
-          return `<tr class="task-row" data-id="${escapeHtml(s.schedule_id)}"><td>${escapeHtml(s.date)}</td><td>${escapeHtml(displayTime(s) || "-")}</td><td><span class="badge ${categoryBadgeClass(s.category)}">${escapeHtml(categoryName(s.category))}</span></td><td><div class="compact-title">${escapeHtml(s.title)}</div>${sub ? `<div class="compact-sub">${escapeHtml(sub)}</div>` : ""}</td><td>${escapeHtml(s.main_user_name || "-")}</td><td>${escapeHtml(s.part || "-")}</td><td>${statusControlHtml(s)}</td><td>${escapeHtml([s.location,s.customer].filter(Boolean).join(" / ") || "-")}</td></tr>`;
+          return `<tr class="task-row" data-id="${escapeHtml(s.schedule_id)}"><td>${escapeHtml(s.date)}</td><td>${escapeHtml(displayTime(s) || "-")}</td><td><span class="badge ${categoryBadgeClass(s.category)}">${escapeHtml(categoryName(s.category))}</span></td><td><div class="compact-title">${escapeHtml(primaryScheduleTitle(s))}</div>${sub ? `<div class="compact-sub">${escapeHtml(sub)}</div>` : ""}</td><td>${escapeHtml(s.main_user_name || "-")}</td><td>${escapeHtml(s.part || "-")}</td><td>${statusControlHtml(s)}</td><td>${escapeHtml([s.location,s.customer].filter(Boolean).join(" / ") || "-")}</td></tr>`;
         }).join("") : `<tr><td colspan="8" style="text-align:center;color:#94a3b8;padding:34px;">등록된 일정이 없습니다.</td></tr>`}</tbody>
       </table></div>`;
     }
@@ -677,7 +870,7 @@
         el.addEventListener("click", ev => ev.stopPropagation());
         el.addEventListener("change", ev => {
           ev.stopPropagation();
-          quickUpdateStatus(el.dataset.id, el.value, el);
+          queueStatusChange(el.dataset.ids || el.dataset.id, el.value, el);
         });
       });
     }
@@ -690,7 +883,7 @@
       const today = ymd(new Date());
       document.getElementById("scheduleView").innerHTML = `<div class="week-grid">${days.map(d => {
         const date = ymd(d);
-        const list = sortedSchedules().filter(s => s.date === date);
+        const list = groupSchedulesForDisplay(sortedSchedules().filter(s => s.date === date));
         return `<div class="day-col">
           <div class="day-head"><div class="day-name">${weekdayName(d)}요일</div><div class="day-date"><span class="num">${pad(d.getMonth()+1)}.${pad(d.getDate())}</span>${date===today?`<span class="today-pill">TODAY</span>`:""}</div></div>
           <div class="day-body">${list.length ? list.map(cardHtml).join("") : `<div class="empty-day">등록된 일정 없음</div>`}</div>
@@ -762,7 +955,7 @@
 
     function openForm(schedule){
       state.editSchedule = schedule;
-      const data = schedule ? scheduleToFormData(schedule) : scheduleToFormData({ date:ymd(state.cursor), category:"INSPECTION" });
+      const data = schedule ? scheduleToFormData(schedule) : scheduleToFormData({ date:ymd(state.cursor), category:"INSPECTION", start_time:"09:00" });
       const canEdit = canEditSchedule(schedule);
       const cats = (state.categories.length ? state.categories : DEFAULT_CATEGORIES).map(c => `<option value="${escapeHtml(c.category)}" ${data.category===c.category?"selected":""}>${escapeHtml(c.display_name)}</option>`).join("");
       const partOpts = PARTS.map(p => `<option value="${escapeHtml(p)}" ${data.part===p?"selected":""}>${escapeHtml(p)}</option>`).join("");
@@ -777,8 +970,8 @@
             <div class="field"><label>구분</label><select id="fCategory" class="control" ${!canEdit?"disabled":""}>${cats}</select></div>
             <div class="field full"><label>스케쥴명</label><input id="fTitle" class="control" value="${escapeHtml(data.title)}" placeholder="예: HMD-2880 ACAP 검사" ${!canEdit?"disabled":""}></div>
             <div class="field"><label>상태</label><select id="fStatus" class="control" ${!canEdit?"disabled":""}>${STATUS_OPTIONS.map(s=>`<option value="${s}" ${data.status===s?"selected":""}>${s}</option>`).join("")}</select></div>
-            <div class="field"><label>시작 시간</label><input id="fStart" type="time" class="control" value="${escapeHtml(data.start_time)}" ${!canEdit?"disabled":""}></div>
-            <div class="field"><label>종료 시간</label><input id="fEnd" type="time" class="control" value="${escapeHtml(data.end_time)}" ${!canEdit?"disabled":""}></div>
+            <div class="field"><label>시작 시간</label><div class="time-input-wrap"><input id="fStart" type="text" inputmode="numeric" class="control" value="${escapeHtml(data.start_time || "09:00")}" placeholder="09:00" maxlength="5" ${!canEdit?"disabled":""}><button type="button" class="time-pick-btn" data-target="fStart" ${!canEdit?"disabled":""}>⌄</button></div></div>
+            <div class="field"><label>종료 시간</label><div class="time-input-wrap"><input id="fEnd" type="text" inputmode="numeric" class="control" value="${escapeHtml(data.end_time)}" placeholder="--:--" maxlength="5" ${!canEdit?"disabled":""}><button type="button" class="time-pick-btn" data-target="fEnd" ${!canEdit?"disabled":""}>⌄</button></div></div>
             <div class="field"><label>장소</label><input id="fLocation" class="control" value="${escapeHtml(data.location)}" ${!canEdit?"disabled":""}></div>
             <div class="field"><label>고객/업체</label><input id="fCustomer" class="control" value="${escapeHtml(data.customer)}" ${!canEdit?"disabled":""}></div>
             <div class="field full"><label>메모</label><textarea id="fMemo" class="control" ${!canEdit?"disabled":""}>${escapeHtml(data.memo)}</textarea></div>
@@ -810,6 +1003,15 @@
         </div>
       </div>`;
       document.body.appendChild(modal);
+      bindTimeInput(modal.querySelector("#fStart"));
+      bindTimeInput(modal.querySelector("#fEnd"));
+      modal.querySelectorAll(".time-pick-btn").forEach(btn => {
+        btn.onclick = (ev) => {
+          ev.preventDefault();
+          const input = modal.querySelector("#" + btn.dataset.target);
+          if(input && !input.disabled) openTimeMenu(input);
+        };
+      });
       makeModalDraggable(modal);
       modal.querySelector(".modal-close").onclick = () => modal.remove();
       modal.querySelector(".closeBtn").onclick = () => modal.remove();
@@ -823,8 +1025,8 @@
         date:modal.querySelector("#fDate").value,
         category:modal.querySelector("#fCategory").value,
         title:modal.querySelector("#fTitle").value.trim(),
-        start_time:modal.querySelector("#fStart").value,
-        end_time:modal.querySelector("#fEnd").value,
+        start_time:normalizeTimeInput(modal.querySelector("#fStart").value),
+        end_time:normalizeTimeInput(modal.querySelector("#fEnd").value),
         location:modal.querySelector("#fLocation").value.trim(),
         customer:modal.querySelector("#fCustomer").value.trim(),
         memo:modal.querySelector("#fMemo").value.trim(),
@@ -847,7 +1049,7 @@
       try{
         const data = JSON.parse(saved);
         const set = (id, value) => { const el = modal.querySelector(id); if(el && value != null) el.value = value; };
-        set("#fCategory", data.category); set("#fTitle", data.title); set("#fStart", data.start_time); set("#fEnd", data.end_time);
+        set("#fCategory", data.category); set("#fTitle", data.title); set("#fStart", normalizeTimeInput(data.start_time)); set("#fEnd", normalizeTimeInput(data.end_time));
         set("#fLocation", data.location); set("#fCustomer", data.customer); set("#fMemo", data.memo); set("#fStatus", data.status); set("#fProject", data.project_no);
         set("#fItem", data.item_code); set("#fQty", data.qty); set("#fSub", data.sub_user_names); set("#fPriority", data.priority); set("#fVisibility", data.visibility);
         toast("최근 입력값을 불러왔습니다.");
@@ -855,24 +1057,64 @@
     }
 
 
-    async function quickUpdateStatus(scheduleId, status, selectEl){
-      const item = state.schedules.find(s => s.schedule_id === scheduleId);
-      if(!item) return;
-      if(!canEditSchedule(item)){ toast("수정 권한이 없습니다."); return; }
-      const before = item.status || "예정";
-      selectEl.disabled = true;
+    function queueStatusChange(rawIds, status, selectEl){
+      const ids = String(rawIds || "").split("|").map(v => v.trim()).filter(Boolean);
+      if(!ids.length) return;
+      let changed = 0;
+      ids.forEach(id => {
+        const item = state.schedules.find(s => s.schedule_id === id);
+        if(!item || !canEditSchedule(item)) return;
+        const original = item.status || "예정";
+        if(status === original) delete state.pendingStatusChanges[id];
+        else { state.pendingStatusChanges[id] = status; changed++; }
+      });
+      if(selectEl) selectEl.classList.toggle("is-pending", ids.some(id => state.pendingStatusChanges[id] !== undefined));
+      updatePendingStatusUi();
+      if(changed) toast("상태가 임시 변경되었습니다. 저장 버튼을 눌러 반영하세요.");
+    }
+
+    function updatePendingStatusUi(){
+      const ids = Object.keys(state.pendingStatusChanges);
+      const btn = document.getElementById("saveStatusChangesBtn");
+      if(btn){
+        btn.classList.toggle("hidden", ids.length === 0);
+        btn.textContent = ids.length ? `상태 변경 저장 (${ids.length})` : "상태 변경 저장";
+      }
+      document.querySelectorAll(".quick-status").forEach(el => {
+        const idsForEl = String(el.dataset.ids || el.dataset.id || "").split("|").filter(Boolean);
+        el.classList.toggle("is-pending", idsForEl.some(id => state.pendingStatusChanges[id] !== undefined));
+      });
+    }
+
+    async function savePendingStatusChanges(){
+      const changes = Object.entries(state.pendingStatusChanges);
+      if(!changes.length){ toast("저장할 상태 변경이 없습니다."); return; }
+      const btn = document.getElementById("saveStatusChangesBtn");
+      if(btn){ btn.disabled = true; btn.textContent = "저장 중..."; }
+      setInlineSaving("상태 변경 저장 중...");
+      showBusy("상태 변경 저장 중...");
       try{
-        const res = await jsonp("updateSchedule", Object.assign({}, userParams(), { schedule_id:scheduleId, status }));
-        if(isUnsupportedScheduleApi(res)) throw new Error(scheduleApiErrorMessage());
-        if(!res.success) throw new Error(res.message || "상태 변경 실패");
-        item.status = status;
-        toast("상태가 변경되었습니다.");
+        for(let i=0; i<changes.length; i++){
+          const [scheduleId, status] = changes[i];
+          const item = state.schedules.find(s => s.schedule_id === scheduleId);
+          if(!item || !canEditSchedule(item)) continue;
+          setInlineSaving(`상태 변경 저장 중... ${i+1}/${changes.length}`);
+          const res = await jsonp("updateSchedule", Object.assign({}, userParams(), { schedule_id:scheduleId, status }));
+          if(isUnsupportedScheduleApi(res)) throw new Error(scheduleApiErrorMessage());
+          if(!res.success) throw new Error(res.message || "상태 저장 실패");
+          item.status = status;
+          delete state.pendingStatusChanges[scheduleId];
+        }
+        toast("상태 변경이 저장되었습니다.");
         await loadSchedules();
       }catch(err){
-        selectEl.value = before;
         toast(err.message);
+        updatePendingStatusUi();
       }finally{
-        selectEl.disabled = false;
+        hideBusy();
+        setInlineSaving("");
+        if(btn){ btn.disabled = false; }
+        updatePendingStatusUi();
       }
     }
 
@@ -909,6 +1151,7 @@
       const data = collectForm(modal);
       if(!data.date || !data.category || !data.title){ toast("날짜, 구분, 스케쥴명은 필수입니다."); return; }
       const btn = modal.querySelector("#saveScheduleBtn"); btn.disabled=true; btn.textContent="저장 중...";
+      showBusy("스케쥴 저장 중...");
       try{
         const action = schedule ? "updateSchedule" : "createSchedule";
         const params = Object.assign({}, userParams(), data);
@@ -921,17 +1164,19 @@
         toast(res.message || "저장되었습니다.");
         await loadSchedules();
       }catch(err){ toast(err.message); }
-      finally{ btn.disabled=false; btn.textContent="저장"; }
+      finally{ hideBusy(); btn.disabled=false; btn.textContent="저장"; }
     }
 
     async function cancelSchedule(schedule, modal){
       if(!confirm("이 스케쥴을 취소 처리할까요?")) return;
+      showBusy("스케쥴 취소 처리 중...");
       try{
         const res = await jsonp("cancelSchedule", Object.assign({}, userParams(), { schedule_id:schedule.schedule_id }));
         if(isUnsupportedScheduleApi(res)) throw new Error(scheduleApiErrorMessage());
         if(!res.success) throw new Error(res.message || "취소 실패");
         modal.remove(); toast("스케쥴이 취소되었습니다."); await loadSchedules();
       }catch(err){ toast(err.message); }
+      finally{ hideBusy(); }
     }
 
     async function initApp(){
