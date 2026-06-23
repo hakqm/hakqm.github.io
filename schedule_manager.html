@@ -105,15 +105,29 @@
     .board-head .status{color:#667085;font-size:13px;font-weight:950;}
     .loading{padding:42px;text-align:center;color:#64748b;font-weight:900;}
 
-    .week-grid{display:grid;grid-template-columns:repeat(7,minmax(180px,1fr));min-width:1180px;background:#f8fafc;}
-    .day-col{min-height:440px;border-right:1px solid #e2e8f0;background:#f8fafc;}
+    .week-grid{display:grid;grid-template-columns:repeat(7,minmax(136px,1fr));min-width:0;background:#f8fafc;}
+    .day-col{min-height:420px;border-right:1px solid #e2e8f0;background:#f8fafc;min-width:0;}
     .day-col:last-child{border-right:0;}
     .day-head{position:sticky;top:0;z-index:1;padding:13px 13px 11px;border-bottom:1px solid #e2e8f0;background:rgba(248,250,252,.96);backdrop-filter:blur(8px);}
     .day-name{color:#203a69;font-size:14px;font-weight:950;}
     .day-date{display:flex;align-items:center;gap:7px;margin-top:3px;color:#667085;font-size:12px;font-weight:900;}
     .today-pill{display:inline-flex;padding:2px 7px;border-radius:999px;background:#eaf2ff;color:#173b78;font-size:10px;font-weight:950;}
-    .day-body{display:grid;align-content:start;gap:10px;padding:12px;}
+    .day-body{display:grid;align-content:start;gap:8px;padding:10px;}
     .empty-day{display:flex;align-items:center;justify-content:center;min-height:120px;border:1px dashed #cbd5e1;border-radius:14px;background:rgba(255,255,255,.58);color:#94a3b8;font-size:13px;font-weight:900;text-align:center;}
+
+    .mobile-week-wrap{display:none;}
+    .mobile-week-tabs{display:flex;gap:8px;overflow-x:auto;padding:12px 12px 6px;background:#f8fafc;border-bottom:1px solid #e2e8f0;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;}
+    .mobile-week-tabs::-webkit-scrollbar{height:4px;}
+    .mobile-week-tabs::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:99px;}
+    .mobile-day-btn{flex:0 0 auto;min-width:76px;border:1px solid #d9e3f0;border-radius:14px;background:#fff;color:#203a69;padding:8px 10px;text-align:center;font-weight:950;scroll-snap-align:start;}
+    .mobile-day-btn .md-name{display:block;font-size:12px;line-height:1.2;}
+    .mobile-day-btn .md-date{display:block;margin-top:3px;font-size:11px;color:#64748b;}
+    .mobile-day-btn.active{background:#203f82;color:#fff;border-color:#203f82;box-shadow:0 8px 18px rgba(32,63,130,.20);}
+    .mobile-day-btn.active .md-date{color:#eaf2ff;}
+    .mobile-day-btn.today:not(.active){border-color:#93c5fd;background:#eff6ff;}
+    .mobile-day-panel{padding:12px;background:#f8fafc;}
+    .mobile-day-panel .day-col{display:block;margin:0;border:1px solid #e2e8f0;border-radius:18px;overflow:hidden;background:#fff;}
+
 
     .overview-wrap{padding:18px;background:#f8fafc;}
     .overview-title-row{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:14px;}
@@ -208,6 +222,7 @@
     .toast{position:fixed;right:24px;bottom:24px;z-index:80;background:#172b50;color:#fff;padding:12px 16px;border-radius:14px;font-weight:900;box-shadow:0 12px 24px rgba(15,23,42,.2);}
     .login-panel{max-width:520px;margin:80px auto;background:#fff;border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow);padding:28px;}.login-panel h1{margin:0 0 8px;color:#203a69;}.login-panel p{color:#667085;line-height:1.7;}.login-grid{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;margin-top:18px;}
 
+    @media(max-width:1280px){.week-grid{grid-template-columns:repeat(7,minmax(118px,1fr));}.task-card{padding:10px 10px 10px 14px;}.task-primary{font-size:12.5px;}.task-kind,.task-person,.task-place{font-size:11px;}.quick-status{min-width:62px;} }
     @media(max-width:1000px){.app-shell{padding:0 16px 28px;}.page-hero{margin:0 -16px 18px;padding:22px 18px 26px;}.page-hero-inner,.filter-top{align-items:stretch;flex-direction:column;}.filter-grid{grid-template-columns:1fr 1fr;}.kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr));}.part-summary-grid{grid-template-columns:repeat(2,minmax(0,1fr));}.year-grid{grid-template-columns:repeat(2,minmax(0,1fr));}.title-block h1{font-size:27px;}.login-grid{grid-template-columns:1fr;}}
     @media(max-width:640px){.filter-grid,.form-grid,details.advanced .inner{grid-template-columns:1fr;}.kpi-grid,.part-summary-grid,.year-grid{grid-template-columns:1fr;}.top-actions{justify-content:flex-start;}.range-title{min-width:0;width:100%;}.nav-row{justify-content:flex-start;}.seg{width:100%;}.seg button{flex:1;}.login-panel{margin:36px 12px;}.modal{padding:12px;}.modal-card{width:100%;max-height:calc(100vh - 24px);border-radius:20px;}.modal-head{padding:16px 18px 12px;}.modal-body{padding:18px 18px 0;}.modal-actions{margin-left:-18px;margin-right:-18px;padding-left:18px;padding-right:18px;}}
 
@@ -269,7 +284,8 @@
       status:"",
       keyword:"",
       editSchedule:null,
-      pendingStatusChanges:{}
+      pendingStatusChanges:{},
+      mobileDayDate:""
     };
 
     const root = document.getElementById("root");
@@ -390,6 +406,21 @@
       return `${ymd(r.from)} ~ ${ymd(r.to)}`;
     }
 
+    function currentScopeLabel(){
+      return state.personKeyword ? `${state.personKeyword} 담당 일정` : (state.scope === "mine" ? "내 일정" : state.scope === "part" ? `${state.part || state.user.part || "내 파트"} 파트 일정` : "전체 팀 일정");
+    }
+
+    function updatePeriodUiNow(){
+      const range = getRangeTitle();
+      document.querySelectorAll(".range-title").forEach(el => { el.textContent = range; });
+      const boardTitle = document.getElementById("boardTitle");
+      if(boardTitle) boardTitle.textContent = `${currentScopeLabel()} · ${range}`;
+    }
+
+    function isMobileView(){
+      return window.matchMedia && window.matchMedia("(max-width:720px)").matches;
+    }
+
     function jsonp(action, params={}){
       return new Promise((resolve,reject)=>{
         const cb = "hakScheduleCb_" + Date.now() + "_" + Math.random().toString(36).slice(2);
@@ -400,7 +431,7 @@
         const script = document.createElement("script");
         const timer = setTimeout(() => {
           cleanup(); reject(new Error("요청 시간이 초과되었습니다."));
-        }, 20000);
+        }, 12000);
         function cleanup(){ clearTimeout(timer); delete window[cb]; script.remove(); }
         window[cb] = (data) => { cleanup(); resolve(data); };
         script.onerror = () => { cleanup(); reject(new Error("서버 연결에 실패했습니다.")); };
@@ -699,9 +730,9 @@
       const saveStatusBtn = document.getElementById("saveStatusChangesBtn"); if(saveStatusBtn) saveStatusBtn.onclick = savePendingStatusChanges;
       document.getElementById("prevBtn").onclick = () => movePeriod(-1);
       document.getElementById("nextBtn").onclick = () => movePeriod(1);
-      document.getElementById("todayBtn").onclick = () => { state.cursor = new Date(); loadSchedules(); };
+      document.getElementById("todayBtn").onclick = () => { state.cursor = new Date(); state.mobileDayDate = ymd(state.cursor); updatePeriodUiNow(); loadSchedules(); };
       document.querySelectorAll("#scopeSeg button").forEach(btn => btn.onclick = () => { state.scope = btn.dataset.scope; if(state.scope!=="part") state.part=""; loadSchedules(true); });
-      document.querySelectorAll("#periodSeg button").forEach(btn => btn.onclick = () => { state.period = btn.dataset.period; loadSchedules(true); });
+      document.querySelectorAll("#periodSeg button").forEach(btn => btn.onclick = () => { state.period = btn.dataset.period; state.mobileDayDate = ""; loadSchedules(true); });
       const partFilter = document.getElementById("partFilter"); if(partFilter) partFilter.onchange = () => { state.part = partFilter.value; loadSchedules(); };
       const categoryFilter = document.getElementById("categoryFilter"); categoryFilter.onchange = () => { state.category = categoryFilter.value; loadSchedules(); };
       const statusFilter = document.getElementById("statusFilter"); statusFilter.onchange = () => { state.status = statusFilter.value; loadSchedules(); };
@@ -724,7 +755,10 @@
       if(state.period === "year") d.setFullYear(d.getFullYear()+delta);
       else if(state.period === "month") d.setMonth(d.getMonth()+delta);
       else d.setDate(d.getDate() + delta*7);
-      state.cursor = d; loadSchedules();
+      state.cursor = d;
+      state.mobileDayDate = "";
+      updatePeriodUiNow();
+      loadSchedules();
     }
 
     async function loadCategories(){
@@ -741,7 +775,8 @@
       const viewEl = document.getElementById("scheduleView");
       const titleEl = document.getElementById("boardTitle");
       if(statusEl) statusEl.textContent = "불러오는 중...";
-      if(titleEl) titleEl.textContent = getRangeTitle();
+      if(titleEl) titleEl.textContent = `${currentScopeLabel()} · ${getRangeTitle()}`;
+      updatePeriodUiNow();
       if(viewEl) viewEl.innerHTML = `<div class="loading">스케쥴을 불러오는 중입니다.</div>`;
       const r = getPeriodRange();
       const params = Object.assign({}, userParams(), { from_date:ymd(r.from), to_date:ymd(r.to) });
@@ -790,8 +825,7 @@
       status.textContent = `${state.schedules.length}건`;
       const title = document.getElementById("boardTitle");
       if(title){
-        const scopeLabel = state.personKeyword ? `${state.personKeyword} 담당 일정` : (state.scope === "mine" ? "내 일정" : state.scope === "part" ? `${state.part || state.user.part || "내 파트"} 파트 일정` : "전체 팀 일정");
-        title.textContent = `${scopeLabel} · ${getRangeTitle()}`;
+        title.textContent = `${currentScopeLabel()} · ${getRangeTitle()}`;
       }
       if(state.period === "week") renderWeek();
       else if(state.period === "month") renderMonth();
@@ -880,6 +914,7 @@
       const r = getPeriodRange();
       const days = [];
       for(let i=0;i<7;i++){ const d=cloneDate(r.from); d.setDate(d.getDate()+i); days.push(d); }
+      if(isMobileView()){ renderMobileWeek(days); return; }
       const today = ymd(new Date());
       document.getElementById("scheduleView").innerHTML = `<div class="week-grid">${days.map(d => {
         const date = ymd(d);
@@ -889,6 +924,37 @@
           <div class="day-body">${list.length ? list.map(cardHtml).join("") : `<div class="empty-day">등록된 일정 없음</div>`}</div>
         </div>`;
       }).join("")}</div>`;
+      bindTaskInteractions();
+    }
+
+    function renderMobileWeek(days){
+      const today = ymd(new Date());
+      const dayKeys = days.map(ymd);
+      if(!state.mobileDayDate || !dayKeys.includes(state.mobileDayDate)){
+        state.mobileDayDate = dayKeys.includes(today) ? today : dayKeys[0];
+      }
+      const activeDate = state.mobileDayDate;
+      const activeDay = days[dayKeys.indexOf(activeDate)] || days[0];
+      const list = groupSchedulesForDisplay(sortedSchedules().filter(s => s.date === activeDate));
+      document.getElementById("scheduleView").innerHTML = `<div class="mobile-week-wrap" style="display:block;">
+        <div class="mobile-week-tabs" aria-label="요일 선택">
+          ${days.map(d => {
+            const key = ymd(d);
+            return `<button type="button" class="mobile-day-btn ${key===activeDate?"active":""} ${key===today?"today":""}" data-date="${key}">
+              <span class="md-name">${weekdayName(d)}</span><span class="md-date">${pad(d.getMonth()+1)}.${pad(d.getDate())}</span>
+            </button>`;
+          }).join("")}
+        </div>
+        <div class="mobile-day-panel">
+          <div class="day-col">
+            <div class="day-head"><div class="day-name">${weekdayName(activeDay)}요일</div><div class="day-date"><span class="num">${pad(activeDay.getMonth()+1)}.${pad(activeDay.getDate())}</span>${activeDate===today?`<span class="today-pill">TODAY</span>`:""}</div></div>
+            <div class="day-body">${list.length ? list.map(cardHtml).join("") : `<div class="empty-day">등록된 일정 없음</div>`}</div>
+          </div>
+        </div>
+      </div>`;
+      document.querySelectorAll(".mobile-day-btn").forEach(btn => {
+        btn.onclick = () => { state.mobileDayDate = btn.dataset.date; renderMobileWeek(days); };
+      });
       bindTaskInteractions();
     }
 
@@ -1093,23 +1159,33 @@
       if(btn){ btn.disabled = true; btn.textContent = "저장 중..."; }
       setInlineSaving("상태 변경 저장 중...");
       showBusy("상태 변경 저장 중...");
+      const failed = [];
+      let savedCount = 0;
       try{
         for(let i=0; i<changes.length; i++){
           const [scheduleId, status] = changes[i];
           const item = state.schedules.find(s => s.schedule_id === scheduleId);
-          if(!item || !canEditSchedule(item)) continue;
+          if(!item || !canEditSchedule(item)) { delete state.pendingStatusChanges[scheduleId]; continue; }
           setInlineSaving(`상태 변경 저장 중... ${i+1}/${changes.length}`);
-          const res = await jsonp("updateSchedule", Object.assign({}, userParams(), { schedule_id:scheduleId, status }));
-          if(isUnsupportedScheduleApi(res)) throw new Error(scheduleApiErrorMessage());
-          if(!res.success) throw new Error(res.message || "상태 저장 실패");
-          item.status = status;
-          delete state.pendingStatusChanges[scheduleId];
+          try{
+            const res = await jsonp("updateSchedule", Object.assign({}, userParams(), { schedule_id:scheduleId, status }));
+            if(isUnsupportedScheduleApi(res)) throw new Error(scheduleApiErrorMessage());
+            if(!res.success) throw new Error(res.message || "상태 저장 실패");
+            item.status = status;
+            delete state.pendingStatusChanges[scheduleId];
+            savedCount++;
+          }catch(err){
+            failed.push({ scheduleId, message: err.message || "저장 실패" });
+          }
         }
-        toast("상태 변경이 저장되었습니다.");
-        await loadSchedules();
-      }catch(err){
-        toast(err.message);
-        updatePendingStatusUi();
+        renderKpis();
+        renderSchedules();
+        if(failed.length){
+          toast(`상태 ${savedCount}건 저장, ${failed.length}건 실패`);
+        }else{
+          toast("상태 변경이 저장되었습니다.");
+          setTimeout(() => loadSchedules(), 250);
+        }
       }finally{
         hideBusy();
         setInlineSaving("");
@@ -1188,6 +1264,11 @@
       await loadCategories();
       renderShell();
       await loadSchedules();
+      let resizeTimer = null;
+      window.addEventListener("resize", () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => { if(state.user && state.period === "week") renderSchedules(); }, 180);
+      });
     }
 
     initApp();
