@@ -101,9 +101,13 @@
     /* ── Scope filter ─────────────────────────────────────────── */
     .scope-bar { display: flex; align-items: center; gap: 8px; padding: 8px 20px; background: #f8fafc; border-bottom: 1px solid var(--line2); flex-wrap: wrap; }
     .scope-bar label { font-size: 11.5px; font-weight: 850; color: #64748b; }
+    .scope-tabs { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: #fff; flex-shrink: 0; }
+    .scope-tab { border: 0; background: transparent; padding: 5px 14px; font-size: 12px; font-weight: 800; color: #475569; cursor: pointer; transition: .12s; white-space: nowrap; font-family: inherit; }
+    .scope-tab.active { background: var(--navy); color: #fff; }
+    .scope-tab:hover:not(.active) { background: #eef4ff; color: var(--navy); }
     .scope-select { border: 1px solid var(--line); border-radius: 8px; padding: 4px 8px; font-size: 12px; font-weight: 800; color: var(--navy); background: #fff; cursor: pointer; outline: none; }
     .scope-select:focus { border-color: var(--blue); }
-    .search-input { border: 1px solid var(--line); border-radius: 8px; padding: 4px 10px; font-size: 12px; color: #334155; background: #fff; outline: none; min-width: 140px; }
+    .search-input { border: 1px solid var(--line); border-radius: 8px; padding: 4px 10px; font-size: 12px; color: #334155; background: #fff; outline: none; min-width: 120px; }
     .search-input:focus { border-color: var(--blue); }
     .scope-bar-right { margin-left: auto; display: flex; align-items: center; gap: 6px; }
     .kpi-strip { display: flex; gap: 6px; }
@@ -112,6 +116,9 @@
     .kpi-chip.active { background: #ecfdf5; color: #166534; }
     .kpi-chip.done { background: #f0fdf4; color: #14532d; }
     .kpi-chip.cancel { background: #fef2f2; color: #991b1b; }
+    .save-pending-btn { border: 1px solid #2563eb; background: #2563eb; border-radius: 8px; padding: 5px 13px; font-size: 12px; font-weight: 850; color: #fff; cursor: pointer; transition: .12s; white-space: nowrap; font-family: inherit; animation: pulse-save 1.8s ease-in-out infinite; }
+    .save-pending-btn:hover { background: #1d4ed8; border-color: #1d4ed8; }
+    @keyframes pulse-save { 0%,100%{box-shadow:0 0 0 0 rgba(37,99,235,.4)} 50%{box-shadow:0 0 0 6px rgba(37,99,235,0)} }
 
     /* ── Calendar ─────────────────────────────────────────────── */
     .cal-wrap { flex: 1; overflow: auto; }
@@ -530,6 +537,8 @@
       let list=(Array.isArray(res.schedules)?res.schedules:[]).map(s=>Object.assign({},s,{start_time:formatTime(s.start_time),end_time:formatTime(s.end_time)}));
       if(state.filterPerson) { const k=state.filterPerson.toLowerCase(); list=list.filter(s=>String(s.main_user_name||"").toLowerCase().includes(k)); }
       if(state.scope==="part"&&!state.filterPart&&state.user.part) list=list.filter(s=>s.part===state.user.part);
+      /* 취소 상태는 명시적으로 필터 선택 시에만 표시 */
+      if(!state.filterStatus) list=list.filter(s=>s.status!=="취소");
       state.schedules=list;
     } catch(e){ toast(e.message); state.schedules=[]; }
   }
@@ -592,6 +601,7 @@
         <div class="topbar-user">
           <span class="topbar-chip">${esc(state.user.name)}</span>
           <span class="topbar-chip part">${esc(state.user.part||"파트 미지정")}</span>
+          <button class="save-pending-btn" id="savePendingBtn" style="display:none;">상태 저장 (0)</button>
           <button class="topbar-btn" id="newBtn">+ 일정 등록</button>
           <button class="topbar-btn" id="reloadBtn">새로고침</button>
         </div>
@@ -615,12 +625,11 @@
             </div>
           </div>
           <div class="scope-bar">
-            <label>범위</label>
-            <select class="scope-select" id="scopeSel">
-              <option value="mine" ${state.scope==="mine"?"selected":""}>내 일정</option>
-              <option value="part" ${state.scope==="part"?"selected":""}>파트별</option>
-              <option value="team" ${state.scope==="team"?"selected":""}>전체 팀</option>
-            </select>
+            <div class="scope-tabs" id="scopeTabs">
+              <button class="scope-tab ${state.scope==="mine"?"active":""}" data-scope="mine">내 일정</button>
+              <button class="scope-tab ${state.scope==="part"?"active":""}" data-scope="part">파트별</button>
+              <button class="scope-tab ${state.scope==="team"?"active":""}" data-scope="team">팀 전체</button>
+            </div>
             <select class="scope-select" id="partSel" style="${state.scope==="part"?"":"display:none"}">
               <option value="">내 파트</option>
               ${PARTS.map(p=>`<option value="${esc(p)}" ${state.filterPart===p?"selected":""}>${esc(p)}</option>`).join("")}
@@ -651,15 +660,23 @@
     document.getElementById("nextBtn").onclick=()=>movePeriod(1);
     document.getElementById("todayBtn").onclick=()=>{ state.cursor=new Date(); reloadAndRender(); };
     document.querySelectorAll("#viewSeg button").forEach(b=>b.onclick=()=>{ state.view=b.dataset.v; renderCalendar(); renderSide(); updateViewSeg(); updatePeriodTitle(); });
-    const scopeSel=document.getElementById("scopeSel");
     const partSel=document.getElementById("partSel");
-    scopeSel.onchange=()=>{ state.scope=scopeSel.value; partSel.style.display=state.scope==="part"?"":"none"; reloadAndRender(); };
+    /* 스코프 탭 */
+    document.querySelectorAll("#scopeTabs .scope-tab").forEach(btn=>{
+      btn.onclick=()=>{
+        state.scope=btn.dataset.scope;
+        document.querySelectorAll("#scopeTabs .scope-tab").forEach(b=>b.classList.toggle("active",b===btn));
+        partSel.style.display=state.scope==="part"?"":"none";
+        reloadAndRender();
+      };
+    });
     partSel.onchange=()=>{ state.filterPart=partSel.value; reloadAndRender(); };
     const personSearch=document.getElementById("personSearch");
     let st=null; personSearch.addEventListener("input",()=>{ clearTimeout(st); st=setTimeout(()=>{ state.filterPerson=personSearch.value.trim(); reloadAndRender(); },350); });
     document.getElementById("catSel").onchange=e=>{ state.filterCategory=e.target.value; reloadAndRender(); };
     document.getElementById("statusSel").onchange=e=>{ state.filterStatus=e.target.value; reloadAndRender(); };
-    /* 상태 저장은 팝오버에서 즉시 처리 - 별도 save 버튼 없음 */
+    const savePendingBtn=document.getElementById("savePendingBtn");
+    if(savePendingBtn) savePendingBtn.onclick=savePendingChanges;
   }
 
   function updateViewSeg() {
@@ -670,9 +687,13 @@
   }
   function updateKpi() {
     const list=filteredSchedules();
-    const total=list.length, active=list.filter(s=>["예정","확정","진행"].includes(s.status||"예정")).length, done=list.filter(s=>s.status==="완료").length, cancel=list.filter(s=>s.status==="취소").length;
+    const effStatus=s=>state.pendingStatusChanges[s.schedule_id]||s.status||"예정";
+    const total=list.length;
+    const active=list.filter(s=>["예정","확정","진행"].includes(effStatus(s))).length;
+    const done=list.filter(s=>effStatus(s)==="완료").length;
+    const pending=Object.keys(state.pendingStatusChanges).length;
     const el=document.getElementById("kpiStrip");
-    if(el) el.innerHTML=`<span class="kpi-chip total">${total}건</span><span class="kpi-chip active">예정 ${active}</span><span class="kpi-chip done">완료 ${done}</span><span class="kpi-chip cancel">취소 ${cancel}</span>`;
+    if(el) el.innerHTML=`<span class="kpi-chip total">${total}건</span><span class="kpi-chip active">진행중 ${active}</span><span class="kpi-chip done">완료 ${done}</span>${pending>0?`<span class="kpi-chip" style="background:#fff7ed;color:#c2410c;">미저장 ${pending}</span>`:""}`;
   }
   function updateSavePendingBtn() {
     const count=Object.keys(state.pendingStatusChanges).length;
@@ -1061,7 +1082,7 @@
       </span></div>
     </div>
     <div class="popover-actions">
-      ${editable?`<button class="popover-btn danger" id="pCancelBtn">일정 취소</button>`:""}
+      ${editable?`<button class="popover-btn danger" id="pCancelBtn">삭제</button>`:""}
       ${editable?`<button class="popover-btn primary" id="pEditBtn">수정</button>`:"<button class='popover-btn' id='pEditBtn'>상세 보기</button>"}
     </div>`;
     document.body.appendChild(pop);
@@ -1076,27 +1097,25 @@
     pop.querySelector(".popover-close").onclick=closePopover;
     const editBtn=pop.querySelector("#pEditBtn"); if(editBtn) editBtn.onclick=()=>{ closePopover(); openForm(s); };
     const cancelBtn=pop.querySelector("#pCancelBtn"); if(cancelBtn) cancelBtn.onclick=()=>{ closePopover(); doCancel(s); };
-    /* 상태 직접 저장 — 클릭하면 즉시 서버에 반영 */
+    /* 상태 변경 — 큐에 담고 일괄 저장 */
+    const statusColors={예정:"#475569",확정:"#2563eb",진행:"#059669",완료:"#16a34a",취소:"#dc2626",보류:"#d97706"};
     pop.querySelectorAll(".status-pill[data-status][data-sid]").forEach(btn=>{
-      btn.onclick=async(ev)=>{
+      btn.onclick=(ev)=>{
         ev.stopPropagation();
         const newStatus=btn.dataset.status;
-        if(newStatus===eff) return; /* 변경 없음 */
-        /* 낙관적 UI 업데이트 */
-        pop.querySelectorAll(".status-pill").forEach(b=>b.classList.remove("active"));
+        const curEff=state.pendingStatusChanges[s.schedule_id]||s.status||"예정";
+        if(newStatus===curEff) return;
+        queueStatus(s.schedule_id, newStatus, null);
+        /* 팝오버 내 시각 업데이트 */
+        pop.querySelectorAll(".status-pill").forEach(b=>{
+          const col=statusColors[b.dataset.status]||"#475569";
+          b.classList.remove("active");
+          b.style.background=""; b.style.color=col; b.style.borderColor=`${col}40`;
+        });
+        const selCol=statusColors[newStatus]||"#475569";
         btn.classList.add("active");
-        btn.textContent="저장 중…";
-        try{
-          const r=await jsonp("updateSchedule",Object.assign({},userParams(),{schedule_id:s.schedule_id,status:newStatus}));
-          if(!r.success) throw new Error(r.message||"저장 실패");
-          s.status=newStatus; /* state 업데이트 */
-          toast(`상태가 "${newStatus}"로 저장되었습니다.`);
-          closePopover();
-          renderCalendar(); updateKpi();
-        }catch(e){
-          toast(e.message);
-          btn.textContent=newStatus; /* 원복 */
-        }
+        btn.style.background=selCol; btn.style.color="#fff"; btn.style.borderColor=selCol;
+        renderCalendar(); updateKpi();
       };
     });
     setTimeout(()=>document.addEventListener("mousedown",e=>{ if(!pop.contains(e.target)) closePopover(); },{once:true}),0);
@@ -1107,27 +1126,41 @@
   ───────────────────────────────────────────────────────────── */
   function queueStatus(id, status, el) {
     const s=state.schedules.find(x=>x.schedule_id===id); if(!s) return;
-    if(status===s.status) delete state.pendingStatusChanges[id]; else state.pendingStatusChanges[id]=status;
+    if(!s._origStatus) s._origStatus=s.status; /* 원본 저장 */
+    if(status===s._origStatus) {
+      delete state.pendingStatusChanges[id];
+      s.status=s._origStatus;
+    } else {
+      state.pendingStatusChanges[id]=status;
+      s.status=status; /* 로컬 즉시 반영 (낙관적 UI) */
+    }
     if(el) el.classList.toggle("is-pending",!!state.pendingStatusChanges[id]);
     updateSavePendingBtn();
-    toast("상태 변경됨 — '상태 저장' 버튼으로 반영하세요.");
+    toast("상태 변경됨 — 상단 '상태 저장' 버튼을 눌러 저장하세요.");
   }
 
   async function savePendingChanges() {
     const changes=Object.entries(state.pendingStatusChanges); if(!changes.length) return;
-    showBusy("상태 저장 중...");
+    showBusy(`상태 저장 중... (0/${changes.length})`);
     let ok=0, fail=0;
     for(const [id,status] of changes) {
       try {
         const r=await jsonp("updateSchedule",Object.assign({},userParams(),{schedule_id:id,status}));
         if(!r.success) throw new Error(r.message);
-        const s=state.schedules.find(x=>x.schedule_id===id); if(s) s.status=status;
+        const s=state.schedules.find(x=>x.schedule_id===id);
+        if(s){ s.status=status; delete s._origStatus; }
         delete state.pendingStatusChanges[id]; ok++;
-      } catch(e){ fail++; }
+        showBusy(`상태 저장 중... (${ok}/${changes.length})`);
+      } catch(e){
+        /* 실패 시 로컬 원본 복원 */
+        const s=state.schedules.find(x=>x.schedule_id===id);
+        if(s&&s._origStatus){ s.status=s._origStatus; delete s._origStatus; }
+        fail++;
+      }
     }
     hideBusy();
     toast(fail ? `저장 ${ok}건 성공, ${fail}건 실패` : `${ok}건 상태가 저장되었습니다.`);
-    updateSavePendingBtn(); renderCalendar();
+    updateSavePendingBtn(); renderCalendar(); updateKpi();
   }
 
   /* ─────────────────────────────────────────────────────────────
@@ -1228,7 +1261,7 @@
       <div class="modal-footer">
         <div class="modal-footer-left">
           ${isNew?`<button class="btn" id="loadLastBtn">최근 입력 불러오기</button>`:""}
-          ${!isNew&&editable?`<button class="btn danger" id="cancelSchBtn">일정 취소</button>`:""}
+          ${!isNew&&editable?`<button class="btn danger" id="cancelSchBtn">일정 삭제</button>`:""}
         </div>
         <div class="modal-footer-right">
           <button class="btn" id="closeFormBtn">닫기</button>
@@ -1291,12 +1324,17 @@
   }
 
   async function doCancel(schedule, bd) {
-    if(!confirm("이 일정을 취소 처리할까요?")) return;
-    showBusy("취소 처리 중...");
+    if(!confirm("이 일정을 취소(삭제)할까요? 목록에서 제거됩니다.")) return;
+    showBusy("처리 중...");
     try {
       const r=await jsonp("cancelSchedule",Object.assign({},userParams(),{schedule_id:schedule.schedule_id}));
       if(!r.success) throw new Error(r.message||"취소 실패");
-      if(bd) bd.remove(); toast("일정이 취소되었습니다."); await reloadAndRender();
+      /* 로컬 state에서 즉시 제거 → reload 없이 사라짐 */
+      state.schedules=state.schedules.filter(s=>s.schedule_id!==schedule.schedule_id);
+      delete state.pendingStatusChanges[schedule.schedule_id];
+      if(bd) bd.remove();
+      toast("일정이 삭제되었습니다.");
+      renderCalendar(); renderSide(); updateSavePendingBtn();
     } catch(e){ toast(e.message); }
     finally{ hideBusy(); }
   }
