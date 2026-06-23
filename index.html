@@ -2425,6 +2425,16 @@
     }
     .room-res-cancel:hover { background: #fda29b; color: #fff; }
     .room-empty-note { color: #a0aec0; font-size: 11px; text-align: center; padding: 6px 0; }
+
+    /* 회의실 타임바 */
+    .room-timebar { margin: 0 0 10px; }
+    .rtb-track { position: relative; height: 12px; background: #f0f4fb; border-radius: 6px; overflow: hidden; margin-bottom: 3px; }
+    .rtb-seg { position: absolute; top: 0; height: 100%; border-radius: 3px; }
+    .rtb-seg.busy  { background: #fda29b; }
+    .rtb-seg.booked { background: #fcd9b8; }
+    .rtb-now { position: absolute; top: -2px; width: 2px; height: calc(100% + 4px); background: #2563eb; border-radius: 2px; z-index: 2; }
+    .rtb-labels { display: flex; justify-content: space-between; font-size: 9.5px; color: #94a3b8; font-weight: 800; padding: 0 1px; }
+
     .room-reserve-btn {
       width: 100%; padding: 9px 8px; border-radius: 12px;
       border: 1px solid #c9d8f0;
@@ -2680,13 +2690,14 @@
   <div id="mealModal" class="modal hidden" aria-hidden="true">
     <div class="modal-card meal-modal-card" role="dialog" aria-modal="true" aria-labelledby="mealModalTitle">
       <div class="modal-head">
-        <div class="meal-modal-head">
+        <div class="meal-modal-head" style="flex:1;min-width:0;">
           <div>
             <h3 id="mealModalTitle" class="modal-title">🍱 오늘 중식 신청</h3>
             <p class="modal-desc" id="mealModalDateDesc">오늘 날짜 중식 여부를 선택해주세요.</p>
           </div>
           <div class="meal-timer">⏱ <span id="mealTimerDisplay">5:00</span> 후 미신청 처리</div>
         </div>
+        <button type="button" id="closeMealModalBtn" class="modal-close" aria-label="닫기">×</button>
       </div>
       <div class="modal-body">
         <!-- 09:00 이후 잠금 메시지 -->
@@ -3505,10 +3516,33 @@
       return reservations.length > 0 ? "booked" : "free";
     }
 
+    function buildRoomTimeBar(reservations, isToday) {
+      const BAR_START = 8 * 60, BAR_END = 20 * 60, BAR_SPAN = BAR_END - BAR_START;
+      const toMin = t => { if (!t) return null; const [h, m] = String(t).split(":").map(Number); return h * 60 + (m || 0); };
+      const now = new Date(), nowMin = isToday ? now.getHours() * 60 + now.getMinutes() : null;
+      let segs = "", nowLine = "";
+      reservations.forEach(r => {
+        const s = toMin(r.start_time), e = toMin(r.end_time);
+        if (s == null) return;
+        const cs = Math.max(s, BAR_START), ce = Math.min(e || s + 60, BAR_END);
+        if (ce <= BAR_START || cs >= BAR_END) return;
+        const isBusy = nowMin != null && nowMin >= s && nowMin < (e || s + 60);
+        const left = ((cs - BAR_START) / BAR_SPAN * 100).toFixed(1);
+        const width = ((ce - cs) / BAR_SPAN * 100).toFixed(1);
+        segs += `<div class="rtb-seg ${isBusy ? "busy" : "booked"}" style="left:${left}%;width:${width}%;" title="${escapeHtml(r.start_time)}~${escapeHtml(r.end_time)} ${escapeHtml(r.content)}"></div>`;
+      });
+      if (nowMin != null && nowMin >= BAR_START && nowMin <= BAR_END) {
+        const pct = ((nowMin - BAR_START) / BAR_SPAN * 100).toFixed(1);
+        nowLine = `<div class="rtb-now" style="left:${pct}%;"></div>`;
+      }
+      return `<div class="room-timebar"><div class="rtb-track">${segs}${nowLine}</div><div class="rtb-labels"><span>08시</span><span>12시</span><span>16시</span><span>20시</span></div></div>`;
+    }
+
     function renderRoomCard(roomNo, reservations, isToday) {
       const status = (isToday !== false) ? getRoomCurrentStatus(reservations) : (reservations.length > 0 ? "booked" : "free");
       const badgeClass = status === "busy" ? "rb-busy" : status === "booked" ? "rb-booked" : "rb-free";
-      const badgeText = status === "busy" ? "● 사용 중" : status === "booked" ? "◆ 예약 있음" : "○ 사용 가능";
+      const badgeText = status === "busy" ? "● 사용 중" : status === "booked" ? "◆ 예약있음" : "○ 사용 가능";
+      const timeBar = buildRoomTimeBar(reservations, isToday !== false);
 
       const resList = reservations.length === 0
         ? `<div class="room-empty-note">예약 없음</div>`
@@ -3539,6 +3573,7 @@
             <span class="room-name">${ROOM_NAMES[roomNo]}</span>
           </div>
           <div class="room-card-body">
+            ${timeBar}
             <div class="room-res-list">${resList}</div>
             <button type="button" class="room-reserve-btn" data-action="open-room-modal" data-room="${roomNo}">+ 예약하기</button>
           </div>
@@ -3719,6 +3754,8 @@
     }
 
     function bindMealModalEvents() {
+      const closeBtn = document.getElementById("closeMealModalBtn");
+      if (closeBtn) closeBtn.addEventListener("click", closeMealModal);
       const yesBtn   = document.getElementById("mealBtnYes");
       const noBtn    = document.getElementById("mealBtnNo");
       const leaveBtn = document.getElementById("mealBtnLeave");
@@ -3806,12 +3843,19 @@
 
         const roomViewDateBtn = document.getElementById("roomViewDateBtn");
         const roomViewDateInput = document.getElementById("roomViewDate");
+        const roomRefreshBtn = document.getElementById("roomRefreshBtn");
         if (roomViewDateBtn && roomViewDateInput) {
           roomViewDateBtn.addEventListener("click", () => {
             loadRoomStatus(roomViewDateInput.value || getTodayStr());
           });
           roomViewDateInput.addEventListener("keydown", (e) => {
             if (e.key === "Enter") loadRoomStatus(roomViewDateInput.value || getTodayStr());
+          });
+        }
+        if (roomRefreshBtn) {
+          roomRefreshBtn.addEventListener("click", () => {
+            const d = roomViewDateInput ? roomViewDateInput.value : getTodayStr();
+            loadRoomStatus(d || getTodayStr());
           });
         }
       }
@@ -3988,6 +4032,7 @@
               <div style="display:flex;align-items:center;gap:8px;">
                 <input type="date" id="roomViewDate" value="${today}" style="border:1px solid #cdd5e2;border-radius:8px;padding:4px 8px;font-size:12px;color:#22365e;background:#fff;cursor:pointer;" title="날짜 선택" />
                 <button type="button" id="roomViewDateBtn" style="padding:4px 10px;border:1px solid #4fb7ff;border-radius:8px;font-size:12px;color:#213a72;background:#eaf4ff;cursor:pointer;font-weight:800;">조회</button>
+                <button type="button" id="roomRefreshBtn" style="padding:4px 10px;border:1px solid #cdd5e2;border-radius:8px;font-size:12px;color:#475569;background:#fff;cursor:pointer;font-weight:800;" title="새로고침">↺</button>
               </div>
             </div>
             <div class="room-grid" id="roomGrid">
