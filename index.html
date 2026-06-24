@@ -2077,6 +2077,73 @@
       line-height: 1.6;
     }
 
+    /* compact notice row */
+    .notice-compact { padding: 0; overflow: hidden; }
+    .notice-compact-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 13px;
+      cursor: pointer;
+      user-select: none;
+      transition: background .15s;
+      border-radius: 15px;
+    }
+    .notice-compact-row:hover { background: #f5f8ff; }
+    .notice-compact.open .notice-compact-row { border-radius: 15px 15px 0 0; background: #f5f8ff; }
+    .notice-compact-title {
+      flex: 1;
+      font-size: 13px;
+      font-weight: 800;
+      color: #22365e;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-width: 0;
+    }
+    .notice-compact-date { font-size: 11px; color: #94a3b8; flex-shrink: 0; white-space: nowrap; }
+    .notice-expand-icon { font-size: 10px; color: #94a3b8; flex-shrink: 0; transition: transform .2s; }
+    .notice-compact.open .notice-expand-icon { transform: rotate(180deg); }
+    .notice-detail { padding: 6px 13px 12px; border-top: 1px solid #eef2f8; }
+    .notice-detail.hidden { display: none; }
+    .notice-more-btn {
+      display: block;
+      width: 100%;
+      margin-top: 6px;
+      padding: 8px;
+      border: 1px dashed #bfd3f7;
+      border-radius: 10px;
+      background: #f8fbff;
+      color: #2563eb;
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+      text-align: center;
+      transition: background .15s;
+    }
+    .notice-more-btn:hover { background: #eef4ff; }
+
+    /* notice history modal */
+    .notice-hist-modal {
+      position: fixed; inset: 0; z-index: 4000;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(15,23,42,.42);
+    }
+    .notice-hist-box {
+      background: #fff; border-radius: 20px;
+      width: min(480px, 94vw); max-height: 66vh;
+      display: flex; flex-direction: column;
+      box-shadow: 0 20px 60px rgba(15,23,42,.2); overflow: hidden;
+    }
+    .notice-hist-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 18px 12px; border-bottom: 1px solid #eef2f8; flex-shrink: 0;
+    }
+    .notice-hist-head h4 { margin: 0; font-size: 14px; font-weight: 900; color: #22365e; }
+    .notice-hist-close { border: 0; background: transparent; font-size: 22px; line-height: 1; cursor: pointer; color: #94a3b8; padding: 0; }
+    .notice-hist-close:hover { color: #22365e; }
+    .notice-hist-body { overflow-y: auto; flex: 1; padding: 10px; display: grid; gap: 6px; }
+
     .notice-editor {
       display: grid;
       gap: 8px;
@@ -3064,33 +3131,36 @@
       return "";
     }
 
-    function renderNoticeItem(notice) {
+    function renderNoticeItem(notice, expanded) {
       const noticeId = escapeHtml(notice.notice_id || "");
       const title = escapeHtml(notice.title || "제목 없음");
       const body = escapeNoticeBody(notice.body || "내용 없음");
       const category = escapeHtml(notice.category || "안내");
-      const meta = escapeHtml(notice.updated_at || notice.created_at || "");
+      const fullDate = escapeHtml(notice.updated_at || notice.created_at || "");
+      const dateOnly = fullDate ? fullDate.substring(0, 10) : "";
       const writer = escapeHtml(notice.updated_by || notice.created_by || "");
       const adminButtons = isAdminUser()
-        ? `
-          <div class="notice-actions">
+        ? `<div class="notice-actions">
             <button type="button" class="notice-mini-btn" data-notice-action="edit" data-notice-id="${noticeId}">수정</button>
             <button type="button" class="notice-mini-btn danger" data-notice-action="delete" data-notice-id="${noticeId}">삭제</button>
-          </div>
-        `
+          </div>`
         : "";
+      const isOpen = expanded ? " open" : "";
+      const detailHidden = expanded ? "" : " hidden";
 
       return `
-        <div class="notice-item">
-          <div class="notice-item-head">
-            <div class="notice-title-wrap">
-              <strong class="notice-title">${title}</strong>
-              <span class="notice-meta">${meta}${writer ? ` · ${writer}` : ""}</span>
-            </div>
+        <div class="notice-item notice-compact${isOpen}" data-notice-id="${noticeId}">
+          <div class="notice-compact-row" onclick="(function(el){el.closest('.notice-compact').classList.toggle('open');el.nextElementSibling.classList.toggle('hidden');})(this)">
             <span class="notice-category ${noticeCategoryClass(notice.category)}">${category}</span>
+            <span class="notice-compact-title">${title}</span>
+            <span class="notice-compact-date">${dateOnly}</span>
+            <span class="notice-expand-icon">▾</span>
           </div>
-          <p class="notice-body">${body}</p>
-          ${adminButtons}
+          <div class="notice-detail${detailHidden}">
+            <p class="notice-body" style="margin:6px 0 5px;">${body}</p>
+            <span class="notice-meta">${fullDate}${writer ? ` · ${writer}` : ""}</span>
+            ${adminButtons}
+          </div>
         </div>
       `;
     }
@@ -3106,10 +3176,47 @@
         return;
       }
 
-      listEl.innerHTML = noticeCache.map(renderNoticeItem).join("");
+      const SHOW = 5;
+      const visible = noticeCache.slice(0, SHOW);
+      // 첫 번째 항목만 기본 펼침
+      const itemsHtml = visible.map((n, i) => renderNoticeItem(n, i === 0)).join("");
+      const moreCount = noticeCache.length - SHOW;
+      const moreBtn = moreCount > 0
+        ? `<button type="button" class="notice-more-btn" onclick="openNoticeHistory()">이전 알림 보기 (${moreCount}건 더) ▸</button>`
+        : (noticeCache.length > 1
+            ? `<button type="button" class="notice-more-btn" onclick="openNoticeHistory()">전체 알림 이력 보기 ▸</button>`
+            : "");
+
+      listEl.innerHTML = itemsHtml + moreBtn;
       statusEl.textContent = `최근 알림 ${noticeCache.length}건`;
       const noticeCountEl = document.getElementById("homeNoticeCount");
       if (noticeCountEl) noticeCountEl.textContent = noticeCache.length;
+    }
+
+    function openNoticeHistory() {
+      const existing = document.getElementById("noticeHistModal");
+      if (existing) { existing.remove(); return; }
+      const itemsHtml = noticeCache.length
+        ? noticeCache.map(n => renderNoticeItem(n, false)).join("")
+        : `<div class="notice-empty">알림이 없습니다.</div>`;
+      const modal = document.createElement("div");
+      modal.id = "noticeHistModal";
+      modal.className = "notice-hist-modal";
+      modal.innerHTML = `
+        <div class="notice-hist-box">
+          <div class="notice-hist-head">
+            <h4>전체 알림 이력 (${noticeCache.length}건)</h4>
+            <button class="notice-hist-close" id="noticeHistCloseBtn">×</button>
+          </div>
+          <div class="notice-hist-body">${itemsHtml}</div>
+        </div>`;
+      document.body.appendChild(modal);
+      modal.addEventListener("click", e => {
+        if (e.target === modal) modal.remove();
+        const btn = e.target.closest("button[data-notice-action]");
+        if (btn) { handleNoticeAction(btn); modal.remove(); }
+      });
+      document.getElementById("noticeHistCloseBtn").onclick = () => modal.remove();
     }
 
     async function loadNotices() {
@@ -3121,7 +3228,7 @@
       statusEl.textContent = "알림을 불러오는 중입니다.";
 
       try {
-        const url = `${WEB_APP_URL}?action=getNotices&limit=5`;
+        const url = `${WEB_APP_URL}?action=getNotices&limit=20`;
         const result = await jsonpRequest(url, "noticeListCallback");
 
         if (!result.success) {
