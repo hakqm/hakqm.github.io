@@ -2712,7 +2712,6 @@
           <div class="meal-btn-row">
             <button type="button" class="meal-btn" id="mealBtnYes">✓ 신청</button>
             <button type="button" class="meal-btn meal-no-sel" id="mealBtnNo">✗ 미신청</button>
-            <button type="button" class="meal-btn" id="mealBtnLeave" style="background:#f0f9f4;color:#166534;border-color:#bbf7d0;">🌴 연차</button>
           </div>
         </div>
         <!-- Step 2: 외부 손님 여부 -->
@@ -3374,7 +3373,7 @@
         if (step2)   step2.classList.add("hidden");
         const data = getMealLocalData();
         const myStatus = data && data.responded
-          ? (data.applying ? "✓ 신청" : (data.isLeave ? "🌴 연차" : "✗ 미신청"))
+          ? (data.applying ? "✓ 신청" : "✗ 미신청")
           : "미응답 (미신청 처리)";
         if (lockDetail) lockDetail.textContent = `오전 9시 이후에는 당일 식수 신청 변경이 불가합니다.\n내 신청 상태: ${myStatus}`;
         modal.classList.remove("hidden");
@@ -3451,7 +3450,6 @@
         applying: applying,
         guestCount: guestCount || 0,
         isAuto: !!isAuto,
-        isLeave: reason === "연차",
         reason: reason || "",
         submittedAt: new Date().toISOString()
       });
@@ -3548,8 +3546,9 @@
         ? `<div class="room-empty-note">예약 없음</div>`
         : reservations.map(r => {
             const isMine = currentUserData && r.booked_by_empno === String(currentUserData.emp_no || "");
-            const cancelBtn = isMine
-              ? `<button class="room-res-cancel" data-action="cancel-room" data-res-id="${escapeHtml(r.reservation_id)}">취소</button>`
+            const isAdminCan = isAdminUser();
+            const cancelBtn = (isMine || isAdminCan)
+              ? `<button class="room-res-cancel" data-action="cancel-room" data-res-id="${escapeHtml(r.reservation_id)}" title="${isAdminCan && !isMine ? "관리자 권한으로 취소" : ""}">취소</button>`
               : "";
             const dateRange = r.end_date && r.end_date !== r.start_date
               ? `${escapeHtml(r.start_date)} ~ ${escapeHtml(r.end_date)}`
@@ -3758,7 +3757,6 @@
       if (closeBtn) closeBtn.addEventListener("click", closeMealModal);
       const yesBtn   = document.getElementById("mealBtnYes");
       const noBtn    = document.getElementById("mealBtnNo");
-      const leaveBtn = document.getElementById("mealBtnLeave");
       const gNoneBtn = document.getElementById("mealGuestNone");
       const gHasBtn  = document.getElementById("mealGuestHas");
       const submitBtn = document.getElementById("mealSubmitBtn");
@@ -3778,14 +3776,6 @@
           closeMealModal();
           submitMealChoice(false, 0, false, "");
           alert("미신청으로 처리되었습니다.");
-        });
-      }
-
-      if (leaveBtn) {
-        leaveBtn.addEventListener("click", function () {
-          closeMealModal();
-          submitMealChoice(false, 0, false, "연차");
-          alert("연차로 처리되었습니다. (미신청)");
         });
       }
 
