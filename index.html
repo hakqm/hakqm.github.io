@@ -2483,14 +2483,19 @@
     }
     .room-res-time { font-weight: 900; display: block; }
     .room-res-title { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .room-res-cancel {
-      float: right; margin-top: 2px;
+    .room-res-cancel, .room-res-edit {
+      float: right; margin-top: 2px; margin-left: 4px;
       padding: 1px 6px; border-radius: 6px;
-      background: #fef3f2; border: 1px solid #fda29b;
-      color: #b42318; font-size: 10px; font-weight: 900;
-      cursor: pointer;
+      font-size: 10px; font-weight: 900; cursor: pointer;
+    }
+    .room-res-cancel {
+      background: #fef3f2; border: 1px solid #fda29b; color: #b42318;
     }
     .room-res-cancel:hover { background: #fda29b; color: #fff; }
+    .room-res-edit {
+      background: #eff6ff; border: 1px solid #93c5fd; color: #1d4ed8;
+    }
+    .room-res-edit:hover { background: #93c5fd; color: #fff; }
     .room-empty-note { color: #a0aec0; font-size: 11px; text-align: center; padding: 6px 0; }
 
     /* 회의실 타임바 */
@@ -2743,6 +2748,7 @@
             <label class="room-form-label">담당자 이름 *</label>
             <input type="text" id="roomManager" class="room-form-input" placeholder="담당자 이름" maxlength="20" />
           </div>
+          <input type="hidden" id="roomEditId" />
           <div class="room-form-note" id="roomBookerNote">예약자: —</div>
           <div class="room-form-actions">
             <button type="button" class="btn" id="cancelRoomModalBtn">취소</button>
@@ -3654,14 +3660,18 @@
         : reservations.map(r => {
             const isMine = currentUserData && r.booked_by_empno === String(currentUserData.emp_no || "");
             const isAdminCan = isAdminUser();
-            const cancelBtn = (isMine || isAdminCan)
+            const canModify = isMine || isAdminCan;
+            const editBtn = canModify
+              ? `<button class="room-res-edit" data-action="edit-room" data-res-id="${escapeHtml(r.reservation_id)}" title="${isAdminCan && !isMine ? "관리자 권한으로 수정" : "수정"}">수정</button>`
+              : "";
+            const cancelBtn = canModify
               ? `<button class="room-res-cancel" data-action="cancel-room" data-res-id="${escapeHtml(r.reservation_id)}" title="${isAdminCan && !isMine ? "관리자 권한으로 취소" : ""}">취소</button>`
               : "";
             const dateRange = r.end_date && r.end_date !== r.start_date
               ? `${escapeHtml(r.start_date)} ~ ${escapeHtml(r.end_date)}`
               : escapeHtml(r.start_date || r.date || "");
             return `<div class="room-res-item">
-              ${cancelBtn}
+              ${editBtn}${cancelBtn}
               ${r.end_date && r.end_date !== r.start_date ? `<span style="font-size:10px;background:#fef3c7;color:#92400e;border-radius:4px;padding:1px 5px;font-weight:800;">장기 ${dateRange}</span>` : ""}
               <span class="room-res-time">${escapeHtml(r.start_time)}~${escapeHtml(r.end_time)}</span>
               <span class="room-res-title">${escapeHtml(r.content)}</span>
@@ -3705,6 +3715,8 @@
       const today = getTodayStr();
       const targetDate = dateStr || (document.getElementById("roomViewDate")?.value) || today;
       const isToday = targetDate === today;
+      const grid = document.getElementById("roomGrid");
+      if (grid) grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:24px;color:#2563eb;font-size:13px;font-weight:800;">⏳ 조회 중...</div>`;
       try {
         const url = `${WEB_APP_URL}?action=getRoomStatus&date=${encodeURIComponent(targetDate)}`;
         const result = await jsonpRequest(url, "roomStatusCallback");
@@ -3720,35 +3732,58 @@
       }
     }
 
-    function openRoomModal(preselectedRoom) {
+    function openRoomModal(preselectedRoom, existingReservation) {
       const modal = document.getElementById("roomModal");
       if (!modal) return;
 
       const today = getTodayStr();
-      const roomSelect = document.getElementById("roomSelect");
-      const roomDate = document.getElementById("roomDate");
-      const roomStartTime = document.getElementById("roomStartTime");
-      const roomEndTime = document.getElementById("roomEndTime");
-      const roomContent = document.getElementById("roomContent");
-      const roomManager = document.getElementById("roomManager");
-      const bookerNote = document.getElementById("roomBookerNote");
+      const roomSelect   = document.getElementById("roomSelect");
+      const roomDate     = document.getElementById("roomDate");
+      const roomEndDate  = document.getElementById("roomEndDate");
+      const roomStartTime= document.getElementById("roomStartTime");
+      const roomEndTime  = document.getElementById("roomEndTime");
+      const roomContent  = document.getElementById("roomContent");
+      const roomManager  = document.getElementById("roomManager");
+      const bookerNote   = document.getElementById("roomBookerNote");
+      const editIdInput  = document.getElementById("roomEditId");
+      const titleEl      = document.getElementById("roomModalTitle");
+      const submitBtn    = document.getElementById("submitRoomBtn");
 
-      const roomEndDate = document.getElementById("roomEndDate");
-      if (roomSelect) roomSelect.value = String(preselectedRoom || "1");
-      if (roomDate) roomDate.value = today;
-      if (roomEndDate) roomEndDate.value = today;
-      if (roomStartTime) roomStartTime.value = "09:00";
-      if (roomEndTime) roomEndTime.value = "10:00";
-      if (roomContent) roomContent.value = "";
-      if (roomManager && currentUserData) roomManager.value = currentUserData.name || "";
-      if (bookerNote && currentUserData) {
-        bookerNote.textContent = `예약자: ${currentUserData.name} (사번: ${currentUserData.emp_no || "-"}, ${currentUserData.team || "-"})`;
+      if (existingReservation) {
+        /* 수정 모드 */
+        if (editIdInput) editIdInput.value = existingReservation.reservation_id || "";
+        if (titleEl) titleEl.textContent = "🏢 회의실 예약 수정";
+        if (submitBtn) submitBtn.textContent = "수정하기";
+        if (roomSelect) roomSelect.value = String(existingReservation.room_no || "1");
+        if (roomDate) roomDate.value = existingReservation.start_date || today;
+        if (roomEndDate) roomEndDate.value = existingReservation.end_date || existingReservation.start_date || today;
+        if (roomStartTime) roomStartTime.value = existingReservation.start_time || "09:00";
+        if (roomEndTime) roomEndTime.value = existingReservation.end_time || "10:00";
+        if (roomContent) roomContent.value = existingReservation.content || "";
+        if (roomManager) roomManager.value = existingReservation.manager_name || "";
+        if (bookerNote) bookerNote.textContent = `원래 예약자: ${existingReservation.booked_by_name || "-"} (${existingReservation.booked_by_team || "-"})`;
+      } else {
+        /* 신규 예약 모드 */
+        if (editIdInput) editIdInput.value = "";
+        if (titleEl) titleEl.textContent = "🏢 회의실 예약";
+        if (submitBtn) submitBtn.textContent = "예약하기";
+        if (roomSelect) roomSelect.value = String(preselectedRoom || "1");
+        if (roomDate) roomDate.value = today;
+        if (roomEndDate) roomEndDate.value = today;
+        if (roomStartTime) roomStartTime.value = "09:00";
+        if (roomEndTime) roomEndTime.value = "10:00";
+        if (roomContent) roomContent.value = "";
+        if (roomManager && currentUserData) roomManager.value = currentUserData.name || "";
+        if (bookerNote && currentUserData) {
+          bookerNote.textContent = `예약자: ${currentUserData.name} (사번: ${currentUserData.emp_no || "-"}, ${currentUserData.team || "-"})`;
+        }
       }
+
       /* 시작 날짜 변경 시 종료 날짜 자동 맞춤 */
       if (roomDate && roomEndDate) {
-        roomDate.addEventListener("change", () => {
+        roomDate.onchange = () => {
           if (roomEndDate.value < roomDate.value) roomEndDate.value = roomDate.value;
-        });
+        };
       }
 
       modal.classList.remove("hidden");
@@ -3786,12 +3821,14 @@
       if (!content)    { alert("회의 내용을 입력해주세요."); return; }
       if (!manager)    { alert("담당자 이름을 입력해주세요."); return; }
 
+      const editId  = document.getElementById("roomEditId")?.value.trim() || "";
+      const isEdit  = !!editId;
       const submitBtn = document.getElementById("submitRoomBtn");
-      if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = "예약 중..."; }
+      const origLabel = isEdit ? "수정하기" : "예약하기";
+      if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = isEdit ? "수정 중..." : "예약 중..."; }
 
       try {
-        const params = [
-          "action=addRoomReservation",
+        const commonParams = [
           `room_no=${encodeURIComponent(roomNo)}`,
           `start_date=${encodeURIComponent(startDate)}`,
           `end_date=${encodeURIComponent(endDate)}`,
@@ -3802,22 +3839,31 @@
           `booked_by_name=${encodeURIComponent(currentUserData.name || "")}`,
           `booked_by_empno=${encodeURIComponent(currentUserData.emp_no || "")}`,
           `booked_by_team=${encodeURIComponent(currentUserData.team || "")}`
-        ].join("&");
+        ];
 
-        const result = await jsonpRequest(`${WEB_APP_URL}?${params}`, "roomReserveCallback");
+        let result;
+        if (isEdit) {
+          const params = [`action=updateRoomReservation`, `reservation_id=${encodeURIComponent(editId)}`, ...commonParams].join("&");
+          result = await jsonpRequest(`${WEB_APP_URL}?${params}`, "roomUpdateCallback");
+        } else {
+          const params = [`action=addRoomReservation`, ...commonParams].join("&");
+          result = await jsonpRequest(`${WEB_APP_URL}?${params}`, "roomReserveCallback");
+        }
+
         if (!result.success) {
-          alert(result.message || "예약에 실패했습니다.");
+          alert(result.message || (isEdit ? "수정에 실패했습니다." : "예약에 실패했습니다."));
           return;
         }
 
-        alert(result.message || "예약이 완료되었습니다.");
+        alert(result.message || (isEdit ? "예약이 수정되었습니다." : "예약이 완료되었습니다."));
         closeRoomModal();
-        if (currentScreenKey === "home") setTimeout(loadRoomStatus, 300);
+        const viewDate = document.getElementById("roomViewDate")?.value || getTodayStr();
+        if (currentScreenKey === "home") setTimeout(() => loadRoomStatus(viewDate), 300);
       } catch (e) {
         console.error("회의실 예약 오류:", e);
-        alert("예약 중 오류가 발생했습니다.");
+        alert(isEdit ? "수정 중 오류가 발생했습니다." : "예약 중 오류가 발생했습니다.");
       } finally {
-        if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = "예약하기"; }
+        if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = origLabel; }
       }
     }
 
@@ -3938,15 +3984,12 @@
         setTimeout(loadRoomStatus, 200);
         updateHomeMealStatus();
 
-        const roomViewDateBtn = document.getElementById("roomViewDateBtn");
         const roomViewDateInput = document.getElementById("roomViewDate");
         const roomRefreshBtn = document.getElementById("roomRefreshBtn");
-        if (roomViewDateBtn && roomViewDateInput) {
-          roomViewDateBtn.addEventListener("click", () => {
+        if (roomViewDateInput) {
+          /* 날짜 변경 즉시 자동 조회 */
+          roomViewDateInput.addEventListener("change", () => {
             loadRoomStatus(roomViewDateInput.value || getTodayStr());
-          });
-          roomViewDateInput.addEventListener("keydown", (e) => {
-            if (e.key === "Enter") loadRoomStatus(roomViewDateInput.value || getTodayStr());
           });
         }
         if (roomRefreshBtn) {
@@ -4128,7 +4171,6 @@
               <h3>회의실 예약 현황</h3>
               <div style="display:flex;align-items:center;gap:8px;">
                 <input type="date" id="roomViewDate" value="${today}" style="border:1px solid #cdd5e2;border-radius:8px;padding:4px 8px;font-size:12px;color:#22365e;background:#fff;cursor:pointer;" title="날짜 선택" />
-                <button type="button" id="roomViewDateBtn" style="padding:4px 10px;border:1px solid #4fb7ff;border-radius:8px;font-size:12px;color:#213a72;background:#eaf4ff;cursor:pointer;font-weight:800;">조회</button>
                 <button type="button" id="roomRefreshBtn" style="padding:4px 10px;border:1px solid #cdd5e2;border-radius:8px;font-size:12px;color:#475569;background:#fff;cursor:pointer;font-weight:800;" title="새로고침">↺</button>
               </div>
             </div>
@@ -6850,6 +6892,17 @@
           } else {
             openLoginFromScreen();
             alert("회의실 예약은 로그인 후 이용 가능합니다.");
+          }
+          return;
+        }
+
+        if (actionButton.dataset.action === "edit-room") {
+          if (currentUserData) {
+            const resId = actionButton.dataset.resId;
+            const res = roomStatusCache.find(r => r.reservation_id === resId);
+            if (res) openRoomModal(res.room_no, res);
+          } else {
+            openLoginFromScreen();
           }
           return;
         }
