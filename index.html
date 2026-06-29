@@ -3480,7 +3480,7 @@
 
     function isMealLocked() {
       const now = new Date();
-      return now.getHours() >= 9; /* 09:00 이후 잠금 */
+      return now.getHours() >= 23; /* 09:00 이후 잠금 (테스트 중: 23시로 임시 변경) */
     }
 
     function openMealModal() {
