@@ -471,7 +471,7 @@
   function closePopover(){ const p=document.querySelector(".popover"); if(p) p.remove(); }
 
   /* Time picker dropdown */
-  const TIME_OPTIONS = (() => { const a=[]; for(let h=0;h<24;h++) for(const m of [0,30]) a.push(pad(h)+":"+pad(m)); return a; })();
+  const TIME_OPTIONS = (() => { const a=[]; for(let h=8;h<=18;h++) for(const m of (h<18?[0,30]:[0])) a.push(pad(h)+":"+pad(m)); return a; })();
   function openTimeMenu(input) {
     closeTimeMenu();
     const rect=input.getBoundingClientRect();
