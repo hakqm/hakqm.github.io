@@ -308,6 +308,8 @@
   const LOGIN_KEY = "hak_login_user";
   const LOGIN_EXPIRE_MS = 30 * 60 * 1000;
   const LAST_INPUT_KEY = "hak_schedule_last_input";
+  const CAT_CACHE_KEY = "hak_schedule_categories";
+  const CAT_CACHE_TTL = 24 * 60 * 60 * 1000; // 24시간
 
   const PARTS = ["QA","상선/해군","해양","산업공조","FAN","FUELCELL","팀장"];
   const PART_COLORS = {
@@ -518,9 +520,19 @@
   ───────────────────────────────────────────────────────────── */
   async function loadCategories() {
     try {
-      const r=await jsonp("getScheduleCategories",userParams());
-      state.categories = r.success&&Array.isArray(r.categories) ? r.categories : DEFAULT_CATEGORIES;
-    } catch(e){ state.categories=DEFAULT_CATEGORIES; }
+      const raw = localStorage.getItem(CAT_CACHE_KEY);
+      if (raw) {
+        const { data, ts } = JSON.parse(raw);
+        if (Date.now() - ts < CAT_CACHE_TTL && Array.isArray(data) && data.length) {
+          state.categories = data;
+          return;
+        }
+      }
+      const r = await jsonp("getScheduleCategories", userParams());
+      const cats = r.success && Array.isArray(r.categories) ? r.categories : DEFAULT_CATEGORIES;
+      state.categories = cats;
+      localStorage.setItem(CAT_CACHE_KEY, JSON.stringify({ data: cats, ts: Date.now() }));
+    } catch(e) { state.categories = DEFAULT_CATEGORIES; }
   }
 
   async function loadSchedules() {
@@ -1358,8 +1370,7 @@
 
     renderShell();
     showBusy("데이터 불러오는 중...");
-    await loadCategories();
-    await loadSchedules();
+    await Promise.all([loadCategories(), loadSchedules()]);
     hideBusy();
     renderCalendar();
     renderSide();
