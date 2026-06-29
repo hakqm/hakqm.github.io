@@ -2734,11 +2734,11 @@
           <div class="room-form-row">
             <div class="room-form-group">
               <label class="room-form-label">시작 시간 *</label>
-              <input type="time" id="roomStartTime" class="room-form-input" />
+              <input type="time" id="roomStartTime" class="room-form-input" min="08:00" max="18:00" step="1800" />
             </div>
             <div class="room-form-group">
               <label class="room-form-label">종료 시간 *</label>
-              <input type="time" id="roomEndTime" class="room-form-input" />
+              <input type="time" id="roomEndTime" class="room-form-input" min="08:00" max="18:00" step="1800" />
             </div>
           </div>
           <div class="room-form-group">
@@ -3912,10 +3912,11 @@
       }
     }
 
-    async function cancelRoomReservation(reservationId) {
+    async function cancelRoomReservation(reservationId, btnEl) {
       if (!reservationId) return;
       if (!confirm("이 예약을 취소하시겠습니까?")) return;
 
+      if (btnEl) { btnEl.textContent = "취소중.."; btnEl.disabled = true; }
       try {
         const params = [
           "action=cancelRoomReservation",
@@ -3926,6 +3927,7 @@
         const result = await jsonpRequest(`${WEB_APP_URL}?${params}`, "roomCancelCallback");
         if (!result.success) {
           alert(result.message || "취소에 실패했습니다.");
+          if (btnEl) { btnEl.textContent = "취소"; btnEl.disabled = false; }
           return;
         }
         alert(result.message || "예약이 취소되었습니다.");
@@ -3933,6 +3935,7 @@
       } catch (e) {
         console.error("예약 취소 오류:", e);
         alert("취소 중 오류가 발생했습니다.");
+        if (btnEl) { btnEl.textContent = "취소"; btnEl.disabled = false; }
       }
     }
 
@@ -3945,9 +3948,7 @@
       if (closeBtn)  closeBtn.addEventListener("click", closeRoomModal);
       if (cancelBtn) cancelBtn.addEventListener("click", closeRoomModal);
       if (submitBtn) submitBtn.addEventListener("click", submitRoomReservation);
-      if (modal) {
-        modal.addEventListener("click", (e) => { if (e.target === modal) closeRoomModal(); });
-      }
+      /* 바깥 클릭으로 닫히지 않음 — X 또는 취소 버튼으로만 닫기 */
     }
 
     function bindMealModalEvents() {
@@ -6993,7 +6994,7 @@
 
         if (actionButton.dataset.action === "cancel-room") {
           if (currentUserData) {
-            cancelRoomReservation(actionButton.dataset.resId);
+            cancelRoomReservation(actionButton.dataset.resId, actionButton);
           }
           return;
         }
