@@ -2521,6 +2521,10 @@
     .room-modal-card { max-width: 500px; }
     .room-form { display: grid; gap: 12px; }
     .room-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .room-time-wrapper { display: flex; gap: 6px; align-items: center; }
+    .room-time-wrapper .room-form-input { flex: 1; min-width: 0; }
+    .room-time-direct-btn { flex-shrink: 0; font-size: 11px; padding: 6px 10px; border-radius: 8px; border: 1px solid #c7d2fe; background: #eef2ff; color: #3730a3; cursor: pointer; white-space: nowrap; }
+    .room-time-direct-btn:hover { background: #e0e7ff; }
     .room-form-group { display: grid; gap: 4px; }
     .room-form-label { font-size: 12px; font-weight: 900; color: #33445f; }
     .room-form-input,
@@ -2734,11 +2738,17 @@
           <div class="room-form-row">
             <div class="room-form-group">
               <label class="room-form-label">시작 시간 *</label>
-              <input type="time" id="roomStartTime" class="room-form-input" min="08:00" max="18:00" step="1800" />
+              <div class="room-time-wrapper">
+                <select id="roomStartTime" class="room-form-input room-time-select"></select>
+                <button type="button" class="room-time-direct-btn" data-target="roomStartTime">직접 입력</button>
+              </div>
             </div>
             <div class="room-form-group">
               <label class="room-form-label">종료 시간 *</label>
-              <input type="time" id="roomEndTime" class="room-form-input" min="08:00" max="18:00" step="1800" />
+              <div class="room-time-wrapper">
+                <select id="roomEndTime" class="room-form-input room-time-select"></select>
+                <button type="button" class="room-time-direct-btn" data-target="roomEndTime">직접 입력</button>
+              </div>
             </div>
           </div>
           <div class="room-form-group">
@@ -3480,7 +3490,8 @@
 
     function isMealLocked() {
       const now = new Date();
-      return now.getHours() >= 23; /* 09:00 이후 잠금 (테스트 중: 23시로 임시 변경) */
+      const h = now.getHours(), m = now.getMinutes();
+      return h > 8 || (h === 8 && m >= 30); /* 08:30 이후 잠금 */
     }
 
     function openMealModal() {
@@ -3781,12 +3792,14 @@
       const modal = document.getElementById("roomModal");
       if (!modal) return;
 
+      /* 시간 피커를 select 모드로 초기화 */
+      resetRoomTimeToSelect("roomStartTime");
+      resetRoomTimeToSelect("roomEndTime");
+
       const today = getTodayStr();
       const roomSelect   = document.getElementById("roomSelect");
       const roomDate     = document.getElementById("roomDate");
       const roomEndDate  = document.getElementById("roomEndDate");
-      const roomStartTime= document.getElementById("roomStartTime");
-      const roomEndTime  = document.getElementById("roomEndTime");
       const roomContent  = document.getElementById("roomContent");
       const roomManager  = document.getElementById("roomManager");
       const bookerNote   = document.getElementById("roomBookerNote");
@@ -3802,8 +3815,8 @@
         if (roomSelect) roomSelect.value = String(existingReservation.room_no || "1");
         if (roomDate) roomDate.value = existingReservation.start_date || today;
         if (roomEndDate) roomEndDate.value = existingReservation.end_date || existingReservation.start_date || today;
-        if (roomStartTime) roomStartTime.value = existingReservation.start_time || "09:00";
-        if (roomEndTime) roomEndTime.value = existingReservation.end_time || "10:00";
+        setRoomTime("roomStartTime", existingReservation.start_time || "09:00");
+        setRoomTime("roomEndTime",   existingReservation.end_time   || "10:00");
         if (roomContent) roomContent.value = existingReservation.content || "";
         if (roomManager) roomManager.value = existingReservation.manager_name || "";
         if (bookerNote) bookerNote.textContent = `원래 예약자: ${existingReservation.booked_by_name || "-"} (${existingReservation.booked_by_team || "-"})`;
@@ -3815,8 +3828,8 @@
         if (roomSelect) roomSelect.value = String(preselectedRoom || "1");
         if (roomDate) roomDate.value = today;
         if (roomEndDate) roomEndDate.value = today;
-        if (roomStartTime) roomStartTime.value = "09:00";
-        if (roomEndTime) roomEndTime.value = "10:00";
+        setRoomTime("roomStartTime", "09:00");
+        setRoomTime("roomEndTime",   "10:00");
         if (roomContent) roomContent.value = "";
         if (roomManager && currentUserData) roomManager.value = currentUserData.name || "";
         if (bookerNote && currentUserData) {
@@ -3939,6 +3952,62 @@
       }
     }
 
+    function buildRoomTimeOpts(selectedVal) {
+      var opts = ['<option value="">시간 선택</option>'];
+      for (var h = 8; h <= 18; h++) {
+        var mins = h < 18 ? [0, 30] : [0];
+        mins.forEach(function(m) {
+          var v = String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
+          opts.push('<option value="' + v + '"' + (v === selectedVal ? ' selected' : '') + '>' + v + '</option>');
+        });
+      }
+      return opts.join('');
+    }
+
+    function setRoomTime(id, val) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      if (el.tagName === 'SELECT') {
+        el.innerHTML = buildRoomTimeOpts(val || '');
+        if (val) el.value = val;
+      } else {
+        el.value = val || '';
+      }
+    }
+
+    function resetRoomTimeToSelect(id) {
+      var el = document.getElementById(id);
+      if (!el || el.tagName === 'SELECT') return;
+      var wrapper = el.parentElement;
+      if (!wrapper) return;
+      var sel = document.createElement('select');
+      sel.id = id;
+      sel.className = el.className;
+      wrapper.replaceChild(sel, el);
+      var btn = wrapper.querySelector('.room-time-direct-btn');
+      if (btn) btn.textContent = '직접 입력';
+    }
+
+    function toggleRoomTimeDirect(id, btn) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      var val = el.value;
+      var wrapper = el.parentElement;
+      if (el.tagName === 'SELECT') {
+        var inp = document.createElement('input');
+        inp.type = 'time'; inp.id = id; inp.className = el.className;
+        if (val) inp.value = val;
+        wrapper.replaceChild(inp, el);
+        btn.textContent = '목록으로';
+      } else {
+        var newSel = document.createElement('select');
+        newSel.id = id; newSel.className = el.className;
+        newSel.innerHTML = buildRoomTimeOpts(val);
+        wrapper.replaceChild(newSel, el);
+        btn.textContent = '직접 입력';
+      }
+    }
+
     function bindRoomModalEvents() {
       const closeBtn   = document.getElementById("closeRoomModal");
       const cancelBtn  = document.getElementById("cancelRoomModalBtn");
@@ -3949,6 +4018,11 @@
       if (cancelBtn) cancelBtn.addEventListener("click", closeRoomModal);
       if (submitBtn) submitBtn.addEventListener("click", submitRoomReservation);
       /* 바깥 클릭으로 닫히지 않음 — X 또는 취소 버튼으로만 닫기 */
+      document.querySelectorAll(".room-time-direct-btn").forEach(function(btn) {
+        btn.addEventListener("click", function() {
+          toggleRoomTimeDirect(this.dataset.target, this);
+        });
+      });
     }
 
     function bindMealModalEvents() {
