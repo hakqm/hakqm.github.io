@@ -2521,10 +2521,13 @@
     .room-modal-card { max-width: 500px; }
     .room-form { display: grid; gap: 12px; }
     .room-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .room-time-wrapper { display: flex; gap: 6px; align-items: center; }
-    .room-time-wrapper .room-form-input { flex: 1; min-width: 0; }
-    .room-time-direct-btn { flex-shrink: 0; font-size: 11px; padding: 6px 10px; border-radius: 8px; border: 1px solid #c7d2fe; background: #eef2ff; color: #3730a3; cursor: pointer; white-space: nowrap; }
-    .room-time-direct-btn:hover { background: #e0e7ff; }
+    .room-time-wrapper { position: relative; display: flex; align-items: center; }
+    .room-time-wrapper .room-form-input { padding-right: 36px; }
+    .room-time-pick-btn { position: absolute; right: 8px; border: 0; background: transparent; color: #94a3b8; font-size: 16px; cursor: pointer; padding: 4px; line-height: 1; }
+    .room-time-pick-btn:hover { color: var(--navy); }
+    .room-time-menu { position: fixed; z-index: 9999; width: 110px; max-height: 200px; overflow: auto; background: #fff; border: 1px solid #c7d2fe; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.13); padding: 5px; }
+    .room-time-menu button { display: block; width: 100%; border: 0; background: transparent; border-radius: 7px; padding: 7px 10px; text-align: left; font-size: 12.5px; font-weight: 700; color: #334155; cursor: pointer; }
+    .room-time-menu button:hover, .room-time-menu button.rtm-active { background: #eef2ff; color: #3730a3; }
     .room-form-group { display: grid; gap: 4px; }
     .room-form-label { font-size: 12px; font-weight: 900; color: #33445f; }
     .room-form-input,
@@ -2737,17 +2740,17 @@
           </div>
           <div class="room-form-row">
             <div class="room-form-group">
-              <label class="room-form-label">시작 시간 *</label>
+              <label class="room-form-label">시작 시간 * <span style="font-size:10px;color:#94a3b8;font-weight:400;">⌄ 클릭시 08~18시 / 직접 입력 가능</span></label>
               <div class="room-time-wrapper">
-                <select id="roomStartTime" class="room-form-input room-time-select"></select>
-                <button type="button" class="room-time-direct-btn" data-target="roomStartTime">직접 입력</button>
+                <input type="text" id="roomStartTime" class="room-form-input" placeholder="09:00" maxlength="5" autocomplete="off" inputmode="numeric" />
+                <button type="button" class="room-time-pick-btn" data-target="roomStartTime">⌄</button>
               </div>
             </div>
             <div class="room-form-group">
-              <label class="room-form-label">종료 시간 *</label>
+              <label class="room-form-label">종료 시간 * <span style="font-size:10px;color:#94a3b8;font-weight:400;">⌄ 클릭시 08~18시 / 직접 입력 가능</span></label>
               <div class="room-time-wrapper">
-                <select id="roomEndTime" class="room-form-input room-time-select"></select>
-                <button type="button" class="room-time-direct-btn" data-target="roomEndTime">직접 입력</button>
+                <input type="text" id="roomEndTime" class="room-form-input" placeholder="10:00" maxlength="5" autocomplete="off" inputmode="numeric" />
+                <button type="button" class="room-time-pick-btn" data-target="roomEndTime">⌄</button>
               </div>
             </div>
           </div>
@@ -3792,10 +3795,7 @@
       const modal = document.getElementById("roomModal");
       if (!modal) return;
 
-      /* 시간 피커를 select 모드로 초기화 */
-      resetRoomTimeToSelect("roomStartTime");
-      resetRoomTimeToSelect("roomEndTime");
-
+      closeRoomTimeMenu();
       const today = getTodayStr();
       const roomSelect   = document.getElementById("roomSelect");
       const roomDate     = document.getElementById("roomDate");
@@ -3850,6 +3850,7 @@
     }
 
     function closeRoomModal() {
+      closeRoomTimeMenu();
       const modal = document.getElementById("roomModal");
       if (modal) {
         modal.classList.add("hidden");
@@ -3952,60 +3953,56 @@
       }
     }
 
-    function buildRoomTimeOpts(selectedVal) {
-      var opts = ['<option value="">시간 선택</option>'];
+    var ROOM_TIME_OPTIONS = (function() {
+      var a = [];
       for (var h = 8; h <= 18; h++) {
         var mins = h < 18 ? [0, 30] : [0];
         mins.forEach(function(m) {
-          var v = String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
-          opts.push('<option value="' + v + '"' + (v === selectedVal ? ' selected' : '') + '>' + v + '</option>');
+          a.push(String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0'));
         });
       }
-      return opts.join('');
-    }
+      return a;
+    })();
 
     function setRoomTime(id, val) {
       var el = document.getElementById(id);
-      if (!el) return;
-      if (el.tagName === 'SELECT') {
-        el.innerHTML = buildRoomTimeOpts(val || '');
-        if (val) el.value = val;
-      } else {
-        el.value = val || '';
+      if (el) el.value = val || '';
+    }
+
+    function openRoomTimeMenu(input) {
+      closeRoomTimeMenu();
+      var cur = input.value;
+      var rect = input.getBoundingClientRect();
+      var menu = document.createElement('div');
+      menu.className = 'room-time-menu';
+      menu.style.top  = (rect.bottom + 2) + 'px';
+      menu.style.left = rect.left + 'px';
+      menu.innerHTML = ROOM_TIME_OPTIONS.map(function(t) {
+        return '<button type="button" class="' + (t === cur ? 'rtm-active' : '') + '" data-t="' + t + '">' + t + '</button>';
+      }).join('');
+      menu.addEventListener('mousedown', function(e) {
+        var btn = e.target.closest('[data-t]');
+        if (!btn) return;
+        e.preventDefault();
+        input.value = btn.dataset.t;
+        closeRoomTimeMenu();
+      });
+      document.body.appendChild(menu);
+      var active = menu.querySelector('.rtm-active');
+      if (active) active.scrollIntoView({ block: 'nearest' });
+      setTimeout(function() { document.addEventListener('mousedown', handleRoomTimeOutside); }, 0);
+    }
+
+    function handleRoomTimeOutside(e) {
+      if (!e.target.closest('.room-time-menu') && !e.target.closest('.room-time-pick-btn')) {
+        closeRoomTimeMenu();
       }
     }
 
-    function resetRoomTimeToSelect(id) {
-      var el = document.getElementById(id);
-      if (!el || el.tagName === 'SELECT') return;
-      var wrapper = el.parentElement;
-      if (!wrapper) return;
-      var sel = document.createElement('select');
-      sel.id = id;
-      sel.className = el.className;
-      wrapper.replaceChild(sel, el);
-      var btn = wrapper.querySelector('.room-time-direct-btn');
-      if (btn) btn.textContent = '직접 입력';
-    }
-
-    function toggleRoomTimeDirect(id, btn) {
-      var el = document.getElementById(id);
-      if (!el) return;
-      var val = el.value;
-      var wrapper = el.parentElement;
-      if (el.tagName === 'SELECT') {
-        var inp = document.createElement('input');
-        inp.type = 'time'; inp.id = id; inp.className = el.className;
-        if (val) inp.value = val;
-        wrapper.replaceChild(inp, el);
-        btn.textContent = '목록으로';
-      } else {
-        var newSel = document.createElement('select');
-        newSel.id = id; newSel.className = el.className;
-        newSel.innerHTML = buildRoomTimeOpts(val);
-        wrapper.replaceChild(newSel, el);
-        btn.textContent = '직접 입력';
-      }
+    function closeRoomTimeMenu() {
+      var m = document.querySelector('.room-time-menu');
+      if (m) m.remove();
+      document.removeEventListener('mousedown', handleRoomTimeOutside);
     }
 
     function bindRoomModalEvents() {
@@ -4018,9 +4015,11 @@
       if (cancelBtn) cancelBtn.addEventListener("click", closeRoomModal);
       if (submitBtn) submitBtn.addEventListener("click", submitRoomReservation);
       /* 바깥 클릭으로 닫히지 않음 — X 또는 취소 버튼으로만 닫기 */
-      document.querySelectorAll(".room-time-direct-btn").forEach(function(btn) {
-        btn.addEventListener("click", function() {
-          toggleRoomTimeDirect(this.dataset.target, this);
+      document.querySelectorAll(".room-time-pick-btn").forEach(function(btn) {
+        btn.addEventListener("click", function(ev) {
+          ev.preventDefault();
+          var input = document.getElementById(this.dataset.target);
+          if (input) openRoomTimeMenu(input);
         });
       });
     }
