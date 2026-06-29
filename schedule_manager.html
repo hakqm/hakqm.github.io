@@ -127,17 +127,17 @@
     .month-grid { display: grid; grid-template-columns: repeat(7, 1fr); min-width: 700px; }
     .month-dh { background: #f8fafc; border-bottom: 1px solid var(--line); border-right: 1px solid var(--line2); padding: 8px 12px; font-size: 12px; font-weight: 950; color: #64748b; text-align: center; }
     .month-dh:last-child { border-right: 0; }
-    .month-cell { border-right: 1px solid var(--line2); border-bottom: 1px solid var(--line2); min-height: 120px; padding: 6px; background: #fff; vertical-align: top; }
+    .month-cell { border-right: 1px solid var(--line2); border-bottom: 1px solid var(--line2); min-height: 120px; padding: 6px; background: #fff; vertical-align: top; min-width: 0; overflow: hidden; }
     .month-cell:nth-child(7n) { border-right: 0; }
     .month-cell.other-month { background: #f8fafc; }
     .month-cell.today { background: #eff6ff; }
     .mc-date-num { font-size: 12px; font-weight: 950; color: #334155; margin-bottom: 4px; display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 50%; }
     .month-cell.today .mc-date-num { background: var(--blue); color: #fff; }
     .month-cell.other-month .mc-date-num { color: #cbd5e1; }
-    .event-chip { display: flex; align-items: center; gap: 4px; padding: 2px 6px; border-radius: 5px; font-size: 11px; font-weight: 800; margin-bottom: 2px; cursor: pointer; line-height: 1.4; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; transition: opacity .12s; }
+    .event-chip { display: flex; align-items: center; gap: 4px; padding: 2px 6px; border-radius: 5px; font-size: 11px; font-weight: 800; margin-bottom: 2px; cursor: pointer; line-height: 1.4; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; transition: opacity .12s; min-width: 0; max-width: 100%; }
     .event-chip:hover { opacity: .8; }
     .event-chip .chip-dot { width: 6px; height: 6px; border-radius: 50%; flex: 0 0 6px; }
-    .event-chip .chip-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .event-chip .chip-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; flex: 1 1 auto; }
     .more-chip { font-size: 11px; font-weight: 800; color: #64748b; padding: 1px 4px; cursor: pointer; }
     .more-chip:hover { color: var(--blue); }
 
