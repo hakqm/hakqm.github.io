@@ -5309,6 +5309,14 @@
             "inputs": "도면, POS, 검사절차서",
             "output": "부적합 보고서",
             "system": "-"
+          },
+          {
+            "step": "3",
+            "task": "Damper 검사",
+            "work": "Damper 실측 데이터 기반 레포트 자동 생성",
+            "inputs": "실측 데이터 엑셀, Report_Template.xlsx",
+            "output": "Integrated Damper Report.xlsx",
+            "system": "HTML 자동화"
           }
         ]
       },
@@ -5890,6 +5898,7 @@
       "qa_equipment_checkout_embed",
       "qa_equipment_return_embed",
       "hvac_004_2",
+      "hvac_005_3",
       "fan_004_2",
       "marine_004_1",
       "fuelcell_005_1",
@@ -6150,6 +6159,16 @@
       screens["hvac_004_2"] = {
         tab: "산업공조 > 공정간 검사 > 자재검사",
         html: () => steelMaterialCheckEmbedScreen("산업공조 / 공정간 검사 / 자재검사")
+      };
+
+      screens["hvac_005_3"] = {
+        tab: "산업공조 > 완제품 검사 > Damper 검사",
+        html: () => fuelcellReportEmbedScreen(
+          "산업공조 / 완제품 검사 / Damper 검사",
+          "damper_report.html",
+          "damperReportFrame",
+          "Damper Report 자동 생성 화면을 작업영역 안에서 바로 확인할 수 있습니다."
+        )
       };
 
       screens["fan_004_2"] = {
