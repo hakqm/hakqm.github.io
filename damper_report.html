@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Damper 레포트 자동 생성</title>
+    
+    <!-- 디자인 및 UI 라이브러리 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <!-- 💡 서버 없이 웹에서 엑셀을 직접 처리하는 필수 라이브러리 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+
+    <style>
+        .hidden { display: none !important; }
+        .fade-in { animation: fadeIn 0.4s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        ::-webkit-scrollbar { width: 10px; height: 10px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 5px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        /* 뷰어 테이블 최적화 스타일 */
+        th, td { white-space: nowrap; }
+    </style>
+</head>
+<body class="bg-slate-100 font-sans text-slate-800 flex flex-col h-screen overflow-hidden">
+
+    <!-- 상단 네비게이션 바 (전체 폭) -->
+    <header class="bg-slate-900 text-white h-16 flex items-center px-6 shadow-md shrink-0 justify-between z-20">
+        <div class="flex items-center">
+            <i class="fas fa-fan text-blue-400 text-2xl mr-4"></i>
+            <h1 class="text-xl font-bold tracking-wide">QM AGENCY <span class="font-normal text-slate-400 text-sm ml-3 border-l border-slate-600 pl-3">Damper Report Printing System</span></h1>
+        </div>
+        <div class="flex items-center text-sm font-medium text-slate-300 bg-slate-800 px-4 py-2 rounded-full shadow-inner">
+            <i class="fas fa-globe text-blue-400 mr-2"></i> AI Station Web App
+        </div>
+    </header>
+    
+    <!-- 메인 스크롤 콘텐츠 (1페이지 통합 구성) -->
+    <main class="flex-1 overflow-y-auto p-6 md:p-8 space-y-8 fade-in relative">
+        
+        <!-- ========================================== -->
+        <!-- 1. 데이터 등록 영역 -->
+        <!-- ========================================== -->
+        <section class="w-full bg-white border border-indigo-200 rounded-2xl shadow-sm p-6 flex flex-col md:flex-row items-center justify-between">
+            <div class="flex items-center mb-4 md:mb-0">
+                <div class="w-14 h-14 bg-indigo-100 text-indigo-500 rounded-full flex items-center justify-center text-2xl mr-5 shadow-sm">
+                    <i class="fas fa-file-csv"></i>
+                </div>
+                <div>
+                    <h2 class="text-xl font-extrabold text-slate-800 flex items-center">
+                        <span class="bg-indigo-500 text-white text-sm px-2 py-0.5 rounded mr-2">Step 1</span> 실측 데이터 등록
+                    </h2>
+                    <p class="text-sm text-slate-500 mt-1">파일을 선택하고 데이터 불러오기 버튼을 누르면 하단 뷰어에 즉시 표출됩니다.</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-3 w-full md:w-auto bg-slate-50 p-2 rounded-xl border border-slate-200">
+                <input type="file" id="excelDataFile" accept=".xlsx, .xls" class="flex-1 text-sm text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-indigo-100 file:text-indigo-700 hover:file:bg-indigo-200 cursor-pointer"/>
+                <button id="btnUpload" onclick="uploadDataExcel()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 px-6 rounded-lg shadow-md transition-all whitespace-nowrap">
+                    <i class="fas fa-cloud-arrow-up mr-2"></i> 데이터 불러오기
+                </button>
+            </div>
+        </section>
+        
+        <!-- ========================================== -->
+        <!-- 2. 검증 뷰어 영역 (최대 폭, 15개 아이템 고정 높이) -->
+        <!-- ========================================== -->
+        <section class="w-full bg-white border border-slate-200 rounded-2xl shadow-md flex flex-col overflow-hidden">
+            <div class="p-4 border-b border-slate-200 bg-slate-50 flex flex-col md:flex-row justify-between items-center shrink-0">
+                <h2 class="text-lg font-extrabold text-slate-800 flex items-center mb-4 md:mb-0">
+                    <i class="fas fa-table-columns mr-2 text-teal-500"></i> 데이터 검증
+                </h2>
+                <div class="flex items-center flex-1 w-full md:max-w-md md:ml-6">
+                    <i class="fas fa-filter text-slate-400 mr-3"></i>
+                    <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="Tag No., Result 등 검색어 입력..." class="bg-white border border-slate-300 rounded-lg outline-none w-full px-4 py-2 text-slate-700 focus:border-teal-500 focus:ring-2 focus:ring-teal-200 transition-all font-medium shadow-sm">
+                    <button onclick="loadTableData()" class="ml-3 font-bold text-sm bg-slate-200 hover:bg-slate-300 text-slate-700 py-2 px-4 rounded-lg shadow-sm transition-colors whitespace-nowrap">
+                        <i class="fas fa-rotate-right mr-1"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 💡 뷰어 창 크기 조정: 가로 최대, 세로 약 600px (15개 아이템 넉넉히 표출) -->
+            <div class="w-full overflow-auto bg-white" style="height: 600px;">
+                <table id="dataTable" class="w-full text-left border-collapse">
+                    <thead id="dataThead" class="sticky top-0 bg-slate-100 shadow-sm z-10">
+                    </thead>
+                    <tbody id="dataTbody">
+                        <tr>
+                            <td class="p-16 text-center text-slate-500 font-medium bg-slate-50">
+                                상단에서 <b class="text-indigo-600">파일 선택</b> 후 <b class="text-indigo-600">데이터 불러오기</b> 버튼을 눌러주세요.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="p-3 bg-slate-50 text-sm text-slate-600 border-t border-slate-200 shrink-0 font-bold flex items-center" id="dataCount">
+                <i class="fas fa-circle-info text-blue-500 mr-2"></i> 데이터 대기 중...
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- 3. 레포트 일괄 출력 영역 -->
+        <!-- ========================================== -->
+        <section class="w-full bg-white border border-slate-200 rounded-2xl shadow-md p-6 lg:p-8">
+            <h2 class="text-2xl font-extrabold text-slate-800 mb-6 flex items-center">
+                <span class="bg-rose-500 text-white text-sm px-2 py-0.5 rounded mr-3">Step 2</span> 레포트 맵핑 및 저장
+            </h2>
+            
+            <!-- 💡 그리드 비율을 1:3으로 수정하여 왼쪽 창의 너비를 좁히고 오른쪽을 넓힘 -->
+            <div class="grid grid-cols-1 xl:grid-cols-4 gap-6">
+                <!-- 좌측 설정 영역 -->
+                <div class="xl:col-span-1 space-y-6">
+                    <!-- 필수 양식 파일 -->
+                    <div class="bg-rose-50 border border-rose-200 rounded-xl p-5 shadow-sm">
+                        <h3 class="font-bold text-rose-800 mb-2 flex items-center"><i class="fas fa-file-excel mr-2 text-lg"></i> 1. 템플릿(양식) 등록</h3>
+                        <p class="text-xs text-rose-600 mb-3 font-medium"> <b>'Report_Template.xlsx'</b> 파일 등록</p>
+                        <input type="file" id="templateFile" accept=".xlsx" class="block w-full text-sm text-slate-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-white file:text-rose-600 hover:file:bg-rose-100 cursor-pointer border border-rose-200 rounded-lg p-1 bg-white/50"/>
+                    </div>
+                    
+                    <!-- RTM 선택 -->
+                    <div class="bg-slate-50 border border-slate-200 rounded-xl p-5 shadow-sm">
+                        <h3 class="font-bold text-slate-800 mb-2 flex items-center"><i class="fas fa-layer-group mr-2 text-lg text-slate-500"></i> 2. RTM 선택</h3>
+                        <select id="rtmSelect" onchange="loadTags()" class="w-full p-3 border border-slate-300 rounded-lg outline-none focus:border-rose-500 focus:ring-2 focus:ring-rose-200 cursor-pointer text-base shadow-sm font-medium text-slate-700 bg-white">
+                            <option value="">데이터를 먼저 등록해주세요...</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- 우측 출력 항목 태그 리스트 -->
+                <div class="xl:col-span-3 bg-slate-50 border border-slate-200 rounded-xl p-5 shadow-sm flex flex-col">
+                    <div class="flex justify-between items-center mb-4 shrink-0">
+                        <h3 class="text-2xl font-extrabold text-slate-800 mb-6 flex items-center">
+                            <span class="bg-indigo-950 text-white text-sm px-2 py-0.5 rounded mr-3"> Step 3</span> 출력할 Tag 선택 (<span id="tagCount" class="text-rose-600 font-extrabold mx-1">0</span>개)
+                        </h3>
+                        <div class="space-x-2">
+                            <button onclick="selectAllTags(true)" class="text-sm bg-white hover:bg-slate-200 text-slate-700 py-2 px-3 rounded-lg font-bold transition-colors border border-slate-300 shadow-sm">전체 선택</button>
+                            <button onclick="selectAllTags(false)" class="text-sm bg-white hover:bg-slate-200 text-slate-700 py-2 px-3 rounded-lg font-bold transition-colors border border-slate-300 shadow-sm">모두 해제</button>
+                        </div>
+                    </div>
+                    
+                    <div id="tagContainer" class="flex-1 grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 border border-slate-300 rounded-xl p-4 bg-white overflow-y-auto shadow-inner" style="min-height: 200px;">
+                        <!-- JS Tags -->
+                        <div class="col-span-full text-center text-slate-400 font-medium py-10">RTM을 선택하면 태그 목록이 나타납니다.</div>
+                    </div>
+                </div>
+            </div>
+
+            <button id="btnGenerate" onclick="generateReports()" class="mt-8 w-full py-5 rounded-2xl text-white font-extrabold text-xl shadow-lg flex items-center justify-center transition-all duration-300 bg-rose-600 hover:bg-rose-700 hover:shadow-xl hover:-translate-y-1">
+                <i class="fas fa-folder-plus mr-3 text-2xl"></i> 레포트 원본 저장
+            </button>
+        </section>
+
+    </main>
+
+    <!-- 순수 JavaScript 동작 로직 -->
+    <script>
+        // 전역 데이터 저장용 변수
+        let globalDamperData = [];
+        let rtmColName = '';
+        let tagColName = '';
+
+        const excludeList = [
+            'Customer', 'Project_Name', 'Equip._Name', 'Procedure_No', 
+            'Design_Press._Fr(In.wg)', 'Design_Press._St(In.wg)', 
+            'Qty', 'QTY.', "Q'ty", 'RTM_No.', 'RTM_No', 'Report_No.', 'Report_No'
+        ].map(x => x.toLowerCase().replace(/[^a-z0-9가-힣]/g, ''));
+
+        // 공통 알림
+        function showAlert(title, text, icon) {
+            Swal.fire({ title, text, html: text, icon, confirmButtonColor: '#4f46e5', borderRadius: '1rem' });
+        }
+
+        // ============================================
+        // Step 1: 엑셀 데이터 파일 브라우저 메모리에 로드
+        // ============================================
+        function uploadDataExcel() {
+            const fileInput = document.getElementById('excelDataFile');
+            if (!fileInput.files.length) {
+                showAlert('파일 누락', '<b>현장 실측 엑셀 데이터 파일</b>을 먼저 선택해주세요.', 'warning');
+                return;
+            }
+
+            const btn = document.getElementById('btnUpload');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> 처리 중...';
+            
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const json = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+                    
+                    if (json.length > 0) {
+                        globalDamperData = json; 
+                        const keys = Object.keys(json[0]);
+                        rtmColName = keys.find(k => k.toLowerCase().includes('rtm')) || '';
+                        tagColName = keys.find(k => k.toLowerCase().includes('tag')) || (keys.length > 0 ? keys[0] : '');
+
+                        Swal.fire({ 
+                            title: '데이터 반영 성공!', 
+                            text: `총 ${json.length}건의 데이터가 성공적으로 시스템에 로드되었습니다.`, 
+                            icon: 'success', 
+                            confirmButtonColor: '#4f46e5', 
+                            borderRadius: '1rem',
+                            timer: 1500,
+                            showConfirmButton: false
+                        });
+                        
+                        // 업로드 성공 즉시 테이블 업데이트 및 RTM 목록 로드
+                        loadTableData();
+                        loadRtms();
+                    } else {
+                        showAlert('오류', '엑셀 파일에 데이터가 없거나 형식이 잘못되었습니다.', 'error');
+                    }
+                } catch (err) {
+                    console.error(err);
+                    showAlert('처리 오류', '엑셀 파일을 읽는 중 문제가 발생했습니다.', 'error');
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-cloud-arrow-up mr-2"></i> 데이터 불러오기';
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        // ============================================
+        // Step 1 뷰어: 표 데이터 가공 및 출력
+        // ============================================
+        function shortenHeader(text) {
+            let t = String(text);
+            const preserveList = ['Blade_Type', 'Blade_Qty', 'Cyc._Rep', 'Cyc_Rep', 'Frame_Leak_CL', 'Seat_Leak_CL'];
+            if (preserveList.some(p => p.toLowerCase() === t.toLowerCase())) return t;
+            
+            t = t.replace(/\(cfm\)|\(in\.wg\)|\(inch\)/gi, '');
+            t = t.replace(/Allow\.Frame_Leak_/gi, 'All.Fr.Leak').replace(/Allow\.Seat_Leak_/gi, 'All.St.Leak');
+            t = t.replace(/Frame_Leak_/gi, 'Fr.Leak.').replace(/Seat_Leak_/gi, 'St.Leak.');
+            t = t.replace(/a_frame_leak/gi, 'Act.Fr.Leak').replace(/a_seat_leak/gi, 'Act.St.Leak');
+            t = t.replace(/test_result/gi, 'Result').replace(/test_date/gi, 'Date').replace(/Tag\._No\./gi, 'Tag.No');
+            return t.replace(/_/g, ' ').trim();
+        }
+
+        function loadTableData() {
+            const thead = document.getElementById('dataThead');
+            const tbody = document.getElementById('dataTbody');
+            
+            if (globalDamperData.length === 0) {
+                return;
+            }
+
+            const allCols = Object.keys(globalDamperData[0]);
+            const displayCols = allCols.filter(col => !excludeList.includes(col.toLowerCase().replace(/[^a-z0-9가-힣]/g, '')));
+
+            const seatClCol = allCols.find(c => c.toLowerCase().includes('seat') && c.toLowerCase().includes('cl'));
+            const allowSeatCol = allCols.find(c => c.toLowerCase().includes('allow') && c.toLowerCase().includes('seat'));
+            const actSeatCol = allCols.find(c => (c.toLowerCase().includes('act') && c.toLowerCase().includes('seat')) || c.toLowerCase().includes('a_seat_leak'));
+
+            let trHead = '<tr>';
+            displayCols.forEach(h => { trHead += `<th class="p-3.5 px-5 font-bold border-b-2 border-slate-300 text-slate-700 bg-slate-100">${shortenHeader(h)}</th>`; });
+            trHead += '</tr>';
+            thead.innerHTML = trHead;
+
+            let trBody = '';
+            globalDamperData.forEach(row => {
+                trBody += '<tr class="border-b border-slate-200 hover:bg-teal-50 transition-colors">';
+                let seatClVal = seatClCol ? String(row[seatClCol]).trim() : '';
+                let isSeatNa = (seatClVal === '4' || seatClVal === '4.0');
+
+                displayCols.forEach((col, idx) => { 
+                    let css = "p-3 px-5 text-slate-600 font-medium";
+                    if(idx === 0) css += " font-extrabold text-indigo-600 bg-indigo-50/30";
+                    let content = row[col] !== undefined && row[col] !== null ? row[col] : '';
+                    
+                    if (isSeatNa && (col === allowSeatCol || col === actSeatCol)) {
+                        content = '<span class="text-slate-400 font-bold">N/A</span>';
+                    } else if(content === 'Accepted' || String(content).toLowerCase() === 'pass') {
+                        content = `<span class="bg-teal-100 text-teal-700 px-3 py-1 rounded-md font-bold text-xs shadow-sm">Pass</span>`;
+                    } else if (content === 'Fail') {
+                        content = `<span class="bg-rose-100 text-rose-700 px-3 py-1 rounded-md font-bold text-xs shadow-sm">Fail</span>`;
+                    }
+                    trBody += `<td class="${css}">${content}</td>`; 
+                });
+                trBody += '</tr>';
+            });
+            tbody.innerHTML = trBody;
+            document.getElementById('dataCount').innerHTML = `<i class="fas fa-check-circle text-teal-500 mr-2 text-lg"></i> 총 ${globalDamperData.length}개의 데이터가 정상적으로 맵핑되었습니다.`;
+        }
+
+        function filterTable() {
+            const filter = document.getElementById("searchInput").value.toLowerCase();
+            const tr = document.getElementById("dataTable").getElementsByTagName("tr");
+            let visibleCount = 0;
+            for (let i = 1; i < tr.length; i++) { 
+                let display = false;
+                const tds = tr[i].getElementsByTagName("td");
+                for (let j = 0; j < tds.length; j++) {
+                    if (tds[j] && tds[j].innerText.toLowerCase().indexOf(filter) > -1) {
+                        display = true; break;
+                    }
+                }
+                tr[i].style.display = display ? "" : "none";
+                if(display) visibleCount++;
+            }
+            document.getElementById('dataCount').innerHTML = `<i class="fas fa-search text-teal-500 mr-2 text-lg"></i> 검색 결과: ${visibleCount}개 표시 중`;
+        }
+
+        // ============================================
+        // Step 2: 레포트 RTM 및 태그 목록 로드
+        // ============================================
+        function loadRtms() {
+            const select = document.getElementById('rtmSelect');
+            if (globalDamperData.length === 0 || !rtmColName) return;
+            
+            const uniqueRtms = [...new Set(globalDamperData.map(item => item[rtmColName]).filter(v => v))].sort();
+            let options = '';
+            uniqueRtms.forEach(rtm => { options += `<option value="${rtm}" class="font-medium">${rtm}</option>`; });
+            select.innerHTML = options;
+            loadTags(); 
+        }
+
+        function loadTags() {
+            const rtm = document.getElementById('rtmSelect').value;
+            const container = document.getElementById('tagContainer');
+            if(!rtm || !rtmColName || !tagColName) return;
+            const tags = globalDamperData.filter(item => item[rtmColName] === rtm).map(item => item[tagColName]).sort();
+            
+            let checks = '';
+            tags.forEach(tag => {
+                checks += `
+                    <label class="flex items-center space-x-3 p-3 bg-white border border-slate-200 hover:border-rose-400 hover:bg-rose-50 rounded-xl cursor-pointer transition-colors shadow-sm">
+                        <input type="checkbox" value="${tag}" checked onchange="updateTagCount()" class="tag-checkbox w-5 h-5 text-rose-500 rounded border-slate-300 focus:ring-rose-500">
+                        <span class="text-slate-700 font-bold text-sm whitespace-nowrap overflow-hidden text-ellipsis">${tag}</span>
+                    </label>
+                `;
+            });
+            container.innerHTML = checks;
+            updateTagCount();
+        }
+
+        function selectAllTags(checked) {
+            document.querySelectorAll('.tag-checkbox').forEach(cb => { cb.checked = checked; });
+            updateTagCount();
+        }
+
+        function updateTagCount() {
+            document.getElementById('tagCount').innerText = document.querySelectorAll('.tag-checkbox:checked').length;
+        }
+
+        function getFlexibleVal(dataDict, keys) {
+            const dictLower = {};
+            for (let k in dataDict) dictLower[k.toLowerCase().trim()] = dataDict[k]; 
+            for (let k of keys) if (dictLower[k.toLowerCase().trim()] !== undefined) return dictLower[k.toLowerCase().trim()];
+            for (let dbKey in dataDict) {
+                const cleanDbKey = String(dbKey).toLowerCase().replace(/[^a-z0-9가-힣]/g, '');
+                for (let k of keys) {
+                    const cleanK = String(k).toLowerCase().replace(/[^a-z0-9가-힣]/g, '');
+                    if (cleanK && cleanDbKey.includes(cleanK)) return dataDict[dbKey];
+                }
+            }
+            return '';
+        }
+
+        // ============================================
+        // 엑셀 시트 복사 헬퍼 함수
+        // ============================================
+        function copyWorksheet(src, dest) {
+            dest.pageSetup = Object.assign({}, src.pageSetup);
+            src.columns.forEach((col, index) => {
+                if (col) {
+                    const destCol = dest.getColumn(index + 1);
+                    destCol.width = col.width;
+                    destCol.hidden = col.hidden;
+                    if (col.style) destCol.style = JSON.parse(JSON.stringify(col.style));
+                }
+            });
+            src.eachRow({ includeEmpty: true }, (row, rowNumber) => {
+                const destRow = dest.getRow(rowNumber);
+                destRow.height = row.height;
+                destRow.hidden = row.hidden;
+                // 💡 복사 시에도 customHeight 속성을 그대로 복제하여 높이 축소 버그 방지
+                if (row.customHeight) destRow.customHeight = true;
+                
+                row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+                    const destCell = dest.getCell(rowNumber, colNumber);
+                    destCell.value = cell.value;
+                    destCell.font = cell.font ? JSON.parse(JSON.stringify(cell.font)) : undefined;
+                    destCell.border = cell.border ? JSON.parse(JSON.stringify(cell.border)) : undefined;
+                    destCell.fill = cell.fill ? JSON.parse(JSON.stringify(cell.fill)) : undefined;
+                    destCell.alignment = cell.alignment ? JSON.parse(JSON.stringify(cell.alignment)) : undefined;
+                    destCell.numFmt = cell.numFmt;
+                });
+            });
+            if (src.model.merges) {
+                src.model.merges.forEach(merge => dest.mergeCells(merge));
+            }
+            src.getImages().forEach(img => dest.addImage(img.imageId, img.range));
+        }
+
+        // 💡 [핵심 보완] 테두리 굵기 일괄 정리 함수 (내부 선 얇게 및 Page Count 선 삭제 완벽 반영)
+        function applyReportBorders(ws) {
+            const MAX_ROW = 27;
+            const MAX_COL = 20;
+
+            for (let r = 1; r <= MAX_ROW; r++) {
+                for (let c = 1; c <= MAX_COL; c++) {
+                    const cell = ws.getCell(r, c);
+                    let b = cell.border || {};
+                    let newBorder = {};
+
+                    // 기존 내부 테두리가 존재하면 얇은 실선(thin)으로 덮어씀
+                    if (b.top) newBorder.top = { style: 'thin', color: { argb: 'FF000000' } };
+                    if (b.bottom) newBorder.bottom = { style: 'thin', color: { argb: 'FF000000' } };
+                    if (b.left) newBorder.left = { style: 'thin', color: { argb: 'FF000000' } };
+                    if (b.right) newBorder.right = { style: 'thin', color: { argb: 'FF000000' } };
+                    
+                    // 💡 [수정 요구사항 2] Page Count 박스(R1~T1) 앞쪽 세로선 삭제 처리
+                    if (r === 1) {
+                        if (c === 17) delete newBorder.right; // Q1 우측선 삭제 (R1과 맞닿는 부분)
+                        if (c === 18) { delete newBorder.left; delete newBorder.right; } // R1 좌/우 삭제
+                        if (c === 19) { delete newBorder.left; delete newBorder.right; } // S1 좌/우 삭제
+                        if (c === 20) delete newBorder.left; // T1 좌측 삭제 (T1 우측은 외곽이므로 남김)
+                    }
+
+                    // 💡 최외곽 4면은 무조건 굵은 실선(medium)으로 강제 덮어쓰기!
+                    if (r === 1) newBorder.top = { style: 'medium', color: { argb: 'FF000000' } };
+                    if (r === MAX_ROW) newBorder.bottom = { style: 'medium', color: { argb: 'FF000000' } };
+                    if (c === 1) newBorder.left = { style: 'medium', color: { argb: 'FF000000' } };
+                    if (c === MAX_COL) newBorder.right = { style: 'medium', color: { argb: 'FF000000' } };
+
+                    cell.border = newBorder;
+                }
+            }
+
+            // 💡 [추가 보완] 병합 셀(Logo 등)의 가장자리가 얇아지는 버그 완벽 해결
+            for (let r = 1; r <= MAX_ROW; r++) {
+                for (let c = 1; c <= MAX_COL; c++) {
+                    const cell = ws.getCell(r, c);
+                    if (cell.isMerged) {
+                        const master = cell.master;
+                        let mb = master.border ? JSON.parse(JSON.stringify(master.border)) : {};
+                        let updated = false;
+
+                        if (r === 1) { mb.top = { style: 'medium', color: { argb: 'FF000000' } }; updated = true; }
+                        if (r === MAX_ROW) { mb.bottom = { style: 'medium', color: { argb: 'FF000000' } }; updated = true; }
+                        if (c === 1) { mb.left = { style: 'medium', color: { argb: 'FF000000' } }; updated = true; }
+                        if (c === MAX_COL) { mb.right = { style: 'medium', color: { argb: 'FF000000' } }; updated = true; }
+                        
+                        if (updated) {
+                            master.border = mb;
+                        }
+                    }
+                }
+            }
+            
+            // 27행 20열 밖의 지저분한 테두리들은 모두 지우기
+            ws.eachRow({ includeEmpty: true }, (row, rowNumber) => {
+                row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+                    if (rowNumber > MAX_ROW || colNumber > MAX_COL) {
+                        cell.border = {};
+                    }
+                });
+            });
+        }
+
+        // 💡 [수정] 행 높이를 보정하는 로직
+        function applyA4Scaling(ws) {
+            const MAX_ROW = 27;
+
+            for (let r = 1; r <= MAX_ROW; r++) {
+                const row = ws.getRow(r);
+                
+                // 💡 [추가] 특정 행 높이 개별 지정 (요청사항 1 반영)
+                if (r === 2) {
+                    row.height = 40; 
+                } else if (r === 25) {
+                    row.height = 50;
+                } else if (r === 27) {
+                    row.height = 80;
+                } else {
+                    row.height = 30; // 나머지 행은 30으로 고정
+                }
+                
+                // 💡 [핵심] 엑셀에서 행 높이가 80%로 축소되는 버그 방지 (강제 적용)
+                row.customHeight = true;
+            }
+            
+            // 인쇄 설정: A4(paperSize: 9), 1페이지에 딱 맞게 채우기 및 상단/좌우 중앙 정렬
+            ws.pageSetup = Object.assign({}, ws.pageSetup, {
+                paperSize: 9,
+                orientation: 'portrait',
+                fitToPage: true,
+                fitToWidth: 1,
+                fitToHeight: 1,
+                horizontalCentered: true,
+                verticalCentered: false,
+                margins: {
+                    left: 0.3, right: 0.3,
+                    top: 0.5, bottom: 0.5,
+                    header: 0.2, footer: 0.2
+                }
+            });
+        }
+
+        // ============================================
+        // 엑셀 데이터 매핑 헬퍼 함수
+        // ============================================
+        function fillSheetData(ws, rowData, tag) {
+            ws.getCell('C3').value = getFlexibleVal(rowData, ['Customer']);
+            ws.getCell('C4').value = getFlexibleVal(rowData, ['Project_Name', 'Project']);
+            ws.getCell('C5').value = getFlexibleVal(rowData, ['Equip._Name', 'Equip']);
+            ws.getCell('C6').value = getFlexibleVal(rowData, ['Drawing_1', 'Drawing1']);
+            ws.getCell('C7').value = getFlexibleVal(rowData, ['Drawing_2', 'Drawing2']);
+            ws.getCell('N6').value = getFlexibleVal(rowData, ['Procedure_No', 'Procedure']);
+            ws.getCell('A9').value = rowData[tagColName] || tag;
+            ws.getCell('O9').value = getFlexibleVal(rowData, ['Blade_Qty', 'BladeQty']);
+            ws.getCell('O14').value = getFlexibleVal(rowData, ['Frame_Leak_CL', 'FrameLeakCL']);
+            
+            const seatLeakClVal = getFlexibleVal(rowData, ['Seat_Leak_CL', 'SeatLeakCL']);
+            ws.getCell('O20').value = seatLeakClVal;
+            const seatClStr = String(seatLeakClVal).trim().toUpperCase();
+
+            ws.getCell('I9').value = getFlexibleVal(rowData, ['Blade_Type', 'BladeType']);
+            ws.getCell('E14').value = getFlexibleVal(rowData, ['Design_Press._Fr(In.wg)', 'Design_Press._Fr']);
+            ws.getCell('E20').value = getFlexibleVal(rowData, ['Design_Press._St(In.wg)', 'Design_Press._St']);
+            ws.getCell('F16').value = getFlexibleVal(rowData, ['Allow.Frame_Leak_(CFM)', 'Allow.Frame_Leak']);
+            
+            if (seatClStr === 'N/A' || seatClStr === '4' || seatClStr === '4.0') {
+                ws.getCell('F22').value = 'N/A';
+                ws.getCell('F23').value = 'N/A';
+                ws.getCell('F24').value = 'N/A';
+            } else {
+                ws.getCell('F22').value = getFlexibleVal(rowData, ['Allow.Seat_Leak_(CFM)', 'Allow.Seat_Leak']);
+                ws.getCell('F23').value = getFlexibleVal(rowData, ['Act_Seat', 'Act.Seat', 'a_seat_leak']);
+                let rawResult = String(getFlexibleVal(rowData, ['Test_Result', 'Result']));
+                ws.getCell('F24').value = (rawResult.toLowerCase() === 'pass') ? 'Accepted' : rawResult;
+            }
+            
+            ws.getCell('N5').value = getFlexibleVal(rowData, ['Qty', "Q'ty", 'QTY.']);
+            ws.getCell('D9').value = getFlexibleVal(rowData, ['Size(Inch)', 'Size', 'SIZE (INCH)']);
+
+            const cycVal = String(getFlexibleVal(rowData, ['Cyc_Rep', 'Cyc'])).trim().toLowerCase();
+            if (cycVal === '10' || cycVal === 'ok') {
+                ['A12','C12','E12','G12','I12','K12','M12','O12','Q12','S12'].forEach(c => ws.getCell(c).value = 'OK');
+            }
+
+            ws.getCell('F17').value = getFlexibleVal(rowData, ['Act_Frame', 'Act.Frame', 'a_frame_leak']);
+            let rawResult2 = String(getFlexibleVal(rowData, ['Test_Result', 'Result']));
+            ws.getCell('F18').value = (rawResult2.toLowerCase() === 'pass') ? 'Accepted' : rawResult2;
+
+            // 💡 1. 테두리 스타일 일괄 적용 
+            applyReportBorders(ws);
+            // 💡 2. 행 높이 보정 로직 호출
+            applyA4Scaling(ws);
+        }
+
+        // ============================================
+        // Step 2: 다이렉트 폴더 저장 및 레포트 생성 핵심 로직
+        // ============================================
+        async function generateReports() {
+            const templateInput = document.getElementById('templateFile');
+            if (!templateInput.files.length) {
+                showAlert('파일 누락', '레포트 생성을 위해 <b>양식 엑셀 파일(Template)</b>을 먼저 등록해주세요.', 'warning');
+                return;
+            }
+
+            const checkedBoxes = document.querySelectorAll('.tag-checkbox:checked');
+            if (checkedBoxes.length === 0) {
+                showAlert('선택 누락', '출력할 Tag를 하나 이상 선택해주세요.', 'warning');
+                return;
+            }
+
+            if (!window.showDirectoryPicker) {
+                showAlert('지원 불가 브라우저', '압축 없이 지정 폴더에 직접 저장하는 기능은 <b>최신 크롬(Chrome) 또는 엣지(Edge) 브라우저</b>에서만 지원합니다.', 'error');
+                return;
+            }
+
+            const tags = Array.from(checkedBoxes).map(cb => cb.value);
+            const rtm = document.getElementById('rtmSelect').value;
+            const btn = document.getElementById('btnGenerate');
+
+            let dirHandle;
+            try {
+                dirHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
+            } catch (err) {
+                if (err.name === 'AbortError') return; 
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-3 text-2xl"></i> 엑셀 파일 처리 및 지정 폴더 저장 중...';
+            btn.classList.replace('bg-rose-600', 'bg-slate-400');
+            btn.classList.replace('hover:bg-rose-700', 'hover:bg-slate-400');
+
+            try {
+                const arrayBuffer = await templateInput.files[0].arrayBuffer();
+                
+                // 💡 [핵심] 통합 레포트를 위한 Workbook을 생성할 때, 원본 템플릿의 Properties를 안전하게 넘깁니다.
+                const combinedWb = new ExcelJS.Workbook();
+                await combinedWb.xlsx.load(arrayBuffer);
+                const templateSheet = combinedWb.worksheets[0];
+                
+                const totalCount = tags.length;
+
+                for (let i = 0; i < totalCount; i++) {
+                    const tag = tags[i];
+                    const rowData = globalDamperData.find(item => item[tagColName] === tag);
+                    if (!rowData) continue;
+                    
+                    const sheetName = tag.replace(/[\\/*?:\[\]]/g, '_').substring(0, 31);
+
+                    // ------------------------------------
+                    // 💡 [수정] 개별 파일 생성(indivWb) 관련 로직을 모두 제거하고 통합 파일용 시트 구성만 남김
+                    // ------------------------------------
+                    
+                    // 💡 [핵심] AddWorksheet 생성 시 템플릿의 프로퍼티를 100% 명시적으로 상속 (비율 축소 1차 방어)
+                    const combWs = combinedWb.addWorksheet(sheetName, {
+                        properties: templateSheet.properties ? JSON.parse(JSON.stringify(templateSheet.properties)) : undefined,
+                        pageSetup: templateSheet.pageSetup ? JSON.parse(JSON.stringify(templateSheet.pageSetup)) : undefined,
+                        views: templateSheet.views ? JSON.parse(JSON.stringify(templateSheet.views)) : undefined
+                    });
+                    copyWorksheet(templateSheet, combWs); 
+                    
+                    fillSheetData(combWs, rowData, tag); 
+                    
+                    // 💡 [개선] 통합 레포트 시트별 페이지 넘버링 표기 (Page X of Y)
+                    combWs.getCell('R1').value = `Page ${i + 1} of ${totalCount}`;
+                }
+
+                // ------------------------------------
+                // 3. 통합 파일 1개로 최종 저장
+                // ------------------------------------
+                combinedWb.removeWorksheet(templateSheet.id); // 빈 원본 템플릿 삭제
+                const combinedBuffer = await combinedWb.xlsx.writeBuffer();
+                
+                const safeRtm = rtm.replace(/[^a-zA-Z0-9가-힣\s\-_]/g, '').trim();
+                
+                // 💡 [저장 파일명 형식 변경] Integrated Damper Report_[RTM 번호]_[출력날짜]
+                const dateStr = new Date().toISOString().split('T')[0];
+                const fileName = `Integrated Damper Report_${safeRtm}_${dateStr}.xlsx`;
+                
+                const combFileHandle = await dirHandle.getFileHandle(fileName, { create: true });
+                const combWritable = await combFileHandle.createWritable();
+                await combWritable.write(combinedBuffer);
+                await combWritable.close();
+
+                // 💡 [요구사항 5번 반영] 성공 메시지 문구 유지
+                Swal.fire({ 
+                    title: '저장 성공!', 
+                    html: '지정 폴더에 레포트 파일 저장', 
+                    icon: 'success', 
+                    confirmButtonColor: '#e11d48', 
+                    borderRadius: '1rem' 
+                });
+
+            } catch (err) {
+                console.error(err);
+                showAlert('생성 오류', '엑셀 파일 생성 중 시스템 오류가 발생했습니다. 양식 파일 구조를 다시 확인해주세요.', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-folder-plus mr-3 text-2xl"></i> 레포트 원본 저장';
+                btn.classList.replace('bg-slate-400', 'bg-rose-600');
+                btn.classList.replace('hover:bg-slate-400', 'hover:bg-rose-700');
+            }
+        }
+    </script>
+</body>
+</html>
