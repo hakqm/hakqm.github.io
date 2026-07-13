@@ -116,9 +116,17 @@
     .kpi-chip.active { background: #ecfdf5; color: #166534; }
     .kpi-chip.done { background: #f0fdf4; color: #14532d; }
     .kpi-chip.cancel { background: #fef2f2; color: #991b1b; }
-    .save-pending-btn { border: 1px solid #2563eb; background: #2563eb; border-radius: 8px; padding: 5px 13px; font-size: 12px; font-weight: 850; color: #fff; cursor: pointer; transition: .12s; white-space: nowrap; font-family: inherit; animation: pulse-save 1.8s ease-in-out infinite; }
-    .save-pending-btn:hover { background: #1d4ed8; border-color: #1d4ed8; }
-    @keyframes pulse-save { 0%,100%{box-shadow:0 0 0 0 rgba(37,99,235,.4)} 50%{box-shadow:0 0 0 6px rgba(37,99,235,0)} }
+    /* ── 목록 일괄 상태 변경 ─────────────────────────────────── */
+    .list-check { width: 16px; height: 16px; flex: 0 0 16px; cursor: pointer; accent-color: var(--blue); }
+    .list-check:disabled { cursor: not-allowed; opacity: .35; }
+    .batch-bar { position: sticky; top: 0; z-index: 30; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; background: #eef4ff; border: 1px solid #bfd6fb; border-radius: 12px; padding: 8px 14px; margin-bottom: 12px; box-shadow: 0 4px 14px rgba(37,99,235,.12); }
+    .batch-bar-count { font-size: 13px; font-weight: 950; color: var(--navy); white-space: nowrap; }
+    .batch-bar select { border: 1px solid #bfd6fb; border-radius: 8px; padding: 5px 8px; font-size: 12px; font-weight: 800; color: var(--navy); background: #fff; cursor: pointer; outline: none; }
+    .batch-bar .btn { padding: 6px 12px; font-size: 12px; }
+    .batch-bar .btn.primary:disabled { opacity: .6; cursor: not-allowed; }
+    @media (max-width: 768px) {
+      .batch-bar { position: fixed; left: 8px; right: 8px; bottom: 8px; top: auto; margin-bottom: 0; }
+    }
 
     /* ── Calendar ─────────────────────────────────────────────── */
     .cal-wrap { flex: 1; overflow: auto; }
@@ -306,7 +314,8 @@
   const WEB_APP_URL = URL_PARAMS.get("api") || PARENT_URL || DEFAULT_WEB_APP_URL;
 
   const LOGIN_KEY = "hak_login_user";
-  const LOGIN_EXPIRE_MS = 30 * 60 * 1000;
+  /* 무동작 기준 3시간 — index.html 과 동일한 localStorage 키를 쓰므로 만료시간도 반드시 동일 */
+  const LOGIN_EXPIRE_MS = 3 * 60 * 60 * 1000;
   const LAST_INPUT_KEY = "hak_schedule_last_input";
   const CAT_CACHE_KEY = "hak_schedule_categories";
   const CAT_CACHE_TTL = 24 * 60 * 60 * 1000; // 24시간
@@ -354,10 +363,15 @@
     filterStatus: "",
     hiddenParts: new Set(),
     editSchedule: null,
-    pendingStatusChanges: {},
     miniCalDate: new Date(),
-    saving: false,          /* 일정 저장 중 여부 (중복 저장 방지) */
+    saving: false,                    /* 일정 폼 저장 중 여부 (중복 저장 방지) */
+    savingScheduleIds: new Set(),     /* 즉시 상태 저장 중인 일정 ID (중복 요청 차단) */
+    selectedScheduleIds: new Set(),   /* 목록 화면 체크박스 선택 목록 */
+    batchStatusSaving: false,         /* 일괄 상태 저장 중 여부 */
   };
+
+  /* 목록 선택 초기화 — 화면 전환/기간·필터 변경/새로 불러오기/선택 해제 시 호출 */
+  function clearSelection(){ state.selectedScheduleIds.clear(); state.batchStatusSaving=false; }
 
   /* 일정 조회 요청 관리: 최신 요청 시퀀스 + 동일 조건 요청 합치기 + 짧은 메모리 캐시 */
   const schedFetch = { seq: 0, inflight: {}, cache: {} };
@@ -468,6 +482,23 @@
   function userParams() {
     return { user_id:state.user.user_id, user_name:state.user.name, emp_no:state.user.emp_no };
   }
+
+  /* iframe 안에서의 조작(달력/카드/팝오버/체크박스/필터/입력/스크롤)도 사용자 활동으로 인정
+     — lastActivity 를 20초 throttle 로 갱신해 localStorage 과다 쓰기 방지 */
+  let lastActivityWrite = 0;
+  function touchActivity() {
+    if(!state.user) return;
+    const now=Date.now();
+    if(now-lastActivityWrite<20000) return;
+    lastActivityWrite=now;
+    try {
+      const raw=localStorage.getItem(LOGIN_KEY); if(!raw) return;
+      const p=JSON.parse(raw); p.lastActivity=now;
+      localStorage.setItem(LOGIN_KEY,JSON.stringify(p));
+    } catch(e){}
+  }
+  ["click","keydown","touchstart","scroll","input","change"].forEach(evt=>
+    document.addEventListener(evt,touchActivity,{passive:true,capture:true}));
   const isAdmin = () => state.user && String(state.user.role||"").toLowerCase()==="admin";
   const canEdit = s => !s || isAdmin() || s.main_user_id===state.user.user_id || s.created_by_user_id===state.user.user_id;
 
@@ -553,7 +584,9 @@
     const d=cloneDate(state.cursor);
     if(state.view==="month"||state.view==="list") d.setMonth(d.getMonth()+delta);
     else d.setDate(d.getDate()+delta*7);
-    state.cursor=d; reloadAndRender();
+    state.cursor=d;
+    clearSelection(); /* 조회 기간 변경 시 선택 초기화 */
+    reloadAndRender();
   }
 
   /* ─────────────────────────────────────────────────────────────
@@ -706,7 +739,6 @@
         <div class="topbar-user">
           <span class="topbar-chip">${esc(state.user.name)}</span>
           <span class="topbar-chip part">${esc(state.user.part||"파트 미지정")}</span>
-          <button class="save-pending-btn" id="savePendingBtn" style="display:none;">상태 저장 (0)</button>
           <button class="topbar-btn" id="newBtn">+ 일정 등록</button>
           <button class="topbar-btn" id="reloadBtn">새로고침</button>
         </div>
@@ -760,11 +792,11 @@
 
   function bindShellEvents() {
     document.getElementById("newBtn").onclick=()=>openForm(null);
-    document.getElementById("reloadBtn").onclick=()=>reloadAndRender({forceFresh:true});
+    document.getElementById("reloadBtn").onclick=()=>{ clearSelection(); reloadAndRender({forceFresh:true}); };
     document.getElementById("prevBtn").onclick=()=>movePeriod(-1);
     document.getElementById("nextBtn").onclick=()=>movePeriod(1);
-    document.getElementById("todayBtn").onclick=()=>{ state.cursor=new Date(); reloadAndRender(); };
-    document.querySelectorAll("#viewSeg button").forEach(b=>b.onclick=()=>{ state.view=b.dataset.v; renderCalendar(); renderSide(); updateViewSeg(); updatePeriodTitle(); });
+    document.getElementById("todayBtn").onclick=()=>{ state.cursor=new Date(); clearSelection(); reloadAndRender(); };
+    document.querySelectorAll("#viewSeg button").forEach(b=>b.onclick=()=>{ state.view=b.dataset.v; clearSelection(); renderCalendar(); renderSide(); updateViewSeg(); updatePeriodTitle(); });
     const partSel=document.getElementById("partSel");
     /* 스코프 탭 */
     document.querySelectorAll("#scopeTabs .scope-tab").forEach(btn=>{
@@ -772,16 +804,15 @@
         state.scope=btn.dataset.scope;
         document.querySelectorAll("#scopeTabs .scope-tab").forEach(b=>b.classList.toggle("active",b===btn));
         partSel.style.display=state.scope==="part"?"":"none";
+        clearSelection();
         reloadAndRender();
       };
     });
-    partSel.onchange=()=>{ state.filterPart=partSel.value; reloadAndRender(); };
+    partSel.onchange=()=>{ state.filterPart=partSel.value; clearSelection(); reloadAndRender(); };
     const personSearch=document.getElementById("personSearch");
-    let st=null; personSearch.addEventListener("input",()=>{ clearTimeout(st); st=setTimeout(()=>{ state.filterPerson=personSearch.value.trim(); reloadAndRender(); },350); });
-    document.getElementById("catSel").onchange=e=>{ state.filterCategory=e.target.value; reloadAndRender(); };
-    document.getElementById("statusSel").onchange=e=>{ state.filterStatus=e.target.value; reloadAndRender(); };
-    const savePendingBtn=document.getElementById("savePendingBtn");
-    if(savePendingBtn) savePendingBtn.onclick=savePendingChanges;
+    let st=null; personSearch.addEventListener("input",()=>{ clearTimeout(st); st=setTimeout(()=>{ state.filterPerson=personSearch.value.trim(); clearSelection(); reloadAndRender(); },350); });
+    document.getElementById("catSel").onchange=e=>{ state.filterCategory=e.target.value; clearSelection(); reloadAndRender(); };
+    document.getElementById("statusSel").onchange=e=>{ state.filterStatus=e.target.value; clearSelection(); reloadAndRender(); };
   }
 
   function updateViewSeg() {
@@ -792,18 +823,11 @@
   }
   function updateKpi() {
     const list=filteredSchedules();
-    const effStatus=s=>state.pendingStatusChanges[s.schedule_id]||s.status||"예정";
     const total=list.length;
-    const active=list.filter(s=>["예정","확정","진행"].includes(effStatus(s))).length;
-    const done=list.filter(s=>effStatus(s)==="완료").length;
-    const pending=Object.keys(state.pendingStatusChanges).length;
+    const active=list.filter(s=>["예정","확정","진행"].includes(s.status||"예정")).length;
+    const done=list.filter(s=>s.status==="완료").length;
     const el=document.getElementById("kpiStrip");
-    if(el) el.innerHTML=`<span class="kpi-chip total">${total}건</span><span class="kpi-chip active">진행중 ${active}</span><span class="kpi-chip done">완료 ${done}</span>${pending>0?`<span class="kpi-chip" style="background:#fff7ed;color:#c2410c;">미저장 ${pending}</span>`:""}`;
-  }
-  function updateSavePendingBtn() {
-    const count=Object.keys(state.pendingStatusChanges).length;
-    const btn=document.getElementById("savePendingBtn");
-    if(btn){ btn.style.display=count>0?"":"none"; btn.textContent=`상태 저장 (${count})`; }
+    if(el) el.innerHTML=`<span class="kpi-chip total">${total}건</span><span class="kpi-chip active">진행중 ${active}</span><span class="kpi-chip done">완료 ${done}</span>`;
   }
 
   /* ─────────────────────────────────────────────────────────────
@@ -1084,9 +1108,14 @@
     });
 
     const datesWithEvents=days.filter(d=>byDate[d]);
-    if(!datesWithEvents.length){ wrap.innerHTML=`<div class="list-wrap"><div style="text-align:center;padding:48px;color:#94a3b8;font-weight:800;">이 기간에 등록된 일정이 없습니다.</div></div>`; return; }
+    if(!datesWithEvents.length){ clearSelection(); wrap.innerHTML=`<div class="list-wrap"><div style="text-align:center;padding:48px;color:#94a3b8;font-weight:800;">이 기간에 등록된 일정이 없습니다.</div></div>`; return; }
+
+    /* 현재 목록에 없는 ID 는 선택에서 제거 */
+    const validIds=new Set(sorted.map(s=>s.schedule_id));
+    [...state.selectedScheduleIds].forEach(id=>{ if(!validIds.has(id)) state.selectedScheduleIds.delete(id); });
 
     let html=`<div class="list-wrap">`;
+    html+=renderBatchBar();
     datesWithEvents.forEach(dStr=>{
       const dt=parseDate(dStr);
       const dow=dt?["일","월","화","수","목","금","토"][dt.getDay()]:"";
@@ -1098,7 +1127,12 @@
         </div>
         ${byDate[dStr].map(s=>{
           const ci=categoryInfo(s.category);
+          const editable=canEdit(s);
+          const checked=state.selectedScheduleIds.has(s.schedule_id);
           return `<div class="list-event" data-sid="${esc(s.schedule_id)}">
+            <input type="checkbox" class="list-check" data-check-sid="${esc(s.schedule_id)}"
+              ${checked?"checked":""} ${(!editable||state.batchStatusSaving)?"disabled":""}
+              title="${editable?"일괄 상태 변경 대상으로 선택":"수정 권한이 없어 선택할 수 없습니다"}" />
             <div class="list-event-bar" style="${barStyle(s)}"></div>
             <span class="list-event-time">${esc(displayTime(s)||"종일")}</span>
             <div class="list-event-body">
@@ -1116,7 +1150,64 @@
     });
     html+=`</div>`;
     wrap.innerHTML=html;
-    wrap.querySelectorAll(".list-event[data-sid]").forEach(el=>el.onclick=()=>openPopover(el.dataset.sid,el));
+
+    /* 체크박스: 팝오버 열기와 분리 (개별 팝오버 상태 변경 = 즉시 저장, 체크박스 = 일괄 변경) */
+    wrap.querySelectorAll(".list-check[data-check-sid]").forEach(cb=>{
+      cb.onclick=ev=>{
+        ev.stopPropagation();
+        const id=cb.dataset.checkSid;
+        if(cb.checked) state.selectedScheduleIds.add(id);
+        else state.selectedScheduleIds.delete(id);
+        refreshBatchBar();
+      };
+    });
+    wrap.querySelectorAll(".list-event[data-sid]").forEach(el=>el.onclick=ev=>{
+      if(ev.target.closest(".list-check")) return;
+      openPopover(el.dataset.sid,el);
+    });
+    bindBatchBarEvents();
+  }
+
+  /* 일괄 작업 바 (선택이 있을 때만 표시, sticky — 모바일에서는 하단 고정) */
+  function renderBatchBar() {
+    const count=state.selectedScheduleIds.size;
+    if(!count) return "";
+    return `<div class="batch-bar" id="batchBar">
+      <span class="batch-bar-count">선택 ${count}건</span>
+      <label style="font-size:12px;font-weight:800;color:#475569;display:inline-flex;align-items:center;gap:4px;">변경 상태:
+        <select id="batchStatusSel" ${state.batchStatusSaving?"disabled":""}>
+          ${STATUS_OPTIONS.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join("")}
+        </select>
+      </label>
+      <button class="btn primary" id="batchApplyBtn" ${state.batchStatusSaving?"disabled":""}>${state.batchStatusSaving?`${count}건 저장 중...`:"선택 상태 변경"}</button>
+      <button class="btn" id="batchClearBtn" ${state.batchStatusSaving?"disabled":""}>선택 해제</button>
+    </div>`;
+  }
+
+  function bindBatchBarEvents() {
+    const applyBtn=document.getElementById("batchApplyBtn");
+    const clearBtn=document.getElementById("batchClearBtn");
+    if(applyBtn) applyBtn.onclick=doBatchStatusChange;
+    if(clearBtn) clearBtn.onclick=()=>{ clearSelection(); renderList(); };
+  }
+
+  /* 스크롤 위치를 유지하면서 일괄 작업 바만 갱신 (선택된 변경 상태 값 유지) */
+  function refreshBatchBar() {
+    const wrap=document.getElementById("calWrap"); if(!wrap) return;
+    const listWrap=wrap.querySelector(".list-wrap"); if(!listWrap) return;
+    const prevSel=document.getElementById("batchStatusSel");
+    const prevVal=prevSel?prevSel.value:"";
+    const existing=document.getElementById("batchBar");
+    const html=renderBatchBar();
+    if(existing){
+      if(html) existing.outerHTML=html;
+      else existing.remove();
+    } else if(html) {
+      listWrap.insertAdjacentHTML("afterbegin",html);
+    }
+    const sel=document.getElementById("batchStatusSel");
+    if(sel&&prevVal) sel.value=prevVal;
+    bindBatchBarEvents();
   }
 
   /* ─────────────────────────────────────────────────────────────
@@ -1172,7 +1263,7 @@
     const ci=categoryInfo(s.category);
     const col=eventColor(s);
     const editable=canEdit(s);
-    const eff=state.pendingStatusChanges[s.schedule_id]||s.status||"예정";
+    const eff=s.status||"예정";
 
     const pop=document.createElement("div"); pop.className="popover";
     pop.innerHTML=`<div class="popover-head">
@@ -1220,71 +1311,120 @@
     pop.querySelector(".popover-close").onclick=closePopover;
     const editBtn=pop.querySelector("#pEditBtn"); if(editBtn) editBtn.onclick=()=>{ closePopover(); openForm(s); };
     const cancelBtn=pop.querySelector("#pCancelBtn"); if(cancelBtn) cancelBtn.onclick=()=>{ closePopover(); doCancel(s); };
-    /* 상태 변경 — 큐에 담고 일괄 저장 */
-    const statusColors={예정:"#475569",확정:"#2563eb",진행:"#059669",완료:"#16a34a",취소:"#dc2626",보류:"#d97706"};
+    /* 상태 변경 — 팝오버에서 클릭 즉시 한 건 저장 (월간/주간/목록 공통) */
     pop.querySelectorAll(".status-pill[data-status][data-sid]").forEach(btn=>{
       btn.onclick=(ev)=>{
         ev.stopPropagation();
-        const newStatus=btn.dataset.status;
-        const curEff=state.pendingStatusChanges[s.schedule_id]||s.status||"예정";
-        if(newStatus===curEff) return;
-        queueStatus(s.schedule_id, newStatus, null);
-        /* 팝오버 내 시각 업데이트 */
-        pop.querySelectorAll(".status-pill").forEach(b=>{
-          const col=statusColors[b.dataset.status]||"#475569";
-          b.classList.remove("active");
-          b.style.background=""; b.style.color=col; b.style.borderColor=`${col}40`;
-        });
-        const selCol=statusColors[newStatus]||"#475569";
-        btn.classList.add("active");
-        btn.style.background=selCol; btn.style.color="#fff"; btn.style.borderColor=selCol;
-        renderCalendar(); updateKpi();
+        saveStatusNow(s, btn.dataset.status, pop);
       };
     });
     setTimeout(()=>document.addEventListener("mousedown",e=>{ if(!pop.contains(e.target)) closePopover(); },{once:true}),0);
   }
 
   /* ─────────────────────────────────────────────────────────────
-     Status change queuing
+     즉시 상태 저장 (한 건) + 목록 일괄 상태 변경
   ───────────────────────────────────────────────────────────── */
-  function queueStatus(id, status, el) {
-    const s=state.schedules.find(x=>x.schedule_id===id); if(!s) return;
-    if(!s._origStatus) s._origStatus=s.status; /* 원본 저장 */
-    if(status===s._origStatus) {
-      delete state.pendingStatusChanges[id];
-      s.status=s._origStatus;
-    } else {
-      state.pendingStatusChanges[id]=status;
-      s.status=status; /* 로컬 즉시 반영 (낙관적 UI) */
+  const STATUS_CONFIRM=new Set(["완료","취소"]); /* 실수 방지 확인창 대상 */
+
+  async function saveStatusNow(s, newStatus, pop) {
+    const id=s.schedule_id;
+    if(!id||state.savingScheduleIds.has(id)) return; /* 동일 일정 중복 요청 차단 */
+    const curStatus=s.status||"예정";
+    if(newStatus===curStatus) return; /* 같은 상태 재클릭 — 요청/로그 없음 */
+    if(STATUS_CONFIRM.has(newStatus)&&!confirm(`이 일정을 ${newStatus} 상태로 변경하시겠습니까?`)) return;
+
+    state.savingScheduleIds.add(id);
+    /* 팝오버의 모든 상태 버튼 비활성화 + 선택 버튼 '저장 중...' 표시 (전체 화면은 막지 않음) */
+    let pills=[];
+    if(pop&&document.body.contains(pop)){
+      pills=[...pop.querySelectorAll(".status-pill")];
+      pills.forEach(b=>{ b.disabled=true; });
+      const target=pills.find(b=>b.dataset&&b.dataset.status===newStatus);
+      if(target) target.textContent="저장 중...";
     }
-    if(el) el.classList.toggle("is-pending",!!state.pendingStatusChanges[id]);
-    updateSavePendingBtn();
-    toast("상태 변경됨 — 상단 '상태 저장' 버튼을 눌러 저장하세요.");
+
+    try {
+      const r=await jsonp("updateSchedule",Object.assign({},userParams(),{schedule_id:id,status:newStatus}));
+      if(!r.success) throw new Error(r.message||"상태 저장 실패");
+      /* 서버가 반환한 schedule 로 state 반영 */
+      if(r.schedule&&r.schedule.schedule_id) upsertSchedule(r.schedule);
+      else {
+        const t=state.schedules.find(x=>x.schedule_id===id);
+        if(t) t.status=newStatus;
+        if(!state.filterStatus) state.schedules=state.schedules.filter(x=>x.status!=="취소");
+      }
+      clearSchedFetchCache(); /* 일정 캐시 무효화 */
+      state.savingScheduleIds.delete(id);
+      closePopover();
+      renderCalendar(); renderSide(); /* 화면 + KPI 갱신 */
+      toast(`${curStatus} → ${newStatus}로 변경되었습니다.`);
+    } catch(e) {
+      /* 실패: 기존 상태 유지, 팝오버 유지, 버튼 재활성화 */
+      state.savingScheduleIds.delete(id);
+      if(pop&&document.body.contains(pop)){
+        pills.forEach(b=>{ b.disabled=false; });
+        const target=pills.find(b=>b.dataset&&b.dataset.status===newStatus);
+        if(target) target.textContent=newStatus;
+      }
+      toast(e.message||"상태 저장에 실패했습니다.");
+    }
   }
 
-  async function savePendingChanges() {
-    const changes=Object.entries(state.pendingStatusChanges); if(!changes.length) return;
-    showBusy(`상태 저장 중... (0/${changes.length})`);
-    let ok=0, fail=0;
-    for(const [id,status] of changes) {
-      try {
-        const r=await jsonp("updateSchedule",Object.assign({},userParams(),{schedule_id:id,status}));
-        if(!r.success) throw new Error(r.message);
-        const s=state.schedules.find(x=>x.schedule_id===id);
-        if(s){ s.status=status; delete s._origStatus; }
-        delete state.pendingStatusChanges[id]; ok++;
-        showBusy(`상태 저장 중... (${ok}/${changes.length})`);
-      } catch(e){
-        /* 실패 시 로컬 원본 복원 */
-        const s=state.schedules.find(x=>x.schedule_id===id);
-        if(s&&s._origStatus){ s.status=s._origStatus; delete s._origStatus; }
-        fail++;
+  /* 목록 화면 일괄 상태 변경 — batchUpdateScheduleStatus 한 번의 요청으로 처리 */
+  async function doBatchStatusChange() {
+    if(state.batchStatusSaving) return; /* 중복 클릭 방지 */
+    const ids=[...state.selectedScheduleIds];
+    if(!ids.length){ toast("선택된 일정이 없습니다."); return; }
+    const sel=document.getElementById("batchStatusSel");
+    const newStatus=sel?sel.value:"";
+    if(!newStatus) return;
+    if(STATUS_CONFIRM.has(newStatus)&&!confirm(`선택한 ${ids.length}건의 일정을 ${newStatus} 상태로 변경하시겠습니까?`)) return;
+
+    state.batchStatusSaving=true;
+    renderList(); /* 체크박스·버튼 비활성화 + '저장 중...' 표시 (전체 화면은 막지 않음) */
+
+    try {
+      const r=await jsonp("batchUpdateScheduleStatus",Object.assign({},userParams(),{
+        status:newStatus,
+        schedule_ids:JSON.stringify(ids) /* JSONP 안전 전달을 위해 JSON 문자열 사용 */
+      }));
+      if(isApiError(r)) throw new Error("일괄 상태 변경 API를 찾을 수 없습니다. Apps Script를 최신 버전으로 배포해 주세요.");
+      if(!r.success) throw new Error(r.message||"일괄 상태 변경 실패");
+
+      const results=Array.isArray(r.results)?r.results:[];
+      results.forEach(item=>{
+        if(item.success){
+          if(item.schedule&&item.schedule.schedule_id) upsertSchedule(item.schedule);
+          else {
+            const t=state.schedules.find(x=>x.schedule_id===item.schedule_id);
+            if(t) t.status=newStatus;
+          }
+          state.selectedScheduleIds.delete(item.schedule_id); /* 성공 건 선택 해제 */
+        }
+        /* 실패 건은 선택 유지 → 재시도 가능 */
+      });
+      if(!state.filterStatus) state.schedules=state.schedules.filter(x=>x.status!=="취소");
+      clearSchedFetchCache();
+
+      const updated=r.updated||0, unchanged=r.unchanged||0, failed=r.failed||0;
+      let msg;
+      if(failed===0&&unchanged===0&&updated>0) msg=`${updated}건의 상태가 ${newStatus}(으)로 변경되었습니다.`;
+      else if(updated===0&&failed===0) msg=`선택한 일정은 이미 모두 ${newStatus} 상태입니다.`;
+      else {
+        msg=`총 ${ids.length}건 중 ${updated}건이 변경되었습니다.`;
+        if(unchanged>0) msg+=` ${unchanged}건은 이미 같은 상태입니다.`;
+        if(failed>0){
+          const failMsgs=results.filter(x=>!x.success).map(x=>x.message).filter(Boolean);
+          msg+=` ${failed}건은 변경되지 않았습니다${failMsgs.length?` (${failMsgs[0]})`:""}.`;
+        }
       }
+      toast(msg);
+    } catch(e) {
+      toast(e.message||"일괄 상태 변경에 실패했습니다."); /* 실패 건 기존 상태·선택 유지 */
+    } finally {
+      state.batchStatusSaving=false;
+      renderCalendar(); renderSide(); /* 목록 + KPI 다시 렌더링 */
     }
-    hideBusy();
-    clearSchedFetchCache(); /* 상태 일괄 저장 후 메모리 캐시 무효화 */
-    toast(fail ? `저장 ${ok}건 성공, ${fail}건 실패` : `${ok}건 상태가 저장되었습니다.`);
-    updateSavePendingBtn(); renderCalendar(); updateKpi();
   }
 
   /* ─────────────────────────────────────────────────────────────
@@ -1516,12 +1656,12 @@
       if(!r.success) throw new Error(r.message||"취소 실패");
       /* 로컬 state에서 즉시 제거 → reload 없이 사라짐 */
       state.schedules=state.schedules.filter(s=>s.schedule_id!==schedule.schedule_id);
-      delete state.pendingStatusChanges[schedule.schedule_id];
+      state.selectedScheduleIds.delete(schedule.schedule_id);
       clearSchedFetchCache();
       state.saving=false;
       if(bd){ if(closeForm) closeForm(); else bd.remove(); }
       toast("일정이 삭제되었습니다.");
-      renderCalendar(); renderSide(); updateSavePendingBtn();
+      renderCalendar(); renderSide();
     } catch(e){ toast(e.message); }
     finally{ state.saving=false; hideBusy(); }
   }
