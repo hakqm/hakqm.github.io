@@ -2782,20 +2782,22 @@
             <h3 id="mealModalTitle" class="modal-title">🍱 오늘 식수 신청</h3>
             <p class="modal-desc" id="mealModalDateDesc">오늘 식수(중식·석식) 여부를 선택해주세요.</p>
           </div>
-          <div class="meal-timer">⏱ <span id="mealTimerDisplay">5:00</span> 후 미신청 처리</div>
+          <div class="meal-timer">🕗 오전 8시 40분까지 신청·변경 가능</div>
         </div>
         <button type="button" id="closeMealModalBtn" class="modal-close" aria-label="닫기">×</button>
       </div>
       <div class="modal-body">
-        <!-- 08:30 이후 잠금 메시지 -->
+        <!-- 08:40 이후 잠금 메시지 -->
         <div id="mealLockMsg" class="meal-step hidden" style="text-align:center;padding:20px 0;">
           <div style="font-size:28px;margin-bottom:8px;">🔒</div>
           <p style="font-weight:900;color:#22365e;font-size:15px;margin-bottom:6px;">신청이 마감되었습니다</p>
           <p id="mealLockDetail" style="font-size:13px;color:#667085;line-height:1.6;"></p>
         </div>
+        <!-- 08:30 자동 미신청 처리 안내 (08:40 전 변경 가능) -->
+        <div id="mealAutoNotice" class="hidden" style="margin-bottom:10px;padding:9px 12px;border-radius:10px;background:#fff7ed;border:1px solid #fcd9b8;font-size:12.5px;color:#8a5317;font-weight:700;line-height:1.6;"></div>
         <!-- Step 1: 중식 신청 여부 -->
         <div id="mealStep1" class="meal-step">
-          <p class="meal-info-p">오늘 <strong>중식</strong>을 신청하시겠습니까?<br>응답하지 않으면 <strong>미신청</strong>으로 자동 처리됩니다.</p>
+          <p class="meal-info-p">오늘 <strong>중식</strong>을 신청하시겠습니까?<br>미응답자는 오전 8시 30분 이후 <strong>중식·석식 미신청</strong>으로 자동 처리됩니다.</p>
           <div class="meal-btn-row">
             <button type="button" class="meal-btn" id="mealBtnYes">✓ 중식 신청</button>
             <button type="button" class="meal-btn meal-no-sel" id="mealBtnNo">✗ 미신청</button>
@@ -2858,7 +2860,8 @@
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwn9I60-14GHDQk_rNF_uJYBpig-Bovl7Qqje_eGGjcFmZJZfqQgtpUg6necytvlQQ-/exec";
     window.HAK_WEB_APP_URL = WEB_APP_URL;
     const LOGIN_STORAGE_KEY = "hak_login_user";
-    const LOGIN_EXPIRE_MINUTES = 60;
+    /* 무동작 기준 3시간 (schedule_manager.html 과 동일한 키·만료시간 사용) */
+    const LOGIN_EXPIRE_MINUTES = 180;
     const LOGIN_EXPIRE_MS = LOGIN_EXPIRE_MINUTES * 60 * 1000;
 
     let currentUserData = null;
@@ -2962,16 +2965,25 @@
       localStorage.removeItem(LOGIN_STORAGE_KEY);
     }
 
-    function touchLoginActivity() {
+    /* 마지막 활동 시각 갱신 — scroll/input 등 잦은 이벤트로 localStorage 를
+       과도하게 쓰지 않도록 20초 throttle 적용 */
+    let lastActivityWriteAt = 0;
+    const ACTIVITY_WRITE_THROTTLE_MS = 20000;
+
+    function touchLoginActivity(force) {
       if (!currentUserData) return;
+
+      const nowTs = Date.now();
+      if (!force && nowTs - lastActivityWriteAt < ACTIVITY_WRITE_THROTTLE_MS) return;
 
       const saved = localStorage.getItem(LOGIN_STORAGE_KEY);
       if (!saved) return;
 
       try {
         const parsed = JSON.parse(saved);
-        parsed.lastActivity = Date.now();
+        parsed.lastActivity = nowTs;
         localStorage.setItem(LOGIN_STORAGE_KEY, JSON.stringify(parsed));
+        lastActivityWriteAt = nowTs;
       } catch (error) {
         clearLoginData();
       }
@@ -3013,14 +3025,45 @@
       updateLoginUI();
     }
 
+    /* 공통 로그아웃 — 수동/자동 로그아웃 모두 이 함수를 사용하며 항상 홈 화면으로 이동
+       (페이지 전체 새로고침이나 외부 주소 이동은 사용하지 않음) */
     function logout(showMessage = true) {
+      /* 1~2. 로그인 정보 / 대기 액션 초기화 */
       clearLoginData();
       pendingAction = null;
+
+      /* 3. 식수 임시 상태 초기화 */
+      mealGuestSelected = false;
+      mealLunchApplying = false;
+      mealDinnerApplying = false;
+      mealDinnerGuestSelected = false;
+      mealStatusSyncing = false;
+      mealStatusError = false;
+
+      /* 4. 회의실 임시 상태 초기화 */
+      roomStatusCache = [];
+      const roomEditIdInput = document.getElementById("roomEditId");
+      if (roomEditIdInput) roomEditIdInput.value = "";
+
+      /* 5~7. 열려 있는 모달/팝오버/드롭다운 정리
+         (일정 선택 상태는 iframe 화면이 홈으로 교체되면서 함께 초기화됨) */
+      closeMealModal();
+      closeRoomModal();
+      closeLoginModal();
+      closeRoomTimeMenu();
+      const histModal = document.getElementById("noticeHistModal");
+      if (histModal) histModal.remove();
+
+      /* 8~9. 로그인 입력값 초기화 + 로그인 UI 갱신 */
       loginNameInput.value = "";
       loginEmpNoInput.value = "";
       updateLoginUI();
-      if (currentScreenKey === "home") refreshCurrentScreen();
 
+      /* 10~12. 홈 화면으로 이동 — 이미 홈이면 중복 생성 없이 홈만 다시 렌더링
+         (홈 메뉴 활성화와 탭 제목 변경은 openScreen 이 처리) */
+      openScreen("home");
+
+      /* 13. 안내 */
       if (showMessage) {
         alert("로그아웃되었습니다.");
       }
@@ -3028,7 +3071,7 @@
 
     function autoLogout() {
       logout(false);
-      alert("일정 시간 동안 사용 기록이 없어 로그인 세션이 종료되었습니다. 다시 로그인해주세요.");
+      alert("3시간 동안 사용 기록이 없어 자동 로그아웃되었습니다.");
     }
 
     function startAutoLogoutWatcher() {
@@ -3054,8 +3097,9 @@
     }
 
     function bindActivityEvents() {
-      ["click", "keydown", "touchstart", "scroll"].forEach((eventName) => {
-        document.addEventListener(eventName, () => touchLoginActivity(), { passive: true });
+      /* capture:true — 내부 요소의 scroll/input 등 버블링되지 않는 이벤트도 감지 */
+      ["click", "keydown", "touchstart", "scroll", "input", "change"].forEach((eventName) => {
+        document.addEventListener(eventName, () => touchLoginActivity(), { passive: true, capture: true });
       });
     }
 
@@ -3498,9 +3542,15 @@
 
     /* =============================================
        식수 신청 기능
+       운영 시간 (Apps Script 와 동일 기준, 상수로 통일):
+       - 자동 미신청 처리 시작: 오전 08:30 (서버 트리거가 처리)
+       - 사용자 신청·변경 마감: 오전 08:40 (08:40:00부터 변경 불가)
     ============================================= */
-    let mealTimerInterval = null;
-    let mealTimerSeconds = 300;
+    const MEAL_AUTO_MARK_HOUR = 8;
+    const MEAL_AUTO_MARK_MINUTE = 30;
+    const MEAL_EDIT_CUTOFF_HOUR = 8;
+    const MEAL_EDIT_CUTOFF_MINUTE = 40;
+
     let mealGuestSelected = false;     // 중식 외부손님 있음 여부
     let mealLunchApplying = false;     // 중식 신청 여부
     let mealDinnerApplying = false;    // 석식 신청 여부
@@ -3556,6 +3606,12 @@
       } else if (!data || !data.responded) {
         short = mealStatusError ? "확인 실패" : "미응답";
         detail = mealStatusError ? "상태 조회 실패 — 새로고침 후 다시 확인해주세요." : "미응답";
+      } else if (data.isAuto && !data.applying && !data.dinner) {
+        /* 08:30 자동 미신청 처리 — 08:40 전이면 변경 가능 안내 */
+        short = "자동 미신청";
+        detail = isMealLocked()
+          ? "자동 미신청 처리됨 (변경 마감)"
+          : "자동 미신청 처리됨 · 오전 8시 40분까지 변경 가능";
       } else {
         short = data.applying ? "신청" : "미신청";
         detail = data.applying ? "중식 신청" : "중식 미신청";
@@ -3570,7 +3626,8 @@
 
     /* 서버 기준 내 식수 상태 동기화
        1) getMyMealStatus 호출 → 2) 응답 기록 있으면 팝업 없이 상태 표시 + 로컬 캐시 갱신
-       3) 응답 기록 없으면 신청 가능 시간(08:30 이전)에만 팝업
+          (단, 08:30 자동 미신청 사용자는 08:40 전이면 세션당 한 번 변경 안내 팝업)
+       3) 응답 기록 없으면 신청 가능 시간(08:40 이전)에만 팝업
        4) 서버 오류 시 미응답으로 단정하지 않고 팝업 표시 안 함(기존 로컬 캐시는 보조로만 사용) */
     async function syncMyMealStatus(showModalIfNeeded) {
       if (!currentUserData || !currentUserData.user_id) return;
@@ -3600,8 +3657,19 @@
             isAuto: !!result.is_auto,
             submittedAt: result.submitted_at || ""
           });
+          /* 08:30 자동 미신청 사용자 — 08:40 전이면 변경 안내 팝업을
+             사용자별·날짜별·브라우저 세션별 한 번만 자동으로 연다 */
+          if (result.is_auto && !isMealLocked()) {
+            try {
+              const popKey = `hak_meal_auto_popup_${getTodayStr()}_${currentUserData.user_id}`;
+              if (!sessionStorage.getItem(popKey)) {
+                sessionStorage.setItem(popKey, "1");
+                setTimeout(openMealModal, 800);
+              }
+            } catch (e) { /* sessionStorage 사용 불가 시 팝업 생략 */ }
+          }
         } else if (showModalIfNeeded && !isMealLocked()) {
-          /* 서버에도 기록 없음 → 신청 가능 시간에만 팝업 */
+          /* 서버에도 기록 없음 → 신청 가능 시간(08:40 이전)에만 팝업 */
           setTimeout(openMealModal, 800);
         }
       } catch (e) {
@@ -3627,10 +3695,11 @@
       syncMyMealStatus(true);
     }
 
+    /* 신청·변경 마감 여부 — 08:40:00부터 변경 불가 (서버 submitMeal 과 동일 기준) */
     function isMealLocked() {
       const now = new Date();
-      const h = now.getHours(), m = now.getMinutes();
-      return h > 8 || (h === 8 && m >= 30); /* 08:30 이후 잠금 */
+      const mins = now.getHours() * 60 + now.getMinutes();
+      return mins >= MEAL_EDIT_CUTOFF_HOUR * 60 + MEAL_EDIT_CUTOFF_MINUTE;
     }
 
     function openMealModal() {
@@ -3640,33 +3709,41 @@
       const descEl = document.getElementById("mealModalDateDesc");
       if (descEl) descEl.textContent = getTodayStr() + " 식수 신청 (중식 + 석식)";
 
-      /* 08:30 이후 잠금 처리 (Apps Script submitMeal 잠금 기준과 동일) */
+      /* 08:40 이후 잠금 처리 (Apps Script submitMeal 잠금 기준과 동일) */
       const lockMsg  = document.getElementById("mealLockMsg");
       const lockDetail = document.getElementById("mealLockDetail");
       const step1    = document.getElementById("mealStep1");
       const step2    = document.getElementById("mealStep2");
-      const timerEl  = document.querySelector(".meal-timer");
+      const autoNotice = document.getElementById("mealAutoNotice");
+      const data = getMealLocalData();
 
       if (isMealLocked()) {
-        clearMealTimer();
-        if (timerEl) timerEl.style.display = "none";
         if (lockMsg) lockMsg.classList.remove("hidden");
         if (step1)   step1.classList.add("hidden");
         if (step2)   step2.classList.add("hidden");
-        const data = getMealLocalData();
+        if (autoNotice) autoNotice.classList.add("hidden");
         const myStatus = data && data.responded
-          ? (data.applying ? "✓ 신청" : "✗ 미신청")
+          ? (data.applying ? "✓ 신청" : (data.isAuto ? "✗ 미신청 (자동 처리)" : "✗ 미신청"))
           : "미응답 (미신청 처리)";
-        if (lockDetail) lockDetail.textContent = `오전 8시 30분 이후에는 당일 식수 신청 변경이 불가합니다.\n내 신청 상태: ${myStatus}`;
+        if (lockDetail) lockDetail.textContent = `오전 8시 40분 이후에는 당일 식수 신청을 변경할 수 없습니다.\n내 신청 상태: ${myStatus}`;
         modal.classList.remove("hidden");
         modal.setAttribute("aria-hidden", "false");
         return;
       }
 
       if (lockMsg) lockMsg.classList.add("hidden");
-      if (timerEl) timerEl.style.display = "";
       if (step1) step1.classList.remove("hidden");
       if (step2) step2.classList.add("hidden");
+
+      /* 08:30 자동 미신청 처리된 사용자 안내 — 08:40 전까지 변경 가능 */
+      if (autoNotice) {
+        if (data && data.responded && data.isAuto) {
+          autoNotice.textContent = "오전 8시 30분에 자동 미신청 처리되었습니다. 오전 8시 40분까지 변경할 수 있습니다.";
+          autoNotice.classList.remove("hidden");
+        } else {
+          autoNotice.classList.add("hidden");
+        }
+      }
 
       const gcWrap = document.getElementById("mealGuestCountWrap");
       if (gcWrap) gcWrap.classList.add("hidden");
@@ -3696,53 +3773,16 @@
 
       modal.classList.remove("hidden");
       modal.setAttribute("aria-hidden", "false");
-      startMealTimer();
     }
 
+    /* 팝업을 닫는 것만으로는 어떤 값도 저장하지 않음.
+       식수 데이터 저장은 ① 사용자의 실제 제출, ② 서버의 08:30 자동 미신청 처리 두 경우뿐 */
     function closeMealModal() {
-      clearMealTimer();
       const modal = document.getElementById("mealModal");
       if (modal) {
         modal.classList.add("hidden");
         modal.setAttribute("aria-hidden", "true");
       }
-    }
-
-    function startMealTimer() {
-      clearMealTimer();
-      mealTimerSeconds = 300;
-      updateMealTimerDisplay();
-      mealTimerInterval = setInterval(function () {
-        mealTimerSeconds--;
-        updateMealTimerDisplay();
-        if (mealTimerSeconds <= 0) {
-          clearMealTimer();
-          closeMealModal();
-          submitMealChoice(false, 0, false, 0, true).then((r) => {
-            if (r && r.success) {
-              alert("응답 시간이 초과되어 미신청으로 처리되었습니다.");
-            } else {
-              /* 서버 저장 실패 시 responded 로 저장하지 않음 — 이후 다시 신청 가능 */
-              alert("응답 시간이 초과되었지만 서버 저장에 실패했습니다.\n홈 화면의 [신청 / 변경] 버튼으로 다시 신청해주세요.");
-            }
-          });
-        }
-      }, 1000);
-    }
-
-    function clearMealTimer() {
-      if (mealTimerInterval) {
-        clearInterval(mealTimerInterval);
-        mealTimerInterval = null;
-      }
-    }
-
-    function updateMealTimerDisplay() {
-      const el = document.getElementById("mealTimerDisplay");
-      if (!el) return;
-      const m = Math.floor(mealTimerSeconds / 60);
-      const s = mealTimerSeconds % 60;
-      el.textContent = `${m}:${String(s).padStart(2, "0")}`;
     }
 
     /* 식수 신청 전송 — 서버 저장 success 확인 후에만 로컬 캐시/화면 갱신
@@ -4192,7 +4232,6 @@
 
       /* step2 로 이동 — 중식 신청 여부에 따라 중식 손님 섹션 표시/숨김 */
       function goToStep2(lunchApplying) {
-        clearMealTimer();   // 상세 선택 중에는 자동 미신청 처리 안 함
         mealLunchApplying = lunchApplying;
         const step1 = document.getElementById("mealStep1");
         const step2 = document.getElementById("mealStep2");
@@ -4279,7 +4318,6 @@
           submitBtn.disabled = true;
           const origLabel = submitBtn.textContent;
           submitBtn.textContent = "저장 중...";
-          clearMealTimer(); /* 저장 중 타이머 자동처리 방지 */
 
           try {
             const result = await submitMealChoice(mealLunchApplying, lunchGuest, mealDinnerApplying, dinnerGuest, false);
@@ -4452,7 +4490,7 @@
                 }
               </div>
               <p style="margin:12px 0 0;font-size:12px;color:var(--muted);line-height:1.6;">
-                매일 자정 이후 식수 신청 팝업이 자동으로 표시됩니다. 미응답 시 5분 후 미신청으로 자동 처리되며, 미접속자는 오전 8시 20분에 자동 미신청 처리됩니다. 당일 신청 변경은 오전 8시 30분까지 가능합니다.
+                매일 자정 이후 식수 신청 팝업이 자동으로 표시됩니다. 미응답자는 오전 8시 30분 이후 중식·석식 미신청으로 자동 처리됩니다. 자동 미신청 처리 후에도 오전 8시 40분 전까지 변경할 수 있습니다. 오전 8시 40분부터 당일 신청 변경이 마감됩니다.
               </p>
             </div>
 
