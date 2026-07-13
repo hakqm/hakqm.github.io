@@ -356,7 +356,12 @@
     editSchedule: null,
     pendingStatusChanges: {},
     miniCalDate: new Date(),
+    saving: false,          /* 일정 저장 중 여부 (중복 저장 방지) */
   };
+
+  /* 일정 조회 요청 관리: 최신 요청 시퀀스 + 동일 조건 요청 합치기 + 짧은 메모리 캐시 */
+  const schedFetch = { seq: 0, inflight: {}, cache: {} };
+  const SCHED_CACHE_TTL = 25000; /* ms — 서버 30초 캐시와 유사한 수준 */
 
   /* ─────────────────────────────────────────────────────────────
      Utils
@@ -391,6 +396,36 @@
   function displayTime(s) {
     const st = formatTime(s.start_time), en = formatTime(s.end_time);
     return (st&&en) ? `${st}~${en}` : st||en||"";
+  }
+
+  /* ── 기간 일정(시작일~종료일) 유틸 ─────────────────────────── */
+  function schedStart(s){ return String(s.date||""); }
+  function schedEnd(s){
+    const st=schedStart(s);
+    const en=String(s.end_date||"");
+    return (en && en>=st) ? en : st; /* end_date 없거나 이상하면 하루 일정 */
+  }
+  function isMultiDay(s){ return schedEnd(s)>schedStart(s); }
+  /* 해당 날짜(YYYY-MM-DD)에 일정이 걸치는지 (시작일·종료일 포함) */
+  function occursOn(s, dateStr){ const st=schedStart(s); return !!st && st<=dateStr && dateStr<=schedEnd(s); }
+  /* 팝오버/상세 표시용: "2026-07-10" 또는 "2026-07-10 ~ 2026-07-15" */
+  function periodText(s){ return isMultiDay(s) ? `${schedStart(s)} ~ ${schedEnd(s)}` : schedStart(s); }
+
+  /* 같은 schedule_id 가 두 번 존재하지 않도록 Map 기반 중복 제거 */
+  function dedupeSchedules(list){
+    const map=new Map();
+    (list||[]).forEach(s=>{ if(s&&s.schedule_id) map.set(s.schedule_id,s); });
+    return [...map.values()];
+  }
+  /* 서버 응답 일정 한 건을 state.schedules 에 즉시 반영(교체/추가) */
+  function upsertSchedule(sch){
+    if(!sch||!sch.schedule_id) return;
+    const norm=Object.assign({},sch,{start_time:formatTime(sch.start_time),end_time:formatTime(sch.end_time)});
+    const map=new Map(state.schedules.map(x=>[x.schedule_id,x]));
+    map.set(norm.schedule_id,norm);
+    let list=[...map.values()];
+    if(!state.filterStatus) list=list.filter(s=>s.status!=="취소");
+    state.schedules=list;
   }
 
   function categoryInfo(code) {
@@ -445,8 +480,14 @@
       const q = new URLSearchParams({ action, callback:cb });
       Object.keys(params).forEach(k => { if(params[k]!=null&&params[k]!=="") q.append(k,params[k]); });
       const el = document.createElement("script");
-      const t = setTimeout(()=>{ cleanup(); reject(new Error("요청 시간이 초과되었습니다.")); },12000);
-      function cleanup(){ clearTimeout(t); delete window[cb]; el.remove(); }
+      const t = setTimeout(()=>{ cleanup(); reject(new Error("서버 응답이 지연되고 있습니다. 다시 시도해주세요.")); },12000);
+      function cleanup(){
+        clearTimeout(t);
+        /* 타임아웃 후 늦게 도착한 응답이 오류를 내지 않도록 no-op 처리 후 제거 */
+        window[cb]=function(){ try{ delete window[cb]; }catch(_){} };
+        setTimeout(()=>{ try{ delete window[cb]; }catch(_){} },30000);
+        el.remove();
+      }
       window[cb] = d => { cleanup(); resolve(d); };
       el.onerror = () => { cleanup(); reject(new Error("서버 연결에 실패했습니다.")); };
       el.src = WEB_APP_URL+"?"+q;
@@ -535,29 +576,80 @@
     } catch(e) { state.categories = DEFAULT_CATEGORIES; }
   }
 
-  async function loadSchedules() {
+  function schedRequestParams(forceFresh) {
     const r=getPeriodRange();
     const params=Object.assign({},userParams(),{ from_date:ymd(r.from), to_date:ymd(r.to) });
     if(state.scope==="mine") params.main_user_id=state.user.user_id;
     if(state.scope==="part") params.part=state.filterPart||state.user.part;
     if(state.filterCategory) params.category=state.filterCategory;
     if(state.filterStatus) params.status=state.filterStatus;
-    try {
-      const res=await jsonp("getSchedules",params);
-      if(isApiError(res)) throw new Error("스케쥴 API를 찾을 수 없습니다. Apps Script를 최신 버전으로 배포해 주세요.");
-      if(!res.success) throw new Error(res.message||"스케쥴 조회 실패");
-      let list=(Array.isArray(res.schedules)?res.schedules:[]).map(s=>Object.assign({},s,{start_time:formatTime(s.start_time),end_time:formatTime(s.end_time)}));
-      if(state.filterPerson) { const k=state.filterPerson.toLowerCase(); list=list.filter(s=>String(s.main_user_name||"").toLowerCase().includes(k)); }
-      if(state.scope==="part"&&!state.filterPart&&state.user.part) list=list.filter(s=>s.part===state.user.part);
-      /* 취소 상태는 명시적으로 필터 선택 시에만 표시 */
-      if(!state.filterStatus) list=list.filter(s=>s.status!=="취소");
-      state.schedules=list;
-    } catch(e){ toast(e.message); state.schedules=[]; }
+    if(forceFresh) params.nocache="1"; /* 새로고침 버튼: 항상 서버 최신값 */
+    return params;
+  }
+  function schedCacheKey(params) {
+    /* 클라이언트 후처리 조건(담당자 검색·스코프)도 키에 포함 */
+    return JSON.stringify([params.from_date,params.to_date,params.part||"",params.main_user_id||"",params.category||"",params.status||"",state.filterPerson,state.scope]);
+  }
+  function postProcessSchedules(raw) {
+    let list=(Array.isArray(raw)?raw:[]).map(s=>Object.assign({},s,{start_time:formatTime(s.start_time),end_time:formatTime(s.end_time)}));
+    if(state.filterPerson) { const k=state.filterPerson.toLowerCase(); list=list.filter(s=>String(s.main_user_name||"").toLowerCase().includes(k)); }
+    if(state.scope==="part"&&!state.filterPart&&state.user.part) list=list.filter(s=>s.part===state.user.part);
+    /* 취소 상태는 명시적으로 필터 선택 시에만 표시 */
+    if(!state.filterStatus) list=list.filter(s=>s.status!=="취소");
+    return dedupeSchedules(list);
   }
 
-  async function reloadAndRender() {
-    showBusy("불러오는 중...");
-    try { await loadSchedules(); } finally { hideBusy(); }
+  async function loadSchedules(opts) {
+    opts=opts||{};
+    const params=schedRequestParams(opts.forceFresh);
+    const key=schedCacheKey(params);
+    const seq=++schedFetch.seq;
+    const reqUrlKey=key+(opts.forceFresh?"|fresh":"");
+    try {
+      /* 동일 조건 요청이 이미 진행 중이면 그 결과를 함께 사용 (요청 합치기) */
+      let promise=schedFetch.inflight[reqUrlKey];
+      if(!promise){
+        promise=jsonp("getSchedules",params);
+        schedFetch.inflight[reqUrlKey]=promise;
+        promise.finally(()=>{ delete schedFetch.inflight[reqUrlKey]; });
+      }
+      const res=await promise;
+      /* 오래된 응답이 최신 화면을 덮어쓰지 않도록 시퀀스 확인 */
+      if(seq!==schedFetch.seq) return false;
+      if(isApiError(res)) throw new Error("스케쥴 API를 찾을 수 없습니다. Apps Script를 최신 버전으로 배포해 주세요.");
+      if(!res.success) throw new Error(res.message||"스케쥴 조회 실패");
+      state.schedules=postProcessSchedules(res.schedules);
+      schedFetch.cache[key]={ts:Date.now(),list:state.schedules};
+      return true;
+    } catch(e){
+      /* 오류 시 기존 화면 데이터를 유지하고 메시지만 표시 */
+      if(seq===schedFetch.seq) toast(e.message);
+      return false;
+    }
+  }
+
+  function clearSchedFetchCache(){ schedFetch.cache={}; }
+
+  async function reloadAndRender(opts) {
+    opts=opts||{};
+    const params=schedRequestParams(false);
+    const key=schedCacheKey(params);
+    const cached=schedFetch.cache[key];
+    const cacheUsable=cached&&!opts.forceFresh;
+
+    if(cacheUsable){
+      /* stale-while-revalidate: 캐시 데이터 먼저 렌더링 후 서버 최신값 갱신 */
+      state.schedules=cached.list;
+      renderCalendar(); renderSide();
+      if(Date.now()-cached.ts<SCHED_CACHE_TTL){
+        loadSchedules().then(ok=>{ if(ok){ renderCalendar(); renderSide(); } });
+        return;
+      }
+    } else {
+      showBusy("불러오는 중...");
+    }
+    try { await loadSchedules(opts); }
+    finally { hideBusy(); }
     renderCalendar(); renderSide();
   }
 
@@ -569,7 +661,8 @@
   }
 
   function schedulesForDate(dateStr) {
-    return filteredSchedules().filter(s=>s.date===dateStr);
+    /* 기간 일정: 시작일~종료일 사이의 모든 날짜에 표시 */
+    return filteredSchedules().filter(s=>occursOn(s,dateStr));
   }
 
   /* ─────────────────────────────────────────────────────────────
@@ -667,7 +760,7 @@
 
   function bindShellEvents() {
     document.getElementById("newBtn").onclick=()=>openForm(null);
-    document.getElementById("reloadBtn").onclick=reloadAndRender;
+    document.getElementById("reloadBtn").onclick=()=>reloadAndRender({forceFresh:true});
     document.getElementById("prevBtn").onclick=()=>movePeriod(-1);
     document.getElementById("nextBtn").onclick=()=>movePeriod(1);
     document.getElementById("todayBtn").onclick=()=>{ state.cursor=new Date(); reloadAndRender(); };
@@ -769,7 +862,16 @@
     const startDow=firstDay.getDay(); // 0=Sun
     const today=todayStr();
     const cursorStr=ymd(state.cursor);
-    const scheduleDates=new Set(state.schedules.map(s=>s.date));
+    /* 기간 중 하루라도 포함되면 일정 표시 점 노출 */
+    const scheduleDates=(()=>{
+      const set=new Set();
+      state.schedules.forEach(s=>{
+        let d=parseDate(schedStart(s)); const en=parseDate(schedEnd(s))||d;
+        let guard=0;
+        while(d&&en&&d<=en&&guard<400){ set.add(ymd(d)); d.setDate(d.getDate()+1); guard++; }
+      });
+      return set;
+    })();
 
     let html='<div class="mc-day-name">일</div><div class="mc-day-name">월</div><div class="mc-day-name">화</div><div class="mc-day-name">수</div><div class="mc-day-name">목</div><div class="mc-day-name">금</div><div class="mc-day-name">토</div>';
 
@@ -932,7 +1034,9 @@
     showParts.forEach(part=>{
       const col=PART_DOT_COLORS[part]||"#94a3b8";
       const evs=allEvents.filter(s=>(s.part||"미지정")===part);
-      const weekEvs=evs.filter(s=>{ const d=parseDate(s.date); return d&&d>=r.from&&d<=r.to; });
+      const fromStr=ymd(r.from), toStr=ymd(r.to);
+      /* 기간 일정 포함: 일정 기간과 주간 기간이 겹치면 표시 */
+      const weekEvs=evs.filter(s=>schedStart(s)<=toStr&&schedEnd(s)>=fromStr);
       if(weekEvs.length===0&&state.scope!=="team") return;
       html+=`<div class="team-row">
         <div class="team-row-head">
@@ -947,7 +1051,7 @@
               <span class="team-event-dot" style="background:${col2}"></span>
               <div class="team-event-body">
                 <div class="team-event-title">${esc(s.title||"일정")}</div>
-                <div class="team-event-meta">${esc(s.date)} ${esc(displayTime(s)||"")} · ${esc(s.main_user_name||"-")}</div>
+                <div class="team-event-meta">${esc(periodText(s))} ${esc(displayTime(s)||"")} · ${esc(s.main_user_name||"-")}</div>
               </div>
             </div>`;
           }).join("") : `<div class="team-empty">이 기간 일정 없음</div>`}
@@ -970,8 +1074,14 @@
     const today=todayStr();
     const sorted=[...filteredSchedules()].sort((a,b)=>a.date.localeCompare(b.date)||(a.start_time||"99:99").localeCompare(b.start_time||"99:99"));
 
+    /* 기간 일정은 조회 기간 내 첫 표시일에 한 번만 나열 (기간은 배지로 표시) */
+    const fromStr=ymd(r.from);
     const byDate={};
-    sorted.forEach(s=>{ if(!byDate[s.date]) byDate[s.date]=[];  byDate[s.date].push(s); });
+    sorted.forEach(s=>{
+      const groupDay=schedStart(s)>fromStr?schedStart(s):fromStr;
+      if(!byDate[groupDay]) byDate[groupDay]=[];
+      byDate[groupDay].push(s);
+    });
 
     const datesWithEvents=days.filter(d=>byDate[d]);
     if(!datesWithEvents.length){ wrap.innerHTML=`<div class="list-wrap"><div style="text-align:center;padding:48px;color:#94a3b8;font-weight:800;">이 기간에 등록된 일정이 없습니다.</div></div>`; return; }
@@ -996,6 +1106,7 @@
               <div class="list-event-meta">${esc(s.main_user_name||"-")} · ${esc(s.part||"-")} ${s.location?`· ${esc(s.location)}`:""}</div>
             </div>
             <div class="list-event-badges">
+              ${isMultiDay(s)?`<span class="badge" style="background:#fef3c7;color:#92400e;">기간 ${esc(periodText(s))}</span>`:""}
               <span class="badge ${CAT_BADGE[s.category]||"b-etc"}">${esc(ci.display_name)}</span>
               <span class="badge b-status">${esc(s.status||"예정")}</span>
             </div>
@@ -1068,7 +1179,7 @@
       <div class="popover-color-bar" style="background:${col}"></div>
       <div class="popover-title-wrap">
         <div class="popover-title">${esc(s.title||"일정")}</div>
-        <div class="popover-sub">${esc(s.date)} ${esc(displayTime(s)||"")} · <span class="badge ${CAT_BADGE[s.category]||"b-etc"}">${esc(ci.display_name)}</span></div>
+        <div class="popover-sub">${esc(periodText(s))} ${esc(displayTime(s)||"")} · <span class="badge ${CAT_BADGE[s.category]||"b-etc"}">${esc(ci.display_name)}</span></div>
       </div>
       <button class="popover-close">×</button>
     </div>
@@ -1171,6 +1282,7 @@
       }
     }
     hideBusy();
+    clearSchedFetchCache(); /* 상태 일괄 저장 후 메모리 캐시 무효화 */
     toast(fail ? `저장 ${ok}건 성공, ${fail}건 실패` : `${ok}건 상태가 저장되었습니다.`);
     updateSavePendingBtn(); renderCalendar(); updateKpi();
   }
@@ -1179,15 +1291,18 @@
      Form Modal
   ───────────────────────────────────────────────────────────── */
   function openForm(schedule, preDate) {
-    const isNew=!schedule;
-    const data=schedule?{...schedule}:{
-      schedule_id:"", date:preDate||ymd(state.cursor), category:"INSPECTION",
+    /* 수정 여부는 객체 truthy 가 아니라 '유효한 schedule_id 존재'로 판단 */
+    const editingId = schedule && String(schedule.schedule_id||"").trim()
+      ? String(schedule.schedule_id).trim() : "";
+    const isNew = !editingId;
+    const data=(!isNew)?{...schedule}:{
+      schedule_id:"", date:preDate||ymd(state.cursor), end_date:"", category:"INSPECTION",
       title:"", start_time:"09:00", end_time:"", location:"", customer:"",
       memo:"", project_no:"", item_code:"", qty:"", sub_user_names:"",
       status:"예정", priority:"일반", visibility:"팀",
       part:state.user.part||"", main_user_id:state.user.user_id, main_user_name:state.user.name
     };
-    const editable=canEdit(schedule);
+    const editable=isNew||canEdit(schedule);
     const cats=(state.categories.length?state.categories:DEFAULT_CATEGORIES);
     const partOpts=PARTS.map(p=>`<option value="${esc(p)}" ${data.part===p?"selected":""}>${esc(p)}</option>`).join("");
 
@@ -1201,8 +1316,12 @@
         ${!editable?`<div style="padding:8px 12px;background:#fff7ed;border-radius:10px;font-size:12px;color:#b45309;margin-bottom:12px;">이 일정은 조회만 가능합니다.</div>`:""}
         <div class="form-grid">
           <div class="field">
-            <label>날짜</label>
+            <label>시작일</label>
             <input id="fDate" type="date" class="control" value="${esc(data.date)}" ${!editable?"disabled":""}/>
+          </div>
+          <div class="field">
+            <label>종료일 <span style="font-weight:700;color:#94a3b8;">(하루 일정이면 비워두거나 시작일과 동일)</span></label>
+            <input id="fDateEnd" type="date" class="control" value="${esc(isMultiDay(data)?schedEnd(data):(data.end_date&&data.end_date!==data.date?data.end_date:""))}" ${!editable?"disabled":""}/>
           </div>
           <div class="field">
             <label>구분</label>
@@ -1286,9 +1405,37 @@
     bindTimeInput(bd.querySelector("#fStart")); bindTimeInput(bd.querySelector("#fEnd"));
     bd.querySelectorAll(".time-pick-btn").forEach(b=>b.onclick=ev=>{ ev.preventDefault(); const inp=bd.querySelector("#"+b.dataset.target); if(inp&&!inp.disabled) openTimeMenu(inp); });
 
-    bd.querySelector(".modal-close").onclick=()=>bd.remove();
-    bd.querySelector("#closeFormBtn").onclick=()=>bd.remove();
-    bd.onclick=e=>{ if(e.target===bd) bd.remove(); };
+    /* 시작일 변경 시 종료일이 시작일보다 빠르면 자동 보정 */
+    const fDateEl=bd.querySelector("#fDate"), fDateEndEl=bd.querySelector("#fDateEnd");
+    if(fDateEl&&fDateEndEl){
+      fDateEl.addEventListener("change",()=>{ if(fDateEndEl.value&&fDateEndEl.value<fDateEl.value) fDateEndEl.value=fDateEl.value; });
+    }
+
+    /* ── 모달 닫기 제어 ──────────────────────────────────────
+       - 바깥(어두운 영역) 클릭으로는 닫히지 않음
+       - Escape 로도 닫히지 않음 (시간 드롭다운 등 작은 팝업만 닫힘)
+       - ×, 닫기, 저장 성공, 삭제 성공으로만 닫힘
+       - 입력 변경 후 ×/닫기 시 확인창 표시, 저장 중에는 닫기 불가 */
+    const snapshotForm=()=>Array.from(bd.querySelectorAll("input,select,textarea")).map(el=>el.value).join("");
+    const initialSnapshot=snapshotForm();
+    const onEscKeydown=(ev)=>{
+      if(ev.key!=="Escape") return;
+      ev.preventDefault(); ev.stopPropagation();
+      closeTimeMenu(); /* 작은 팝업만 닫음 — 입력 내용은 유지 */
+    };
+    document.addEventListener("keydown",onEscKeydown,true);
+    const destroyForm=()=>{ document.removeEventListener("keydown",onEscKeydown,true); closeTimeMenu(); bd.remove(); };
+    const tryClose=()=>{
+      if(state.saving) return; /* 저장 중에는 닫기 제한 */
+      if(snapshotForm()!==initialSnapshot){
+        if(!confirm("입력 내용이 저장되지 않습니다. 창을 닫을까요?")) return;
+      }
+      destroyForm();
+    };
+
+    bd.querySelector(".modal-close").onclick=tryClose;
+    bd.querySelector("#closeFormBtn").onclick=tryClose;
+    /* 바깥 클릭 닫기 제거 — 실수로 입력 내용이 사라지는 것 방지 */
 
     const loadLast=bd.querySelector("#loadLastBtn");
     if(loadLast) loadLast.onclick=()=>{
@@ -1304,15 +1451,18 @@
     };
 
     const saveBtn=bd.querySelector("#saveFormBtn");
-    if(saveBtn) saveBtn.onclick=()=>doSave(bd,schedule);
+    if(saveBtn) saveBtn.onclick=()=>doSave(bd,editingId,destroyForm);
     const cancelSchBtn=bd.querySelector("#cancelSchBtn");
-    if(cancelSchBtn) cancelSchBtn.onclick=()=>doCancel(schedule,bd);
+    if(cancelSchBtn) cancelSchBtn.onclick=()=>doCancel(schedule,bd,destroyForm);
   }
 
-  async function doSave(bd, schedule) {
+  async function doSave(bd, editingId, closeForm) {
+    if(state.saving) return; /* 저장 버튼 연속 클릭/중복 요청 방지 */
     const g=id=>bd.querySelector(id)?.value?.trim()||"";
+    const startDate=g("#fDate");
+    let endDate=g("#fDateEnd")||startDate; /* 종료일 미선택 시 시작일과 동일 */
     const data={
-      date:g("#fDate"), category:g("#fCat"), title:g("#fTitle"),
+      date:startDate, end_date:endDate, category:g("#fCat"), title:g("#fTitle"),
       start_time:normalizeTime(g("#fStart")), end_time:normalizeTime(g("#fEnd")),
       status:g("#fStatus"), location:g("#fLoc"), customer:g("#fCust"),
       memo:bd.querySelector("#fMemo")?.value?.trim()||"",
@@ -1321,22 +1471,45 @@
       part:g("#fPart"), main_user_name:g("#fMainName"), main_user_id:g("#fMainId")
     };
     if(!data.date||!data.category||!data.title){ toast("날짜, 구분, 스케쥴명은 필수입니다."); return; }
-    const btn=bd.querySelector("#saveFormBtn"); btn.disabled=true; btn.textContent="저장 중...";
+    if(data.end_date<data.date){ toast("종료일은 시작일보다 빠를 수 없습니다."); return; }
+
+    const isUpdate=!!editingId; /* 유효한 schedule_id 가 있을 때만 수정 */
+    const btn=bd.querySelector("#saveFormBtn");
+    state.saving=true;
+    btn.disabled=true; btn.textContent="저장 중...";
     showBusy("저장 중...");
     try {
-      const action=schedule?"updateSchedule":"createSchedule";
+      const action=isUpdate?"updateSchedule":"createSchedule";
       const params=Object.assign({},userParams(),data);
-      if(schedule) params.schedule_id=schedule.schedule_id;
+      if(isUpdate) params.schedule_id=editingId;
       const r=await jsonp(action,params);
       if(!r.success) throw new Error(r.message||"저장 실패");
       localStorage.setItem(LAST_INPUT_KEY,JSON.stringify(data));
-      bd.remove(); toast("저장되었습니다."); await reloadAndRender();
+      clearSchedFetchCache();
+      state.saving=false;
+      if(closeForm) closeForm(); else bd.remove();
+      toast(isUpdate?"수정되었습니다.":"저장되었습니다.");
+      /* 서버가 돌려준 일정 객체로 화면 즉시 교체(같은 schedule_id 항목 교체) 후 백그라운드 재검증 */
+      if(r.schedule&&r.schedule.schedule_id){
+        upsertSchedule(r.schedule);
+        renderCalendar(); renderSide();
+        loadSchedules().then(ok=>{ if(ok){ renderCalendar(); renderSide(); } });
+      } else {
+        await reloadAndRender({forceFresh:true});
+      }
     } catch(e){ toast(e.message); }
-    finally{ hideBusy(); btn.disabled=false; btn.textContent="저장"; }
+    finally{
+      state.saving=false;
+      hideBusy();
+      if(document.body.contains(btn)){ btn.disabled=false; btn.textContent="저장"; }
+    }
   }
 
-  async function doCancel(schedule, bd) {
+  async function doCancel(schedule, bd, closeForm) {
+    if(state.saving) return;
+    if(!schedule||!String(schedule.schedule_id||"").trim()){ toast("삭제할 일정 정보가 없습니다."); return; }
     if(!confirm("이 일정을 취소(삭제)할까요? 목록에서 제거됩니다.")) return;
+    state.saving=true;
     showBusy("처리 중...");
     try {
       const r=await jsonp("cancelSchedule",Object.assign({},userParams(),{schedule_id:schedule.schedule_id}));
@@ -1344,11 +1517,13 @@
       /* 로컬 state에서 즉시 제거 → reload 없이 사라짐 */
       state.schedules=state.schedules.filter(s=>s.schedule_id!==schedule.schedule_id);
       delete state.pendingStatusChanges[schedule.schedule_id];
-      if(bd) bd.remove();
+      clearSchedFetchCache();
+      state.saving=false;
+      if(bd){ if(closeForm) closeForm(); else bd.remove(); }
       toast("일정이 삭제되었습니다.");
       renderCalendar(); renderSide(); updateSavePendingBtn();
     } catch(e){ toast(e.message); }
-    finally{ hideBusy(); }
+    finally{ state.saving=false; hideBusy(); }
   }
 
   /* ─────────────────────────────────────────────────────────────
