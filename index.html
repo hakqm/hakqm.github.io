@@ -2787,7 +2787,7 @@
         <button type="button" id="closeMealModalBtn" class="modal-close" aria-label="닫기">×</button>
       </div>
       <div class="modal-body">
-        <!-- 09:00 이후 잠금 메시지 -->
+        <!-- 08:30 이후 잠금 메시지 -->
         <div id="mealLockMsg" class="meal-step hidden" style="text-align:center;padding:20px 0;">
           <div style="font-size:28px;margin-bottom:8px;">🔒</div>
           <p style="font-weight:900;color:#22365e;font-size:15px;margin-bottom:6px;">신청이 마감되었습니다</p>
@@ -2930,7 +2930,31 @@
       }));
       updateLoginUI();
       if (currentScreenKey === "home") refreshCurrentScreen();
+      /* 식수 상태는 서버 기준으로 백그라운드 동기화 (로그인 완료 UI를 지연시키지 않음) */
       checkAndShowMealModal();
+    }
+
+    /* 저장된 세션에 필수 필드가 없을 때만 서버에서 사용자 정보 보완 (불필요한 재로그인 방지) */
+    let userProfileRefreshRunning = false;
+    async function refreshUserProfileIfNeeded() {
+      if (!currentUserData || userProfileRefreshRunning) return;
+      const missingField = !currentUserData.user_id || !currentUserData.emp_no || currentUserData.part === undefined;
+      if (!missingField) return;
+      if (!currentUserData.name || !currentUserData.emp_no) return;
+      userProfileRefreshRunning = true;
+      try {
+        const url = `${WEB_APP_URL}?action=login&name=${encodeURIComponent(currentUserData.name)}&emp_no=${encodeURIComponent(currentUserData.emp_no)}`;
+        const result = await jsonpRequest(url, "profileRefreshCallback");
+        if (result && result.success && result.user) {
+          currentUserData = result.user;
+          localStorage.setItem(LOGIN_STORAGE_KEY, JSON.stringify({ user: result.user, lastActivity: Date.now() }));
+          updateLoginUI();
+        }
+      } catch (e) {
+        console.error("사용자 정보 보완 오류:", e);
+      } finally {
+        userProfileRefreshRunning = false;
+      }
     }
 
     function clearLoginData() {
@@ -2981,6 +3005,7 @@
 
         currentUserData = user;
         touchLoginActivity();
+        refreshUserProfileIfNeeded(); /* 필수 필드 누락 시에만 백그라운드 보완 */
       } catch (error) {
         clearLoginData();
       }
@@ -3034,26 +3059,53 @@
       });
     }
 
-    function jsonpRequest(url, callbackName) {
-      return new Promise((resolve, reject) => {
+    /* JSONP 공통 요청
+       - 기본 12초 타임아웃: callback/script/timer 모두 정리
+       - options.retryOnNetworkError: 네트워크 오류(onerror)일 때만 1회 짧게 재시도
+         (서버가 로그인 실패 등 정상 응답을 반환한 경우에는 재시도하지 않음) */
+    function jsonpRequest(url, callbackName, options) {
+      const opts = options || {};
+      const timeoutMs = opts.timeoutMs || 12000;
+
+      const attempt = (retriesLeft) => new Promise((resolve, reject) => {
         const script = document.createElement("script");
-        const uniqueCallback = `${callbackName}_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+        const uniqueCallback = `${callbackName}_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
+        let settled = false;
+
+        const cleanup = () => {
+          if (settled) return;
+          settled = true;
+          clearTimeout(timer);
+          /* 타임아웃 이후 늦게 도착한 응답이 오류를 내지 않도록 no-op 처리 후 지연 삭제 */
+          window[uniqueCallback] = function () { try { delete window[uniqueCallback]; } catch (e) {} };
+          setTimeout(() => { try { delete window[uniqueCallback]; } catch (e) {} }, 30000);
+          script.remove();
+        };
+
+        const timer = setTimeout(() => {
+          cleanup();
+          reject(new Error("서버 응답이 지연되고 있습니다. 다시 시도해주세요."));
+        }, timeoutMs);
 
         window[uniqueCallback] = function(result) {
+          cleanup();
           resolve(result);
-          delete window[uniqueCallback];
-          script.remove();
+        };
+
+        script.onerror = function() {
+          cleanup();
+          if (retriesLeft > 0) {
+            setTimeout(() => attempt(retriesLeft - 1).then(resolve, reject), 500);
+          } else {
+            reject(new Error("Apps Script 연결 오류"));
+          }
         };
 
         script.src = `${url}&callback=${uniqueCallback}`;
-        script.onerror = function() {
-          reject(new Error("Apps Script 연결 오류"));
-          delete window[uniqueCallback];
-          script.remove();
-        };
-
         document.body.appendChild(script);
       });
+
+      return attempt(opts.retryOnNetworkError ? 1 : 0);
     }
 
     async function login() {
@@ -3070,20 +3122,22 @@
 
       try {
         const url = `${WEB_APP_URL}?action=login&name=${encodeURIComponent(name)}&emp_no=${encodeURIComponent(empNo)}`;
-        const result = await jsonpRequest(url, "loginCallback");
+        /* 네트워크 오류에 한해 1회 재시도. 서버가 로그인 실패를 반환하면 재시도하지 않음 */
+        const result = await jsonpRequest(url, "loginCallback", { retryOnNetworkError: true });
 
         if (!result.success) {
           alert(result.message || "로그인에 실패했습니다.");
           return;
         }
 
+        /* 인증 성공 → 로그인 모달 즉시 닫힘(saveLoginUser 내부), 부가 데이터는 백그라운드 로드 */
         saveLoginUser(result.user);
-        alert("로그인되었습니다.");
         runPendingAction();
       } catch (error) {
         console.error(error);
-        alert("로그인 중 오류가 발생했습니다.");
+        alert(error && error.message ? error.message : "로그인 중 오류가 발생했습니다.");
       } finally {
+        /* 인증 API 완료 시점에 버튼/입력창 반드시 복구 */
         setLoginSubmitting(false);
       }
     }
@@ -3460,35 +3514,117 @@
       return `${y}-${m}-${d}`;
     }
 
+    /* 로컬 캐시 키는 사용자별로 분리: hak_meal_${date}_${user_id}
+       — localStorage 는 서버 상태를 대신하는 기준이 아니라 화면 속도용 캐시로만 사용 */
+    function mealStorageKey() {
+      if (!currentUserData || !currentUserData.user_id) return null;
+      return `hak_meal_${getTodayStr()}_${currentUserData.user_id}`;
+    }
+
     function getMealLocalData() {
-      const saved = localStorage.getItem(`hak_meal_${getTodayStr()}`);
+      const key = mealStorageKey();
+      if (!key) return null;
+      const saved = localStorage.getItem(key);
       if (!saved) return null;
-      try { return JSON.parse(saved); } catch (e) { return null; }
+      try {
+        const parsed = JSON.parse(saved);
+        /* 다른 사용자/다른 날짜 데이터가 섞이지 않도록 검증 */
+        if (parsed.date !== getTodayStr()) return null;
+        if (parsed.user_id && parsed.user_id !== currentUserData.user_id) return null;
+        return parsed;
+      } catch (e) { return null; }
     }
 
     function saveMealLocalData(data) {
-      localStorage.setItem(`hak_meal_${getTodayStr()}`, JSON.stringify({ ...data, date: getTodayStr() }));
+      const key = mealStorageKey();
+      if (!key) return; /* 사용자 ID 없으면 저장하지 않음 */
+      localStorage.setItem(key, JSON.stringify({
+        ...data,
+        date: getTodayStr(),
+        user_id: currentUserData.user_id
+      }));
     }
+
+    let mealStatusSyncing = false;
+    let mealStatusError = false;
 
     function updateHomeMealStatus() {
       const data = getMealLocalData();
-      const status = (!data || !data.responded) ? "미응답"
-        : (data.applying ? "중식 신청" : "중식 미신청");
-      let suffix = "";
-      if (data && data.applying && data.guestCount > 0) suffix += ` (외부 ${data.guestCount}명)`;
-      if (data && data.dinner) suffix += ` + 석식${data.dinnerGuest > 0 ? ` (외부 ${data.dinnerGuest}명)` : ""}`;
-
+      let short, detail;
+      if (mealStatusSyncing && (!data || !data.responded)) {
+        short = "확인 중..."; detail = "서버에서 신청 상태 확인 중...";
+      } else if (!data || !data.responded) {
+        short = mealStatusError ? "확인 실패" : "미응답";
+        detail = mealStatusError ? "상태 조회 실패 — 새로고침 후 다시 확인해주세요." : "미응답";
+      } else {
+        short = data.applying ? "신청" : "미신청";
+        detail = data.applying ? "중식 신청" : "중식 미신청";
+        if (data.applying && data.guestCount > 0) detail += ` (외부 ${data.guestCount}명)`;
+        if (data.dinner) detail += ` + 석식${data.dinnerGuest > 0 ? ` (외부 ${data.dinnerGuest}명)` : ""}`;
+      }
       const el1 = document.getElementById("homeMealMyStatus");
       const el2 = document.getElementById("mealMyStatusDetail");
-      if (el1) el1.textContent = (!data || !data.responded) ? "미응답" : (data.applying ? "신청" : "미신청");
-      if (el2) el2.textContent = status + suffix;
+      if (el1) el1.textContent = short;
+      if (el2) el2.textContent = detail;
+    }
+
+    /* 서버 기준 내 식수 상태 동기화
+       1) getMyMealStatus 호출 → 2) 응답 기록 있으면 팝업 없이 상태 표시 + 로컬 캐시 갱신
+       3) 응답 기록 없으면 신청 가능 시간(08:30 이전)에만 팝업
+       4) 서버 오류 시 미응답으로 단정하지 않고 팝업 표시 안 함(기존 로컬 캐시는 보조로만 사용) */
+    async function syncMyMealStatus(showModalIfNeeded) {
+      if (!currentUserData || !currentUserData.user_id) return;
+      mealStatusSyncing = true;
+      mealStatusError = false;
+      updateHomeMealStatus();
+      try {
+        const params = [
+          "action=getMyMealStatus",
+          `date=${encodeURIComponent(getTodayStr())}`,
+          `user_id=${encodeURIComponent(currentUserData.user_id || "")}`,
+          `emp_no=${encodeURIComponent(currentUserData.emp_no || "")}`,
+          `user_name=${encodeURIComponent(currentUserData.name || "")}`
+        ].join("&");
+        const result = await jsonpRequest(`${WEB_APP_URL}?${params}`, "myMealStatusCallback");
+        if (!result || !result.success) {
+          throw new Error((result && result.message) || "식수 상태 조회 실패");
+        }
+        if (result.responded) {
+          /* 서버에 이미 기록 있음 → 팝업 없이 로컬 캐시를 서버 상태로 갱신 */
+          saveMealLocalData({
+            responded: true,
+            applying: !!result.lunch_applying,
+            guestCount: result.lunch_guest || 0,
+            dinner: !!result.dinner_applying,
+            dinnerGuest: result.dinner_guest || 0,
+            isAuto: !!result.is_auto,
+            submittedAt: result.submitted_at || ""
+          });
+        } else if (showModalIfNeeded && !isMealLocked()) {
+          /* 서버에도 기록 없음 → 신청 가능 시간에만 팝업 */
+          setTimeout(openMealModal, 800);
+        }
+      } catch (e) {
+        console.error("식수 상태 동기화 오류:", e);
+        mealStatusError = true;
+        /* 서버 오류: 무조건 미응답으로 단정해 팝업을 띄우지 않음.
+           로컬 캐시에 응답 기록이 있으면 그대로 보조 표시됨 */
+      } finally {
+        mealStatusSyncing = false;
+        updateHomeMealStatus();
+      }
     }
 
     function checkAndShowMealModal() {
       if (!currentUserData) return;
       const data = getMealLocalData();
-      if (data && data.responded) return;
-      setTimeout(openMealModal, 1500);
+      if (data && data.responded) {
+        /* 로컬 캐시에 이미 응답 → 팝업 없이 화면 표시, 서버 상태로 백그라운드 재검증 */
+        updateHomeMealStatus();
+        syncMyMealStatus(false);
+        return;
+      }
+      syncMyMealStatus(true);
     }
 
     function isMealLocked() {
@@ -3504,7 +3640,7 @@
       const descEl = document.getElementById("mealModalDateDesc");
       if (descEl) descEl.textContent = getTodayStr() + " 식수 신청 (중식 + 석식)";
 
-      /* 09:00 이후 잠금 처리 */
+      /* 08:30 이후 잠금 처리 (Apps Script submitMeal 잠금 기준과 동일) */
       const lockMsg  = document.getElementById("mealLockMsg");
       const lockDetail = document.getElementById("mealLockDetail");
       const step1    = document.getElementById("mealStep1");
@@ -3521,7 +3657,7 @@
         const myStatus = data && data.responded
           ? (data.applying ? "✓ 신청" : "✗ 미신청")
           : "미응답 (미신청 처리)";
-        if (lockDetail) lockDetail.textContent = `오전 9시 이후에는 당일 식수 신청 변경이 불가합니다.\n내 신청 상태: ${myStatus}`;
+        if (lockDetail) lockDetail.textContent = `오전 8시 30분 이후에는 당일 식수 신청 변경이 불가합니다.\n내 신청 상태: ${myStatus}`;
         modal.classList.remove("hidden");
         modal.setAttribute("aria-hidden", "false");
         return;
@@ -3582,8 +3718,14 @@
         if (mealTimerSeconds <= 0) {
           clearMealTimer();
           closeMealModal();
-          submitMealChoice(false, 0, false, 0, true);
-          alert("응답 시간이 초과되어 미신청으로 처리되었습니다.");
+          submitMealChoice(false, 0, false, 0, true).then((r) => {
+            if (r && r.success) {
+              alert("응답 시간이 초과되어 미신청으로 처리되었습니다.");
+            } else {
+              /* 서버 저장 실패 시 responded 로 저장하지 않음 — 이후 다시 신청 가능 */
+              alert("응답 시간이 초과되었지만 서버 저장에 실패했습니다.\n홈 화면의 [신청 / 변경] 버튼으로 다시 신청해주세요.");
+            }
+          });
         }
       }, 1000);
     }
@@ -3603,48 +3745,61 @@
       el.textContent = `${m}:${String(s).padStart(2, "0")}`;
     }
 
-    /* 식수 신청 전송
+    /* 식수 신청 전송 — 서버 저장 success 확인 후에만 로컬 캐시/화면 갱신
+       (전송 전에 responded:true 를 먼저 저장하지 않음)
        lunchApplying: 중식 신청 여부, lunchGuest: 중식 외부손님 수
-       dinnerApplying: 석식 신청 여부, dinnerGuest: 석식 외부손님 수 */
+       dinnerApplying: 석식 신청 여부, dinnerGuest: 석식 외부손님 수
+       반환값: { success, message } */
     async function submitMealChoice(lunchApplying, lunchGuest, dinnerApplying, dinnerGuest, isAuto, reason) {
-      saveMealLocalData({
-        responded: true,
-        applying: lunchApplying,               // 중식 신청 여부 (하위호환 키)
-        guestCount: lunchGuest || 0,
-        dinner: !!dinnerApplying,              // 석식 신청 여부
-        dinnerGuest: dinnerGuest || 0,
-        isAuto: !!isAuto,
-        reason: reason || "",
-        submittedAt: new Date().toISOString()
-      });
-      updateHomeMealStatus();
-
-      if (currentUserData) {
-        try {
-          const params = [
-            "action=submitMeal",
-            `date=${encodeURIComponent(getTodayStr())}`,
-            `user_id=${encodeURIComponent(currentUserData.user_id || "")}`,
-            `user_name=${encodeURIComponent(currentUserData.name || "")}`,
-            `emp_no=${encodeURIComponent(currentUserData.emp_no || "")}`,
-            `team=${encodeURIComponent(currentUserData.team || "")}`,
-            `lunch=${lunchApplying ? "Y" : "N"}`,
-            `lunch_guest=${encodeURIComponent(lunchGuest || 0)}`,
-            `dinner=${dinnerApplying ? "Y" : "N"}`,
-            `dinner_guest=${encodeURIComponent(dinnerGuest || 0)}`,
-            `applying=${lunchApplying ? "Y" : "N"}`,        // 구 백엔드 호환
-            `guest_count=${encodeURIComponent(lunchGuest || 0)}`,
-            `is_auto=${isAuto ? "Y" : "N"}`,
-            `reason=${encodeURIComponent(reason || "")}`
-          ].join("&");
-          await jsonpRequest(`${WEB_APP_URL}?${params}`, "mealSubmitCallback");
-        } catch (e) {
-          console.error("식수 신청 전송 오류:", e);
-        }
+      if (!currentUserData || !currentUserData.user_id) {
+        return { success: false, message: "로그인 정보가 없어 식수 신청을 저장할 수 없습니다." };
       }
 
-      if (currentScreenKey === "home") {
-        setTimeout(loadMealSummary, 200);
+      try {
+        const params = [
+          "action=submitMeal",
+          `date=${encodeURIComponent(getTodayStr())}`,
+          `user_id=${encodeURIComponent(currentUserData.user_id || "")}`,
+          `user_name=${encodeURIComponent(currentUserData.name || "")}`,
+          `emp_no=${encodeURIComponent(currentUserData.emp_no || "")}`,
+          `team=${encodeURIComponent(currentUserData.team || "")}`,
+          `lunch=${lunchApplying ? "Y" : "N"}`,
+          `lunch_guest=${encodeURIComponent(lunchGuest || 0)}`,
+          `dinner=${dinnerApplying ? "Y" : "N"}`,
+          `dinner_guest=${encodeURIComponent(dinnerGuest || 0)}`,
+          `applying=${lunchApplying ? "Y" : "N"}`,        // 구 백엔드 호환
+          `guest_count=${encodeURIComponent(lunchGuest || 0)}`,
+          `is_auto=${isAuto ? "Y" : "N"}`,
+          `reason=${encodeURIComponent(reason || "")}`
+        ].join("&");
+
+        const result = await jsonpRequest(`${WEB_APP_URL}?${params}`, "mealSubmitCallback");
+
+        if (!result || !result.success) {
+          return { success: false, message: (result && result.message) || "식수 신청 저장에 실패했습니다." };
+        }
+
+        /* 서버 저장 성공 → 이때만 로컬 캐시와 화면 갱신 */
+        saveMealLocalData({
+          responded: true,
+          applying: lunchApplying,               // 중식 신청 여부 (하위호환 키)
+          guestCount: lunchGuest || 0,
+          dinner: !!dinnerApplying,              // 석식 신청 여부
+          dinnerGuest: dinnerGuest || 0,
+          isAuto: !!isAuto,
+          reason: reason || "",
+          submittedAt: new Date().toISOString()
+        });
+        mealStatusError = false;
+        updateHomeMealStatus();
+
+        if (currentScreenKey === "home") {
+          setTimeout(loadMealSummary, 200);
+        }
+        return result;
+      } catch (e) {
+        console.error("식수 신청 전송 오류:", e);
+        return { success: false, message: (e && e.message) || "식수 신청 전송 중 오류가 발생했습니다." };
       }
     }
 
@@ -4099,7 +4254,9 @@
       }
 
       if (submitBtn) {
-        submitBtn.addEventListener("click", function () {
+        submitBtn.addEventListener("click", async function () {
+          if (submitBtn.disabled) return; /* 중복 전송 방지 */
+
           /* 중식 외부 손님 */
           let lunchGuest = 0;
           if (mealLunchApplying && mealGuestSelected) {
@@ -4118,16 +4275,33 @@
             if (dinnerGuest < 0) dinnerGuest = 0;
           }
 
-          closeMealModal();
-          submitMealChoice(mealLunchApplying, lunchGuest, mealDinnerApplying, dinnerGuest, false);
+          /* 1) 저장 버튼 비활성화 → 2) 서버 전송 → 3) success 확인 후에만 모달 닫기/저장 */
+          submitBtn.disabled = true;
+          const origLabel = submitBtn.textContent;
+          submitBtn.textContent = "저장 중...";
+          clearMealTimer(); /* 저장 중 타이머 자동처리 방지 */
 
-          const lunchMsg = mealLunchApplying
-            ? `중식 신청${lunchGuest > 0 ? ` (외부 ${lunchGuest}명)` : ""}`
-            : "중식 미신청";
-          const dinnerMsg = mealDinnerApplying
-            ? ` · 석식 신청${dinnerGuest > 0 ? ` (외부 ${dinnerGuest}명)` : ""}`
-            : "";
-          alert(`식수 신청 완료! ${lunchMsg}${dinnerMsg}`);
+          try {
+            const result = await submitMealChoice(mealLunchApplying, lunchGuest, mealDinnerApplying, dinnerGuest, false);
+
+            if (!result || !result.success) {
+              /* 실패: 모달과 입력 내용 유지, 구체적 오류 표시 */
+              alert(`식수 신청 저장에 실패했습니다.\n${(result && result.message) || "네트워크 상태를 확인 후 다시 시도해주세요."}`);
+              return;
+            }
+
+            closeMealModal();
+            const lunchMsg = mealLunchApplying
+              ? `중식 신청${lunchGuest > 0 ? ` (외부 ${lunchGuest}명)` : ""}`
+              : "중식 미신청";
+            const dinnerMsg = mealDinnerApplying
+              ? ` · 석식 신청${dinnerGuest > 0 ? ` (외부 ${dinnerGuest}명)` : ""}`
+              : "";
+            alert(`식수 신청 완료! ${lunchMsg}${dinnerMsg}`);
+          } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = origLabel;
+          }
         });
       }
     }
@@ -4278,7 +4452,7 @@
                 }
               </div>
               <p style="margin:12px 0 0;font-size:12px;color:var(--muted);line-height:1.6;">
-                매일 자정 이후 식수 신청 팝업이 자동으로 표시됩니다. 미응답 시 5분 후 미신청으로 자동 처리되며, 미접속자는 오전 8시 20분에 자동 미신청 처리됩니다.
+                매일 자정 이후 식수 신청 팝업이 자동으로 표시됩니다. 미응답 시 5분 후 미신청으로 자동 처리되며, 미접속자는 오전 8시 20분에 자동 미신청 처리됩니다. 당일 신청 변경은 오전 8시 30분까지 가능합니다.
               </p>
             </div>
 
@@ -5847,14 +6021,7 @@
 };
     const GENERATED_PART_ORDER = ["merchant", "navy", "marine", "hvac", "fan", "fuelcell"];
 
-    function escapeHtml(value) {
-      return String(value == null ? "" : value)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#39;");
-    }
+    /* escapeHtml 은 상단 공통 정의를 사용 (중복 정의 제거) */
 
     function formatText(value) {
       const safe = String(value == null || value === "" ? "-" : value);
@@ -7261,9 +7428,29 @@
 
     function syncLoginStateAcrossPages() {
       window.addEventListener("storage", (event) => {
-        if (event.key !== LOGIN_STORAGE_KEY) return;
-        loadSavedUser();
+        if (event.key === LOGIN_STORAGE_KEY) {
+          loadSavedUser();
+          return;
+        }
+        /* 다른 탭에서 동일 사용자의 식수 상태가 변경되면 화면에 반영 */
+        const mealKey = mealStorageKey();
+        if (mealKey && event.key === mealKey) {
+          updateHomeMealStatus();
+        }
       });
+    }
+
+    /* 자정 넘김(날짜 변경) 감시 — 새 날짜의 식수 상태를 서버에서 재조회 */
+    function startMealDateWatcher() {
+      let lastDate = getTodayStr();
+      setInterval(() => {
+        const nowDate = getTodayStr();
+        if (nowDate === lastDate) return;
+        lastDate = nowDate;
+        updateHomeMealStatus();
+        if (currentScreenKey === "home") refreshCurrentScreen();
+        if (currentUserData) checkAndShowMealModal();
+      }, 60000);
     }
 
     function init() {
@@ -7281,6 +7468,7 @@
       syncLoginStateAcrossPages();
       startAutoLogoutWatcher();
       startDatetimeClock();
+      startMealDateWatcher();
       checkAndShowMealModal();
 
       document.querySelectorAll("details").forEach((detailsEl) => {
