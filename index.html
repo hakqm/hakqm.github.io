@@ -147,6 +147,46 @@
       background: rgba(255,255,255,.18);
     }
 
+    /* === 언어 전환 (한국어 | English) === */
+    .language-switch {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      background: rgba(255,255,255,.10);
+      border: 1px solid rgba(255,255,255,.18);
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .language-switch button {
+      border: none;
+      background: transparent;
+      color: rgba(255,255,255,.82);
+      font-weight: 700;
+      font-size: 12.5px;
+      padding: 7px 11px;
+      cursor: pointer;
+      white-space: nowrap;
+      line-height: 1;
+      transition: .18s ease;
+    }
+    .language-switch button:hover { background: rgba(255,255,255,.14); }
+    .language-switch button[aria-pressed="true"] {
+      background: #fff;
+      color: var(--navy-dark);
+    }
+    .language-switch .lang-short { display: none; }
+    /* 영어 모드 안내 (업무 메뉴가 한국어 전용임을 사이드바 상단에 1회 표시) */
+    .korean-only-note {
+      margin: 10px 14px 0;
+      padding: 8px 10px;
+      border-radius: 8px;
+      background: #eef1f6;
+      border: 1px solid #d8dce5;
+      color: #6b7280;
+      font-size: 11.5px;
+      line-height: 1.5;
+    }
+
     .content {
       display: grid;
       grid-template-columns: 320px 1fr;
@@ -1038,6 +1078,13 @@
         padding: 8px 10px;
         font-size: 13px;
       }
+
+      .language-switch button {
+        padding: 6px 8px;
+        font-size: 11.5px;
+      }
+      .language-switch .lang-full { display: none; }
+      .language-switch .lang-short { display: inline; }
 
       .tabs {
         padding: 8px 10px 0;
@@ -2288,13 +2335,17 @@
     .meal-btn-row { display: flex; gap: 10px; }
     .meal-btn {
       flex: 1;
+      min-width: 0;
       min-height: 54px;
+      padding: 8px 10px;
       border-radius: 14px;
       border: 1px solid #dce7f6;
       background: #f8fbff;
       color: #1b365d;
       font-size: 15px;
       font-weight: 900;
+      line-height: 1.25;
+      word-break: keep-all;
       cursor: pointer;
       transition: .2s ease;
     }
@@ -2578,11 +2629,19 @@
           <span class="topbar-date" id="topbarDate">----.--.--</span>
           <span class="topbar-time" id="topbarTime">--:--:--</span>
         </div>
+        <div class="language-switch" role="group" id="languageSwitch" aria-label="언어 선택 / Select language">
+          <button type="button" data-language="ko" title="한국어" aria-label="한국어">
+            <span class="lang-full">한국어</span><span class="lang-short">KO</span>
+          </button>
+          <button type="button" data-language="en" title="English" aria-label="English">
+            <span class="lang-full">English</span><span class="lang-short">EN</span>
+          </button>
+        </div>
         <div id="userChip" class="user-chip hidden">
           <span id="userChipText">로그인됨</span>
         </div>
-        <button type="button" id="openLoginBtn" class="top-btn top-btn-primary">로그인</button>
-        <button type="button" id="logoutBtn" class="top-btn top-btn-outline hidden">로그아웃</button>
+        <button type="button" id="openLoginBtn" class="top-btn top-btn-primary" data-i18n="login">로그인</button>
+        <button type="button" id="logoutBtn" class="top-btn top-btn-outline hidden" data-i18n="logout">로그아웃</button>
       </div>
     </div>
 
@@ -2600,6 +2659,8 @@
             <button type="button" id="menuViewExecutableBtn" class="menu-filter-btn">실행 메뉴만</button>
           </div>
         </div>
+
+        <div id="koreanOnlyNote" class="korean-only-note hidden" data-i18n="koreanOnlyNote">Other work menus are currently available in Korean only.</div>
 
         <div class="tree-wrap">
           <div class="tree-section-title">Menu</div>
@@ -2779,56 +2840,56 @@
       <div class="modal-head">
         <div class="meal-modal-head" style="flex:1;min-width:0;">
           <div>
-            <h3 id="mealModalTitle" class="modal-title">🍱 오늘 식수 신청</h3>
-            <p class="modal-desc" id="mealModalDateDesc">오늘 식수(중식·석식) 여부를 선택해주세요.</p>
+            <h3 id="mealModalTitle" class="modal-title" data-i18n="mealModalTitle">🍱 오늘 식수 신청</h3>
+            <p class="modal-desc" id="mealModalDateDesc" data-i18n="mealModalDescDefault">오늘 식수(중식·석식) 여부를 선택해주세요.</p>
           </div>
-          <div class="meal-timer">🕗 오전 8시 40분까지 신청·변경 가능</div>
+          <div class="meal-timer" data-i18n="mealTimer">🕗 오전 8시 40분까지 신청·변경 가능</div>
         </div>
-        <button type="button" id="closeMealModalBtn" class="modal-close" aria-label="닫기">×</button>
+        <button type="button" id="closeMealModalBtn" class="modal-close" aria-label="닫기" data-i18n-aria="close">×</button>
       </div>
       <div class="modal-body">
         <!-- 08:40 이후 잠금 메시지 -->
         <div id="mealLockMsg" class="meal-step hidden" style="text-align:center;padding:20px 0;">
           <div style="font-size:28px;margin-bottom:8px;">🔒</div>
-          <p style="font-weight:900;color:#22365e;font-size:15px;margin-bottom:6px;">신청이 마감되었습니다</p>
-          <p id="mealLockDetail" style="font-size:13px;color:#667085;line-height:1.6;"></p>
+          <p style="font-weight:900;color:#22365e;font-size:15px;margin-bottom:6px;" data-i18n="mealLockTitle">신청이 마감되었습니다</p>
+          <p id="mealLockDetail" style="font-size:13px;color:#667085;line-height:1.6;white-space:pre-line;"></p>
         </div>
         <!-- 08:30 자동 미신청 처리 안내 (08:40 전 변경 가능) -->
         <div id="mealAutoNotice" class="hidden" style="margin-bottom:10px;padding:9px 12px;border-radius:10px;background:#fff7ed;border:1px solid #fcd9b8;font-size:12.5px;color:#8a5317;font-weight:700;line-height:1.6;"></div>
         <!-- Step 1: 중식 신청 여부 -->
         <div id="mealStep1" class="meal-step">
-          <p class="meal-info-p">오늘 <strong>중식</strong>을 신청하시겠습니까?<br>미응답자는 오전 8시 30분 이후 <strong>중식·석식 미신청</strong>으로 자동 처리됩니다.</p>
+          <p class="meal-info-p" data-i18n="mealStep1Q">오늘 <strong>중식</strong>을 신청하시겠습니까?<br>미응답자는 오전 8시 30분 이후 <strong>중식·석식 미신청</strong>으로 자동 처리됩니다.</p>
           <div class="meal-btn-row">
-            <button type="button" class="meal-btn" id="mealBtnYes">✓ 중식 신청</button>
-            <button type="button" class="meal-btn meal-no-sel" id="mealBtnNo">✗ 미신청</button>
+            <button type="button" class="meal-btn" id="mealBtnYes" data-i18n="mealBtnYes">✓ 중식 신청</button>
+            <button type="button" class="meal-btn meal-no-sel" id="mealBtnNo" data-i18n="mealBtnNo">✗ 미신청</button>
           </div>
         </div>
         <!-- Step 2: 외부 손님 + 석식(선택) -->
         <div id="mealStep2" class="meal-step hidden">
           <!-- 중식 외부 손님 (중식 신청 시에만 표시) -->
           <div id="mealLunchGuestSection">
-            <p class="meal-info-p">중식 외부 손님이 있으십니까?</p>
+            <p class="meal-info-p" data-i18n="lunchGuestQ">중식 외부 손님이 있으십니까?</p>
             <div class="meal-btn-row">
-              <button type="button" class="meal-btn" id="mealGuestNone">없음</button>
-              <button type="button" class="meal-btn" id="mealGuestHas">있음</button>
+              <button type="button" class="meal-btn" id="mealGuestNone" data-i18n="guestNone">없음</button>
+              <button type="button" class="meal-btn" id="mealGuestHas" data-i18n="guestHas">있음</button>
             </div>
             <div id="mealGuestCountWrap" class="hidden">
-              <input type="number" id="mealGuestCount" class="meal-guest-input" placeholder="중식 외부 손님 인원 수 (명)" min="1" max="99" />
+              <input type="number" id="mealGuestCount" class="meal-guest-input" placeholder="중식 외부 손님 인원 수 (명)" data-i18n-ph="lunchGuestPh" min="1" max="99" />
             </div>
           </div>
           <!-- 석식 신청 (필요 시) -->
           <div style="margin-top:14px;border-top:1px solid #eef0f4;padding-top:12px;">
-            <p class="meal-info-p">🌙 석식도 신청하시겠습니까? <span style="font-weight:600;color:#8a93a3;font-size:12px;">(필요 시 선택)</span></p>
+            <p class="meal-info-p"><span data-i18n="dinnerQ">🌙 석식도 신청하시겠습니까?</span> <span style="font-weight:600;color:#8a93a3;font-size:12px;" data-i18n="dinnerQOptional">(필요 시 선택)</span></p>
             <div class="meal-btn-row">
-              <button type="button" class="meal-btn meal-yes-sel" id="mealDinnerNo">석식 미신청</button>
-              <button type="button" class="meal-btn" id="mealDinnerYes">석식 신청</button>
+              <button type="button" class="meal-btn meal-yes-sel" id="mealDinnerNo" data-i18n="dinnerNo">석식 미신청</button>
+              <button type="button" class="meal-btn" id="mealDinnerYes" data-i18n="dinnerYes">석식 신청</button>
             </div>
             <div id="mealDinnerGuestWrap" class="hidden">
-              <input type="number" id="mealDinnerGuestCount" class="meal-guest-input" placeholder="석식 외부 손님 인원 수 (명, 없으면 0)" min="0" max="99" />
+              <input type="number" id="mealDinnerGuestCount" class="meal-guest-input" placeholder="석식 외부 손님 인원 수 (명, 없으면 0)" data-i18n-ph="dinnerGuestPh" min="0" max="99" />
             </div>
           </div>
           <div class="meal-btn-row">
-            <button type="button" class="meal-btn meal-submit" id="mealSubmitBtn">완료 — 식수 신청</button>
+            <button type="button" class="meal-btn meal-submit" id="mealSubmitBtn" data-i18n="mealSubmit">완료 — 식수 신청</button>
           </div>
         </div>
       </div>
@@ -2839,18 +2900,18 @@
     <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="loginModalTitle">
       <div class="modal-head">
         <div>
-          <h3 id="loginModalTitle" class="modal-title">로그인</h3>
-          <p class="modal-desc">로그인 정보를 입력해주세요.</p>
+          <h3 id="loginModalTitle" class="modal-title" data-i18n="loginTitle">로그인</h3>
+          <p class="modal-desc" data-i18n="loginDesc">로그인 정보를 입력해주세요.</p>
         </div>
-        <button type="button" id="closeLoginBtn" class="modal-close" aria-label="닫기">×</button>
+        <button type="button" id="closeLoginBtn" class="modal-close" aria-label="닫기" data-i18n-aria="close">×</button>
       </div>
       <div class="modal-body">
-        <input type="text" id="loginName" class="login-input" placeholder="이름 입력" />
-        <input type="text" id="loginEmpNo" class="login-input" placeholder="사번 입력" />
-        <div class="login-help">이름과 사번을 입력해주세요.</div>
+        <input type="text" id="loginName" class="login-input" placeholder="이름 입력" data-i18n-ph="loginNamePh" />
+        <input type="text" id="loginEmpNo" class="login-input" placeholder="사번 입력" data-i18n-ph="loginEmpNoPh" />
+        <div class="login-help" data-i18n="loginHelp">이름과 사번을 입력해주세요.</div>
         <div class="login-row">
-          <button type="button" id="submitLoginBtn" class="login-btn">로그인</button>
-          <button type="button" id="cancelLoginBtn" class="login-btn login-btn-secondary">닫기</button>
+          <button type="button" id="submitLoginBtn" class="login-btn" data-i18n="login">로그인</button>
+          <button type="button" id="cancelLoginBtn" class="login-btn login-btn-secondary" data-i18n="close">닫기</button>
         </div>
       </div>
     </div>
@@ -2863,6 +2924,260 @@
     /* 무동작 기준 3시간 (schedule_manager.html 과 동일한 키·만료시간 사용) */
     const LOGIN_EXPIRE_MINUTES = 180;
     const LOGIN_EXPIRE_MS = LOGIN_EXPIRE_MINUTES * 60 * 1000;
+
+    /* =============================================
+       다국어(i18n) — 한국어/English 전환
+       - 로그인/로그아웃, 식수 신청 관련 화면만 영어로 전환한다.
+       - 그 외 업무 메뉴는 한국어를 유지한다.
+       - 번역 문자열은 이 한 곳에서만 관리하고, 없는 키는 한국어로 안전 폴백한다.
+    ============================================= */
+    const PORTAL_LANGUAGE_KEY = "hak_portal_language";
+    let currentLang = "ko";
+
+    const I18N = {
+      ko: {
+        /* 상단/로그인 */
+        login: "로그인",
+        logout: "로그아웃",
+        loggedIn: "로그인됨",
+        loginTitle: "로그인",
+        loginDesc: "로그인 정보를 입력해주세요.",
+        loginHelp: "이름과 사번을 입력해주세요.",
+        loginNamePh: "이름 입력",
+        loginEmpNoPh: "사번 입력",
+        close: "닫기",
+        loginSubmitting: "로그인 중...",
+        loginRequired: "로그인이 필요합니다. 로그인 후 선택한 메뉴가 자동으로 실행됩니다.",
+        loginFail: "로그인에 실패했습니다.",
+        loginError: "로그인 중 오류가 발생했습니다.",
+        enterNameEmp: "이름과 사번을 입력해주세요.",
+        sessionExpired: "로그인 세션이 만료되어 자동으로 로그아웃되었습니다. 다시 로그인해주세요.",
+        loggedOut: "로그아웃되었습니다.",
+        autoLoggedOut: "3시간 동안 사용 기록이 없어 자동 로그아웃되었습니다.",
+        /* 로그인 전 홈 안내 */
+        homeLoginNoticePrefix: "로그인 전 상태입니다. 우측 상단 ",
+        homeLoginNoticeSuffix: " 버튼을 눌러 로그인해주세요.",
+        homeLoginBtn: "로그인하기",
+        /* 사이드바 안내 */
+        koreanOnlyNote: "그 외 업무 메뉴는 현재 한국어로만 제공됩니다.",
+        /* 식수 — 홈 카드/패널 */
+        mealMyToday: "오늘 내 식수 신청",
+        change: "변경",
+        mealStatusTitle: "오늘의 식수 신청 현황",
+        lunchRequested: "중식 신청",
+        lunchNotRequested: "중식 미신청",
+        noResponse: "미응답",
+        dinnerRequested: "석식 신청",
+        countUnit: "명",
+        myRequestStatus: "내 신청 상태",
+        requestChange: "신청 / 변경",
+        loginToRequest: "로그인 후 신청 가능",
+        mealHomeInfo: "매일 자정 이후 식수 신청 팝업이 자동으로 표시됩니다. 미응답자는 오전 8시 30분 이후 중식·석식 미신청으로 자동 처리됩니다. 자동 미신청 처리 후에도 오전 8시 40분 전까지 변경할 수 있습니다. 오전 8시 40분부터 당일 신청 변경이 마감됩니다.",
+        /* 식수 상태(동적) */
+        checking: "확인 중...",
+        checkingDetail: "서버에서 신청 상태 확인 중...",
+        checkFailed: "확인 실패",
+        checkFailedDetail: "상태 조회 실패 — 새로고침 후 다시 확인해주세요.",
+        autoNotRequested: "자동 미신청",
+        autoNotRequestedLocked: "자동 미신청 처리됨 (변경 마감)",
+        autoNotRequestedOpen: "자동 미신청 처리됨 · 오전 8시 40분까지 변경 가능",
+        requested: "신청",
+        notRequested: "미신청",
+        /* 식수 모달 */
+        mealModalTitle: "🍱 오늘 식수 신청",
+        mealModalDescDefault: "오늘 식수(중식·석식) 여부를 선택해주세요.",
+        mealTimer: "🕗 오전 8시 40분까지 신청·변경 가능",
+        mealLockTitle: "신청이 마감되었습니다",
+        mealStep1Q: "오늘 <strong>중식</strong>을 신청하시겠습니까?<br>미응답자는 오전 8시 30분 이후 <strong>중식·석식 미신청</strong>으로 자동 처리됩니다.",
+        mealBtnYes: "✓ 중식 신청",
+        mealBtnNo: "✗ 미신청",
+        lunchGuestQ: "중식 외부 손님이 있으십니까?",
+        guestNone: "없음",
+        guestHas: "있음",
+        lunchGuestPh: "중식 외부 손님 인원 수 (명)",
+        dinnerQ: "🌙 석식도 신청하시겠습니까?",
+        dinnerQOptional: "(필요 시 선택)",
+        dinnerNo: "석식 미신청",
+        dinnerYes: "석식 신청",
+        dinnerGuestPh: "석식 외부 손님 인원 수 (명, 없으면 0)",
+        mealSubmit: "완료 — 식수 신청",
+        mealSaving: "저장 중...",
+        mealAutoNotice: "오전 8시 30분에 자동 미신청 처리되었습니다. 오전 8시 40분까지 변경할 수 있습니다.",
+        /* 식수 alert */
+        mealLoginRequired: "식수 신청은 로그인 후 이용 가능합니다.",
+        lunchGuestCountReq: "중식 외부 손님 인원 수를 입력해주세요.",
+        mealSaveFail: "식수 신청 저장에 실패했습니다.",
+        mealNetworkRetry: "네트워크 상태를 확인 후 다시 시도해주세요.",
+        mealComplete: "식수 신청 완료!",
+        /* 마감 상태 내 신청 표시 */
+        lockStatusRequested: "✓ 신청",
+        lockStatusNotRequestedAuto: "✗ 미신청 (자동 처리)",
+        lockStatusNotRequested: "✗ 미신청",
+        lockStatusNoResponse: "미응답 (미신청 처리)",
+        lockMyStatusLabel: "내 신청 상태",
+        lockDetailPrefix: "오전 8시 40분 이후에는 당일 식수 신청을 변경할 수 없습니다."
+      },
+      en: {
+        login: "Login",
+        logout: "Logout",
+        loggedIn: "Logged in",
+        loginTitle: "Login",
+        loginDesc: "Please enter your login information.",
+        loginHelp: "Please enter your name and employee number.",
+        loginNamePh: "Enter your name",
+        loginEmpNoPh: "Enter your employee number",
+        close: "Close",
+        loginSubmitting: "Logging in...",
+        loginRequired: "Login is required. The selected menu will run automatically after you log in.",
+        loginFail: "Login failed. Please check your name and employee number.",
+        loginError: "An error occurred while logging in.",
+        enterNameEmp: "Please enter your name and employee number.",
+        sessionExpired: "Your login session has expired. Please log in again.",
+        loggedOut: "You have been logged out.",
+        autoLoggedOut: "You have been automatically logged out after 3 hours of inactivity.",
+        homeLoginNoticePrefix: "You are not logged in. Please select the ",
+        homeLoginNoticeSuffix: " button at the top right.",
+        homeLoginBtn: "Login",
+        koreanOnlyNote: "Other work menus are currently available in Korean only.",
+        mealMyToday: "My Meal Request Today",
+        change: "Change",
+        mealStatusTitle: "Today's Meal Request Status",
+        lunchRequested: "Lunch Requested",
+        lunchNotRequested: "Lunch Not Requested",
+        noResponse: "No Response",
+        dinnerRequested: "Dinner Requested",
+        countUnit: "",
+        myRequestStatus: "My Request Status",
+        requestChange: "Request / Change",
+        loginToRequest: "Login is required.",
+        mealHomeInfo: "The meal request popup appears automatically after midnight each day. Users who have not responded will be automatically marked as not requesting lunch or dinner after 8:30 AM. You may still change your request until 8:40 AM. Meal requests and changes close at 8:40 AM.",
+        checking: "Checking...",
+        checkingDetail: "Checking your meal request status...",
+        checkFailed: "Check Failed",
+        checkFailedDetail: "Unable to retrieve your meal request status. Please refresh and try again.",
+        autoNotRequested: "Automatically Marked as Not Requested",
+        autoNotRequestedLocked: "Automatically marked as not requested. Changes are closed.",
+        autoNotRequestedOpen: "Automatically marked as not requested. Changes are available until 8:40 AM.",
+        requested: "Requested",
+        notRequested: "Not Requested",
+        mealModalTitle: "🍱 Today's Meal Request",
+        mealModalDescDefault: "Please select your meal (lunch/dinner) request for today.",
+        mealTimer: "🕗 Requests and changes are available until 8:40 AM.",
+        mealLockTitle: "Meal requests are closed.",
+        mealStep1Q: "Would you like to request <strong>lunch</strong> today?<br>Users who have not responded will be automatically marked as <strong>not requesting lunch or dinner</strong> after 8:30 AM.",
+        mealBtnYes: "✓ Request Lunch",
+        mealBtnNo: "✗ Do Not Request Lunch",
+        lunchGuestQ: "Will you have any guests for lunch?",
+        guestNone: "No",
+        guestHas: "Yes",
+        lunchGuestPh: "Number of lunch guests",
+        dinnerQ: "🌙 Would you also like to request dinner?",
+        dinnerQOptional: "(Optional)",
+        dinnerNo: "No Dinner",
+        dinnerYes: "Request Dinner",
+        dinnerGuestPh: "Number of dinner guests (enter 0 if none)",
+        mealSubmit: "Submit Meal Request",
+        mealSaving: "Saving...",
+        mealAutoNotice: "Automatically marked as not requested at 8:30 AM. You may change your request until 8:40 AM.",
+        mealLoginRequired: "Please log in to submit a meal request.",
+        lunchGuestCountReq: "Please enter the number of lunch guests.",
+        mealSaveFail: "Failed to save your meal request.",
+        mealNetworkRetry: "Please check your network connection and try again.",
+        mealComplete: "Your meal request has been submitted!",
+        lockStatusRequested: "✓ Requested",
+        lockStatusNotRequestedAuto: "✗ Not Requested (Auto)",
+        lockStatusNotRequested: "✗ Not Requested",
+        lockStatusNoResponse: "No Response (Marked as Not Requested)",
+        lockMyStatusLabel: "My request status",
+        lockDetailPrefix: "Meal requests and changes are unavailable after 8:40 AM."
+      }
+    };
+
+    function getLang() { return currentLang; }
+
+    /* 번역 조회 — 현재 언어에 값이 없으면 한국어로 폴백 */
+    function t(key) {
+      const dict = I18N[currentLang] || I18N.ko;
+      if (dict[key] != null) return dict[key];
+      if (I18N.ko[key] != null) return I18N.ko[key];
+      return key;
+    }
+
+    /* 외부 손님 인원 표기: 한국어 "외부 N명", 영어 "N Guests" */
+    function guestText(n) {
+      if (currentLang === "en") return `${n} ${n === 1 ? "Guest" : "Guests"}`;
+      return `외부 ${n}명`;
+    }
+
+    function loadSavedLanguage() {
+      try {
+        const saved = localStorage.getItem(PORTAL_LANGUAGE_KEY);
+        currentLang = saved === "en" ? "en" : "ko";
+      } catch (e) {
+        currentLang = "ko";
+      }
+    }
+
+    /* data-i18n / data-i18n-ph / data-i18n-aria 속성이 붙은 고정 DOM 문구를 현재 언어로 갱신 */
+    function applyStaticTranslations() {
+      document.querySelectorAll("[data-i18n]").forEach((el) => {
+        const key = el.getAttribute("data-i18n");
+        const val = t(key);
+        /* HTML 태그가 포함된 문구(mealStep1Q 등)는 innerHTML 로 적용 */
+        if (val.indexOf("<") !== -1) el.innerHTML = val;
+        else el.textContent = val;
+      });
+      document.querySelectorAll("[data-i18n-ph]").forEach((el) => {
+        el.setAttribute("placeholder", t(el.getAttribute("data-i18n-ph")));
+      });
+      document.querySelectorAll("[data-i18n-aria]").forEach((el) => {
+        el.setAttribute("aria-label", t(el.getAttribute("data-i18n-aria")));
+      });
+    }
+
+    /* 언어 전환 버튼 눌림 상태 갱신 */
+    function updateLanguageButtons() {
+      const sw = document.getElementById("languageSwitch");
+      if (!sw) return;
+      sw.querySelectorAll("button[data-language]").forEach((btn) => {
+        btn.setAttribute("aria-pressed", btn.dataset.language === currentLang ? "true" : "false");
+      });
+    }
+
+    /* 언어 적용 — 고정 문구 갱신 + 현재 화면/로그인 UI/식수 상태 재렌더링 (상태값은 유지) */
+    function applyLanguage(lang, persist) {
+      currentLang = lang === "en" ? "en" : "ko";
+      if (persist) {
+        try { localStorage.setItem(PORTAL_LANGUAGE_KEY, currentLang); } catch (e) {}
+      }
+      document.documentElement.lang = currentLang;
+      updateLanguageButtons();
+      applyStaticTranslations();
+
+      /* 영어 모드에서만 사이드바 한국어 전용 안내 1회 표시 */
+      const koreanOnlyNote = document.getElementById("koreanOnlyNote");
+      if (koreanOnlyNote) koreanOnlyNote.classList.toggle("hidden", currentLang !== "en");
+
+      /* 로그인 버튼 저장 중 상태 문구가 언어에 맞게 반영되도록 갱신 */
+      if (typeof submitLoginBtn !== "undefined" && submitLoginBtn) {
+        submitLoginBtn.textContent = isLoginSubmitting ? t("loginSubmitting") : t("login");
+      }
+
+      updateLoginUI();
+
+      /* 홈 화면만 다시 렌더링(식수 카드/패널 문구 갱신). 상태·데이터는 캐시에서 그대로 복원됨.
+         다른 업무 화면(iframe 등)은 한국어 전용이라 재렌더하지 않아 불필요한 새로고침을 막는다. */
+      if (currentScreenKey === "home" && typeof screens !== "undefined" && screens[currentScreenKey]) {
+        refreshCurrentScreen();
+      }
+      updateHomeMealStatus();
+
+      /* 식수 모달이 열려 있으면 열림 상태를 유지한 채 문구 갱신 */
+      const mealModalEl = document.getElementById("mealModal");
+      if (mealModalEl && !mealModalEl.classList.contains("hidden")) {
+        openMealModal();
+      }
+    }
 
     let currentUserData = null;
     let isLoginSubmitting = false;
@@ -2893,7 +3208,7 @@
     function setLoginSubmitting(isSubmitting) {
       isLoginSubmitting = isSubmitting;
       submitLoginBtn.disabled = isSubmitting;
-      submitLoginBtn.textContent = isSubmitting ? "로그인 중..." : "로그인";
+      submitLoginBtn.textContent = isSubmitting ? t("loginSubmitting") : t("login");
       loginNameInput.disabled = isSubmitting;
       loginEmpNoInput.disabled = isSubmitting;
     }
@@ -2914,7 +3229,10 @@
         userChip.classList.remove("hidden");
         logoutBtn.classList.remove("hidden");
         openLoginBtn.classList.add("hidden");
-        userChipText.textContent = `${currentUserData.team} · ${currentUserData.name}님`;
+        /* 이름·팀명은 스프레드시트 원본 값을 그대로 표시(번역하지 않음). 영어 모드에서는 "님" 생략 */
+        userChipText.textContent = currentLang === "en"
+          ? `${currentUserData.team} · ${currentUserData.name}`
+          : `${currentUserData.team} · ${currentUserData.name}님`;
         closeLoginModal();
         return;
       }
@@ -2922,7 +3240,7 @@
       userChip.classList.add("hidden");
       logoutBtn.classList.add("hidden");
       openLoginBtn.classList.remove("hidden");
-      userChipText.textContent = "로그인됨";
+      userChipText.textContent = t("loggedIn");
     }
 
     function saveLoginUser(user) {
@@ -3011,7 +3329,7 @@
         if (Date.now() - lastActivity > LOGIN_EXPIRE_MS) {
           clearLoginData();
           updateLoginUI();
-          alert("로그인 세션이 만료되어 자동으로 로그아웃되었습니다. 다시 로그인해주세요.");
+          alert(t("sessionExpired"));
           return;
         }
 
@@ -3065,13 +3383,13 @@
 
       /* 13. 안내 */
       if (showMessage) {
-        alert("로그아웃되었습니다.");
+        alert(t("loggedOut"));
       }
     }
 
     function autoLogout() {
       logout(false);
-      alert("3시간 동안 사용 기록이 없어 자동 로그아웃되었습니다.");
+      alert(t("autoLoggedOut"));
     }
 
     function startAutoLogoutWatcher() {
@@ -3157,7 +3475,7 @@
       const empNo = loginEmpNoInput.value.trim();
 
       if (!name || !empNo) {
-        alert("이름과 사번을 입력해주세요.");
+        alert(t("enterNameEmp"));
         return;
       }
 
@@ -3170,7 +3488,9 @@
         const result = await jsonpRequest(url, "loginCallback", { retryOnNetworkError: true });
 
         if (!result.success) {
-          alert(result.message || "로그인에 실패했습니다.");
+          /* 영어 모드: 백엔드의 한국어 메시지 대신 일반 영어 안내를 표시(원본은 콘솔에 기록) */
+          if (result.message) console.error("로그인 실패 메시지:", result.message);
+          alert(currentLang === "en" ? t("loginFail") : (result.message || t("loginFail")));
           return;
         }
 
@@ -3179,7 +3499,8 @@
         runPendingAction();
       } catch (error) {
         console.error(error);
-        alert(error && error.message ? error.message : "로그인 중 오류가 발생했습니다.");
+        /* 영어 모드: 서버/네트워크 오류 원문 대신 일반 영어 안내 */
+        alert(currentLang === "en" ? t("loginError") : (error && error.message ? error.message : t("loginError")));
       } finally {
         /* 인증 API 완료 시점에 버튼/입력창 반드시 복구 */
         setLoginSubmitting(false);
@@ -3203,7 +3524,7 @@
       }
 
       if (shouldAlert) {
-        alert("로그인이 필요합니다. 로그인 후 선택한 메뉴가 자동으로 실행됩니다.");
+        alert(t("loginRequired"));
       }
     }
 
@@ -3602,21 +3923,19 @@
       const data = getMealLocalData();
       let short, detail;
       if (mealStatusSyncing && (!data || !data.responded)) {
-        short = "확인 중..."; detail = "서버에서 신청 상태 확인 중...";
+        short = t("checking"); detail = t("checkingDetail");
       } else if (!data || !data.responded) {
-        short = mealStatusError ? "확인 실패" : "미응답";
-        detail = mealStatusError ? "상태 조회 실패 — 새로고침 후 다시 확인해주세요." : "미응답";
+        short = mealStatusError ? t("checkFailed") : t("noResponse");
+        detail = mealStatusError ? t("checkFailedDetail") : t("noResponse");
       } else if (data.isAuto && !data.applying && !data.dinner) {
         /* 08:30 자동 미신청 처리 — 08:40 전이면 변경 가능 안내 */
-        short = "자동 미신청";
-        detail = isMealLocked()
-          ? "자동 미신청 처리됨 (변경 마감)"
-          : "자동 미신청 처리됨 · 오전 8시 40분까지 변경 가능";
+        short = t("autoNotRequested");
+        detail = isMealLocked() ? t("autoNotRequestedLocked") : t("autoNotRequestedOpen");
       } else {
-        short = data.applying ? "신청" : "미신청";
-        detail = data.applying ? "중식 신청" : "중식 미신청";
-        if (data.applying && data.guestCount > 0) detail += ` (외부 ${data.guestCount}명)`;
-        if (data.dinner) detail += ` + 석식${data.dinnerGuest > 0 ? ` (외부 ${data.dinnerGuest}명)` : ""}`;
+        short = data.applying ? t("requested") : t("notRequested");
+        detail = data.applying ? t("lunchRequested") : t("lunchNotRequested");
+        if (data.applying && data.guestCount > 0) detail += ` (${guestText(data.guestCount)})`;
+        if (data.dinner) detail += ` + ${t("dinnerRequested")}${data.dinnerGuest > 0 ? ` (${guestText(data.dinnerGuest)})` : ""}`;
       }
       const el1 = document.getElementById("homeMealMyStatus");
       const el2 = document.getElementById("mealMyStatusDetail");
@@ -3707,7 +4026,9 @@
       if (!modal) return;
 
       const descEl = document.getElementById("mealModalDateDesc");
-      if (descEl) descEl.textContent = getTodayStr() + " 식수 신청 (중식 + 석식)";
+      if (descEl) descEl.textContent = currentLang === "en"
+        ? `${getTodayStr()} Meal Request (Lunch + Dinner)`
+        : `${getTodayStr()} 식수 신청 (중식 + 석식)`;
 
       /* 08:40 이후 잠금 처리 (Apps Script submitMeal 잠금 기준과 동일) */
       const lockMsg  = document.getElementById("mealLockMsg");
@@ -3723,9 +4044,9 @@
         if (step2)   step2.classList.add("hidden");
         if (autoNotice) autoNotice.classList.add("hidden");
         const myStatus = data && data.responded
-          ? (data.applying ? "✓ 신청" : (data.isAuto ? "✗ 미신청 (자동 처리)" : "✗ 미신청"))
-          : "미응답 (미신청 처리)";
-        if (lockDetail) lockDetail.textContent = `오전 8시 40분 이후에는 당일 식수 신청을 변경할 수 없습니다.\n내 신청 상태: ${myStatus}`;
+          ? (data.applying ? t("lockStatusRequested") : (data.isAuto ? t("lockStatusNotRequestedAuto") : t("lockStatusNotRequested")))
+          : t("lockStatusNoResponse");
+        if (lockDetail) lockDetail.textContent = `${t("lockDetailPrefix")}\n${t("lockMyStatusLabel")}: ${myStatus}`;
         modal.classList.remove("hidden");
         modal.setAttribute("aria-hidden", "false");
         return;
@@ -3738,7 +4059,7 @@
       /* 08:30 자동 미신청 처리된 사용자 안내 — 08:40 전까지 변경 가능 */
       if (autoNotice) {
         if (data && data.responded && data.isAuto) {
-          autoNotice.textContent = "오전 8시 30분에 자동 미신청 처리되었습니다. 오전 8시 40분까지 변경할 수 있습니다.";
+          autoNotice.textContent = t("mealAutoNotice");
           autoNotice.classList.remove("hidden");
         } else {
           autoNotice.classList.add("hidden");
@@ -4302,7 +4623,7 @@
             const gcInput = document.getElementById("mealGuestCount");
             lunchGuest = parseInt((gcInput && gcInput.value) || "0", 10) || 0;
             if (lunchGuest <= 0) {
-              alert("중식 외부 손님 인원 수를 입력해주세요.");
+              alert(t("lunchGuestCountReq"));
               return;
             }
           }
@@ -4317,25 +4638,29 @@
           /* 1) 저장 버튼 비활성화 → 2) 서버 전송 → 3) success 확인 후에만 모달 닫기/저장 */
           submitBtn.disabled = true;
           const origLabel = submitBtn.textContent;
-          submitBtn.textContent = "저장 중...";
+          submitBtn.textContent = t("mealSaving");
 
           try {
             const result = await submitMealChoice(mealLunchApplying, lunchGuest, mealDinnerApplying, dinnerGuest, false);
 
             if (!result || !result.success) {
-              /* 실패: 모달과 입력 내용 유지, 구체적 오류 표시 */
-              alert(`식수 신청 저장에 실패했습니다.\n${(result && result.message) || "네트워크 상태를 확인 후 다시 시도해주세요."}`);
+              /* 실패: 모달과 입력 내용 유지. 영어 모드는 서버 원문 대신 일반 영어 안내(원문은 콘솔) */
+              if (result && result.message) console.error("식수 저장 실패 메시지:", result.message);
+              const detailMsg = currentLang === "en"
+                ? t("mealNetworkRetry")
+                : ((result && result.message) || t("mealNetworkRetry"));
+              alert(`${t("mealSaveFail")}\n${detailMsg}`);
               return;
             }
 
             closeMealModal();
             const lunchMsg = mealLunchApplying
-              ? `중식 신청${lunchGuest > 0 ? ` (외부 ${lunchGuest}명)` : ""}`
-              : "중식 미신청";
+              ? `${t("lunchRequested")}${lunchGuest > 0 ? ` (${guestText(lunchGuest)})` : ""}`
+              : t("lunchNotRequested");
             const dinnerMsg = mealDinnerApplying
-              ? ` · 석식 신청${dinnerGuest > 0 ? ` (외부 ${dinnerGuest}명)` : ""}`
+              ? ` · ${t("dinnerRequested")}${dinnerGuest > 0 ? ` (${guestText(dinnerGuest)})` : ""}`
               : "";
-            alert(`식수 신청 완료! ${lunchMsg}${dinnerMsg}`);
+            alert(`${t("mealComplete")} ${lunchMsg}${dinnerMsg}`);
           } finally {
             submitBtn.disabled = false;
             submitBtn.textContent = origLabel;
@@ -4372,11 +4697,11 @@
     function homeScreen() {
       const today = getTodayStr();
       const mealData = getMealLocalData();
-      let myMealStatus = "미응답";
+      let myMealStatus = t("noResponse");
       let myMealApplying = false;
       let myGuestCount = 0;
       if (mealData && mealData.responded) {
-        myMealStatus = mealData.applying ? "신청" : "미신청";
+        myMealStatus = mealData.applying ? t("requested") : t("notRequested");
         myMealApplying = mealData.applying;
         myGuestCount = mealData.guestCount || 0;
       }
@@ -4419,9 +4744,9 @@
 
           ${!currentUserData ? `
             <div class="callout warn-callout" style="margin-bottom:14px;">
-              로그인 전 상태입니다. 우측 상단 <strong>로그인</strong> 버튼을 눌러 로그인해주세요.
+              ${t("homeLoginNoticePrefix")}<strong>${t("login")}</strong>${t("homeLoginNoticeSuffix")}
               <div style="margin-top:10px;">
-                <button class="btn primary" type="button" data-action="open-login">로그인하기</button>
+                <button class="btn primary" type="button" data-action="open-login">${t("homeLoginBtn")}</button>
               </div>
             </div>
           ` : ""}
@@ -4432,9 +4757,9 @@
               <div class="home-stat-icon hsi-meal">🍱</div>
               <div class="home-stat-body">
                 <strong id="homeMealMyStatus">${myMealStatus}</strong>
-                <span>오늘 내 식수 신청</span>
+                <span>${t("mealMyToday")}</span>
               </div>
-              ${currentUserData ? `<button type="button" class="home-action-btn" data-action="open-meal">변경</button>` : ""}
+              ${currentUserData ? `<button type="button" class="home-action-btn" data-action="open-meal">${t("change")}</button>` : ""}
             </div>
             <div class="home-stat-card">
               <div class="home-stat-icon hsi-notice">🔔</div>
@@ -4459,38 +4784,38 @@
             <!-- 식수 현황 패널 -->
             <div class="panel" id="mealSection">
               <div class="panel-title-row">
-                <h3>오늘의 식수 신청 현황</h3>
+                <h3>${t("mealStatusTitle")}</h3>
                 <span id="mealTodayLabel">${today}</span>
               </div>
               <div class="meal-count-grid">
                 <div class="meal-count-item mci-applying">
                   <strong id="mealCountApplying">-</strong>
-                  <span>중식 신청</span>
+                  <span>${t("lunchRequested")}</span>
                 </div>
                 <div class="meal-count-item mci-not">
                   <strong id="mealCountNotApplying">-</strong>
-                  <span>중식 미신청</span>
+                  <span>${t("lunchNotRequested")}</span>
                 </div>
                 <div class="meal-count-item mci-pending">
                   <strong id="mealCountPending">-</strong>
-                  <span>미응답</span>
+                  <span>${t("noResponse")}</span>
                 </div>
               </div>
               <div style="margin-top:8px;font-size:12.5px;color:var(--muted);text-align:center;">
-                🌙 석식 신청 <strong id="mealCountDinner" style="color:#5b3da8;">-</strong>명
+                🌙 ${t("dinnerRequested")} <strong id="mealCountDinner" style="color:#5b3da8;">-</strong>${t("countUnit")}
               </div>
               <div class="meal-my-row">
                 <div>
-                  <span style="font-size:12px;color:var(--muted);">내 신청 상태</span>
-                  <strong id="mealMyStatusDetail" style="display:block;margin-top:2px;font-size:15px;">${myMealStatus}${myMealApplying && myGuestCount > 0 ? ` (외부 손님 ${myGuestCount}명)` : ""}</strong>
+                  <span style="font-size:12px;color:var(--muted);">${t("myRequestStatus")}</span>
+                  <strong id="mealMyStatusDetail" style="display:block;margin-top:2px;font-size:15px;word-break:keep-all;">${myMealStatus}${myMealApplying && myGuestCount > 0 ? ` (${guestText(myGuestCount)})` : ""}</strong>
                 </div>
                 ${currentUserData
-                  ? `<button type="button" class="home-action-btn" data-action="open-meal">신청 / 변경</button>`
-                  : `<span style="color:var(--muted);font-size:12px;">로그인 후 신청 가능</span>`
+                  ? `<button type="button" class="home-action-btn" data-action="open-meal">${t("requestChange")}</button>`
+                  : `<span style="color:var(--muted);font-size:12px;">${t("loginToRequest")}</span>`
                 }
               </div>
               <p style="margin:12px 0 0;font-size:12px;color:var(--muted);line-height:1.6;">
-                매일 자정 이후 식수 신청 팝업이 자동으로 표시됩니다. 미응답자는 오전 8시 30분 이후 중식·석식 미신청으로 자동 처리됩니다. 자동 미신청 처리 후에도 오전 8시 40분 전까지 변경할 수 있습니다. 오전 8시 40분부터 당일 신청 변경이 마감됩니다.
+                ${t("mealHomeInfo")}
               </p>
             </div>
 
@@ -7263,7 +7588,7 @@
             openMealModal();
           } else {
             openLoginFromScreen();
-            alert("식수 신청은 로그인 후 이용 가능합니다.");
+            alert(t("mealLoginRequired"));
           }
           return;
         }
@@ -7491,7 +7816,20 @@
       }, 60000);
     }
 
+    function bindLanguageEvents() {
+      const sw = document.getElementById("languageSwitch");
+      if (!sw) return;
+      sw.addEventListener("click", (event) => {
+        const btn = event.target.closest("button[data-language]");
+        if (!btn) return;
+        const lang = btn.dataset.language;
+        if (lang === currentLang) return;
+        applyLanguage(lang, true);
+      });
+    }
+
     function init() {
+      loadSavedLanguage();
       renderGeneratedPartMenus();
       registerGeneratedScreens();
       syncMenuExecutableBadges();
@@ -7503,6 +7841,7 @@
       bindModalEvents();
       bindMealModalEvents();
       bindRoomModalEvents();
+      bindLanguageEvents();
       syncLoginStateAcrossPages();
       startAutoLogoutWatcher();
       startDatetimeClock();
@@ -7529,6 +7868,14 @@
       }
 
       openScreen("home");
+
+      /* 홈 화면은 loadSavedLanguage 이후 렌더되어 이미 올바른 언어다.
+         여기서는 재렌더 없이 고정 DOM(로그인/식수 모달 등)만 현재 언어로 맞춘다. */
+      document.documentElement.lang = currentLang;
+      updateLanguageButtons();
+      applyStaticTranslations();
+      const initKoreanNote = document.getElementById("koreanOnlyNote");
+      if (initKoreanNote) initKoreanNote.classList.toggle("hidden", currentLang !== "en");
     }
 
     init();
