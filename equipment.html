@@ -739,7 +739,8 @@
   <script>
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwn9I60-14GHDQk_rNF_uJYBpig-Bovl7Qqje_eGGjcFmZJZfqQgtpUg6necytvlQQ-/exec";
     const LOGIN_STORAGE_KEY = "hak_login_user";
-    const LOGIN_EXPIRE_MINUTES = 30;
+    /* 무동작 만료 기준 — index.html 과 동일한 localStorage 키를 쓰므로 만료시간도 반드시 동일 */
+    const LOGIN_EXPIRE_MINUTES = 600;
     const LOGIN_EXPIRE_MS = LOGIN_EXPIRE_MINUTES * 60 * 1000;
 
     const EQUIPMENT_CODES = [
