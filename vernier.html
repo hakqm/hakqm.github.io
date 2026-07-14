@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>버니어 캘리퍼스 | HAK 계측기 운영 시스템</title>
+  <title>소음 계측기 | HAK 계측기 운영 시스템</title>
   <style>
     :root {
       --primary: #1f3a5f;
@@ -246,6 +246,29 @@
       background: #ffffff;
     }
 
+    .due-field-normal {
+      background: #ffffff;
+      border-color: var(--line-soft);
+    }
+
+    .due-field-warning {
+      background: #fff4e8;
+      border-color: #fdba74;
+    }
+
+    .due-field-danger {
+      background: #fef3f2;
+      border-color: #fda29b;
+    }
+
+    .due-text-warning {
+      color: #b54708;
+    }
+
+    .due-text-danger {
+      color: #b42318;
+    }
+
     .compact-label {
       display: block;
       margin-bottom: 4px;
@@ -436,30 +459,6 @@
 
     .login-btn-secondary:hover { background: #dfe7f1; }
 
-
-    .due-field-normal {
-      background: #ffffff;
-      border-color: var(--line-soft);
-    }
-
-    .due-field-warning {
-      background: #fff4e8;
-      border-color: #fdba74;
-    }
-
-    .due-field-danger {
-      background: #fef3f2;
-      border-color: #fda29b;
-    }
-
-    .due-text-warning {
-      color: #b54708;
-    }
-
-    .due-text-danger {
-      color: #b42318;
-    }
-
     @media (max-width: 640px) {
       .hero-top { align-items: stretch; }
       .item-actions { flex-direction: column; }
@@ -492,7 +491,7 @@
         </div>
       </div>
 
-      <h1 class="hero-title">버니어 캘리퍼스</h1>
+      <h1 class="hero-title">소음 계측기</h1>
       <p class="hero-desc">사용방법, 장비 상태, 검교정 자료, 불출·반납 기능을 확인할 수 있습니다.</p>
 
       <div class="top-actions">
@@ -504,13 +503,13 @@
   <main class="wrap">
     <section class="card">
       <h2 class="section-title">01. 장비 정보</h2>
-      <p class="sub">버니어 캘리퍼스 공용 사용 정보입니다.</p>
+      <p class="sub">사내 등록 장비 기준 공용 사용 정보입니다.</p>
       <div class="summary-box">
-        외측, 내측, 깊이 측정에 사용하는 대표 계측기입니다.
-        사용 전 영점과 측정면 상태를 확인해야 합니다.
+        소음 계측기는 작업장, 설비 주변, 시험 환경의 소음 수준을 측정할 때 사용하는 장비입니다.<br />
+        모델 정보: <strong>SVANTEK / 977</strong>
       </div>
       <div class="img-wrap">
-        <img src="Q-GH-vernier.jpg" alt="버니어 캘리퍼스 사진" class="guide-image" />
+        <img src="Q-GH-sound-level-meter.jpg" alt="소음 계측기 사진" class="guide-image" />
       </div>
     </section>
 
@@ -523,38 +522,38 @@
     <section class="card">
       <h2 class="section-title">03. 사용 전 확인사항</h2>
       <ol>
-        <li>측정면에 이물질이나 먼지가 없는지 확인합니다.</li>
-        <li>영점(0점)이 정확히 맞는지 확인합니다.</li>
-        <li>측정 대상을 과도하게 조이지 않도록 주의합니다.</li>
-        <li>측정 중 본체가 비틀리거나 기울어지지 않도록 합니다.</li>
-        <li>사용 후에는 측정면을 닦고 지정 위치에 보관합니다.</li>
+        <li>장비 외관, 마이크, 윈드스크린, 케이블 및 전원 상태에 이상이 없는지 확인합니다.</li>
+        <li>배터리 잔량 또는 충전 상태를 확인하고, 필요 시 측정 전 충분히 충전합니다.</li>
+        <li>측정 목적에 맞는 설정값(가중치, 응답속도, 측정범위)이 맞는지 확인합니다.</li>
+        <li>측정 위치 주변에 손 접촉, 바람, 충격, 불필요한 진동 등 측정값에 영향을 줄 요소가 없는지 확인합니다.</li>
+        <li>필요 시 교정기(calibrator)를 이용해 측정 전 음향 교정을 실시하고, 교정값이 정상인지 확인합니다.</li>
       </ol>
     </section>
 
     <section class="card">
       <h2 class="section-title">04. 사용 순서</h2>
       <ol>
-        <li>외측/내측 측정면과 본체 상태를 확인합니다.</li>
-        <li>캘리퍼스를 닫아 영점(0점)을 확인합니다.</li>
-        <li>측정 대상에 맞게 측정면을 위치시킵니다.</li>
-        <li>측정면이 대상물에 가볍게 닿도록 조절한 뒤 눈금을 읽습니다.</li>
-        <li>측정값을 기록하고 장비를 정리합니다.</li>
+        <li>전원을 켜고 측정 목적에 맞는 모드와 설정값을 선택합니다.</li>
+        <li>교정기를 연결해 측정 전 교정을 수행하고 정상 여부를 확인합니다.</li>
+        <li>측정 지점에 장비를 안정적으로 위치시키고 마이크 방향을 측정 조건에 맞게 맞춥니다.</li>
+        <li>주변 영향을 최소화한 상태에서 측정을 시작하고, 표시되는 소음값 또는 저장 데이터를 확인합니다.</li>
+        <li>측정 완료 후 결과를 기록하거나 저장한 뒤, 필요하면 측정 후 교정을 다시 확인합니다.</li>
       </ol>
     </section>
 
     <section class="card">
       <h2 class="section-title">05. 매뉴얼</h2>
       <p class="sub">매뉴얼 PDF를 바로 확인할 수 있습니다.</p>
-      <a class="action-btn" href="manual.pdf">매뉴얼 보기</a>
+      <a class="action-btn" href="manual_sound_level_meter.pdf">매뉴얼 보기</a>
     </section>
 
     <section class="card">
       <h2 class="section-title">06. 사용 영상</h2>
-      <p class="sub">장비 사용 영상을 확인할 수 있습니다.</p>
+      <p class="sub">현재 확인된 영상 기준으로 영어 Quick Start 영상을 우선 연결했습니다.</p>
       <div class="video">
         <iframe
-          src="https://www.youtube.com/embed/iTuMsyMcu9c"
-          title="버니어 캘리퍼스 사용 영상"
+          src="https://www.youtube.com/embed/pF7oPzfLevU"
+          title="SVANTEK 977 사용 영상"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowfullscreen>
         </iframe>
@@ -593,13 +592,14 @@
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwn9I60-14GHDQk_rNF_uJYBpig-Bovl7Qqje_eGGjcFmZJZfqQgtpUg6necytvlQQ-/exec";
 
     const EQUIPMENT_LIST = [
-      { no: 1, eq_code: "Q-GJ-002", eq_name: "버니어 캘리퍼스", spec: "300mm", due: "2027-03-12", file: "CC_Q-GJ-002.pdf" },
-      { no: 2, eq_code: "Q-GJ-007", eq_name: "버니어 캘리퍼스", spec: "300mm", due: "2026-11-14", file: "CC_Q-GJ-007.pdf" },
-      { no: 3, eq_code: "Q-GJ-016", eq_name: "버니어 캘리퍼스", spec: "600mm", due: "2026-12-12", file: "CC_Q-GJ-016.pdf" }
+      { no: 1, eq_code: "Q-GB-020", eq_name: "소음/진동 계측기", spec: "130dB", due: "2026-06-24", file: "CC_Q-GB-020.pdf" },
+      { no: 2, eq_code: "Q-GB-021", eq_name: "소음/진동 계측기", spec: "130dB", due: "2026-04-18", file: "CC_Q-GB-021.pdf" },
+      { no: 3, eq_code: "Q-GB-026", eq_name: "소음/진동 계측기", spec: "130dB", due: "2027-07-08", file: "CC_Q-GB-026.pdf" }
     ];
 
     const LOGIN_STORAGE_KEY = "hak_login_user";
-    const LOGIN_EXPIRE_MINUTES = 30;
+    /* 무동작 만료 기준 — index.html 과 동일한 localStorage 키를 쓰므로 만료시간도 반드시 동일 */
+    const LOGIN_EXPIRE_MINUTES = 600;
     const LOGIN_EXPIRE_MS = LOGIN_EXPIRE_MINUTES * 60 * 1000;
 
     let currentUserData = null;
