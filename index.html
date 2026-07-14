@@ -22,6 +22,7 @@
       --orange-soft: #fff4e8;
       --shadow: 0 10px 24px rgba(31, 41, 55, 0.08);
       --overlay: rgba(15, 23, 42, 0.52);
+      --topbar-h: 56px; /* 상단바 높이 — 모바일에서 축소(사이드바/오버레이 위치와 공유) */
     }
 
     * { box-sizing: border-box; }
@@ -39,7 +40,7 @@
 
     .app {
       display: grid;
-      grid-template-rows: 56px 1fr;
+      grid-template-rows: var(--topbar-h) 1fr;
       min-height: 100vh;
     }
 
@@ -145,6 +146,21 @@
 
     .top-btn-outline:hover {
       background: rgba(255,255,255,.18);
+    }
+
+    /* 상단 버튼 아이콘/라벨 — 데스크톱은 텍스트 라벨만 표시(아이콘 숨김) */
+    .top-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+    .top-btn .btn-icon { display: none; }
+    .top-btn .btn-icon svg { display: block; }
+
+    /* 사용자 칩: 팀명(uc-team) + 이름(uc-name) 분리. 데스크톱은 모두 표시 */
+    .user-chip .uc-name {
+      display: inline-block;
+      max-width: 240px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      vertical-align: bottom;
     }
 
     /* === 언어 전환 (한국어 | English) === */
@@ -1056,20 +1072,27 @@
     }
 
     @media (max-width: 640px) {
+      /* 모바일 상단바 높이 축소 (사이드바/오버레이 위치와 공유하는 변수) */
+      :root { --topbar-h: 54px; }
+
       .topbar {
-        padding: 0 12px;
+        padding: 0 10px;
       }
 
+      /* 상단바를 한 줄로 고정 — 로그아웃/로그인이 다음 줄로 밀리지 않게 함 */
+      .top-right {
+        gap: 6px;
+        flex-wrap: nowrap;
+      }
+      .topbar-left { gap: 8px; }
+
       .brand {
-        padding: 8px 10px;
+        padding: 7px 9px;
+        gap: 7px;
       }
 
       .brand-title {
         font-size: 13px;
-      }
-
-      .top-right {
-        gap: 8px;
       }
 
       .top-btn,
@@ -1079,6 +1102,20 @@
         font-size: 13px;
       }
 
+      /* 로그아웃은 모바일에서 아이콘만 표시(텍스트 숨김) */
+      #logoutBtn { padding: 8px 9px; }
+      #logoutBtn .btn-label { display: none; }
+      #logoutBtn .btn-icon { display: inline-flex; align-items: center; }
+
+      /* 사용자 칩: 팀명 숨기고 이름만, 이름은 말줄임 처리 */
+      .user-chip {
+        padding: 6px 10px;
+        min-height: 34px;
+        max-width: 130px;
+      }
+      .user-chip .uc-team { display: none; }
+      .user-chip .uc-name { max-width: 88px; }
+
       .language-switch button {
         padding: 6px 8px;
         font-size: 11.5px;
@@ -1086,8 +1123,9 @@
       .language-switch .lang-full { display: none; }
       .language-switch .lang-short { display: inline; }
 
+      /* Home 탭은 현재 화면 이름만 표시하는 라벨이라 모바일에서 숨겨 상단 공간 확보 */
       .tabs {
-        padding: 8px 10px 0;
+        display: none;
       }
 
       .workspace {
@@ -1139,6 +1177,16 @@
       .login-btn {
         width: 100%;
       }
+    }
+
+    /* 초소형 화면(≤380px) — 상단바 한 줄 유지를 위한 추가 축약 */
+    @media (max-width: 380px) {
+      .brand-logo { display: none; }        /* HQAA 텍스트는 유지, HQ 로고만 숨김 */
+      .brand { padding: 6px 8px; }
+      .top-right { gap: 5px; }
+      .user-chip { max-width: 96px; padding: 6px 8px; }
+      .user-chip .uc-name { max-width: 58px; }
+      .language-switch button { padding: 6px 7px; font-size: 11px; }
     }
 
     /* =========================
@@ -1880,11 +1928,12 @@
     }
 
     @media (max-width: 640px) {
-      .app { grid-template-rows: auto 1fr; }
-      .topbar { min-height: 58px; }
+      /* 상단바 높이는 --topbar-h(54px) 로 고정 — 한 줄 유지 */
+      .app { grid-template-rows: var(--topbar-h) 1fr; }
+      .topbar { min-height: var(--topbar-h); }
       .brand-kicker,
       .brand-badge { display: none; }
-      .brand-logo { width: 32px; height: 32px; }
+      .brand-logo { width: 30px; height: 30px; }
       .screen { border-radius: 20px; }
       .screen-head,
       .screen-body { padding-left: 16px; padding-right: 16px; }
@@ -2725,7 +2774,7 @@
     .mobile-menu-btn:hover { background: rgba(255,255,255,.18); }
     .mobile-menu-overlay {
       display: none;
-      position: fixed; inset: 56px 0 0 0;
+      position: fixed; inset: var(--topbar-h) 0 0 0;
       background: rgba(15,23,42,.45);
       z-index: 55;
     }
@@ -2736,7 +2785,7 @@
       /* 사이드바를 왼쪽에서 슬라이드되는 오버레이 메뉴로 전환 */
       .sidebar {
         position: fixed;
-        top: 56px; bottom: 0; left: 0;
+        top: var(--topbar-h); bottom: 0; left: 0;
         width: min(86vw, 340px);
         z-index: 60;
         transform: translateX(-105%);
@@ -2785,7 +2834,10 @@
           <span id="userChipText">로그인됨</span>
         </div>
         <button type="button" id="openLoginBtn" class="top-btn top-btn-primary" data-i18n="login">로그인</button>
-        <button type="button" id="logoutBtn" class="top-btn top-btn-outline hidden" data-i18n="logout">로그아웃</button>
+        <button type="button" id="logoutBtn" class="top-btn top-btn-outline hidden" aria-label="로그아웃" title="로그아웃" data-i18n-aria="logout" data-i18n-title="logout">
+          <span class="btn-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></span>
+          <span class="btn-label" data-i18n="logout">로그아웃</span>
+        </button>
       </div>
     </div>
 
@@ -3287,6 +3339,9 @@
       document.querySelectorAll("[data-i18n-aria]").forEach((el) => {
         el.setAttribute("aria-label", t(el.getAttribute("data-i18n-aria")));
       });
+      document.querySelectorAll("[data-i18n-title]").forEach((el) => {
+        el.setAttribute("title", t(el.getAttribute("data-i18n-title")));
+      });
     }
 
     /* 언어 전환 버튼 눌림 상태 갱신 */
@@ -3383,10 +3438,22 @@
         userChip.classList.remove("hidden");
         logoutBtn.classList.remove("hidden");
         openLoginBtn.classList.add("hidden");
-        /* 이름·팀명은 스프레드시트 원본 값을 그대로 표시(번역하지 않음). 영어 모드에서는 "님" 생략 */
-        userChipText.textContent = currentLang === "en"
-          ? `${currentUserData.team} · ${currentUserData.name}`
-          : `${currentUserData.team} · ${currentUserData.name}님`;
+        /* 이름·팀명은 스프레드시트 원본 값을 그대로 표시(번역하지 않음). 영어 모드에서는 "님" 생략.
+           팀명(uc-team)과 이름(uc-name)을 분리 렌더링해 모바일에서 팀명만 숨길 수 있게 한다. */
+        const teamText = currentUserData.team ? `${currentUserData.team} · ` : "";
+        const nameText = currentLang === "en" ? currentUserData.name : `${currentUserData.name}님`;
+        userChipText.textContent = "";
+        const teamSpan = document.createElement("span");
+        teamSpan.className = "uc-team";
+        teamSpan.textContent = teamText;
+        const nameSpan = document.createElement("span");
+        nameSpan.className = "uc-name";
+        nameSpan.textContent = nameText;
+        userChipText.append(teamSpan, nameSpan);
+        /* 축약(말줄임/팀명 숨김) 시에도 전체 정보를 title·aria-label 로 확인 가능 */
+        const fullLabel = `${teamText}${nameText}`;
+        userChip.setAttribute("title", fullLabel);
+        userChip.setAttribute("aria-label", fullLabel);
         closeLoginModal();
         return;
       }
