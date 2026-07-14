@@ -2570,6 +2570,37 @@
 
     /* === 회의실 예약 모달 === */
     .room-modal-card { max-width: 500px; }
+    /* 오버레이: 배경으로 스크롤 전파 차단 (내부 스크롤은 .modal-body 에서 처리) */
+    #roomModal { overscroll-behavior: contain; }
+    /* 회의실 모달 열림 동안 배경 스크롤 잠금 보강 (body 는 JS 에서 position:fixed 처리) */
+    html.room-modal-open, body.room-modal-open { overflow: hidden; }
+    /* 모달 카드: 화면 높이를 넘지 않도록 세로 flex + 내부 스크롤 구조 (100vh 폴백 → 100dvh) */
+    #roomModal .room-modal-card {
+      display: flex;
+      flex-direction: column;
+      width: min(100%, 500px);
+      max-height: calc(100vh - 36px);
+      max-height: calc(100dvh - 36px);
+      overflow: hidden;
+    }
+    /* 헤더: 항상 접근 가능하도록 고정, 본문 스크롤에 밀리지 않음 */
+    #roomModal .modal-head {
+      flex: 0 0 auto;
+      position: relative;
+      z-index: 3;
+      background: #fff;
+    }
+    /* 본문만 스크롤: 최상단·최하단에서 배경으로 스크롤이 전달되지 않게 contain */
+    #roomModal .modal-body {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
+      touch-action: pan-y;
+      padding: 18px 20px 0;
+    }
     .room-form { display: grid; gap: 12px; }
     .room-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .room-time-wrapper { position: relative; display: flex; align-items: center; }
@@ -2600,6 +2631,22 @@
       background: #f5f8ff; border: 1px solid #dce8f8;
       font-size: 12px; color: #53627a; line-height: 1.6;
     }
+    /* 하단 버튼: 본문 스크롤 영역 하단에 sticky 로 고정해 항상 접근 가능.
+       좌우 음수 마진으로 modal-body 패딩(20px)을 상쇄해 카드 폭 전체로 펼침 */
+    #roomModal .room-form-actions {
+      position: sticky;
+      bottom: 0;
+      z-index: 3;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin: 8px -20px 0;
+      padding: 12px 20px max(12px, env(safe-area-inset-bottom));
+      background: linear-gradient(to bottom, rgba(255,255,255,0.92), #ffffff 24%);
+      border-top: 1px solid #e9eef5;
+    }
+    #roomModal .room-form-actions .btn { min-height: 46px; }
+    /* 데스크톱 기본값(비 #roomModal 재사용 대비) */
     .room-form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 4px; }
 
     @media (max-width: 1280px) { .room-grid { grid-template-columns: repeat(3, 1fr); } }
@@ -2607,6 +2654,48 @@
     @media (max-width: 640px)  {
       .room-grid { grid-template-columns: 1fr; }
       .room-form-row { grid-template-columns: 1fr; }
+
+      /* === 회의실 모달 모바일 최적화 === */
+      /* 오버레이: safe-area 여백, 세로로 길 때 위에서부터 표시 */
+      #roomModal {
+        align-items: flex-start;
+        padding:
+          max(8px, env(safe-area-inset-top))
+          8px
+          max(8px, env(safe-area-inset-bottom));
+      }
+      #roomModal .room-modal-card {
+        width: 100%;
+        max-width: none;
+        max-height: calc(100vh - 16px);
+        max-height: calc(100dvh - 16px);
+        border-radius: 16px;
+      }
+      #roomModal .modal-head {
+        padding: 12px 14px;
+      }
+      #roomModal .modal-title { font-size: 19px; }
+      #roomModal .modal-desc { font-size: 12.5px; margin-top: 4px; }
+      /* X 버튼: 표시는 작아도 터치 영역은 최소 44px 확보 */
+      #roomModal .modal-close { width: 44px; height: 44px; font-size: 20px; }
+      #roomModal .modal-body { padding: 12px 14px 0; }
+      #roomModal .room-form { gap: 9px; }
+      #roomModal .room-form-row { grid-template-columns: 1fr; gap: 8px; }
+      #roomModal .room-form-group { gap: 3px; }
+      /* 입력 글자 16px → iOS Safari 자동 확대(zoom) 방지.
+         padding 은 건드리지 않아 시간 입력창의 우측 ⌄ 버튼 여백(36px)을 보존한다 */
+      #roomModal .room-form-input,
+      #roomModal .room-form-select,
+      #roomModal .room-form-textarea {
+        font-size: 16px;
+      }
+      #roomModal .room-form-textarea { min-height: 64px; }
+      #roomModal .room-form-note { padding: 8px 10px; font-size: 11.5px; }
+      #roomModal .room-form-actions {
+        margin: 8px -14px 0;
+        padding: 10px 14px max(10px, env(safe-area-inset-bottom));
+      }
+      #roomModal .room-form-actions .btn { min-height: 48px; }
     }
 
 </style>
@@ -4307,6 +4396,44 @@
       }
     }
 
+    /* =============================================
+       회의실 모달 배경 스크롤 잠금 (iOS Safari 대응 body fixed 방식)
+       - 열 때: 현재 스크롤 위치 저장 후 body 를 position:fixed 로 고정
+       - 닫을 때: 인라인 스타일 제거 + 저장된 위치로 정확히 복원
+       - 중복 호출에도 위치가 어긋나지 않도록 잠금 플래그로 방어
+    ============================================= */
+    let roomModalScrollY = 0;
+    let roomModalScrollLocked = false;
+
+    function lockRoomModalPageScroll() {
+      if (roomModalScrollLocked) return;
+      roomModalScrollY = window.scrollY || window.pageYOffset || 0;
+      roomModalScrollLocked = true;
+
+      document.documentElement.classList.add("room-modal-open");
+      document.body.classList.add("room-modal-open");
+      document.body.style.position = "fixed";
+      document.body.style.top = `-${roomModalScrollY}px`;
+      document.body.style.left = "0";
+      document.body.style.right = "0";
+      document.body.style.width = "100%";
+    }
+
+    function unlockRoomModalPageScroll() {
+      if (!roomModalScrollLocked) return;
+
+      document.documentElement.classList.remove("room-modal-open");
+      document.body.classList.remove("room-modal-open");
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.left = "";
+      document.body.style.right = "";
+      document.body.style.width = "";
+
+      window.scrollTo(0, roomModalScrollY);
+      roomModalScrollLocked = false;
+    }
+
     function openRoomModal(preselectedRoom, existingReservation) {
       const modal = document.getElementById("roomModal");
       if (!modal) return;
@@ -4360,9 +4487,22 @@
         };
       }
 
+      /* 배경 스크롤 잠금 후 모달 표시 */
+      lockRoomModalPageScroll();
       modal.classList.remove("hidden");
       modal.setAttribute("aria-hidden", "false");
-      setTimeout(() => { if (roomContent) roomContent.focus(); }, 50);
+      /* 본문은 항상 맨 위부터 보이도록 스크롤 초기화 */
+      const roomBody = modal.querySelector(".modal-body");
+      if (roomBody) roomBody.scrollTop = 0;
+
+      /* 모바일(좁은 화면/터치)에서는 자동 포커스로 키보드가 즉시 뜨지 않게 함.
+         데스크톱에서만 기존처럼 회의 내용 입력창에 포커스한다. */
+      const isMobileViewport =
+        window.matchMedia("(max-width: 640px)").matches ||
+        window.matchMedia("(pointer: coarse)").matches;
+      if (!isMobileViewport) {
+        setTimeout(() => { if (roomContent) roomContent.focus(); }, 50);
+      }
     }
 
     function closeRoomModal() {
@@ -4372,6 +4512,8 @@
         modal.classList.add("hidden");
         modal.setAttribute("aria-hidden", "true");
       }
+      /* 모든 종료 경로(X·취소·저장 성공·수정 성공·로그아웃)에서 배경 잠금 해제 */
+      unlockRoomModalPageScroll();
     }
 
     async function submitRoomReservation() {
@@ -4491,8 +4633,6 @@
       var rect = input.getBoundingClientRect();
       var menu = document.createElement('div');
       menu.className = 'room-time-menu';
-      menu.style.top  = (rect.bottom + 2) + 'px';
-      menu.style.left = rect.left + 'px';
       menu.innerHTML = ROOM_TIME_OPTIONS.map(function(t) {
         return '<button type="button" class="' + (t === cur ? 'rtm-active' : '') + '" data-t="' + t + '">' + t + '</button>';
       }).join('');
@@ -4503,7 +4643,38 @@
         input.value = btn.dataset.t;
         closeRoomTimeMenu();
       });
+
+      /* 화면 밖으로 잘리지 않도록 위치·최대높이 보정.
+         측정을 위해 먼저 숨긴 채 붙였다가 위치 계산 후 표시한다. */
+      menu.style.visibility = 'hidden';
       document.body.appendChild(menu);
+
+      var vpH = window.innerHeight || document.documentElement.clientHeight;
+      var vpW = document.documentElement.clientWidth || window.innerWidth;
+      var margin = 8;
+      var menuW = menu.offsetWidth || 110;
+
+      var spaceBelow = vpH - rect.bottom - margin;
+      var spaceAbove = rect.top - margin;
+      /* 아래 공간이 부족하고 위가 더 넓으면 입력창 위쪽에 표시 */
+      var placeAbove = spaceBelow < 140 && spaceAbove > spaceBelow;
+      var avail = placeAbove ? spaceAbove : spaceBelow;
+      var maxH = Math.max(120, Math.min(240, avail));
+      menu.style.maxHeight = maxH + 'px';
+
+      var menuH = menu.offsetHeight;
+      var top = placeAbove ? (rect.top - menuH - 2) : (rect.bottom + 2);
+      if (top + menuH > vpH - margin) top = vpH - margin - menuH;
+      if (top < margin) top = margin;
+
+      var left = rect.left;
+      if (left + menuW > vpW - margin) left = vpW - margin - menuW;
+      if (left < margin) left = margin;
+
+      menu.style.top = top + 'px';
+      menu.style.left = left + 'px';
+      menu.style.visibility = '';
+
       var active = menu.querySelector('.rtm-active');
       if (active) active.scrollIntoView({ block: 'nearest' });
       setTimeout(function() { document.addEventListener('mousedown', handleRoomTimeOutside); }, 0);
