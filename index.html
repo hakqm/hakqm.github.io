@@ -2382,7 +2382,7 @@
     /* === 홈 현황 스트립 === */
     .home-stat-strip {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(4, 1fr);
       gap: 14px;
       margin-bottom: 18px;
     }
@@ -2409,6 +2409,7 @@
     .hsi-meal { background: linear-gradient(135deg, #fff8ef, #fff); border: 1px solid #fcd9b8; }
     .hsi-notice { background: linear-gradient(135deg, #eaf3ff, #fff); border: 1px solid #cde4ff; }
     .hsi-schedule { background: linear-gradient(135deg, #eafaf4, #fff); border: 1px solid #bff0df; }
+    .hsi-room { background: linear-gradient(135deg, #eef0ff, #fff); border: 1px solid #d4d9fb; }
     .home-stat-body { flex: 1; min-width: 0; }
     .home-stat-body strong { display: block; font-size: 18px; color: #16284c; letter-spacing: -0.03em; line-height: 1.2; }
     .home-stat-body span { color: var(--muted); font-size: 12px; }
@@ -2470,7 +2471,7 @@
     .home-action-btn.hab-green:hover { background: #185e35; }
 
     @media (max-width: 900px) {
-      .home-stat-strip { grid-template-columns: repeat(3, 1fr); }
+      .home-stat-strip { grid-template-columns: repeat(2, 1fr); }
     }
     @media (max-width: 640px) {
       .topbar-datetime { display: none; }
@@ -2572,8 +2573,8 @@
     .room-modal-card { max-width: 500px; }
     /* 오버레이: 배경으로 스크롤 전파 차단 (내부 스크롤은 .modal-body 에서 처리) */
     #roomModal { overscroll-behavior: contain; }
-    /* 회의실 모달 열림 동안 배경 스크롤 잠금 보강 (body 는 JS 에서 position:fixed 처리) */
-    html.room-modal-open, body.room-modal-open { overflow: hidden; }
+    /* 배경 스크롤 잠금 보강 (body 는 JS 에서 position:fixed 처리) — 회의실 모달/모바일 메뉴 공용 */
+    html.page-scroll-locked, body.page-scroll-locked { overflow: hidden; }
     /* 모달 카드: 화면 높이를 넘지 않도록 세로 flex + 내부 스크롤 구조 (100vh 폴백 → 100dvh) */
     #roomModal .room-modal-card {
       display: flex;
@@ -2630,6 +2631,17 @@
       padding: 10px 12px; border-radius: 12px;
       background: #f5f8ff; border: 1px solid #dce8f8;
       font-size: 12px; color: #53627a; line-height: 1.6;
+    }
+    /* 회의시간 빠른 선택 버튼 */
+    .room-duration-quick { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+    .room-duration-quick button {
+      border: 1px solid #cfd9e5; background: #fff; color: #33445f;
+      border-radius: 10px; padding: 9px 4px; font-size: 12.5px; font-weight: 800;
+      cursor: pointer; white-space: nowrap; transition: .15s ease; line-height: 1.2;
+    }
+    .room-duration-quick button:hover { background: #eef5ff; border-color: #b9d7ff; }
+    .room-duration-quick button.rdq-active {
+      background: var(--navy); border-color: var(--navy); color: #fff;
     }
     /* 하단 버튼: 본문 스크롤 영역 하단에 sticky 로 고정해 항상 접근 가능.
        좌우 음수 마진으로 modal-body 패딩(20px)을 상쇄해 카드 폭 전체로 펼침 */
@@ -2698,20 +2710,63 @@
       #roomModal .room-form-actions .btn { min-height: 48px; }
     }
 
+    /* === 모바일 햄버거 메뉴 === */
+    .topbar-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+    .mobile-menu-btn {
+      display: none;
+      width: 40px; height: 40px;
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 10px;
+      background: rgba(255,255,255,.10);
+      color: #fff; font-size: 20px; line-height: 1;
+      cursor: pointer; flex-shrink: 0;
+      align-items: center; justify-content: center;
+    }
+    .mobile-menu-btn:hover { background: rgba(255,255,255,.18); }
+    .mobile-menu-overlay {
+      display: none;
+      position: fixed; inset: 56px 0 0 0;
+      background: rgba(15,23,42,.45);
+      z-index: 55;
+    }
+    .mobile-menu-overlay.visible { display: block; }
+
+    @media (max-width: 900px) {
+      .mobile-menu-btn { display: inline-flex; }
+      /* 사이드바를 왼쪽에서 슬라이드되는 오버레이 메뉴로 전환 */
+      .sidebar {
+        position: fixed;
+        top: 56px; bottom: 0; left: 0;
+        width: min(86vw, 340px);
+        z-index: 60;
+        transform: translateX(-105%);
+        transition: transform .22s ease;
+        overflow: hidden;
+        border-right: 1px solid #cdd5e2;
+        border-bottom: 0;
+        box-shadow: 0 14px 40px rgba(15,23,42,.28);
+      }
+      .sidebar.mobile-open { transform: translateX(0); }
+      .tree-wrap { overflow-y: auto; min-height: 0; }
+    }
+
 </style>
   <link rel="prefetch" href="schedule_manager.html" />
 </head>
 <body>
   <div class="app">
     <div class="topbar">
-      <a class="brand" href="https://hakqm.github.io/" title="메인으로 이동">
-        <span class="brand-logo" aria-hidden="true">HQ</span>
-        <span class="brand-copy">
-          <span class="brand-kicker">HI AIR KOREA</span>
-          <span class="brand-title">HQAA</span>
-        </span>
-        <span class="brand-badge">Portal</span>
-      </a>
+      <div class="topbar-left">
+        <button type="button" id="mobileMenuBtn" class="mobile-menu-btn" aria-label="메뉴 열기" aria-controls="portalSidebar" aria-expanded="false">☰</button>
+        <a class="brand" href="https://hakqm.github.io/" title="메인으로 이동">
+          <span class="brand-logo" aria-hidden="true">HQ</span>
+          <span class="brand-copy">
+            <span class="brand-kicker">HI AIR KOREA</span>
+            <span class="brand-title">HQAA</span>
+          </span>
+          <span class="brand-badge">Portal</span>
+        </a>
+      </div>
 
       <div class="top-right">
         <div class="topbar-datetime" title="오늘 날짜와 시간">
@@ -2735,7 +2790,8 @@
     </div>
 
     <div class="content">
-      <aside class="sidebar">
+      <div id="mobileMenuOverlay" class="mobile-menu-overlay" aria-hidden="true"></div>
+      <aside class="sidebar" id="portalSidebar">
         <div class="side-head">
           <div class="search-box">
             <div class="search-input-wrap">
@@ -2905,6 +2961,15 @@
             </div>
           </div>
           <div class="room-form-group">
+            <label class="room-form-label">회의시간 빠른 선택</label>
+            <div class="room-duration-quick" role="group" aria-label="회의시간 빠른 선택">
+              <button type="button" data-room-duration="30">30분</button>
+              <button type="button" data-room-duration="60">1시간</button>
+              <button type="button" data-room-duration="90">1시간 30분</button>
+              <button type="button" data-room-duration="120">2시간</button>
+            </div>
+          </div>
+          <div class="room-form-group">
             <label class="room-form-label">회의 내용/목적 *</label>
             <textarea id="roomContent" class="room-form-textarea" placeholder="회의 내용 또는 목적을 입력하세요." maxlength="200"></textarea>
           </div>
@@ -3010,8 +3075,8 @@
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwn9I60-14GHDQk_rNF_uJYBpig-Bovl7Qqje_eGGjcFmZJZfqQgtpUg6necytvlQQ-/exec";
     window.HAK_WEB_APP_URL = WEB_APP_URL;
     const LOGIN_STORAGE_KEY = "hak_login_user";
-    /* 무동작 기준 3시간 (schedule_manager.html 과 동일한 키·만료시간 사용) */
-    const LOGIN_EXPIRE_MINUTES = 180;
+    /* 무동작 만료 기준 600분 (schedule_manager.html 및 계측기 페이지와 동일한 키·만료시간 사용) */
+    const LOGIN_EXPIRE_MINUTES = 600;
     const LOGIN_EXPIRE_MS = LOGIN_EXPIRE_MINUTES * 60 * 1000;
 
     /* =============================================
@@ -3040,9 +3105,9 @@
         loginFail: "로그인에 실패했습니다.",
         loginError: "로그인 중 오류가 발생했습니다.",
         enterNameEmp: "이름과 사번을 입력해주세요.",
-        sessionExpired: "로그인 세션이 만료되어 자동으로 로그아웃되었습니다. 다시 로그인해주세요.",
+        sessionExpired: "일정 시간 동안 사용 기록이 없어 자동으로 로그아웃되었습니다. 다시 로그인해주세요.",
         loggedOut: "로그아웃되었습니다.",
-        autoLoggedOut: "3시간 동안 사용 기록이 없어 자동 로그아웃되었습니다.",
+        autoLoggedOut: "일정 시간 동안 사용 기록이 없어 자동으로 로그아웃되었습니다. 다시 로그인해주세요.",
         /* 로그인 전 홈 안내 */
         homeLoginNoticePrefix: "로그인 전 상태입니다. 우측 상단 ",
         homeLoginNoticeSuffix: " 버튼을 눌러 로그인해주세요.",
@@ -3121,9 +3186,9 @@
         loginFail: "Login failed. Please check your name and employee number.",
         loginError: "An error occurred while logging in.",
         enterNameEmp: "Please enter your name and employee number.",
-        sessionExpired: "Your login session has expired. Please log in again.",
+        sessionExpired: "You were logged out due to inactivity. Please log in again.",
         loggedOut: "You have been logged out.",
-        autoLoggedOut: "You have been automatically logged out after 3 hours of inactivity.",
+        autoLoggedOut: "You were logged out due to inactivity. Please log in again.",
         homeLoginNoticePrefix: "You are not logged in. Please select the ",
         homeLoginNoticeSuffix: " button at the top right.",
         homeLoginBtn: "Login",
@@ -3455,7 +3520,7 @@
       /* 5~7. 열려 있는 모달/팝오버/드롭다운 정리
          (일정 선택 상태는 iframe 화면이 홈으로 교체되면서 함께 초기화됨) */
       closeMealModal();
-      closeRoomModal();
+      closeRoomModal({ force: true });
       closeLoginModal();
       closeRoomTimeMenu();
       const histModal = document.getElementById("noticeHistModal");
@@ -4402,36 +4467,184 @@
        - 닫을 때: 인라인 스타일 제거 + 저장된 위치로 정확히 복원
        - 중복 호출에도 위치가 어긋나지 않도록 잠금 플래그로 방어
     ============================================= */
-    let roomModalScrollY = 0;
-    let roomModalScrollLocked = false;
+    /* 공용 배경 스크롤 잠금 — 회의실 모달과 모바일 메뉴가 동시에 써도 충돌하지 않도록
+       참조 카운트로 관리한다. 첫 잠금에서 위치 저장, 마지막 해제에서 위치 복원. */
+    let pageScrollLockY = 0;
+    let pageScrollLockCount = 0;
 
-    function lockRoomModalPageScroll() {
-      if (roomModalScrollLocked) return;
-      roomModalScrollY = window.scrollY || window.pageYOffset || 0;
-      roomModalScrollLocked = true;
-
-      document.documentElement.classList.add("room-modal-open");
-      document.body.classList.add("room-modal-open");
-      document.body.style.position = "fixed";
-      document.body.style.top = `-${roomModalScrollY}px`;
-      document.body.style.left = "0";
-      document.body.style.right = "0";
-      document.body.style.width = "100%";
+    function lockPageScroll() {
+      if (pageScrollLockCount === 0) {
+        pageScrollLockY = window.scrollY || window.pageYOffset || 0;
+        document.documentElement.classList.add("page-scroll-locked");
+        document.body.classList.add("page-scroll-locked");
+        document.body.style.position = "fixed";
+        document.body.style.top = `-${pageScrollLockY}px`;
+        document.body.style.left = "0";
+        document.body.style.right = "0";
+        document.body.style.width = "100%";
+      }
+      pageScrollLockCount++;
     }
 
-    function unlockRoomModalPageScroll() {
-      if (!roomModalScrollLocked) return;
+    function unlockPageScroll() {
+      if (pageScrollLockCount === 0) return;
+      pageScrollLockCount--;
+      if (pageScrollLockCount > 0) return;
 
-      document.documentElement.classList.remove("room-modal-open");
-      document.body.classList.remove("room-modal-open");
+      document.documentElement.classList.remove("page-scroll-locked");
+      document.body.classList.remove("page-scroll-locked");
       document.body.style.position = "";
       document.body.style.top = "";
       document.body.style.left = "";
       document.body.style.right = "";
       document.body.style.width = "";
+      window.scrollTo(0, pageScrollLockY);
+    }
 
-      window.scrollTo(0, roomModalScrollY);
+    /* 회의실 모달 잠금 — 공용 잠금에 위임(기존 함수명 유지). 이중 호출 방지 플래그 사용 */
+    let roomModalScrollLocked = false;
+    function lockRoomModalPageScroll() {
+      if (roomModalScrollLocked) return;
+      roomModalScrollLocked = true;
+      lockPageScroll();
+    }
+    function unlockRoomModalPageScroll() {
+      if (!roomModalScrollLocked) return;
       roomModalScrollLocked = false;
+      unlockPageScroll();
+    }
+
+    /* =============================================
+       회의실 예약 시간 계산 유틸 (업무시간 08:00~20:00 기준)
+    ============================================= */
+    const ROOM_OPEN_MIN  = 8 * 60;   // 08:00
+    const ROOM_CLOSE_MIN = 20 * 60;  // 20:00
+    const ROOM_DURATION_PRESETS = [30, 60, 90, 120];
+
+    function timeToMinutes(timeText) {
+      const m = /^(\d{1,2}):(\d{2})$/.exec(String(timeText || "").trim());
+      if (!m) return null;
+      const h = parseInt(m[1], 10);
+      const mi = parseInt(m[2], 10);
+      if (isNaN(h) || isNaN(mi) || h > 23 || mi > 59) return null;
+      return h * 60 + mi;
+    }
+
+    function minutesToTime(totalMinutes) {
+      let t = Math.round(Number(totalMinutes));
+      if (!isFinite(t)) t = 0;
+      t = ((t % 1440) + 1440) % 1440; /* 0~1439 정규화 */
+      const h = Math.floor(t / 60);
+      const mi = t % 60;
+      return String(h).padStart(2, "0") + ":" + String(mi).padStart(2, "0");
+    }
+
+    function ceilToNextThirtyMinutes(date) {
+      const d = date || new Date();
+      const mins = d.getHours() * 60 + d.getMinutes();
+      return Math.ceil(mins / 30) * 30;
+    }
+
+    /* 로컬 날짜 기준 다음 날 (UTC 변환으로 하루가 밀리지 않도록 로컬 생성자 사용) */
+    function nextLocalDateStr(dateStr) {
+      const parts = String(dateStr || getTodayStr()).split("-");
+      const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+      if (isNaN(d.getTime())) return getTodayStr();
+      d.setDate(d.getDate() + 1);
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const da = String(d.getDate()).padStart(2, "0");
+      return `${y}-${m}-${da}`;
+    }
+
+    /* 조회 날짜와 현재 시각에 따른 신규 예약 기본 기간 계산.
+       - 미래 날짜: 09:00~10:00
+       - 오늘: 현재 시각을 다음 30분으로 올림한 시각부터 1시간
+         · 08:00 이전 → 09:00~10:00
+         · 오늘 남은 시간에 1시간을 못 넣으면 다음 날 09:00~10:00 */
+    function getDefaultRoomReservationPeriod(viewDate) {
+      const today = getTodayStr();
+      const base = viewDate || today;
+
+      if (base > today) {
+        return { startDate: base, endDate: base, startTime: "09:00", endTime: "10:00" };
+      }
+
+      const now = new Date();
+      const nowMin = now.getHours() * 60 + now.getMinutes();
+      /* 업무 시작(08:00) 이전이면 09:00~10:00 */
+      if (nowMin < ROOM_OPEN_MIN) {
+        return { startDate: today, endDate: today, startTime: "09:00", endTime: "10:00" };
+      }
+      const startMin = ceilToNextThirtyMinutes(now);
+      if (startMin + 60 > ROOM_CLOSE_MIN) {
+        const next = nextLocalDateStr(today);
+        return { startDate: next, endDate: next, startTime: "09:00", endTime: "10:00" };
+      }
+      return {
+        startDate: today,
+        endDate: today,
+        startTime: minutesToTime(startMin),
+        endTime: minutesToTime(startMin + 60)
+      };
+    }
+
+    /* === 작성 중 닫기 확인용 폼 스냅샷 === */
+    let roomFormInitialSnapshot = "";
+
+    function getRoomFormSnapshot() {
+      const g = (id) => {
+        const el = document.getElementById(id);
+        return el ? String(el.value ?? "") : "";
+      };
+      return [
+        g("roomSelect"), g("roomDate"), g("roomEndDate"),
+        g("roomStartTime"), g("roomEndTime"),
+        g("roomContent"), g("roomManager"), g("roomEditId")
+      ].join("|");
+    }
+
+    function hasRoomFormChanged() {
+      if (!roomFormInitialSnapshot) return false;
+      return getRoomFormSnapshot() !== roomFormInitialSnapshot;
+    }
+
+    /* === 회의시간 빠른 선택 === */
+    /* 직접 시간/날짜를 바꾸면 현재 간격에 맞는 빠른 버튼만 활성 표시 */
+    function updateRoomDurationButtons() {
+      const startDate = document.getElementById("roomDate")?.value || "";
+      const endDate   = document.getElementById("roomEndDate")?.value || "";
+      const startMin  = timeToMinutes(document.getElementById("roomStartTime")?.value);
+      const endMin    = timeToMinutes(document.getElementById("roomEndTime")?.value);
+      let activeDur = null;
+      if (startDate && startDate === endDate && startMin != null && endMin != null && endMin > startMin) {
+        activeDur = endMin - startMin;
+      }
+      document.querySelectorAll("#roomModal [data-room-duration]").forEach(function (btn) {
+        const d = parseInt(btn.getAttribute("data-room-duration"), 10);
+        btn.classList.toggle("rdq-active", d === activeDur);
+      });
+    }
+
+    /* 빠른 버튼 클릭 — 시작 시간 + 선택 분 = 종료 시간, 종료 날짜는 시작 날짜와 동일 */
+    function applyRoomDuration(durationMin) {
+      const startEl   = document.getElementById("roomStartTime");
+      const endEl     = document.getElementById("roomEndTime");
+      const startDate = document.getElementById("roomDate");
+      const endDate   = document.getElementById("roomEndDate");
+      const startMin  = timeToMinutes(startEl && startEl.value);
+      if (startMin == null) {
+        alert("시작 시간을 먼저 입력해주세요.");
+        return;
+      }
+      const endMin = startMin + durationMin;
+      if (endMin > ROOM_CLOSE_MIN) {
+        alert("회의실 예약 종료 시간은 오후 8시를 넘을 수 없습니다.");
+        return;
+      }
+      if (endEl) endEl.value = minutesToTime(endMin);
+      if (startDate && endDate) endDate.value = startDate.value;
+      updateRoomDurationButtons();
     }
 
     function openRoomModal(preselectedRoom, existingReservation) {
@@ -4469,10 +4682,14 @@
         if (titleEl) titleEl.textContent = "🏢 회의실 예약";
         if (submitBtn) submitBtn.textContent = "예약하기";
         if (roomSelect) roomSelect.value = String(preselectedRoom || "1");
-        if (roomDate) roomDate.value = today;
-        if (roomEndDate) roomEndDate.value = today;
-        setRoomTime("roomStartTime", "09:00");
-        setRoomTime("roomEndTime",   "10:00");
+        /* 회의실 현황에서 조회 중인 날짜를 기본 예약 날짜로 사용(과거면 오늘로 보정) */
+        const selectedViewDate = document.getElementById("roomViewDate")?.value || today;
+        const baseDate = selectedViewDate >= today ? selectedViewDate : today;
+        const period = getDefaultRoomReservationPeriod(baseDate);
+        if (roomDate) roomDate.value = period.startDate;
+        if (roomEndDate) roomEndDate.value = period.endDate;
+        setRoomTime("roomStartTime", period.startTime);
+        setRoomTime("roomEndTime",   period.endTime);
         if (roomContent) roomContent.value = "";
         if (roomManager && currentUserData) roomManager.value = currentUserData.name || "";
         if (bookerNote && currentUserData) {
@@ -4484,8 +4701,13 @@
       if (roomDate && roomEndDate) {
         roomDate.onchange = () => {
           if (roomEndDate.value < roomDate.value) roomEndDate.value = roomDate.value;
+          updateRoomDurationButtons();
         };
       }
+
+      /* 빠른 선택 버튼 상태 동기화 + 초기 폼 스냅샷 저장(작성 중 닫기 확인용) */
+      updateRoomDurationButtons();
+      roomFormInitialSnapshot = getRoomFormSnapshot();
 
       /* 배경 스크롤 잠금 후 모달 표시 */
       lockRoomModalPageScroll();
@@ -4505,13 +4727,26 @@
       }
     }
 
-    function closeRoomModal() {
+    /* options.force === true 이면 확인 없이 강제로 닫는다.
+       (X·취소 버튼은 이벤트 객체가 인자로 넘어오므로 force 로 취급되지 않음 → 변경 시 확인) */
+    function closeRoomModal(options) {
+      const opts = (options && typeof options === "object" && !options.type) ? options : {};
+      const force = opts.force === true;
+
+      if (!force && hasRoomFormChanged()) {
+        if (!confirm("작성 중인 예약 내용이 있습니다.\n예약 작성을 취소하시겠습니까?")) {
+          return; /* 취소 → 모달 유지 */
+        }
+      }
+
       closeRoomTimeMenu();
       const modal = document.getElementById("roomModal");
       if (modal) {
         modal.classList.add("hidden");
         modal.setAttribute("aria-hidden", "true");
       }
+      /* 다음 열림 때 잘못된 확인이 뜨지 않도록 스냅샷 초기화 */
+      roomFormInitialSnapshot = "";
       /* 모든 종료 경로(X·취소·저장 성공·수정 성공·로그아웃)에서 배경 잠금 해제 */
       unlockRoomModalPageScroll();
     }
@@ -4573,7 +4808,7 @@
         }
 
         alert(result.message || (isEdit ? "예약이 수정되었습니다." : "예약이 완료되었습니다."));
-        closeRoomModal();
+        closeRoomModal({ force: true });
         const viewDate = document.getElementById("roomViewDate")?.value || getTodayStr();
         if (currentScreenKey === "home") setTimeout(() => loadRoomStatus(viewDate), 300);
       } catch (e) {
@@ -4642,6 +4877,8 @@
         e.preventDefault();
         input.value = btn.dataset.t;
         closeRoomTimeMenu();
+        /* 시간 선택 메뉴로 값이 바뀌어도 빠른 선택 버튼 상태 갱신 */
+        updateRoomDurationButtons();
       });
 
       /* 화면 밖으로 잘리지 않도록 위치·최대높이 보정.
@@ -4708,6 +4945,21 @@
           var input = document.getElementById(this.dataset.target);
           if (input) openRoomTimeMenu(input);
         });
+      });
+
+      /* 회의시간 빠른 선택 버튼 */
+      document.querySelectorAll("#roomModal [data-room-duration]").forEach(function(btn) {
+        btn.addEventListener("click", function() {
+          applyRoomDuration(parseInt(this.getAttribute("data-room-duration"), 10));
+        });
+      });
+
+      /* 시간·날짜 직접 변경 시 빠른 선택 버튼 상태 동기화 */
+      ["roomStartTime", "roomEndTime", "roomDate", "roomEndDate"].forEach(function(id) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.addEventListener("input", updateRoomDurationButtons);
+        el.addEventListener("change", updateRoomDurationButtons);
       });
     }
 
@@ -4946,6 +5198,14 @@
                 <span>검사/업무 스케줄</span>
               </div>
               <button type="button" class="home-action-btn hab-green" data-screen="schedule_manager_embed">열기</button>
+            </div>
+            <div class="home-stat-card">
+              <div class="home-stat-icon hsi-room">🏢</div>
+              <div class="home-stat-body">
+                <strong>회의실 예약</strong>
+                <span>현황 확인 및 예약</span>
+              </div>
+              <button type="button" class="home-action-btn" data-action="scroll-room">열기</button>
             </div>
           </div>
 
@@ -7688,6 +7948,69 @@
       filterMenu();
     }
 
+    /* =============================================
+       모바일 햄버거 메뉴 (≤900px)
+       - 배경 스크롤 잠금은 상단바가 사라지지 않도록 overflow:hidden 방식 사용
+         (회의실 모달의 body fixed 잠금과는 별개 메커니즘이라 서로 충돌하지 않음)
+    ============================================= */
+    function isMobileMenuMode() {
+      return window.matchMedia("(max-width: 900px)").matches;
+    }
+
+    function lockMenuBackgroundScroll() {
+      document.documentElement.style.overflow = "hidden";
+      document.body.style.overflow = "hidden";
+    }
+    function unlockMenuBackgroundScroll() {
+      /* 메뉴가 설정한 인라인 overflow 만 해제한다.
+         회의실 모달 잠금이 동시에 걸려 있어도 .page-scroll-locked 클래스가
+         overflow:hidden 을 그대로 유지하므로 잠금이 풀리지 않는다. */
+      document.documentElement.style.overflow = "";
+      document.body.style.overflow = "";
+    }
+
+    function openMobileMenu() {
+      const sidebar = document.getElementById("portalSidebar");
+      if (!sidebar || sidebar.classList.contains("mobile-open")) return;
+      const overlay = document.getElementById("mobileMenuOverlay");
+      const btn = document.getElementById("mobileMenuBtn");
+      sidebar.classList.add("mobile-open");
+      if (overlay) { overlay.classList.add("visible"); overlay.setAttribute("aria-hidden", "false"); }
+      if (btn) { btn.setAttribute("aria-expanded", "true"); btn.setAttribute("aria-label", "메뉴 닫기"); }
+      lockMenuBackgroundScroll();
+    }
+
+    function closeMobileMenu() {
+      const sidebar = document.getElementById("portalSidebar");
+      if (!sidebar || !sidebar.classList.contains("mobile-open")) return;
+      const overlay = document.getElementById("mobileMenuOverlay");
+      const btn = document.getElementById("mobileMenuBtn");
+      sidebar.classList.remove("mobile-open");
+      if (overlay) { overlay.classList.remove("visible"); overlay.setAttribute("aria-hidden", "true"); }
+      if (btn) { btn.setAttribute("aria-expanded", "false"); btn.setAttribute("aria-label", "메뉴 열기"); }
+      unlockMenuBackgroundScroll();
+    }
+
+    function toggleMobileMenu() {
+      const sidebar = document.getElementById("portalSidebar");
+      if (sidebar && sidebar.classList.contains("mobile-open")) closeMobileMenu();
+      else openMobileMenu();
+    }
+
+    function bindMobileMenuEvents() {
+      const btn = document.getElementById("mobileMenuBtn");
+      const overlay = document.getElementById("mobileMenuOverlay");
+      if (btn) btn.addEventListener("click", toggleMobileMenu);
+      if (overlay) overlay.addEventListener("click", closeMobileMenu);
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") closeMobileMenu();
+      });
+      /* 데스크톱 폭으로 커지면 모바일 열림 상태 초기화 */
+      window.addEventListener("resize", () => {
+        if (!isMobileMenuMode()) closeMobileMenu();
+      });
+    }
+
     function bindMenuEvents() {
       const treeWrap = document.querySelector(".tree-wrap");
       const homeButton = document.querySelector(".tree-home");
@@ -7696,6 +8019,7 @@
         homeButton.addEventListener("click", () => {
           resetMenuToInitialState();
           openScreen("home");
+          closeMobileMenu(); /* 홈 선택 시 모바일 메뉴 닫기 */
         });
       }
 
@@ -7704,6 +8028,8 @@
       treeWrap.addEventListener("click", (event) => {
         const link = event.target.closest(".tree-link");
         if (!link) return;
+
+        closeMobileMenu(); /* 메뉴 항목 선택 시 모바일 메뉴 닫기 */
 
         const { screen, url, sidebarAction } = link.dataset;
 
@@ -7771,6 +8097,13 @@
             openLoginFromScreen();
             alert("회의실 예약은 로그인 후 이용 가능합니다.");
           }
+          return;
+        }
+
+        if (actionButton.dataset.action === "scroll-room") {
+          /* 홈 회의실 바로가기 — 아래 회의실 현황 영역으로 스크롤(서버 요청 없음) */
+          const el = document.getElementById("roomSection");
+          if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
           return;
         }
 
@@ -8029,6 +8362,7 @@
       bindMealModalEvents();
       bindRoomModalEvents();
       bindLanguageEvents();
+      bindMobileMenuEvents();
       syncLoginStateAcrossPages();
       startAutoLogoutWatcher();
       startDatetimeClock();
