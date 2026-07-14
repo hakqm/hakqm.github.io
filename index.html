@@ -7632,13 +7632,32 @@
       });
     }
 
+    /* 로그아웃 클릭 핸들러 — 명시적 함수로 흐름을 분명히 한다.
+       첫 클릭이 다른 처리에 소비되지 않도록 기본 동작/버블링만 차단한다.
+       (stopImmediatePropagation 은 정상 기능을 막을 수 있어 사용하지 않음) */
+    function handleLogoutClick(event) {
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      logout();
+    }
+
+    /* 로그아웃 클릭 이벤트는 정확히 한 번만 등록 — 재초기화/재바인딩 시 중복 방지 */
+    function bindLogoutEventOnce() {
+      if (!logoutBtn || logoutBtn.dataset.logoutBound === "Y") return;
+      logoutBtn.dataset.logoutBound = "Y";
+      logoutBtn.addEventListener("click", handleLogoutClick);
+    }
+
     function bindModalEvents() {
       openLoginBtn.addEventListener("click", () => {
         pendingAction = null;
         openLoginModal();
       });
 
-      logoutBtn.addEventListener("click", () => logout());
+      /* 로그아웃은 중복 등록 방지 가드가 있는 전용 함수로 한 번만 바인딩 */
+      bindLogoutEventOnce();
 
       closeLoginBtn.addEventListener("click", () => {
         pendingAction = null;
@@ -7652,12 +7671,9 @@
 
       submitLoginBtn.addEventListener("click", login);
 
-      loginModal.addEventListener("click", (event) => {
-        if (event.target === loginModal) {
-          pendingAction = null;
-          closeLoginModal();
-        }
-      });
+      /* 로그인 모달은 ×·닫기·Escape·로그인 성공·로그아웃 정리로만 닫는다.
+         어두운 배경/카드 주변 클릭으로는 닫지 않아 pendingAction 을 보존한다.
+         (배경 클릭 닫기 이벤트는 의도적으로 등록하지 않음) */
 
       document.addEventListener("keydown", (event) => {
         const modalOpened = !loginModal.classList.contains("hidden");
