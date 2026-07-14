@@ -314,8 +314,9 @@
   const WEB_APP_URL = URL_PARAMS.get("api") || PARENT_URL || DEFAULT_WEB_APP_URL;
 
   const LOGIN_KEY = "hak_login_user";
-  /* 무동작 기준 3시간 — index.html 과 동일한 localStorage 키를 쓰므로 만료시간도 반드시 동일 */
-  const LOGIN_EXPIRE_MS = 3 * 60 * 60 * 1000;
+  /* 무동작 만료 기준 — index.html 과 동일한 localStorage 키를 쓰므로 만료시간도 반드시 동일 (600분) */
+  const LOGIN_EXPIRE_MINUTES = 600;
+  const LOGIN_EXPIRE_MS = LOGIN_EXPIRE_MINUTES * 60 * 1000;
   const LAST_INPUT_KEY = "hak_schedule_last_input";
   const CAT_CACHE_KEY = "hak_schedule_categories";
   const CAT_CACHE_TTL = 24 * 60 * 60 * 1000; // 24시간
