@@ -450,6 +450,48 @@
       content: none;
     }
 
+    /* 팀회의 전달사항 읽지 않은 글 배지 */
+    .menu-unread-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 18px;
+      height: 18px;
+      padding: 0 5px;
+      border-radius: 999px;
+      background: #c0392b;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 800;
+      flex-shrink: 0;
+      line-height: 1;
+    }
+    .menu-unread-badge.hidden { display: none; }
+
+    /* 홈 팀회의 전달사항 한 줄 안내 */
+    .home-meeting-notice {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      text-align: left;
+      border: 1px solid #cddcf7;
+      background: #eef4ff;
+      color: #24314f;
+      border-radius: 10px;
+      padding: 10px 14px;
+      margin-bottom: 14px;
+      font-size: 13.5px;
+      cursor: pointer;
+      transition: .15s ease;
+    }
+    .home-meeting-notice:hover { background: #e2ecfe; }
+    .home-meeting-notice .hmn-icon { font-size: 16px; flex-shrink: 0; }
+    .home-meeting-notice .hmn-text { flex: 1; min-width: 0; word-break: keep-all; line-height: 1.5; }
+    .home-meeting-notice .hmn-text b { color: #26386a; }
+    .home-meeting-notice .hmn-go { font-weight: 700; color: #26386a; flex-shrink: 0; }
+    .home-meeting-notice.hidden { display: none; }
+
     .tree-note {
       display: block;
       font-size: 11px;
@@ -2801,6 +2843,7 @@
 
 </style>
   <link rel="prefetch" href="schedule_manager.html" />
+  <link rel="prefetch" href="team_meeting.html" />
 </head>
 <body>
   <div class="app">
@@ -2869,6 +2912,7 @@
               <button type="button" class="tree-link common-schedule-link" data-screen="schedule_manager_embed" data-badge="none">📅 검사/업무 스케쥴 관리</button>
               <button type="button" class="tree-link" data-badge="none" data-sidebar-action="open-meal">🍱 식수 신청</button>
               <button type="button" class="tree-link" data-badge="none" data-sidebar-action="open-room-modal">🏢 회의실 예약</button>
+              <button type="button" class="tree-link" data-badge="none" data-screen="team_meeting_embed"><span>📋 팀회의 전달사항</span><span class="menu-unread-badge hidden" id="meetingMenuBadge">0</span></button>
             </div>
           </details>
 
@@ -3474,13 +3518,15 @@
       if (currentScreenKey === "home") refreshCurrentScreen();
       /* 식수 상태는 서버 기준으로 백그라운드 동기화 (로그인 완료 UI를 지연시키지 않음) */
       checkAndShowMealModal();
+      /* 팀회의 전달사항 읽지 않은 글 배지/안내 갱신 */
+      setTimeout(loadMeetingSummary, 300);
     }
 
     /* 저장된 세션에 필수 필드가 없을 때만 서버에서 사용자 정보 보완 (불필요한 재로그인 방지) */
     let userProfileRefreshRunning = false;
     async function refreshUserProfileIfNeeded() {
       if (!currentUserData || userProfileRefreshRunning) return;
-      const missingField = !currentUserData.user_id || !currentUserData.emp_no || currentUserData.part === undefined;
+      const missingField = !currentUserData.user_id || !currentUserData.emp_no || currentUserData.part === undefined || currentUserData.meeting_editor === undefined;
       if (!missingField) return;
       if (!currentUserData.name || !currentUserData.emp_no) return;
       userProfileRefreshRunning = true;
@@ -3597,6 +3643,9 @@
       loginNameInput.value = "";
       loginEmpNoInput.value = "";
       updateLoginUI();
+
+      /* 팀회의 배지/안내 숨김 */
+      applyMeetingSummaryUI(0, "");
 
       /* 10~12. 홈 화면으로 이동 — 이미 홈이면 중복 생성 없이 홈만 다시 렌더링
          (홈 메뉴 활성화와 탭 제목 변경은 openScreen 이 처리) */
@@ -3920,6 +3969,55 @@
         listEl.innerHTML = `<div class="notice-empty">Apps Script 연결을 확인해주세요.</div>`;
       } finally {
         noticeRequestRunning = false;
+      }
+    }
+
+    /* =========================================================
+       팀회의 전달사항 — 홈/메뉴용 경량 요약 (본문은 불러오지 않음)
+       - 메뉴 배지(읽지 않은 글 수) + 홈 한 줄 안내 갱신
+       - 알림(notices) 기능과 완전히 분리
+       ========================================================= */
+    let meetingSummaryRunning = false;
+    function applyMeetingSummaryUI(unread, latestTitle) {
+      const badge = document.getElementById("meetingMenuBadge");
+      if (badge) {
+        if (unread > 0) {
+          badge.textContent = unread > 99 ? "99+" : String(unread);
+          badge.classList.remove("hidden");
+        } else {
+          badge.classList.add("hidden");
+        }
+      }
+      const notice = document.getElementById("homeMeetingNotice");
+      const noticeText = document.getElementById("homeMeetingNoticeText");
+      if (notice && noticeText) {
+        if (unread > 0) {
+          noticeText.innerHTML = `새 팀회의 전달사항이 <b>${unread}건</b> 있습니다.`;
+          notice.classList.remove("hidden");
+        } else {
+          notice.classList.add("hidden");
+        }
+      }
+    }
+
+    async function loadMeetingSummary() {
+      if (!currentUserData) { applyMeetingSummaryUI(0, ""); return; }
+      if (meetingSummaryRunning) return;
+      meetingSummaryRunning = true;
+      try {
+        const params = [
+          "action=getMeetingSummary",
+          `user_id=${encodeURIComponent(currentUserData.user_id || "")}`,
+          `emp_no=${encodeURIComponent(currentUserData.emp_no || "")}`
+        ].join("&");
+        const result = await jsonpRequest(`${WEB_APP_URL}?${params}`, "meetingSummaryCallback");
+        if (result && result.success) {
+          applyMeetingSummaryUI(Number(result.unread_count) || 0, result.latest_title || "");
+        }
+      } catch (error) {
+        console.error("팀회의 요약 조회 오류:", error);
+      } finally {
+        meetingSummaryRunning = false;
       }
     }
 
@@ -5164,6 +5262,7 @@
         setTimeout(loadNotices, 0);
         setTimeout(loadMealSummary, 100);
         setTimeout(loadRoomStatus, 200);
+        setTimeout(loadMeetingSummary, 250);
         updateHomeMealStatus();
 
         const roomViewDateInput = document.getElementById("roomViewDate");
@@ -5240,6 +5339,13 @@
               </div>
             </div>
           ` : ""}
+
+          <!-- 팀회의 전달사항 읽지 않은 글 한 줄 안내 (읽지 않은 글이 있을 때만 표시) -->
+          <button type="button" class="home-meeting-notice hidden" id="homeMeetingNotice" data-screen="team_meeting_embed">
+            <span class="hmn-icon">📋</span>
+            <span class="hmn-text" id="homeMeetingNoticeText"></span>
+            <span class="hmn-go">확인 →</span>
+          </button>
 
           <!-- 빠른 현황 스트립 -->
           <div class="home-stat-strip">
@@ -5546,6 +5652,32 @@
             <iframe
               class="embedded-page-frame"
               src="schedule_manager.html?api=${encodeURIComponent(WEB_APP_URL)}&v=20260622-4"
+              title="${titleText}"
+              loading="eager"
+              onload="resizePortalFrame(this)">
+            </iframe>
+          </div>
+        </div>
+      `;
+    }
+
+    function teamMeetingEmbedScreen(titleText) {
+      return `
+        <div class="screen-head">
+          <div class="screen-head-bar">
+            <div class="screen-head-main">
+              <h1>${titleText}</h1>
+            </div>
+            <div class="screen-head-actions">
+              <a class="btn primary" href="team_meeting.html?api=${encodeURIComponent(WEB_APP_URL)}&v=20260715-1" target="_blank" rel="noopener noreferrer">새 창으로 열기</a>
+            </div>
+          </div>
+        </div>
+        <div class="screen-body">
+          <div class="embedded-page-card">
+            <iframe
+              class="embedded-page-frame"
+              src="team_meeting.html?api=${encodeURIComponent(WEB_APP_URL)}&v=20260715-1"
               title="${titleText}"
               loading="eager"
               onload="resizePortalFrame(this)">
@@ -6923,6 +7055,7 @@
 
     const EXECUTABLE_SCREEN_KEYS = new Set([
       "schedule_manager_embed",
+      "team_meeting_embed",
       "qa_equipment_checkout_embed",
       "qa_equipment_return_embed",
       "hvac_004_2",
@@ -6955,7 +7088,8 @@
     }
 
     function shouldHideMenuBadge(screenKey) {
-      return screenKey === "qa_overview" || /_overview$/.test(String(screenKey || ""));
+      /* team_meeting_embed 는 '실행' 라벨 대신 읽지 않은 글 숫자 배지를 사용하므로 ::after 배지를 숨긴다 */
+      return screenKey === "qa_overview" || screenKey === "team_meeting_embed" || /_overview$/.test(String(screenKey || ""));
     }
 
     function syncMenuExecutableBadges() {
@@ -7252,6 +7386,11 @@
       schedule_manager_embed: {
         tab: "공용 업무 > 검사/업무 스케쥴 관리",
         html: () => scheduleManagerEmbedScreen("공용 업무 / 검사·업무 스케쥴 관리")
+      },
+
+      team_meeting_embed: {
+        tab: "공용 업무 > 팀회의 전달사항",
+        html: () => teamMeetingEmbedScreen("공용 업무 / 팀회의 전달사항")
       },
 
       qa_overview: {
@@ -7911,6 +8050,14 @@
 
       const height = Math.max(980, Number(data.height) || 0);
       frame.style.height = height + "px";
+    });
+
+    /* team_meeting.html(iframe)에서 읽음/게시 변화를 알리면 배지·홈 안내 갱신 */
+    window.addEventListener("message", function(event) {
+      const data = event.data || {};
+      if (data.type === "hak-meeting-read") {
+        loadMeetingSummary();
+      }
     });
 
 
