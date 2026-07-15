@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>팀회의 전달사항</title>
+  <style>
+    :root{
+      --navy:#344a8c; --navy-dark:#26386a; --line:#d8dce5; --bg:#eef1f6;
+      --card:#ffffff; --muted:#6b7280; --text:#24314f;
+      --green:#1e7b44; --green-dark:#185e35; --red:#c0392b; --amber:#b7791f;
+      --radius:12px;
+    }
+    *{box-sizing:border-box;}
+    html,body{margin:0;padding:0;}
+    body{
+      font-family:"Malgun Gothic","맑은 고딕",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+      background:var(--bg); color:var(--text); font-size:14px; line-height:1.6;
+      -webkit-text-size-adjust:100%;
+    }
+    .wrap{max-width:1000px;margin:0 auto;padding:16px 14px 60px;}
+
+    /* 상단바 */
+    .topbar{
+      display:flex;align-items:center;justify-content:space-between;gap:10px;
+      margin-bottom:14px;flex-wrap:wrap;
+    }
+    .topbar h1{font-size:18px;margin:0;color:var(--navy-dark);display:flex;align-items:center;gap:8px;}
+    .topbar .who{font-size:12.5px;color:var(--muted);}
+    .topbar .who strong{color:var(--navy-dark);}
+
+    /* 버튼 */
+    .btn{
+      display:inline-flex;align-items:center;justify-content:center;gap:6px;
+      border:1px solid var(--line);background:#fff;color:var(--text);
+      padding:8px 14px;border-radius:10px;font-size:13px;font-weight:600;
+      cursor:pointer;transition:.15s ease;white-space:nowrap;text-decoration:none;
+    }
+    .btn:hover{background:#f4f6fb;}
+    .btn.primary{background:var(--navy);border-color:var(--navy);color:#fff;}
+    .btn.primary:hover{background:var(--navy-dark);}
+    .btn.green{background:var(--green);border-color:var(--green);color:#fff;}
+    .btn.green:hover{background:var(--green-dark);}
+    .btn.danger{background:#fff;border-color:#e6b3ad;color:var(--red);}
+    .btn.danger:hover{background:#fdecea;}
+    .btn.sm{padding:5px 10px;font-size:12px;border-radius:8px;}
+    .btn:disabled{opacity:.55;cursor:not-allowed;}
+
+    /* 카드 */
+    .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px;}
+
+    /* 목록 툴바 */
+    .filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;}
+    .chip{
+      border:1px solid var(--line);background:#fff;color:var(--text);
+      padding:6px 12px;border-radius:999px;font-size:12.5px;font-weight:600;cursor:pointer;
+    }
+    .chip.active{background:var(--navy);border-color:var(--navy);color:#fff;}
+    .search-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;align-items:center;}
+    .search-row input,.search-row select{
+      border:1px solid var(--line);border-radius:9px;padding:8px 10px;font-size:13px;background:#fff;color:var(--text);
+    }
+    .search-row input[type="text"]{flex:1;min-width:150px;}
+    .search-row input[type="date"]{min-width:0;}
+
+    /* 게시물 리스트 */
+    .post-list{display:flex;flex-direction:column;gap:10px;}
+    .post-item{
+      background:#fff;border:1px solid var(--line);border-radius:var(--radius);
+      padding:14px 15px;cursor:pointer;transition:.15s ease;
+    }
+    .post-item:hover{border-color:var(--navy);box-shadow:0 2px 10px rgba(38,56,106,.08);}
+    .post-item .pi-top{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:5px;}
+    .post-item .pi-title{font-size:15px;font-weight:700;color:var(--navy-dark);word-break:break-word;flex:1;min-width:0;}
+    .post-item .pi-meta{font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:4px;}
+    .post-item .pi-preview{font-size:12.5px;color:#5b6472;margin-top:6px;
+      display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+    .tag{font-size:10.5px;font-weight:800;padding:2px 7px;border-radius:999px;line-height:1.4;white-space:nowrap;}
+    .tag.new{background:#e7f7ee;color:var(--green);border:1px solid #b6e6c8;}
+    .tag.important{background:#fdeceb;color:var(--red);border:1px solid #f3c4bf;}
+    .tag.draft{background:#eef1f6;color:var(--muted);border:1px solid var(--line);}
+    .tag.unpub{background:#fff5e6;color:var(--amber);border:1px solid #f0d9a8;}
+    .tag.type{background:#eaf1ff;color:var(--navy);border:1px solid #cddcf7;}
+
+    /* 상세 */
+    .detail-head{border-bottom:2px solid var(--line);padding-bottom:12px;margin-bottom:14px;}
+    .detail-head h2{margin:0 0 8px;font-size:20px;color:var(--navy-dark);word-break:break-word;}
+    .detail-meta{font-size:12.5px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 14px;}
+    .body-block{margin-top:18px;}
+    .body-block h3{
+      font-size:14px;color:#fff;background:var(--navy);display:inline-block;
+      padding:5px 12px;border-radius:8px;margin:0 0 10px;
+    }
+    .body-text{
+      white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;
+      font-size:14.5px;line-height:1.85;color:#2c3648;
+      background:#fbfcfe;border:1px solid var(--line);border-radius:10px;padding:14px 16px;
+    }
+    .detail-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px;padding-top:14px;border-top:1px solid var(--line);}
+
+    /* 편집기 */
+    .form-row{margin-bottom:14px;}
+    .form-row label{display:block;font-size:12.5px;font-weight:700;color:var(--navy-dark);margin-bottom:5px;}
+    .form-row input[type="text"],.form-row input[type="date"],.form-row textarea,.form-row input[list]{
+      width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:14px;
+      background:#fff;color:var(--text);font-family:inherit;
+    }
+    .form-row textarea{min-height:180px;resize:vertical;line-height:1.8;white-space:pre-wrap;}
+    .form-grid{display:flex;gap:12px;flex-wrap:wrap;}
+    .form-grid > .form-row{flex:1;min-width:150px;}
+    .check-row{display:flex;align-items:center;gap:8px;font-size:13px;}
+    .check-row input{width:16px;height:16px;}
+    .editor-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;position:sticky;bottom:0;
+      background:var(--card);padding-top:12px;border-top:1px solid var(--line);}
+    .hint{font-size:11.5px;color:var(--muted);margin-top:4px;line-height:1.5;}
+
+    /* 상태/빈 화면 */
+    .state-msg{text-align:center;color:var(--muted);padding:30px 10px;font-size:13.5px;}
+    .load-more-wrap{text-align:center;margin-top:14px;}
+    .toast{
+      position:fixed;left:50%;bottom:24px;transform:translateX(-50%);
+      background:#26386a;color:#fff;padding:10px 18px;border-radius:999px;font-size:13px;
+      box-shadow:0 6px 20px rgba(0,0,0,.2);z-index:9999;opacity:0;pointer-events:none;transition:.25s;
+    }
+    .toast.show{opacity:1;}
+    .toast.err{background:var(--red);}
+
+    /* 모달 */
+    .modal-overlay{
+      position:fixed;inset:0;background:rgba(20,28,48,.55);display:none;
+      align-items:flex-start;justify-content:center;z-index:1000;padding:24px 12px;overflow-y:auto;
+    }
+    .modal-overlay.show{display:flex;}
+    .modal{
+      background:#fff;border-radius:14px;max-width:760px;width:100%;padding:20px;
+      max-height:calc(100vh - 48px);overflow-y:auto;
+    }
+    .modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+    .modal-head h3{margin:0;font-size:16px;color:var(--navy-dark);}
+    .modal-close{border:0;background:transparent;font-size:22px;cursor:pointer;color:var(--muted);line-height:1;}
+
+    /* 읽음현황 */
+    .read-stat{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;}
+    .read-stat .rs-box{flex:1;min-width:90px;background:#f6f8fc;border:1px solid var(--line);border-radius:10px;padding:12px;text-align:center;}
+    .read-stat .rs-box strong{display:block;font-size:22px;color:var(--navy-dark);}
+    .read-stat .rs-box span{font-size:11.5px;color:var(--muted);}
+    .unread-list{display:flex;flex-wrap:wrap;gap:6px;}
+    .unread-list .u{background:#fdeceb;border:1px solid #f3c4bf;color:#8a2a20;border-radius:8px;padding:4px 9px;font-size:12px;}
+
+    /* 이력 */
+    .hist-item{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:8px;font-size:12.5px;}
+    .hist-item .ha{font-weight:800;color:var(--navy);}
+    .hist-item .hm{color:var(--muted);}
+
+    @media (max-width:640px){
+      .wrap{padding:12px 10px 60px;}
+      .topbar h1{font-size:16px;}
+      .detail-head h2{font-size:17px;}
+      .btn{padding:8px 11px;}
+      .editor-actions .btn,.detail-actions .btn{flex:1;min-width:calc(50% - 8px);}
+    }
+
+    @media print{
+      body{background:#fff;}
+      .topbar,.filters,.search-row,.detail-actions,.editor-actions,.toast,.modal-overlay,#backBar{display:none !important;}
+      .card{border:0;padding:0;}
+      .body-text{border:0;background:#fff;padding:0;}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <h1>📋 팀회의 전달사항</h1>
+      <div class="who" id="whoBox">—</div>
+    </div>
+    <div id="app"></div>
+  </div>
+
+  <!-- 미리보기 모달 -->
+  <div class="modal-overlay" id="previewModal">
+    <div class="modal">
+      <div class="modal-head"><h3>미리보기 (사용자에게 보이는 형태)</h3><button class="modal-close" data-close="previewModal">×</button></div>
+      <div id="previewBody"></div>
+      <div style="text-align:right;margin-top:14px;"><button class="btn" data-close="previewModal">닫기</button></div>
+    </div>
+  </div>
+
+  <!-- 이전 글 불러오기 모달 -->
+  <div class="modal-overlay" id="loadPrevModal">
+    <div class="modal">
+      <div class="modal-head"><h3>이전 글 불러오기</h3><button class="modal-close" data-close="loadPrevModal">×</button></div>
+      <p class="hint">과거 게시물의 회의 전달 내용 · 팀장 전달사항 구조를 복사해 <b>새 글</b>로 작성합니다. 원본은 변경되지 않습니다.</p>
+      <div id="loadPrevList" class="post-list" style="margin-top:10px;"></div>
+    </div>
+  </div>
+
+  <!-- 이력 모달 -->
+  <div class="modal-overlay" id="historyModal">
+    <div class="modal">
+      <div class="modal-head"><h3>수정 이력</h3><button class="modal-close" data-close="historyModal">×</button></div>
+      <div id="historyBody"></div>
+    </div>
+  </div>
+
+  <!-- 읽음현황 모달 -->
+  <div class="modal-overlay" id="readModal">
+    <div class="modal">
+      <div class="modal-head"><h3>읽음 현황</h3><button class="modal-close" data-close="readModal">×</button></div>
+      <div id="readBody"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ───────── 설정 · 로그인 공유 ───────── */
+  const DEFAULT_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwn9I60-14GHDQk_rNF_uJYBpig-Bovl7Qqje_eGGjcFmZJZfqQgtpUg6necytvlQQ-/exec";
+  const URL_PARAMS = new URLSearchParams(window.location.search);
+  const PARENT_URL = (()=>{ try{ return window.parent && window.parent.HAK_WEB_APP_URL || ""; }catch(e){ return ""; } })();
+  const WEB_APP_URL = URL_PARAMS.get("api") || PARENT_URL || DEFAULT_WEB_APP_URL;
+
+  const LOGIN_KEY = "hak_login_user";              /* index.html 및 다른 모듈과 동일 키 (같은 도메인 공유) */
+  const LOGIN_EXPIRE_MINUTES = 600;
+  const LOGIN_EXPIRE_MS = LOGIN_EXPIRE_MINUTES*60*1000;
+  const DRAFT_KEY = "hak_meeting_editor_draft";    /* 브라우저 임시 자동보관 (스프레드시트 정식 임시저장과 별개) */
+
+  const MEETING_TYPES = ["전체 팀장 회의","사장님 전달사항","월간 회의","주간 회의","기타"];
+
+  const state = {
+    user:null,
+    view:"list",
+    list:{ filter:"all", q:"", type:"", dateFrom:"", dateTo:"", offset:0, limit:15, posts:[], total:0, hasMore:false, loading:false },
+    detail:null,
+    editor:null,
+    busy:false
+  };
+
+  const app = document.getElementById("app");
+  const whoBox = document.getElementById("whoBox");
+
+  /* ───────── 인증 ───────── */
+  function loadUser(){
+    try{
+      const raw = localStorage.getItem(LOGIN_KEY);
+      if(!raw) return null;
+      const p = JSON.parse(raw);
+      if(!p.user || !p.lastActivity) return null;
+      if(Date.now()-p.lastActivity > LOGIN_EXPIRE_MS){ localStorage.removeItem(LOGIN_KEY); return null; }
+      p.lastActivity = Date.now();
+      localStorage.setItem(LOGIN_KEY, JSON.stringify(p));
+      return p.user;
+    }catch(e){ return null; }
+  }
+  let lastTouch=0;
+  function touchActivity(){
+    if(!state.user) return;
+    const now=Date.now(); if(now-lastTouch<20000) return; lastTouch=now;
+    try{ const raw=localStorage.getItem(LOGIN_KEY); if(!raw) return;
+      const p=JSON.parse(raw); p.lastActivity=now; localStorage.setItem(LOGIN_KEY,JSON.stringify(p)); }catch(e){}
+  }
+  ["click","keydown","touchstart","input","change","scroll"].forEach(ev=>
+    document.addEventListener(ev,touchActivity,{passive:true,capture:true}));
+
+  function isEditor(){ const u=state.user; if(!u) return false;
+    return String(u.role||"").toLowerCase()==="admin" || String(u.meeting_editor||"").toUpperCase()==="Y"; }
+  function isAdmin(){ const u=state.user; return u && String(u.role||"").toLowerCase()==="admin"; }
+  function userParams(){ const u=state.user||{};
+    return { user_id:u.user_id||"", user_name:u.name||"", emp_no:u.emp_no||"" }; }
+
+  /* ───────── JSONP ───────── */
+  function jsonp(action, params){
+    params = params||{};
+    return new Promise((resolve,reject)=>{
+      const cb = "hakMtg_"+Date.now()+"_"+Math.random().toString(36).slice(2);
+      const q = new URLSearchParams({ action, callback:cb });
+      Object.keys(params).forEach(k=>{ if(params[k]!=null && params[k]!=="") q.append(k,params[k]); });
+      const el = document.createElement("script");
+      const timer = setTimeout(()=>{ cleanup(); reject(new Error("서버 응답이 지연되고 있습니다. 다시 시도해주세요.")); }, 15000);
+      function cleanup(){
+        clearTimeout(timer);
+        window[cb]=function(){ try{ delete window[cb]; }catch(_){} };
+        setTimeout(()=>{ try{ delete window[cb]; }catch(_){} },30000);
+        el.remove();
+      }
+      window[cb]=d=>{ cleanup(); resolve(d); };
+      el.onerror=()=>{ cleanup(); reject(new Error("서버 연결에 실패했습니다.")); };
+      el.src = WEB_APP_URL+"?"+q.toString();
+      document.body.appendChild(el);
+    });
+  }
+
+  /* ───────── 유틸 ───────── */
+  function esc(v){ return String(v==null?"":v)
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;"); }
+  function todayStr(){ const d=new Date(); const p=n=>String(n).padStart(2,"0");
+    return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate()); }
+  let toastTimer=null;
+  function toast(msg, isErr){
+    const el=document.getElementById("toast");
+    el.textContent=msg; el.className="toast show"+(isErr?" err":"");
+    clearTimeout(toastTimer); toastTimer=setTimeout(()=>{ el.className="toast"; },2600);
+  }
+  function typeBadge(t){ return t ? '<span class="tag type">'+esc(t)+'</span>' : ""; }
+  function notifyParentRead(){ try{ window.parent && window.parent.postMessage({type:"hak-meeting-read"}, "*"); }catch(e){} }
+
+  /* 모달 열기/닫기 */
+  function openModal(id){ document.getElementById(id).classList.add("show"); }
+  function closeModal(id){ document.getElementById(id).classList.remove("show"); }
+  document.querySelectorAll("[data-close]").forEach(b=>b.addEventListener("click",()=>closeModal(b.dataset.close)));
+  document.querySelectorAll(".modal-overlay").forEach(ov=>ov.addEventListener("click",e=>{ if(e.target===ov) ov.classList.remove("show"); }));
+
+  /* ═══════════ 목록 화면 ═══════════ */
+  function renderListShell(){
+    state.view="list";
+    const ed=isEditor();
+    const filters=[
+      {k:"all",label:"전체"},
+      {k:"unread",label:"읽지 않음"},
+      {k:"important",label:"중요"}
+    ];
+    if(ed) filters.push({k:"draft",label:"임시저장"});
+    if(isAdmin()) filters.push({k:"unpublished",label:"게시 취소"});
+
+    app.innerHTML = `
+      <div class="filters" id="filterChips">
+        ${filters.map(f=>`<button class="chip ${state.list.filter===f.k?"active":""}" data-filter="${f.k}">${f.label}</button>`).join("")}
+        ${ed?`<button class="btn primary sm" id="newPostBtn" style="margin-left:auto;">✏️ 새 글 작성</button>`:""}
+      </div>
+      <div class="search-row">
+        <input type="text" id="searchInput" placeholder="제목·내용·작성자·구분 검색" value="${esc(state.list.q)}" />
+        <select id="typeFilter">
+          <option value="">전체 구분</option>
+          ${MEETING_TYPES.map(t=>`<option value="${esc(t)}" ${state.list.type===t?"selected":""}>${esc(t)}</option>`).join("")}
+        </select>
+        <input type="date" id="dateFrom" value="${esc(state.list.dateFrom)}" title="시작 회의일자" />
+        <span style="color:var(--muted);">~</span>
+        <input type="date" id="dateTo" value="${esc(state.list.dateTo)}" title="종료 회의일자" />
+        <button class="btn sm" id="searchBtn">검색</button>
+        <button class="btn sm" id="resetBtn">초기화</button>
+      </div>
+      <div id="listArea"><div class="state-msg">불러오는 중…</div></div>
+    `;
+
+    document.querySelectorAll("#filterChips [data-filter]").forEach(c=>c.addEventListener("click",()=>{
+      state.list.filter=c.dataset.filter; state.list.offset=0; renderListShell(); loadList(true);
+    }));
+    const nb=document.getElementById("newPostBtn"); if(nb) nb.addEventListener("click",()=>openEditor("create"));
+    document.getElementById("searchBtn").addEventListener("click",applySearch);
+    document.getElementById("searchInput").addEventListener("keydown",e=>{ if(e.key==="Enter") applySearch(); });
+    document.getElementById("resetBtn").addEventListener("click",()=>{
+      state.list.q=""; state.list.type=""; state.list.dateFrom=""; state.list.dateTo=""; state.list.offset=0;
+      renderListShell(); loadList(true);
+    });
+  }
+  function applySearch(){
+    state.list.q=document.getElementById("searchInput").value.trim();
+    state.list.type=document.getElementById("typeFilter").value;
+    state.list.dateFrom=document.getElementById("dateFrom").value;
+    state.list.dateTo=document.getElementById("dateTo").value;
+    state.list.offset=0; loadList(true);
+  }
+
+  async function loadList(reset){
+    if(state.list.loading) return;
+    state.list.loading=true;
+    if(reset){ state.list.offset=0; state.list.posts=[]; }
+    const area=document.getElementById("listArea");
+    if(reset && area) area.innerHTML='<div class="state-msg">불러오는 중…</div>';
+    try{
+      const r=await jsonp("getMeetingList", Object.assign(userParams(),{
+        filter:state.list.filter, q:state.list.q, meeting_type:state.list.type,
+        date_from:state.list.dateFrom, date_to:state.list.dateTo,
+        offset:state.list.offset, limit:state.list.limit
+      }));
+      if(!r || r.success===false){ if(area) area.innerHTML='<div class="state-msg">'+esc((r&&r.message)||"불러오지 못했습니다.")+'</div>'; return; }
+      state.list.posts = reset ? r.posts : state.list.posts.concat(r.posts);
+      state.list.total = r.total; state.list.hasMore = r.has_more;
+      renderListItems();
+    }catch(e){
+      console.error(e);
+      if(area) area.innerHTML='<div class="state-msg">서버 연결 오류로 불러오지 못했습니다.<br><button class="btn sm" id="retryList" style="margin-top:8px;">다시 시도</button></div>';
+      const rt=document.getElementById("retryList"); if(rt) rt.addEventListener("click",()=>loadList(true));
+    }finally{ state.list.loading=false; }
+  }
+
+  function postItemHtml(p){
+    const tags=[];
+    if(p.is_unread) tags.push('<span class="tag new">NEW</span>');
+    if(p.important==="Y") tags.push('<span class="tag important">중요</span>');
+    if(p.publish_status==="draft") tags.push('<span class="tag draft">임시저장</span>');
+    if(p.active==="N"||p.publish_status==="unpublished") tags.push('<span class="tag unpub">게시취소</span>');
+    return `
+      <div class="post-item" data-id="${esc(p.meeting_id)}">
+        <div class="pi-top">
+          ${tags.join("")}
+          <span class="pi-title">${esc(p.title)}</span>
+        </div>
+        <div class="pi-meta">
+          ${typeBadge(p.meeting_type)}
+          <span>🗓 ${esc(p.meeting_date||"-")}</span>
+          <span>✍ ${esc(p.created_by_name||"-")}</span>
+        </div>
+        ${p.preview?`<div class="pi-preview">${esc(p.preview)}</div>`:""}
+      </div>`;
+  }
+  function renderListItems(){
+    const area=document.getElementById("listArea"); if(!area) return;
+    if(!state.list.posts.length){ area.innerHTML='<div class="state-msg">표시할 게시물이 없습니다.</div>'; return; }
+    area.innerHTML =
+      '<div class="post-list">'+state.list.posts.map(postItemHtml).join("")+'</div>'+
+      (state.list.hasMore?'<div class="load-more-wrap"><button class="btn sm" id="loadMoreBtn">더 보기 ('+state.list.posts.length+' / '+state.list.total+')</button></div>':
+        '<div class="state-msg" style="padding:14px;">전체 '+state.list.total+'건</div>');
+    area.querySelectorAll(".post-item").forEach(it=>it.addEventListener("click",()=>openDetail(it.dataset.id)));
+    const lm=document.getElementById("loadMoreBtn");
+    if(lm) lm.addEventListener("click",()=>{ state.list.offset+=state.list.limit; loadList(false); });
+  }
+
+  /* ═══════════ 상세 화면 ═══════════ */
+  async function openDetail(meetingId){
+    state.view="detail";
+    app.innerHTML='<div class="card"><div class="state-msg">불러오는 중…</div></div>';
+    window.scrollTo(0,0);
+    let r;
+    try{ r=await jsonp("getMeetingDetail", Object.assign(userParams(),{ meeting_id:meetingId })); }
+    catch(e){ console.error(e); app.innerHTML='<div class="card"><div class="state-msg">서버 연결 오류로 불러오지 못했습니다. <button class="btn sm" id="dBack">목록으로</button></div></div>';
+      document.getElementById("dBack").addEventListener("click",backToList); return; }
+    if(!r || r.success===false){ app.innerHTML='<div class="card"><div class="state-msg">'+esc((r&&r.message)||"불러오지 못했습니다.")+' <button class="btn sm" id="dBack">목록으로</button></div></div>';
+      document.getElementById("dBack").addEventListener("click",backToList); return; }
+    state.detail=r;
+    renderDetail(r);
+    /* 실제로 상세를 정상적으로 연 경우에만 읽음 처리 (비차단) */
+    if(r.post.publish_status==="published" && r.post.active==="Y"){
+      jsonp("markMeetingRead", Object.assign(userParams(),{ meeting_id:meetingId }))
+        .then(res=>{ if(res && res.success){ markLocalRead(meetingId); notifyParentRead(); } else { console.warn("읽음 처리 실패:", res && res.message); } })
+        .catch(err=>console.warn("읽음 처리 실패:", err));
+    }
+  }
+  function markLocalRead(id){ const p=state.list.posts.find(x=>x.meeting_id===id); if(p) p.is_unread=false; }
+
+  function renderDetail(r){
+    const p=r.post; const ed=r.is_editor; const admin=r.is_admin;
+    const statusTag =
+      p.publish_status==="draft" ? '<span class="tag draft">임시저장</span>' :
+      (p.active==="N"||p.publish_status==="unpublished") ? '<span class="tag unpub">게시취소</span>' : "";
+    app.innerHTML=`
+      <div id="backBar" style="margin-bottom:12px;"><button class="btn sm" id="backBtn">← 목록으로</button></div>
+      <div class="card" id="detailCard">
+        <div class="detail-head">
+          <div style="display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-bottom:6px;">
+            ${p.important==="Y"?'<span class="tag important">중요</span>':""}
+            ${statusTag}
+            ${typeBadge(p.meeting_type)}
+          </div>
+          <h2>${esc(p.title)}</h2>
+          <div class="detail-meta">
+            <span>🗓 회의일자 <b>${esc(p.meeting_date||"-")}</b></span>
+            <span>✍ 작성자 ${esc(p.created_by_name||"-")}</span>
+            <span>최초작성 ${esc(p.created_at||"-")}</span>
+            ${p.updated_at&&p.updated_at!==p.created_at?`<span>최종수정 ${esc(p.updated_by_name||"")} · ${esc(p.updated_at)}</span>`:""}
+            <span>버전 v${esc(p.version)}</span>
+          </div>
+        </div>
+        <div class="body-block">
+          <h3>회의 전달 내용</h3>
+          <div class="body-text">${esc(p.meeting_body)||'<span style="color:var(--muted);">(내용 없음)</span>'}</div>
+        </div>
+        <div class="body-block">
+          <h3>팀장 전달사항</h3>
+          <div class="body-text">${esc(p.leader_body)||'<span style="color:var(--muted);">(내용 없음)</span>'}</div>
+        </div>
+        <div class="detail-actions">
+          <button class="btn" id="printBtn">🖨 인쇄</button>
+          ${ed?`<button class="btn" id="editBtn">✏️ 수정</button>`:""}
+          ${ed?`<button class="btn" id="histBtn">🕓 수정 이력</button>`:""}
+          ${ed?`<button class="btn" id="readBtn">👀 읽음 현황</button>`:""}
+          ${ed&&(p.publish_status==="published"&&p.active==="Y")?`<button class="btn danger" id="unpubBtn">게시 취소</button>`:""}
+          ${admin&&(p.active==="N"||p.publish_status==="unpublished")?`<button class="btn green" id="restoreBtn">복원</button>`:""}
+        </div>
+      </div>`;
+    document.getElementById("backBtn").addEventListener("click",backToList);
+    document.getElementById("printBtn").addEventListener("click",()=>window.print());
+    const bind=(id,fn)=>{ const el=document.getElementById(id); if(el) el.addEventListener("click",fn); };
+    bind("editBtn",()=>openEditor("edit",p));
+    bind("histBtn",()=>openHistory(p.meeting_id));
+    bind("readBtn",()=>openReadStatus(p.meeting_id));
+    bind("unpubBtn",()=>doUnpublish(p.meeting_id));
+    bind("restoreBtn",()=>doRestore(p.meeting_id));
+  }
+
+  function backToList(){ state.detail=null; renderListShell(); loadList(true); }
+
+  /* ═══════════ 편집기 ═══════════ */
+  function suggestTitle(date,type){ return [date,type].filter(Boolean).join(" ").trim(); }
+
+  function openEditor(mode, post){
+    if(!isEditor()){ toast("작성 권한이 없습니다.",true); return; }
+    state.view="editor";
+    const base = post ? {
+      meeting_id:post.meeting_id, meeting_date:post.meeting_date||todayStr(), meeting_type:post.meeting_type||"",
+      title:post.title||"", meeting_body:post.meeting_body||"", leader_body:post.leader_body||"",
+      important:post.important==="Y", publish_status:post.publish_status||"draft"
+    } : {
+      meeting_id:"", meeting_date:todayStr(), meeting_type:"", title:"", meeting_body:"", leader_body:"",
+      important:false, publish_status:"draft"
+    };
+    state.editor={ mode, publish_status:base.publish_status, meeting_id:base.meeting_id, titleTouched:!!base.title, dirty:false };
+    renderEditor(base);
+    window.scrollTo(0,0);
+  }
+
+  function renderEditor(v){
+    const isPublished = state.editor.publish_status==="published";
+    const editingPublished = state.editor.mode==="edit" && isPublished;
+    app.innerHTML=`
+      <div id="backBar" style="margin-bottom:12px;"><button class="btn sm" id="edBack">← ${state.editor.mode==="edit"?"취소":"목록으로"}</button></div>
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:14px;">
+          <h2 style="margin:0;font-size:17px;color:var(--navy-dark);">${state.editor.mode==="edit"?"게시물 수정":"새 글 작성"}</h2>
+          <button class="btn sm" id="loadPrevBtn">📥 이전 글 불러오기</button>
+        </div>
+        <div class="form-grid">
+          <div class="form-row">
+            <label>회의일자</label>
+            <input type="date" id="fDate" value="${esc(v.meeting_date)}" />
+          </div>
+          <div class="form-row">
+            <label>회의 구분</label>
+            <input list="typeOptions" id="fType" value="${esc(v.meeting_type)}" placeholder="선택 또는 직접 입력" />
+            <datalist id="typeOptions">${MEETING_TYPES.map(t=>`<option value="${esc(t)}">`).join("")}</datalist>
+          </div>
+        </div>
+        <div class="form-row">
+          <label>제목</label>
+          <input type="text" id="fTitle" value="${esc(v.title)}" maxlength="120" placeholder="제목" />
+          <div class="hint">회의일자·구분 입력 시 제목이 자동 제안됩니다. 자유롭게 수정할 수 있습니다.</div>
+        </div>
+        <div class="form-row">
+          <label class="check-row"><input type="checkbox" id="fImportant" ${v.important?"checked":""}/> 중요 표시</label>
+        </div>
+        <div class="form-row">
+          <label>회의 전달 내용</label>
+          <textarea id="fBody" placeholder="회의 전달 내용을 입력하세요. 줄바꿈·번호·들여쓰기가 그대로 유지됩니다.">${esc(v.meeting_body)}</textarea>
+        </div>
+        <div class="form-row">
+          <label>팀장 전달사항</label>
+          <textarea id="fLeader" placeholder="팀장 전달사항을 입력하세요.">${esc(v.leader_body)}</textarea>
+        </div>
+        ${editingPublished?`
+        <div class="form-row">
+          <label class="check-row"><input type="checkbox" id="fNotify" checked/> 사용자에게 수정된 글로 다시 알림</label>
+          <div class="hint">본문·주요 내용 변경 시 켜두세요. 오탈자 수정은 해제할 수 있습니다. (해제해도 버전·이력은 기록됩니다)</div>
+        </div>`:""}
+        <div class="editor-actions">
+          ${editingPublished
+            ? `<button class="btn primary" id="btnSaveEdit">저장</button>`
+            : `<button class="btn" id="btnDraft">💾 임시저장</button>
+               <button class="btn green" id="btnPublish">📢 게시</button>`}
+          <button class="btn" id="btnPreview">👁 미리보기</button>
+          <button class="btn" id="btnCancel">취소</button>
+        </div>
+      </div>`;
+
+    const fDate=document.getElementById("fDate"), fType=document.getElementById("fType"),
+          fTitle=document.getElementById("fTitle"), fBody=document.getElementById("fBody"),
+          fLeader=document.getElementById("fLeader"), fImp=document.getElementById("fImportant");
+
+    // 제목 자동 제안
+    function maybeSuggest(){ if(!state.editor.titleTouched){ const s=suggestTitle(fDate.value,fType.value); if(s) fTitle.value=s; } }
+    fDate.addEventListener("change",()=>{ maybeSuggest(); markDirty(); });
+    fType.addEventListener("input",()=>{ maybeSuggest(); markDirty(); });
+    fTitle.addEventListener("input",()=>{ state.editor.titleTouched=true; markDirty(); });
+    [fBody,fLeader].forEach(el=>el.addEventListener("input",markDirty));
+    fImp.addEventListener("change",markDirty);
+
+    document.getElementById("edBack").addEventListener("click",tryLeaveEditor);
+    document.getElementById("btnCancel").addEventListener("click",tryLeaveEditor);
+    document.getElementById("btnPreview").addEventListener("click",doPreview);
+    document.getElementById("loadPrevBtn").addEventListener("click",openLoadPrev);
+    const bd=document.getElementById("btnDraft"); if(bd) bd.addEventListener("click",()=>doSave("draft"));
+    const bp=document.getElementById("btnPublish"); if(bp) bp.addEventListener("click",()=>doSave("publish"));
+    const be=document.getElementById("btnSaveEdit"); if(be) be.addEventListener("click",()=>doSave("edit"));
+
+    restoreBrowserDraft(v);
+  }
+
+  function markDirty(){ state.editor.dirty=true; saveBrowserDraft(); }
+  function collectForm(){
+    return {
+      meeting_date:document.getElementById("fDate").value,
+      meeting_type:document.getElementById("fType").value.trim(),
+      title:document.getElementById("fTitle").value.trim(),
+      important:document.getElementById("fImportant").checked?"Y":"N",
+      meeting_body:document.getElementById("fBody").value,
+      leader_body:document.getElementById("fLeader").value
+    };
+  }
+
+  /* 브라우저 임시 자동보관 — 정식(스프레드시트) 임시저장과 구분 */
+  function saveBrowserDraft(){
+    if(state.view!=="editor") return;
+    try{ localStorage.setItem(DRAFT_KEY, JSON.stringify(Object.assign(collectForm(),{
+      _mode:state.editor.mode, _mid:state.editor.meeting_id, _ts:Date.now() }))); }catch(e){}
+  }
+  function clearBrowserDraft(){ try{ localStorage.removeItem(DRAFT_KEY); }catch(e){} }
+  function restoreBrowserDraft(v){
+    /* 새 글 작성 시 저장 안 된 자동보관이 있으면 안내 후 복원 */
+    if(state.editor.mode!=="create") return;
+    let d; try{ d=JSON.parse(localStorage.getItem(DRAFT_KEY)||"null"); }catch(e){ d=null; }
+    if(!d || d._mode!=="create") return;
+    if(!(d.title||d.meeting_body||d.leader_body)) return;
+    if(confirm("이전에 작성하다 저장하지 않은 내용이 있습니다. 불러올까요?")){
+      document.getElementById("fDate").value=d.meeting_date||todayStr();
+      document.getElementById("fType").value=d.meeting_type||"";
+      document.getElementById("fTitle").value=d.title||"";
+      document.getElementById("fImportant").checked=d.important==="Y";
+      document.getElementById("fBody").value=d.meeting_body||"";
+      document.getElementById("fLeader").value=d.leader_body||"";
+      state.editor.titleTouched=!!d.title; state.editor.dirty=true;
+    } else { clearBrowserDraft(); }
+  }
+
+  function tryLeaveEditor(){
+    if(state.editor && state.editor.dirty){
+      if(!confirm("저장하지 않은 내용이 있습니다. 정말 나가시겠습니까?")) return;
+    }
+    clearBrowserDraft(); state.editor=null;
+    backToList();
+  }
+
+  function doPreview(){
+    const f=collectForm();
+    document.getElementById("previewBody").innerHTML=`
+      <div class="detail-head">
+        <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:6px;">
+          ${f.important==="Y"?'<span class="tag important">중요</span>':""}
+          ${typeBadge(f.meeting_type)}
+        </div>
+        <h2>${esc(f.title)||'<span style="color:var(--muted);">(제목 없음)</span>'}</h2>
+        <div class="detail-meta"><span>🗓 회의일자 <b>${esc(f.meeting_date||"-")}</b></span></div>
+      </div>
+      <div class="body-block"><h3>회의 전달 내용</h3><div class="body-text">${esc(f.meeting_body)||'<span style="color:var(--muted);">(내용 없음)</span>'}</div></div>
+      <div class="body-block"><h3>팀장 전달사항</h3><div class="body-text">${esc(f.leader_body)||'<span style="color:var(--muted);">(내용 없음)</span>'}</div></div>`;
+    openModal("previewModal");
+  }
+
+  function setEditorBusy(b, labelMap){
+    state.busy=b;
+    document.querySelectorAll(".editor-actions button").forEach(btn=>btn.disabled=b);
+    if(labelMap){ Object.keys(labelMap).forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent=labelMap[id]; }); }
+  }
+
+  async function doSave(kind){
+    if(state.busy) return;
+    const f=collectForm();
+    if(!f.title){ toast("제목을 입력해주세요.",true); return; }
+    if(!f.meeting_date){ toast("회의일자를 입력해주세요.",true); return; }
+    if(kind==="publish" && !f.meeting_body && !f.leader_body){ toast("회의 전달 내용 또는 팀장 전달사항을 입력해주세요.",true); return; }
+    if(kind==="publish"){
+      if(!confirm("이 내용을 사용자에게 게시하시겠습니까?\n게시 후 대상 사용자에게 새 글로 표시됩니다.")) return;
+    }
+
+    const labels = kind==="draft"?{btnDraft:"저장 중…"} : kind==="publish"?{btnPublish:"게시 중…"} : {btnSaveEdit:"저장 중…"};
+    setEditorBusy(true, labels);
+
+    try{
+      let r, params=Object.assign(userParams(), f);
+      if(state.editor.mode==="create"){
+        params.publish_status = kind==="publish" ? "published" : "draft";
+        r=await jsonp("createMeetingPost", params);
+      } else {
+        params.meeting_id = state.editor.meeting_id;
+        if(state.editor.publish_status==="published"){
+          params.notify = (document.getElementById("fNotify") && document.getElementById("fNotify").checked) ? "Y":"N";
+        } else {
+          params.publish = kind==="publish" ? "Y":"N";
+        }
+        r=await jsonp("updateMeetingPost", params);
+      }
+      if(!r || r.success===false){ toast((r&&r.message)||"저장에 실패했습니다.",true); setEditorBusy(false, resetLabels()); return; }
+
+      // 성공 처리
+      state.editor.dirty=false; clearBrowserDraft();
+      // 최초 저장 후에는 edit 모드로 전환하여 중복 생성을 방지
+      if(state.editor.mode==="create" && r.meeting_id){
+        state.editor.mode="edit"; state.editor.meeting_id=r.meeting_id;
+        state.editor.publish_status=r.publish_status||params.publish_status;
+      } else if(r.publish_status){
+        state.editor.publish_status=r.publish_status;
+      }
+      toast(r.message||"저장되었습니다.");
+      notifyParentRead(); /* 게시로 새 글이 생기면 부모 배지 갱신 유도 */
+
+      if(kind==="draft"){
+        setEditorBusy(false, resetLabels());
+      } else {
+        // 게시/수정 완료 → 상세로 이동
+        const mid = r.meeting_id || state.editor.meeting_id;
+        state.editor=null;
+        openDetail(mid);
+      }
+    }catch(e){
+      console.error(e);
+      toast("서버 오류로 저장하지 못했습니다. 다시 시도해주세요.",true);
+      setEditorBusy(false, resetLabels());
+    }
+  }
+  function resetLabels(){ return { btnDraft:"💾 임시저장", btnPublish:"📢 게시", btnSaveEdit:"저장" }; }
+
+  /* 이전 글 불러오기 */
+  async function openLoadPrev(){
+    openModal("loadPrevModal");
+    const box=document.getElementById("loadPrevList");
+    box.innerHTML='<div class="state-msg">불러오는 중…</div>';
+    try{
+      const r=await jsonp("getMeetingList", Object.assign(userParams(),{ filter:"all", offset:0, limit:20 }));
+      if(!r || r.success===false || !r.posts.length){ box.innerHTML='<div class="state-msg">불러올 게시물이 없습니다.</div>'; return; }
+      box.innerHTML=r.posts.map(p=>`
+        <div class="post-item" data-loadid="${esc(p.meeting_id)}">
+          <div class="pi-top"><span class="pi-title">${esc(p.title)}</span></div>
+          <div class="pi-meta">${typeBadge(p.meeting_type)}<span>🗓 ${esc(p.meeting_date||"-")}</span><span>✍ ${esc(p.created_by_name||"-")}</span></div>
+        </div>`).join("");
+      box.querySelectorAll("[data-loadid]").forEach(it=>it.addEventListener("click",()=>loadPreviousInto(it.dataset.loadid)));
+    }catch(e){ console.error(e); box.innerHTML='<div class="state-msg">불러오지 못했습니다.</div>'; }
+  }
+  async function loadPreviousInto(mid){
+    try{
+      const r=await jsonp("getMeetingDetail", Object.assign(userParams(),{ meeting_id:mid }));
+      if(!r || r.success===false){ toast("불러오지 못했습니다.",true); return; }
+      const p=r.post;
+      document.getElementById("fBody").value=p.meeting_body||"";
+      document.getElementById("fLeader").value=p.leader_body||"";
+      if(!document.getElementById("fType").value) document.getElementById("fType").value=p.meeting_type||"";
+      // 회의일자는 오늘 기준, 제목 재제안
+      if(!state.editor.titleTouched){
+        const s=suggestTitle(document.getElementById("fDate").value, document.getElementById("fType").value);
+        if(s) document.getElementById("fTitle").value=s;
+      }
+      state.editor.dirty=true; saveBrowserDraft();
+      closeModal("loadPrevModal");
+      toast("이전 글 내용을 불러왔습니다. (새 글로 작성됩니다)");
+    }catch(e){ console.error(e); toast("불러오지 못했습니다.",true); }
+  }
+
+  /* 게시 취소 / 복원 */
+  async function doUnpublish(mid){
+    if(!confirm("이 게시물의 게시를 취소하시겠습니까?\n사용자 목록에서 숨겨지며, 데이터는 보존됩니다.")) return;
+    try{
+      const r=await jsonp("unpublishMeetingPost", Object.assign(userParams(),{ meeting_id:mid }));
+      if(!r || r.success===false){ toast((r&&r.message)||"실패했습니다.",true); return; }
+      toast(r.message||"게시가 취소되었습니다."); notifyParentRead(); openDetail(mid);
+    }catch(e){ console.error(e); toast("서버 오류로 실패했습니다.",true); }
+  }
+  async function doRestore(mid){
+    if(!confirm("이 게시물을 복원하시겠습니까?")) return;
+    try{
+      const r=await jsonp("restoreMeetingPost", Object.assign(userParams(),{ meeting_id:mid }));
+      if(!r || r.success===false){ toast((r&&r.message)||"실패했습니다.",true); return; }
+      toast(r.message||"복원되었습니다."); notifyParentRead(); openDetail(mid);
+    }catch(e){ console.error(e); toast("서버 오류로 실패했습니다.",true); }
+  }
+
+  /* 이력 */
+  async function openHistory(mid){
+    openModal("historyModal");
+    const box=document.getElementById("historyBody");
+    box.innerHTML='<div class="state-msg">불러오는 중…</div>';
+    try{
+      const r=await jsonp("getMeetingHistory", Object.assign(userParams(),{ meeting_id:mid }));
+      if(!r || r.success===false){ box.innerHTML='<div class="state-msg">'+esc((r&&r.message)||"불러오지 못했습니다.")+'</div>'; return; }
+      if(!r.history.length){ box.innerHTML='<div class="state-msg">이력이 없습니다.</div>'; return; }
+      const actionLabel={CREATE:"작성",PUBLISH:"게시",EDIT:"수정",UNPUBLISH:"게시취소",RESTORE:"복원"};
+      box.innerHTML=r.history.map(h=>`
+        <div class="hist-item">
+          <div><span class="ha">v${esc(h.version)} · ${esc(actionLabel[h.action]||h.action)}</span>
+          ${h.notify_users==="Y"?' <span class="tag new">재알림</span>':""}</div>
+          <div>${esc(h.title)}</div>
+          <div class="hm">${esc(h.actor_name||"")} · ${esc(h.action_at||"")}</div>
+        </div>`).join("");
+    }catch(e){ console.error(e); box.innerHTML='<div class="state-msg">불러오지 못했습니다.</div>'; }
+  }
+
+  /* 읽음 현황 */
+  async function openReadStatus(mid){
+    openModal("readModal");
+    const box=document.getElementById("readBody");
+    box.innerHTML='<div class="state-msg">불러오는 중…</div>';
+    try{
+      const r=await jsonp("getMeetingReadStatus", Object.assign(userParams(),{ meeting_id:mid }));
+      if(!r || r.success===false){ box.innerHTML='<div class="state-msg">'+esc((r&&r.message)||"불러오지 못했습니다.")+'</div>'; return; }
+      box.innerHTML=`
+        <div class="read-stat">
+          <div class="rs-box"><strong>${r.total}</strong><span>전체 대상</span></div>
+          <div class="rs-box"><strong style="color:var(--green);">${r.read_count}</strong><span>읽음</span></div>
+          <div class="rs-box"><strong style="color:var(--red);">${r.unread_count}</strong><span>미확인</span></div>
+          <div class="rs-box"><strong>${r.ratio}%</strong><span>읽음 비율</span></div>
+        </div>
+        <div style="font-size:12.5px;font-weight:700;color:var(--navy-dark);margin:6px 0 8px;">미확인자 (${r.unread_count}명)</div>
+        ${r.unread_list.length
+          ? '<div class="unread-list">'+r.unread_list.map(u=>`<span class="u">${esc(u.name)}${u.team?" ("+esc(u.team)+")":""}</span>`).join("")+'</div>'
+          : '<div class="state-msg" style="padding:12px;">모든 대상자가 확인했습니다. 🎉</div>'}
+        <p class="hint" style="margin-top:12px;">비활성 사용자는 대상 집계에서 제외됩니다.</p>`;
+    }catch(e){ console.error(e); box.innerHTML='<div class="state-msg">불러오지 못했습니다.</div>'; }
+  }
+
+  /* 작성 중 창 닫기 경고 */
+  window.addEventListener("beforeunload",e=>{
+    if(state.view==="editor" && state.editor && state.editor.dirty){ e.preventDefault(); e.returnValue=""; return ""; }
+  });
+
+  /* ═══════════ 시작 ═══════════ */
+  function boot(){
+    state.user=loadUser();
+    if(!state.user){
+      whoBox.textContent="";
+      app.innerHTML='<div class="card"><div class="state-msg">로그인이 필요합니다.<br>포털에서 로그인 후 이용해주세요.</div></div>';
+      return;
+    }
+    whoBox.innerHTML="접속: <strong>"+esc(state.user.name)+"</strong>"+(isEditor()?' · <span style="color:var(--green);">편집 권한</span>':"");
+    renderListShell();
+    loadList(true);
+  }
+
+  /* 딥링크: ?open=<meeting_id> 로 특정 글 바로 열기 */
+  boot();
+  const openId=URL_PARAMS.get("open");
+  if(state.user && openId){ openDetail(openId); }
+
+})();
+</script>
+</body>
+</html>
