@@ -286,7 +286,10 @@
         setTimeout(()=>{ try{ delete window[cb]; }catch(_){} },30000);
         el.remove();
       }
-      window[cb]=d=>{ cleanup(); resolve(d); };
+      const perfStart=performance.now();
+      window[cb]=d=>{ cleanup();
+        console.log("[HQAA perf] "+action+" "+Math.round(performance.now()-perfStart)+"ms");
+        resolve(d); };
       el.onerror=()=>{ cleanup(); reject(new Error("서버 연결에 실패했습니다.")); };
       el.src = WEB_APP_URL+"?"+q.toString();
       document.body.appendChild(el);
@@ -420,10 +423,18 @@
   }
 
   /* ═══════════ 상세 화면 ═══════════ */
-  async function openDetail(meetingId){
+  /* preloadedPost: 방금 서버 저장에 성공한 게시물 — 재조회 없이 즉시 표시 (저장 성공 이후에만 전달됨) */
+  async function openDetail(meetingId, preloadedPost){
     state.view="detail";
-    app.innerHTML='<div class="card"><div class="state-msg">불러오는 중…</div></div>';
     window.scrollTo(0,0);
+    if(preloadedPost){
+      const local={ success:true, post:preloadedPost, is_editor:isEditor(), is_admin:isAdmin(), is_unread:false };
+      state.detail=local;
+      renderDetail(local);
+      markReadIfLive(preloadedPost, meetingId);
+      return;
+    }
+    app.innerHTML='<div class="card"><div class="state-msg">불러오는 중…</div></div>';
     let r;
     try{ r=await jsonp("getMeetingDetail", Object.assign(userParams(),{ meeting_id:meetingId })); }
     catch(e){ console.error(e); app.innerHTML='<div class="card"><div class="state-msg">서버 연결 오류로 불러오지 못했습니다. <button class="btn sm" id="dBack">목록으로</button></div></div>';
@@ -432,12 +443,14 @@
       document.getElementById("dBack").addEventListener("click",backToList); return; }
     state.detail=r;
     renderDetail(r);
-    /* 실제로 상세를 정상적으로 연 경우에만 읽음 처리 (비차단) */
-    if(r.post.publish_status==="published" && r.post.active==="Y"){
-      jsonp("markMeetingRead", Object.assign(userParams(),{ meeting_id:meetingId }))
-        .then(res=>{ if(res && res.success){ markLocalRead(meetingId); notifyParentRead(); } else { console.warn("읽음 처리 실패:", res && res.message); } })
-        .catch(err=>console.warn("읽음 처리 실패:", err));
-    }
+    markReadIfLive(r.post, meetingId);
+  }
+  /* 실제로 상세를 정상적으로 연 경우에만 읽음 처리 (비차단) */
+  function markReadIfLive(post, meetingId){
+    if(!(post.publish_status==="published" && post.active==="Y")) return;
+    jsonp("markMeetingRead", Object.assign(userParams(),{ meeting_id:meetingId }))
+      .then(res=>{ if(res && res.success){ markLocalRead(meetingId); notifyParentRead(); } else { console.warn("읽음 처리 실패:", res && res.message); } })
+      .catch(err=>console.warn("읽음 처리 실패:", err));
   }
   function markLocalRead(id){ const p=state.list.posts.find(x=>x.meeting_id===id); if(p) p.is_unread=false; }
 
@@ -507,7 +520,8 @@
       meeting_id:"", meeting_date:todayStr(), meeting_type:"", title:"", meeting_body:"", leader_body:"",
       important:false, publish_status:"draft"
     };
-    state.editor={ mode, publish_status:base.publish_status, meeting_id:base.meeting_id, titleTouched:!!base.title, dirty:false };
+    state.editor={ mode, publish_status:base.publish_status, meeting_id:base.meeting_id, titleTouched:!!base.title, dirty:false,
+      basePost: post||null /* 저장 후 상세 즉시 표시용 원본(작성자·작성일 유지) */ };
     renderEditor(base);
     window.scrollTo(0,0);
   }
@@ -697,10 +711,12 @@
       if(kind==="draft"){
         setEditorBusy(false, resetLabels());
       } else {
-        // 게시/수정 완료 → 상세로 이동
+        // 게시/수정 완료 → 서버 재조회 없이 방금 저장된 내용으로 상세 즉시 표시
         const mid = r.meeting_id || state.editor.meeting_id;
+        const localPost = buildPostFromSave(f, r, mid);
+        state.busy=false; /* 편집기 이탈 전 busy 해제 (다음 저장이 막히지 않도록) */
         state.editor=null;
-        openDetail(mid);
+        openDetail(mid, localPost);
       }
     }catch(e){
       console.error(e);
@@ -709,6 +725,37 @@
     }
   }
   function resetLabels(){ return { btnDraft:"💾 임시저장", btnPublish:"📢 게시", btnSaveEdit:"저장" }; }
+
+  /* 서버 저장 성공 응답 + 방금 입력한 폼 값으로 상세 표시용 게시물 객체 구성
+     (서버가 success 를 반환한 뒤에만 호출되므로 낙관적 처리가 아님) */
+  function buildPostFromSave(f, r, mid){
+    const base=(state.editor && state.editor.basePost)||{};
+    const u=state.user||{};
+    const p2=n=>String(n).padStart(2,"0");
+    const d=new Date();
+    const clientNow=d.getFullYear()+"-"+p2(d.getMonth()+1)+"-"+p2(d.getDate())+" "+p2(d.getHours())+":"+p2(d.getMinutes())+":"+p2(d.getSeconds());
+    const now=r.updated_at||clientNow;
+    return {
+      meeting_id: mid,
+      meeting_date: f.meeting_date,
+      meeting_type: f.meeting_type,
+      title: f.title,
+      meeting_body: f.meeting_body,
+      leader_body: f.leader_body,
+      important: f.important,
+      publish_status: r.publish_status || (state.editor&&state.editor.publish_status) || "published",
+      active: "Y",
+      version: r.version!==undefined ? r.version : ((base.version||0)+1),
+      notify_version: r.notify_version!==undefined ? r.notify_version : (base.notify_version||0),
+      created_by_user_id: base.created_by_user_id || u.user_id || "",
+      created_by_name: base.created_by_name || u.name || "",
+      created_at: base.created_at || r.created_at || now,
+      updated_by_user_id: u.user_id||"",
+      updated_by_name: u.name||"",
+      updated_at: now,
+      deleted_by_user_id:"", deleted_by_name:"", deleted_at:""
+    };
+  }
 
   /* 이전 글 불러오기 */
   async function openLoadPrev(){
@@ -820,14 +867,16 @@
       return;
     }
     whoBox.innerHTML="접속: <strong>"+esc(state.user.name)+"</strong>"+(isEditor()?' · <span style="color:var(--green);">편집 권한</span>':"");
-    renderListShell();
-    loadList(true);
+    /* 딥링크(?open=<meeting_id>): 상세만 바로 열고 목록 요청은 생략 — '목록으로' 클릭 시 로드 */
+    const openId=URL_PARAMS.get("open");
+    if(openId){
+      openDetail(openId);
+    } else {
+      renderListShell();
+      loadList(true);
+    }
   }
-
-  /* 딥링크: ?open=<meeting_id> 로 특정 글 바로 열기 */
   boot();
-  const openId=URL_PARAMS.get("open");
-  if(state.user && openId){ openDetail(openId); }
 
 })();
 </script>
