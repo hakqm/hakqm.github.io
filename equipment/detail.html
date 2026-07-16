@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>계측기 상세</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <h1 id="pageTitle">📏 계측기 상세</h1>
+      <div class="who" id="whoBox">—</div>
+    </div>
+
+    <div class="eq-notice-banner">
+      ⚠ 장비에 부착된 <b>설비번호를 확인한 후</b>, 아래 목록에서 <b>동일한 번호를 선택</b>해 주세요.
+    </div>
+
+    <div style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap;">
+      <a class="eq-btn sm" href="manager.html">🔧 계측기 통합관리로</a>
+      <button type="button" class="eq-btn sm" id="refreshBtn">🔄 상태 새로고침</button>
+    </div>
+
+    <!-- 장비 설명 -->
+    <section class="card">
+      <div class="section-title">01. 장비 정보</div>
+      <p id="groupDesc" class="eq-hint" style="font-size:13.5px;color:var(--text);"></p>
+      <div style="text-align:center;"><img id="groupImage" class="eq-guide-img" alt="장비 사진" style="max-height:340px;" /></div>
+    </section>
+
+    <!-- 장비 상태 목록 (스프레드시트 실시간) -->
+    <section class="card">
+      <div class="section-title">02. 장비 상태 · 불출/반납</div>
+      <p class="eq-hint">등록 장비의 상태 조회, 검교정 성적서 확인, 불출·반납을 처리할 수 있습니다. 같은 종류 여러 대를 함께 선택할 수 있습니다.</p>
+      <div id="unitList"><div class="eq-state-msg">장비 상태 불러오는 중…</div></div>
+      <div id="myUnitArea" style="margin-top:12px;"></div>
+    </section>
+
+    <!-- 사용 전 확인사항 -->
+    <section class="card">
+      <div class="section-title">03. 사용 전 확인사항</div>
+      <ol id="precheckList"></ol>
+    </section>
+
+    <!-- 사용 순서 -->
+    <section class="card">
+      <div class="section-title">04. 사용 순서</div>
+      <ol id="usageList"></ol>
+    </section>
+
+    <!-- 매뉴얼 -->
+    <section class="card" id="manualCard" style="display:none;">
+      <div class="section-title">05. 매뉴얼</div>
+      <a class="eq-btn" id="manualLink" target="_blank" rel="noopener">매뉴얼 보기</a>
+    </section>
+
+    <!-- 사용 영상 -->
+    <section class="card" id="videoCard" style="display:none;">
+      <div class="section-title">06. 사용 영상</div>
+      <div class="eq-video"><iframe id="videoFrame" title="사용 영상" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>
+    </section>
+
+    <div style="text-align:center;color:var(--muted);font-size:12px;margin-top:20px;">
+      <strong>HI AIR KOREA</strong><br />HAK 계측기 운영 시스템<br />
+      Copyright © 2026 HI AIR KOREA Co.,Ltd. All Rights Reserved.
+    </div>
+  </div>
+
+  <!-- 선택 요약 바 -->
+  <div class="eq-cart" id="cart">
+    <div class="eq-cart-info" id="cartInfo">0대 선택</div>
+    <button type="button" class="eq-btn sm" id="cartClear">해제</button>
+    <button type="button" class="eq-btn sm green" id="cartCheckout">📤 선택 장비 불출</button>
+  </div>
+
+  <script src="common.js"></script>
+  <script src="groups.js"></script>
+  <script>
+  (function () {
+    "use strict";
+    var params = new URLSearchParams(location.search);
+    var groupId = params.get("group") || "";
+    var group = window.EQUIPMENT_GROUPS[groupId];
+    var st = { data: null, selected: {}, mineSelected: {} };
+
+    if (!group) {
+      document.querySelector(".wrap").innerHTML =
+        '<div class="card"><div class="eq-state-msg">알 수 없는 장비 종류입니다.<br><a class="eq-btn sm" href="manager.html" style="margin-top:8px;">계측기 통합관리로</a></div></div>';
+      return;
+    }
+
+    /* 정적 콘텐츠 렌더 (그룹 공통) */
+    document.getElementById("pageTitle").textContent = "📏 " + group.name;
+    document.title = group.name + " — 계측기 상세";
+    document.getElementById("groupDesc").textContent = group.description || "";
+    var img = document.getElementById("groupImage");
+    if (group.image) img.src = group.image; else img.style.display = "none";
+    document.getElementById("precheckList").innerHTML = (group.precheck || []).map(function (t) { return "<li>" + EQ.esc(t) + "</li>"; }).join("");
+    document.getElementById("usageList").innerHTML = (group.usage || []).map(function (t) { return "<li>" + EQ.esc(t) + "</li>"; }).join("");
+    if (group.manual) {
+      document.getElementById("manualCard").style.display = "";
+      document.getElementById("manualLink").href = group.manual;
+    }
+    if (group.video) {
+      document.getElementById("videoCard").style.display = "";
+      document.getElementById("videoFrame").src = group.video;
+    }
+
+    function refreshWho() {
+      var u = EQ.user();
+      document.getElementById("whoBox").innerHTML = u
+        ? "접속: <strong>" + EQ.esc(u.name) + "</strong>"
+        : '<button type="button" class="eq-btn sm" id="whoLogin">로그인</button>';
+      var lb = document.getElementById("whoLogin");
+      if (lb) lb.addEventListener("click", function () { EQ.openLoginModal(function () { refreshWho(); load(); }); });
+    }
+
+    /* 이 그룹의 장비만 (미로그인도 조회 가능 — 불출/반납만 로그인 필요) */
+    function load() {
+      document.getElementById("unitList").innerHTML = '<div class="eq-state-msg">장비 상태 불러오는 중…</div>';
+      EQ.api.list().then(function (r) {
+        if (!r || !r.success) throw new Error((r && r.message) || "장비 목록을 불러오지 못했습니다.");
+        st.data = r;
+        render();
+      }).catch(function (e) {
+        console.error(e);
+        document.getElementById("unitList").innerHTML =
+          '<div class="eq-state-msg">' + EQ.esc(e.message) + '<br><button type="button" class="eq-btn sm" id="retryBtn" style="margin-top:8px;">다시 시도</button></div>';
+        document.getElementById("retryBtn").addEventListener("click", load);
+      });
+    }
+
+    function units() {
+      return (st.data && st.data.items || []).filter(function (i) { return i.eq_group === groupId; });
+    }
+
+    function render() {
+      var today = st.data.today || EQ.todayStr();
+      var list = units();
+      var box = document.getElementById("unitList");
+      Object.keys(st.selected).forEach(function (c) {
+        var u2 = list.find(function (i) { return i.eq_code === c; });
+        if (!u2 || !EQ.canCheckout(u2, today)) delete st.selected[c];
+      });
+      if (!list.length) {
+        box.innerHTML = '<div class="eq-state-msg">이 종류로 등록된 장비가 없습니다.<br>관리자에게 equipment_master 시트의 eq_group 값을 확인 요청해주세요.</div>';
+        renderMine(today);
+        return;
+      }
+      box.innerHTML = '<div class="eq-list">' + list.map(function (i) {
+        var cs = EQ.calState(i.next_cal_date, today);
+        var selectable = EQ.canCheckout(i, today);
+        var reason = EQ.blockReason(i, today);
+        var holder = "";
+        if (i.status === "checked_out") {
+          holder = i.holder_is_me ? "내가 불출" : (i.current_user_name ? i.current_user_name + (i.current_user_team ? " (" + i.current_user_team + ")" : "") : (i.current_user_team || "타 사용자"));
+        }
+        return '<div class="eq-item' + (selectable ? " selectable" : " blocked") + (st.selected[i.eq_code] ? " selected" : "") + '" data-code="' + EQ.esc(i.eq_code) + '">' +
+          (selectable ? '<input type="checkbox" class="eq-check"' + (st.selected[i.eq_code] ? " checked" : "") + " />" : '<span class="eq-check"></span>') +
+          '<div class="eq-body">' +
+          '<div class="eq-head"><span class="eq-code">' + EQ.esc(i.eq_code) + "</span>" +
+          EQ.statusBadge(i.active === "N" ? "retired" : i.status) +
+          '<span class="eq-cal ' + cs.cls + '">' + cs.label + "</span></div>" +
+          '<div class="eq-meta">' +
+          (i.maker ? "<span>" + EQ.esc(i.maker) + (i.model ? " " + EQ.esc(i.model) : "") + "</span>" : "") +
+          (i.spec ? "<span>" + EQ.esc(i.spec) + "</span>" : "") +
+          (i.serial_no ? "<span>No." + EQ.esc(i.serial_no) + "</span>" : "") +
+          "<span>📍 " + EQ.esc(EQ.siteText(i)) + "</span>" +
+          (i.next_cal_date ? "<span>🗓 점검예정 " + EQ.esc(i.next_cal_date) + "</span>" : "<span>🗓 점검예정 미등록</span>") +
+          (holder ? "<span>👤 " + EQ.esc(holder) + "</span>" : "") +
+          (!selectable && reason && i.status !== "checked_out" ? '<span style="color:var(--red);">⛔ ' + EQ.esc(reason) + "</span>" : "") +
+          "</div></div>" +
+          '<div class="eq-actions">' +
+          (i.cert_url ? '<button type="button" class="eq-btn sm" data-cert="' + EQ.esc(i.cert_url) + '">성적서</button>' : "") +
+          "</div></div>";
+      }).join("") + "</div>";
+
+      box.querySelectorAll(".eq-item.selectable").forEach(function (el) {
+        el.addEventListener("click", function (ev) {
+          if (ev.target.closest("[data-cert]")) return;
+          var code = el.dataset.code;
+          var item = list.find(function (x) { return x.eq_code === code; });
+          if (st.selected[code]) delete st.selected[code]; else st.selected[code] = item;
+          el.classList.toggle("selected", !!st.selected[code]);
+          var cb = el.querySelector("input");
+          if (cb) cb.checked = !!st.selected[code];
+          updateCart();
+        });
+      });
+      box.querySelectorAll("[data-cert]").forEach(function (b) {
+        b.addEventListener("click", function () { EQ.openCert(b.dataset.cert); });
+      });
+      updateCart();
+      renderMine(today);
+    }
+
+    /* 내가 불출한 이 종류 장비 → 반납 */
+    function renderMine(today) {
+      var area = document.getElementById("myUnitArea");
+      var u = EQ.user();
+      if (!u) { area.innerHTML = ""; return; }
+      var mine = units().filter(function (i) { return i.status === "checked_out" && i.holder_is_me; });
+      if (!mine.length) { area.innerHTML = ""; return; }
+      area.innerHTML =
+        '<div class="section-title">내가 불출한 ' + EQ.esc(group.name) + " (" + mine.length + '대)</div>' +
+        '<div class="eq-list">' + mine.map(function (i) {
+          return '<div class="eq-item selectable' + (st.mineSelected[i.eq_code] ? " selected" : "") + '" data-mcode="' + EQ.esc(i.eq_code) + '">' +
+            '<input type="checkbox" class="eq-check"' + (st.mineSelected[i.eq_code] ? " checked" : "") + " />" +
+            '<div class="eq-body"><div class="eq-head"><span class="eq-code">' + EQ.esc(i.eq_code) + "</span></div>" +
+            '<div class="eq-meta"><span>불출 ' + EQ.esc(i.checkout_time || "-") + "</span><span>반납예정 " + EQ.esc(i.expected_return_date || "-") + "</span></div></div></div>";
+        }).join("") + "</div>" +
+        '<div style="margin-top:8px;"><button type="button" class="eq-btn sm green" id="unitReturn">📥 선택 장비 반납</button></div>';
+      area.querySelectorAll("[data-mcode]").forEach(function (el) {
+        el.addEventListener("click", function () {
+          var code = el.dataset.mcode;
+          var item = mine.find(function (x) { return x.eq_code === code; });
+          if (st.mineSelected[code]) delete st.mineSelected[code]; else st.mineSelected[code] = item;
+          el.classList.toggle("selected", !!st.mineSelected[code]);
+          el.querySelector("input").checked = !!st.mineSelected[code];
+        });
+      });
+      area.querySelector("#unitReturn").addEventListener("click", function () {
+        var sel = Object.keys(st.mineSelected).map(function (c) { return st.mineSelected[c]; });
+        if (!sel.length) { EQ.toast("반납할 장비를 선택해주세요.", true); return; }
+        EQ.openReturnModal(sel, function () { st.mineSelected = {}; load(); });
+      });
+    }
+
+    function updateCart() {
+      var codes = Object.keys(st.selected);
+      var cart = document.getElementById("cart");
+      if (!codes.length) { cart.classList.remove("show"); return; }
+      cart.classList.add("show");
+      document.getElementById("cartInfo").textContent = codes.length + "대 선택: " + codes.join(", ");
+    }
+    document.getElementById("cartClear").addEventListener("click", function () { st.selected = {}; render(); });
+    document.getElementById("cartCheckout").addEventListener("click", function () {
+      var items = Object.keys(st.selected).map(function (c) { return st.selected[c]; });
+      if (!items.length) return;
+      EQ.requireLogin(function () {
+        refreshWho();
+        EQ.openCheckoutModal(items, function () { st.selected = {}; load(); });
+      });
+    });
+    document.getElementById("refreshBtn").addEventListener("click", load);
+
+    EQ.init();
+    refreshWho();
+    load();
+  })();
+  </script>
+</body>
+</html>

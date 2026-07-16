@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>계측기 통합관리</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <h1>🔧 계측기 통합관리</h1>
+      <div class="who" id="whoBox">—</div>
+    </div>
+    <div class="eq-tabs" id="tabs">
+      <button type="button" class="eq-tab active" data-tab="all">전체 계측기</button>
+      <button type="button" class="eq-tab" data-tab="mine">내 불출 장비 <span id="mineCnt"></span></button>
+      <button type="button" class="eq-tab" data-tab="history">내 이용 이력</button>
+      <button type="button" class="eq-tab" data-tab="admin" id="adminTab" style="display:none;">관리자 관리 <span id="adminCnt"></span></button>
+    </div>
+    <div id="view"></div>
+  </div>
+
+  <!-- 선택 요약 바 -->
+  <div class="eq-cart" id="cart">
+    <div class="eq-cart-info" id="cartInfo">0대 선택</div>
+    <button type="button" class="eq-btn sm" id="cartClear">전체 해제</button>
+    <button type="button" class="eq-btn sm green" id="cartCheckout">📤 선택 장비 불출</button>
+  </div>
+
+  <script src="common.js"></script>
+  <script>
+  (function () {
+    "use strict";
+    var view = document.getElementById("view");
+    var st = {
+      tab: "all",
+      data: null,          /* getEquipmentList 응답 */
+      loading: false,
+      selected: {},        /* eq_code → item (전체 탭 불출 선택) */
+      mineSelected: {},    /* eq_code → item (반납 선택) */
+      mineItems: [],
+      filters: { q: "", site: "", status: "", cal: "", group: "" },
+      tx: { list: [], offset: 0, total: 0, hasMore: false, loading: false, scope: "mine" },
+      adminSummary: null
+    };
+
+    function user() { return EQ.user(); }
+    function refreshWho() {
+      var u = user();
+      document.getElementById("whoBox").innerHTML = u
+        ? "접속: <strong>" + EQ.esc(u.name) + "</strong>" + (EQ.isManager() ? ' · <span style="color:var(--green);">계측기 관리자</span>' : "")
+        : '<button type="button" class="eq-btn sm" id="whoLogin">로그인</button>';
+      var lb = document.getElementById("whoLogin");
+      if (lb) lb.addEventListener("click", function () { EQ.openLoginModal(function () { boot(true); }); });
+    }
+
+    /* ── 데이터 로드 ── */
+    function loadList(force) {
+      if (st.loading) return Promise.resolve();
+      st.loading = true;
+      if (force) st.data = null;
+      renderTab();
+      return EQ.api.list().then(function (r) {
+        if (!r || !r.success) throw new Error((r && r.message) || "목록을 불러오지 못했습니다.");
+        st.data = r;
+        /* 서버 기준 관리자 여부 반영 */
+        document.getElementById("adminTab").style.display = r.is_manager ? "" : "none";
+        updateMineCount();
+      }).catch(function (e) {
+        console.error(e);
+        st.data = { error: e.message };
+      }).finally(function () {
+        st.loading = false;
+        renderTab();
+      });
+    }
+    function myItems() {
+      if (!st.data || !st.data.items) return [];
+      var uid = user() ? user().user_id : "";
+      return st.data.items.filter(function (i) { return i.status === "checked_out" && i.holder_is_me; });
+    }
+    function updateMineCount() {
+      var n = myItems().length;
+      document.getElementById("mineCnt").innerHTML = n ? '<span class="cnt">' + n + "</span>" : "";
+    }
+
+    /* ── 탭 ── */
+    document.querySelectorAll("#tabs .eq-tab").forEach(function (t) {
+      t.addEventListener("click", function () {
+        st.tab = t.dataset.tab;
+        document.querySelectorAll("#tabs .eq-tab").forEach(function (x) { x.classList.toggle("active", x === t); });
+        if ((st.tab === "mine" || st.tab === "history") && !user()) {
+          EQ.requireLogin(function () { refreshWho(); renderTab(); });
+        }
+        if (st.tab === "history") { st.tx = { list: [], offset: 0, total: 0, hasMore: false, loading: false, scope: "mine" }; loadTx(true); }
+        if (st.tab === "admin") loadAdmin();
+        renderTab();
+      });
+    });
+
+    function renderTab() {
+      updateCart();
+      if (st.tab === "all") renderAll();
+      else if (st.tab === "mine") renderMine();
+      else if (st.tab === "history") renderHistory();
+      else if (st.tab === "admin") renderAdmin();
+    }
+
+    /* ══════════ 전체 계측기 ══════════ */
+    function calFilterMatch(item, key, today) {
+      var cs = EQ.calState(item.next_cal_date, today);
+      if (key === "ok") return cs.key === "ok";
+      if (key === "soon") return cs.key === "d30" || cs.key === "d7" || cs.key === "today";
+      if (key === "overdue") return cs.key === "overdue";
+      if (key === "none") return cs.key === "none";
+      return true;
+    }
+    function statusFilterMatch(item, key) {
+      if (!key) return true;
+      if (key === "available") return item.status === "available" && item.active !== "N";
+      return item.status === key;
+    }
+    function applyFilters(items, today) {
+      var f = st.filters;
+      var q = f.q.toLowerCase();
+      return items.filter(function (i) {
+        if (f.site && i.site !== f.site) return false;
+        if (!statusFilterMatch(i, f.status)) return false;
+        if (f.cal && !calFilterMatch(i, f.cal, today)) return false;
+        if (f.group && i.eq_group !== f.group) return false;
+        if (q) {
+          var hay = (i.eq_code + " " + i.eq_name + " " + i.maker + " " + i.model + " " + i.spec + " " + i.serial_no + " " + i.location + " " + i.site).toLowerCase();
+          if (hay.indexOf(q) === -1) return false;
+        }
+        return true;
+      });
+    }
+
+    function renderAll() {
+      if (st.loading && !st.data) { view.innerHTML = '<div class="card"><div class="eq-state-msg">장비 목록 불러오는 중…</div></div>'; return; }
+      if (!st.data) { view.innerHTML = '<div class="card"><div class="eq-state-msg">장비 목록 불러오는 중…</div></div>'; return; }
+      if (st.data.error) {
+        view.innerHTML = '<div class="card"><div class="eq-state-msg">' + EQ.esc(st.data.error) + '<br><button type="button" class="eq-btn sm" id="retryBtn" style="margin-top:8px;">다시 시도</button></div></div>';
+        document.getElementById("retryBtn").addEventListener("click", function () { loadList(true); });
+        return;
+      }
+      var today = st.data.today || EQ.todayStr();
+      var groups = st.data.groups || [];
+      var groupOptions = groups.map(function (g) {
+        return '<option value="' + EQ.esc(g.group_id) + '"' + (st.filters.group === g.group_id ? " selected" : "") + ">" + EQ.esc(g.group_name) + "</option>";
+      }).join("");
+      var filtered = applyFilters(st.data.items, today);
+
+      view.innerHTML =
+        '<div class="card">' +
+        '<div class="eq-filter-row">' +
+        '<input type="text" id="fQ" placeholder="설비번호·설비명·제조사·형식·규격·기기번호·위치 검색" value="' + EQ.esc(st.filters.q) + '" />' +
+        "</div>" +
+        '<div class="eq-chip-row" id="siteChips">' +
+        ['<button type="button" class="eq-chip' + (st.filters.site === "" ? " active" : "") + '" data-site="">전체</button>',
+         '<button type="button" class="eq-chip' + (st.filters.site === "김해" ? " active" : "") + '" data-site="김해">김해</button>',
+         '<button type="button" class="eq-chip' + (st.filters.site === "창녕" ? " active" : "") + '" data-site="창녕">창녕</button>'].join("") +
+        "</div>" +
+        '<div class="eq-filter-row">' +
+        '<select id="fStatus">' +
+        '<option value="">상태 전체</option>' +
+        '<option value="available"' + (st.filters.status === "available" ? " selected" : "") + ">사용 가능</option>" +
+        '<option value="checked_out"' + (st.filters.status === "checked_out" ? " selected" : "") + ">불출 중</option>" +
+        '<option value="inspect_needed"' + (st.filters.status === "inspect_needed" ? " selected" : "") + ">반납 점검 필요</option>" +
+        '<option value="repair"' + (st.filters.status === "repair" ? " selected" : "") + ">수리 중</option>" +
+        '<option value="retired"' + (st.filters.status === "retired" ? " selected" : "") + ">사용 중지</option>" +
+        "</select>" +
+        '<select id="fCal">' +
+        '<option value="">검교정 전체</option>' +
+        '<option value="ok"' + (st.filters.cal === "ok" ? " selected" : "") + ">정상</option>" +
+        '<option value="soon"' + (st.filters.cal === "soon" ? " selected" : "") + ">예정 임박(30일)</option>" +
+        '<option value="overdue"' + (st.filters.cal === "overdue" ? " selected" : "") + ">기한 경과</option>" +
+        '<option value="none"' + (st.filters.cal === "none" ? " selected" : "") + ">예정일 미등록</option>" +
+        "</select>" +
+        '<select id="fGroup"><option value="">종류 전체</option>' + groupOptions + "</select>" +
+        '<button type="button" class="eq-btn sm" id="fReset">초기화</button>' +
+        '<button type="button" class="eq-btn sm" id="fRefresh">🔄 새로고침</button>' +
+        "</div>" +
+        '<div class="eq-muted" style="margin-bottom:8px;">' + filtered.length + " / " + st.data.items.length + "대 표시</div>" +
+        '<div class="eq-list" id="eqList">' + filtered.map(function (i) { return itemHtml(i, today); }).join("") + "</div>" +
+        (filtered.length ? "" : '<div class="eq-state-msg">조건에 맞는 장비가 없습니다.</div>') +
+        "</div>";
+
+      var qEl = document.getElementById("fQ");
+      var qTimer = null;
+      qEl.addEventListener("input", function () {
+        clearTimeout(qTimer);
+        qTimer = setTimeout(function () { st.filters.q = qEl.value.trim(); renderAll(); }, 250);
+      });
+      document.querySelectorAll("#siteChips [data-site]").forEach(function (c) {
+        c.addEventListener("click", function () { st.filters.site = c.dataset.site; renderAll(); });
+      });
+      document.getElementById("fStatus").addEventListener("change", function (e) { st.filters.status = e.target.value; renderAll(); });
+      document.getElementById("fCal").addEventListener("change", function (e) { st.filters.cal = e.target.value; renderAll(); });
+      document.getElementById("fGroup").addEventListener("change", function (e) { st.filters.group = e.target.value; renderAll(); });
+      document.getElementById("fReset").addEventListener("click", function () {
+        st.filters = { q: "", site: "", status: "", cal: "", group: "" }; renderAll();
+      });
+      document.getElementById("fRefresh").addEventListener("click", function () { loadList(true); });
+      bindItemEvents(today);
+    }
+
+    function groupDetailPage(groupId) {
+      var g = (st.data && st.data.groups || []).find(function (x) { return x.group_id === groupId; });
+      if (!g || !g.detail_page) return "";
+      /* 시트에는 사이트 루트 기준 경로가 저장됨 → 이 페이지(equipment/) 기준으로 변환 */
+      return g.detail_page.replace(/^equipment\//, "");
+    }
+
+    function itemHtml(i, today) {
+      var cs = EQ.calState(i.next_cal_date, today);
+      var selectable = EQ.canCheckout(i, today);
+      var reason = EQ.blockReason(i, today);
+      var selected = !!st.selected[i.eq_code];
+      var detail = groupDetailPage(i.eq_group);
+      var holder = "";
+      if (i.status === "checked_out") {
+        holder = i.holder_is_me ? "내가 불출" : (i.current_user_name ? i.current_user_name + (i.current_user_team ? " (" + i.current_user_team + ")" : "") : (i.current_user_team || "타 사용자"));
+      }
+      return '<div class="eq-item' + (selectable ? " selectable" : " blocked") + (selected ? " selected" : "") + '" data-code="' + EQ.esc(i.eq_code) + '">' +
+        (selectable ? '<input type="checkbox" class="eq-check" data-code="' + EQ.esc(i.eq_code) + '"' + (selected ? " checked" : "") + " />" : '<span class="eq-check"></span>') +
+        '<div class="eq-body">' +
+        '<div class="eq-head"><span class="eq-code">' + EQ.esc(i.eq_code) + '</span><span class="eq-name">' + EQ.esc(i.eq_name) + "</span>" +
+        EQ.statusBadge(i.active === "N" ? "retired" : i.status) +
+        '<span class="eq-cal ' + cs.cls + '">' + cs.label + "</span></div>" +
+        '<div class="eq-meta">' +
+        (i.maker ? "<span>" + EQ.esc(i.maker) + (i.model ? " " + EQ.esc(i.model) : "") + "</span>" : "") +
+        (i.spec ? "<span>" + EQ.esc(i.spec) + "</span>" : "") +
+        (i.serial_no ? "<span>No." + EQ.esc(i.serial_no) + "</span>" : "") +
+        "<span>📍 " + EQ.esc(EQ.siteText(i)) + "</span>" +
+        (i.next_cal_date ? "<span>🗓 점검예정 " + EQ.esc(i.next_cal_date) + "</span>" : "") +
+        (holder ? "<span>👤 " + EQ.esc(holder) + (i.expected_return_date ? " · 반납예정 " + EQ.esc(i.expected_return_date) : "") + "</span>" : "") +
+        (!selectable && reason && i.status !== "checked_out" ? '<span style="color:var(--red);">⛔ ' + EQ.esc(reason) + "</span>" : "") +
+        "</div></div>" +
+        '<div class="eq-actions">' +
+        (detail ? '<a class="eq-btn sm" href="' + EQ.esc(detail) + '">상세보기</a>' : "") +
+        (i.cert_url ? '<button type="button" class="eq-btn sm" data-cert="' + EQ.esc(i.cert_url) + '">성적서</button>' : "") +
+        "</div></div>";
+    }
+
+    function bindItemEvents(today) {
+      document.querySelectorAll("#eqList .eq-item.selectable").forEach(function (el) {
+        el.addEventListener("click", function (ev) {
+          if (ev.target.closest("a") || ev.target.closest("[data-cert]")) return;
+          var code = el.dataset.code;
+          var item = st.data.items.find(function (x) { return x.eq_code === code; });
+          if (!item) return;
+          if (st.selected[code]) delete st.selected[code];
+          else {
+            var cs = EQ.calState(item.next_cal_date, today);
+            if (cs.key === "d7" || cs.key === "today" || cs.key === "d30") {
+              EQ.toast("⚠ 검교정 예정 임박 장비입니다 (" + item.next_cal_date + "). 불출은 가능합니다.");
+            }
+            st.selected[code] = item;
+          }
+          el.classList.toggle("selected", !!st.selected[code]);
+          var cb = el.querySelector(".eq-check");
+          if (cb && cb.tagName === "INPUT") cb.checked = !!st.selected[code];
+          updateCart();
+        });
+      });
+      document.querySelectorAll("#eqList [data-cert]").forEach(function (b) {
+        b.addEventListener("click", function () { EQ.openCert(b.dataset.cert); });
+      });
+    }
+
+    /* ── 선택 요약 바 ── */
+    function updateCart() {
+      var codes = Object.keys(st.selected);
+      var cart = document.getElementById("cart");
+      if (st.tab !== "all" || !codes.length) { cart.classList.remove("show"); return; }
+      cart.classList.add("show");
+      document.getElementById("cartInfo").textContent = codes.length + "대 선택: " + codes.slice(0, 4).join(", ") + (codes.length > 4 ? " 외 " + (codes.length - 4) + "대" : "");
+    }
+    document.getElementById("cartClear").addEventListener("click", function () {
+      st.selected = {}; renderTab();
+    });
+    document.getElementById("cartCheckout").addEventListener("click", function () {
+      var items = Object.keys(st.selected).map(function (c) { return st.selected[c]; });
+      if (!items.length) return;
+      EQ.requireLogin(function () {
+        refreshWho();
+        EQ.openCheckoutModal(items, function () {
+          st.selected = {};
+          loadList(true);
+        });
+      });
+    });
+
+    /* ══════════ 내 불출 장비 ══════════ */
+    function renderMine() {
+      if (!user()) {
+        view.innerHTML = '<div class="card"><div class="eq-state-msg">로그인 후 내 불출 장비를 확인할 수 있습니다.<br><button type="button" class="eq-btn sm primary" id="mineLogin" style="margin-top:8px;">로그인</button></div></div>';
+        document.getElementById("mineLogin").addEventListener("click", function () { EQ.requireLogin(function () { refreshWho(); loadList(true); }); });
+        return;
+      }
+      if (!st.data || st.data.error) { view.innerHTML = '<div class="card"><div class="eq-state-msg">불러오는 중…</div></div>'; if (!st.loading) loadList(true); return; }
+      var items = myItems();
+      st.mineItems = items;
+      Object.keys(st.mineSelected).forEach(function (c) {
+        if (!items.find(function (i) { return i.eq_code === c; })) delete st.mineSelected[c];
+      });
+      var today = st.data.today || EQ.todayStr();
+      view.innerHTML =
+        '<div class="card">' +
+        '<div class="section-title">내 불출 장비 (' + items.length + "대)</div>" +
+        (items.length ?
+          '<div class="eq-filter-row">' +
+          '<button type="button" class="eq-btn sm" id="mineAll">전체 선택</button>' +
+          '<button type="button" class="eq-btn sm" id="mineNone">전체 해제</button>' +
+          '<button type="button" class="eq-btn sm green" id="mineReturn">📥 선택 장비 반납 (<span id="mineSelCnt">0</span>대)</button>' +
+          "</div>" +
+          '<div class="eq-list">' + items.map(function (i) {
+            var overdue = i.expected_return_date && i.expected_return_date < today;
+            return '<div class="eq-item selectable' + (st.mineSelected[i.eq_code] ? " selected" : "") + '" data-mcode="' + EQ.esc(i.eq_code) + '">' +
+              '<input type="checkbox" class="eq-check" ' + (st.mineSelected[i.eq_code] ? "checked" : "") + " />" +
+              '<div class="eq-body"><div class="eq-head"><span class="eq-code">' + EQ.esc(i.eq_code) + '</span><span class="eq-name">' + EQ.esc(i.eq_name) + "</span>" +
+              (overdue ? '<span class="eq-cal cal-overdue">반납일 경과</span>' : "") + "</div>" +
+              '<div class="eq-meta"><span>불출 ' + EQ.esc(i.checkout_time || "-") + "</span><span>반납예정 " + EQ.esc(i.expected_return_date || "-") + "</span><span>📍 " + EQ.esc(EQ.siteText(i)) + "</span></div>" +
+              "</div></div>";
+          }).join("") + "</div>"
+          : '<div class="eq-state-msg">현재 불출 중인 장비가 없습니다.</div>') +
+        "</div>";
+      if (!items.length) return;
+      function syncCnt() {
+        var n = Object.keys(st.mineSelected).length;
+        var el = document.getElementById("mineSelCnt"); if (el) el.textContent = n;
+      }
+      document.querySelectorAll("[data-mcode]").forEach(function (el) {
+        el.addEventListener("click", function () {
+          var code = el.dataset.mcode;
+          var item = items.find(function (x) { return x.eq_code === code; });
+          if (st.mineSelected[code]) delete st.mineSelected[code]; else st.mineSelected[code] = item;
+          el.classList.toggle("selected", !!st.mineSelected[code]);
+          el.querySelector("input").checked = !!st.mineSelected[code];
+          syncCnt();
+        });
+      });
+      document.getElementById("mineAll").addEventListener("click", function () {
+        items.forEach(function (i) { st.mineSelected[i.eq_code] = i; }); renderMine();
+      });
+      document.getElementById("mineNone").addEventListener("click", function () { st.mineSelected = {}; renderMine(); });
+      document.getElementById("mineReturn").addEventListener("click", function () {
+        var sel = Object.keys(st.mineSelected).map(function (c) { return st.mineSelected[c]; });
+        if (!sel.length) { EQ.toast("반납할 장비를 선택해주세요.", true); return; }
+        EQ.openReturnModal(sel, function () {
+          st.mineSelected = {};
+          loadList(true);
+        });
+      });
+      syncCnt();
+    }
+
+    /* ══════════ 내 이용 이력 ══════════ */
+    var COND_LABEL = { normal: "정상", issue: "이상", damaged: "파손", lost: "분실" };
+    function loadTx(reset) {
+      if (st.tx.loading || !user()) return;
+      st.tx.loading = true;
+      if (reset) { st.tx.list = []; st.tx.offset = 0; }
+      renderHistory();
+      EQ.api.tx({ scope: st.tx.scope, offset: st.tx.offset, limit: 20 }).then(function (r) {
+        if (!r || !r.success) throw new Error((r && r.message) || "이력을 불러오지 못했습니다.");
+        st.tx.list = st.tx.list.concat(r.transactions);
+        st.tx.total = r.total; st.tx.hasMore = r.has_more;
+      }).catch(function (e) { console.error(e); EQ.toast(e.message, true); })
+        .finally(function () { st.tx.loading = false; if (st.tab === "history" || st.tab === "admin") renderTab(); });
+    }
+    function txItemHtml(t, showUser) {
+      return '<div class="eq-tx-item">' +
+        '<div class="tx-top"><b>' + EQ.esc(t.eq_code) + "</b> " + EQ.esc(t.eq_name) +
+        (t.status === "checked_out" ? EQ.statusBadge("checked_out") : '<span class="eq-status ok">반납 완료</span>') +
+        (t.return_condition && t.return_condition !== "normal" ? '<span class="eq-status bad">' + (COND_LABEL[t.return_condition] || t.return_condition) + "</span>" : "") +
+        "</div>" +
+        '<div class="tx-meta">' +
+        (showUser ? EQ.esc(t.user_name) + (t.user_team ? " (" + EQ.esc(t.user_team) + ")" : "") + " · " : "") +
+        "불출 " + EQ.esc(t.checkout_time || "-") +
+        (t.return_time ? " · 반납 " + EQ.esc(t.return_time) : " · 반납예정 " + EQ.esc(t.expected_return_date || "-")) +
+        (t.purpose ? " · " + EQ.esc(t.purpose) : "") + (t.place ? " · " + EQ.esc(t.place) : "") + (t.project ? " · " + EQ.esc(t.project) : "") +
+        (t.batch_id ? ' · <span class="eq-muted">묶음 ' + EQ.esc(t.batch_id) + "</span>" : "") +
+        "</div>" +
+        (t.return_note ? '<div class="tx-meta">반납 비고: ' + EQ.esc(t.return_note) + "</div>" : "") +
+        (t.return_photo_url ? '<div class="tx-meta"><a href="' + EQ.esc(t.return_photo_url) + '" target="_blank" rel="noopener">반납 사진 보기</a></div>' : "") +
+        (t.admin_note ? '<div class="tx-meta">관리자: ' + EQ.esc(t.admin_note) + "</div>" : "") +
+        "</div>";
+    }
+    function renderHistory() {
+      if (!user()) {
+        view.innerHTML = '<div class="card"><div class="eq-state-msg">로그인 후 이용 이력을 확인할 수 있습니다.</div></div>';
+        return;
+      }
+      view.innerHTML =
+        '<div class="card"><div class="section-title">내 이용 이력</div>' +
+        (st.tx.list.length ? st.tx.list.map(function (t) { return txItemHtml(t, false); }).join("") :
+          (st.tx.loading ? '<div class="eq-state-msg">불러오는 중…</div>' : '<div class="eq-state-msg">이용 이력이 없습니다.</div>')) +
+        (st.tx.hasMore ? '<div style="text-align:center;margin-top:10px;"><button type="button" class="eq-btn sm" id="txMore">더 보기 (' + st.tx.list.length + " / " + st.tx.total + ")</button></div>" : "") +
+        "</div>";
+      var more = document.getElementById("txMore");
+      if (more) more.addEventListener("click", function () { st.tx.offset += 20; loadTx(false); });
+    }
+
+    /* ══════════ 관리자 관리 ══════════ */
+    function loadAdmin() {
+      if (!user()) { EQ.requireLogin(function () { refreshWho(); loadAdmin(); }); return; }
+      EQ.api.adminSummary().then(function (r) {
+        if (!r || !r.success) throw new Error((r && r.message) || "요약을 불러오지 못했습니다.");
+        st.adminSummary = r;
+      }).catch(function (e) { console.error(e); st.adminSummary = { error: e.message }; })
+        .finally(function () { if (st.tab === "admin") renderAdmin(); });
+    }
+    var adminFilter = ""; /* overdue | today | d7 | d30 | none | inspect | return_overdue | repair | "" */
+    function renderAdmin() {
+      if (!st.adminSummary) { view.innerHTML = '<div class="card"><div class="eq-state-msg">관리자 요약 불러오는 중…</div></div>'; return; }
+      if (st.adminSummary.error) { view.innerHTML = '<div class="card"><div class="eq-state-msg">' + EQ.esc(st.adminSummary.error) + "</div></div>"; return; }
+      var s = st.adminSummary.summary;
+      var tiles = [
+        { k: "overdue", label: "검교정 기한 경과", v: s.overdue, alert: s.overdue > 0 },
+        { k: "today", label: "오늘 예정", v: s.due_today, alert: s.due_today > 0 },
+        { k: "d7", label: "7일 이내", v: s.due_7d, alert: s.due_7d > 0 },
+        { k: "d30", label: "30일 이내", v: s.due_30d },
+        { k: "none", label: "예정일 미등록", v: s.unregistered },
+        { k: "inspect", label: "반납 점검 필요", v: s.inspect_needed, alert: s.inspect_needed > 0 },
+        { k: "return_overdue", label: "예상 반납일 경과", v: s.return_overdue, alert: s.return_overdue > 0 },
+        { k: "repair", label: "수리 중", v: s.repair },
+        { k: "checked_out", label: "불출 중", v: s.checked_out },
+        { k: "retired", label: "사용 중지", v: s.retired }
+      ];
+      var alertCnt = s.overdue + s.due_today + s.due_7d + s.inspect_needed + s.return_overdue;
+      document.getElementById("adminCnt").innerHTML = alertCnt ? '<span class="cnt">' + alertCnt + "</span>" : "";
+
+      var items = adminFilteredItems();
+      view.innerHTML =
+        '<div class="card"><div class="section-title">검교정·상태 요약 (건수를 누르면 목록 필터)</div>' +
+        '<div class="eq-stat-grid">' + tiles.map(function (t) {
+          return '<div class="eq-stat' + (t.alert ? " alert" : "") + (adminFilter === t.k ? '" style="border-color:var(--navy);' : "") + '" data-af="' + t.k + '"><strong>' + t.v + "</strong><span>" + t.label + "</span></div>";
+        }).join("") + "</div>" +
+        '<div style="margin-top:8px;"><button type="button" class="eq-btn sm" id="afClear">필터 해제</button> ' +
+        '<button type="button" class="eq-btn sm" id="afRefresh">🔄 요약 새로고침</button> ' +
+        '<button type="button" class="eq-btn sm" id="afAllTx">전체 이용 이력</button></div></div>' +
+        '<div class="card"><div class="section-title">장비 목록' + (adminFilter ? " — 필터 적용" : "") + " (" + items.length + '대)</div>' +
+        '<div class="eq-list">' + items.slice(0, 100).map(adminItemHtml).join("") + "</div>" +
+        (items.length > 100 ? '<div class="eq-state-msg">상위 100대만 표시 — 필터를 좁혀주세요.</div>' : "") +
+        (items.length === 0 ? '<div class="eq-state-msg">해당 장비가 없습니다.</div>' : "") +
+        "</div>" +
+        '<div id="adminTxArea"></div>';
+
+      document.querySelectorAll("[data-af]").forEach(function (t) {
+        t.addEventListener("click", function () { adminFilter = t.dataset.af; renderAdmin(); });
+      });
+      document.getElementById("afClear").addEventListener("click", function () { adminFilter = ""; renderAdmin(); });
+      document.getElementById("afRefresh").addEventListener("click", function () { st.adminSummary = null; renderAdmin(); loadAdmin(); loadList(true); });
+      document.getElementById("afAllTx").addEventListener("click", function () {
+        st.tx = { list: [], offset: 0, total: 0, hasMore: false, loading: false, scope: "all" };
+        EQ.api.tx({ scope: "all", offset: 0, limit: 20 }).then(function (r) {
+          if (!r || !r.success) { EQ.toast((r && r.message) || "이력 조회 실패", true); return; }
+          var area = document.getElementById("adminTxArea");
+          if (!area) return;
+          area.innerHTML = '<div class="card"><div class="section-title">전체 이용 이력 (최근 ' + r.transactions.length + " / " + r.total + '건)</div>' +
+            r.transactions.map(function (t) { return txItemHtml(t, true); }).join("") + "</div>";
+        }).catch(function (e) { EQ.toast(e.message, true); });
+      });
+      bindAdminItemEvents();
+    }
+    function adminFilteredItems() {
+      if (!st.data || !st.data.items) { loadList(false); return []; }
+      var today = st.data.today || EQ.todayStr();
+      return st.data.items.filter(function (i) {
+        var cs = EQ.calState(i.next_cal_date, today);
+        var live = i.active !== "N" && i.status !== "retired";
+        switch (adminFilter) {
+          case "overdue": return live && cs.key === "overdue";
+          case "today": return live && cs.key === "today";
+          case "d7": return live && cs.key === "d7";
+          case "d30": return live && cs.key === "d30";
+          case "none": return live && cs.key === "none";
+          case "inspect": return i.status === "inspect_needed";
+          case "repair": return i.status === "repair";
+          case "checked_out": return i.status === "checked_out";
+          case "return_overdue": return i.status === "checked_out" && i.expected_return_date && i.expected_return_date < today;
+          case "retired": return i.active === "N" || i.status === "retired";
+          default: return true;
+        }
+      });
+    }
+    function adminItemHtml(i) {
+      var today = st.data ? st.data.today : EQ.todayStr();
+      var cs = EQ.calState(i.next_cal_date, today);
+      var stopped = i.active === "N" || i.status === "retired";
+      return '<div class="eq-item"><div class="eq-body">' +
+        '<div class="eq-head"><span class="eq-code">' + EQ.esc(i.eq_code) + '</span><span class="eq-name">' + EQ.esc(i.eq_name) + "</span>" +
+        EQ.statusBadge(stopped ? "retired" : i.status) + '<span class="eq-cal ' + cs.cls + '">' + cs.label + "</span></div>" +
+        '<div class="eq-meta"><span>📍 ' + EQ.esc(EQ.siteText(i)) + "</span>" +
+        (i.next_cal_date ? "<span>점검예정 " + EQ.esc(i.next_cal_date) + "</span>" : "<span>점검예정 미등록</span>") +
+        (i.cal_cycle ? "<span>주기 " + EQ.esc(i.cal_cycle) + "</span>" : "") +
+        (i.current_user_name ? "<span>👤 " + EQ.esc(i.current_user_name) + (i.current_user_team ? " (" + EQ.esc(i.current_user_team) + ")" : "") + "</span>" : "") +
+        "</div></div>" +
+        '<div class="eq-actions">' +
+        '<button type="button" class="eq-btn sm" data-cal="' + EQ.esc(i.eq_code) + '">검교정 완료</button>' +
+        '<button type="button" class="eq-btn sm" data-edit="' + EQ.esc(i.eq_code) + '">정보 수정</button>' +
+        (i.status === "inspect_needed" || i.status === "repair" ? '<button type="button" class="eq-btn sm green" data-resolve="' + EQ.esc(i.eq_code) + '">점검 처리</button>' : "") +
+        (stopped ? '<button type="button" class="eq-btn sm green" data-resume="' + EQ.esc(i.eq_code) + '">재개</button>'
+                 : (i.status !== "checked_out" ? '<button type="button" class="eq-btn sm danger" data-stop="' + EQ.esc(i.eq_code) + '">중지</button>' : "")) +
+        "</div></div>";
+    }
+    function findItem(code) { return st.data.items.find(function (x) { return x.eq_code === code; }); }
+    function bindAdminItemEvents() {
+      document.querySelectorAll("[data-cal]").forEach(function (b) {
+        b.addEventListener("click", function () { openCalModal(findItem(b.dataset.cal)); });
+      });
+      document.querySelectorAll("[data-edit]").forEach(function (b) {
+        b.addEventListener("click", function () { openEditModal(findItem(b.dataset.edit)); });
+      });
+      document.querySelectorAll("[data-resolve]").forEach(function (b) {
+        b.addEventListener("click", function () { openResolveModal(findItem(b.dataset.resolve)); });
+      });
+      document.querySelectorAll("[data-stop]").forEach(function (b) {
+        b.addEventListener("click", function () {
+          var code = b.dataset.stop;
+          if (!confirm(code + " 장비를 사용 중지하시겠습니까?")) return;
+          EQ.api.updateInfo({ eq_code: code, active: "N", status: "retired" }).then(afterAdminChange).catch(adminErr);
+        });
+      });
+      document.querySelectorAll("[data-resume]").forEach(function (b) {
+        b.addEventListener("click", function () {
+          var code = b.dataset.resume;
+          if (!confirm(code + " 장비를 사용 재개하시겠습니까?")) return;
+          EQ.api.updateInfo({ eq_code: code, active: "Y", status: "available" }).then(afterAdminChange).catch(adminErr);
+        });
+      });
+    }
+    function afterAdminChange(r) {
+      if (!r || !r.success) { EQ.toast((r && r.message) || "처리에 실패했습니다.", true); return; }
+      EQ.toast(r.message || "처리되었습니다.");
+      loadList(true).then(function () { loadAdmin(); });
+    }
+    function adminErr(e) { console.error(e); EQ.toast("서버 오류로 처리하지 못했습니다.", true); }
+
+    /* 검교정 완료 모달 — 교정주기 기준 다음 예정일 자동 제안(수정 가능) */
+    function cycleMonths(cycle) {
+      if (/6\s*개월/.test(cycle)) return 6;
+      if (/2\s*년/.test(cycle)) return 24;
+      if (/1\s*년/.test(cycle)) return 12;
+      return 12;
+    }
+    function addMonths(dateStr, months) {
+      var d = new Date(dateStr + "T00:00:00");
+      if (isNaN(d.getTime())) d = new Date();
+      d.setMonth(d.getMonth() + months);
+      var p = function (n) { return String(n).padStart(2, "0"); };
+      return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate());
+    }
+    function openCalModal(item) {
+      if (!item) return;
+      var today = EQ.todayStr();
+      var cycle = item.cal_cycle || "1년";
+      var root = EQ.openModal(
+        '<div class="eq-modal-head"><h3>검교정 완료 — ' + EQ.esc(item.eq_code) + '</h3><button type="button" class="eq-modal-close" id="calClose">×</button></div>' +
+        '<p class="eq-hint">' + EQ.esc(item.eq_name) + " · 이전 점검예정일: <b>" + EQ.esc(item.next_cal_date || "미등록") + "</b><br>저장 시 이전 예정일은 검교정 이력에 보존됩니다.</p>" +
+        '<div class="eq-form-row"><label>검교정 완료일 <span class="req">*</span></label><input type="date" id="calDate" value="' + today + '" /></div>' +
+        '<div class="eq-form-row"><label>교정주기</label><select id="calCycle">' +
+        ["6개월", "1년", "2년"].map(function (c) { return '<option' + (c === cycle ? " selected" : "") + ">" + c + "</option>"; }).join("") +
+        "</select></div>" +
+        '<div class="eq-form-row"><label>다음 점검예정일 <span class="req">*</span> <span class="eq-muted">(주기 기준 자동 제안 — 성적서 기준으로 수정 가능)</span></label>' +
+        '<input type="date" id="calNext" value="' + addMonths(today, cycleMonths(cycle)) + '" /></div>' +
+        '<div class="eq-form-row"><label>성적서 URL <span class="eq-muted">(예: equipment/certs/CC_' + EQ.esc(item.eq_code) + ".pdf)</span></label>" +
+        '<input type="text" id="calCert" value="' + EQ.esc(item.cert_url || "") + '" /></div>' +
+        '<div class="eq-form-row"><label>비고</label><input type="text" id="calNote" /></div>' +
+        '<div class="eq-modal-actions"><button type="button" class="eq-btn" id="calCancel">취소</button>' +
+        '<button type="button" class="eq-btn green" id="calSave">저장</button></div>'
+      );
+      root.querySelector("#calClose").addEventListener("click", EQ.closeModal);
+      root.querySelector("#calCancel").addEventListener("click", EQ.closeModal);
+      function resuggest() {
+        root.querySelector("#calNext").value = addMonths(root.querySelector("#calDate").value || today, cycleMonths(root.querySelector("#calCycle").value));
+      }
+      root.querySelector("#calDate").addEventListener("change", resuggest);
+      root.querySelector("#calCycle").addEventListener("change", resuggest);
+      var btn = root.querySelector("#calSave");
+      btn.addEventListener("click", function () {
+        if (btn.disabled) return;
+        var calDate = root.querySelector("#calDate").value;
+        var next = root.querySelector("#calNext").value;
+        if (!calDate || !next) { EQ.toast("완료일과 다음 예정일을 입력해주세요.", true); return; }
+        btn.disabled = true; btn.textContent = "저장 중…";
+        EQ.api.completeCal({
+          eq_code: item.eq_code, cal_date: calDate,
+          cal_cycle: root.querySelector("#calCycle").value,
+          next_due_date: next,
+          cert_url: root.querySelector("#calCert").value.trim(),
+          note: root.querySelector("#calNote").value.trim()
+        }).then(function (r) {
+          if (!r || !r.success) { EQ.toast((r && r.message) || "저장 실패", true); btn.disabled = false; btn.textContent = "저장"; return; }
+          EQ.closeModal(); afterAdminChange(r);
+        }).catch(function (e) { adminErr(e); btn.disabled = false; btn.textContent = "저장"; });
+      });
+    }
+
+    /* 정보 수정 모달 (설비번호는 수정 불가) */
+    function openEditModal(item) {
+      if (!item) return;
+      var root = EQ.openModal(
+        '<div class="eq-modal-head"><h3>장비 정보 수정 — ' + EQ.esc(item.eq_code) + '</h3><button type="button" class="eq-modal-close" id="edClose">×</button></div>' +
+        '<p class="eq-hint">설비번호는 이력의 기준 키이므로 여기서 변경할 수 없습니다.</p>' +
+        '<div class="eq-form-row"><label>설비명</label><input type="text" id="edName" value="' + EQ.esc(item.eq_name) + '" /></div>' +
+        '<div class="eq-form-row"><label>위치 (원래 위치 그대로)</label><input type="text" id="edLoc" value="' + EQ.esc(item.location) + '" /></div>' +
+        '<div class="eq-form-row"><label>사업장</label><select id="edSite">' +
+        ["", "김해", "창녕"].map(function (s2) { return '<option value="' + s2 + '"' + (item.site === s2 ? " selected" : "") + ">" + (s2 || "미지정") + "</option>"; }).join("") +
+        "</select></div>" +
+        '<div class="eq-form-row"><label>장비그룹 (상세페이지 연결값)</label><input type="text" id="edGroup" value="' + EQ.esc(item.eq_group || "") + '" placeholder="예: vernier" /></div>' +
+        '<div class="eq-form-row"><label>성적서 URL</label><input type="text" id="edCert" value="' + EQ.esc(item.cert_url || "") + '" /></div>' +
+        '<div class="eq-form-row"><label>비고</label><input type="text" id="edNote" value="' + EQ.esc(item.note || "") + '" /></div>' +
+        '<div class="eq-modal-actions"><button type="button" class="eq-btn" id="edCancel">취소</button>' +
+        '<button type="button" class="eq-btn green" id="edSave">저장</button></div>'
+      );
+      root.querySelector("#edClose").addEventListener("click", EQ.closeModal);
+      root.querySelector("#edCancel").addEventListener("click", EQ.closeModal);
+      var btn = root.querySelector("#edSave");
+      btn.addEventListener("click", function () {
+        if (btn.disabled) return;
+        btn.disabled = true; btn.textContent = "저장 중…";
+        EQ.api.updateInfo({
+          eq_code: item.eq_code,
+          eq_name: root.querySelector("#edName").value.trim(),
+          location: root.querySelector("#edLoc").value.trim(),
+          site: root.querySelector("#edSite").value,
+          eq_group: root.querySelector("#edGroup").value.trim(),
+          cert_url: root.querySelector("#edCert").value.trim(),
+          note: root.querySelector("#edNote").value.trim()
+        }).then(function (r) {
+          if (!r || !r.success) { EQ.toast((r && r.message) || "저장 실패", true); btn.disabled = false; btn.textContent = "저장"; return; }
+          EQ.closeModal(); afterAdminChange(r);
+        }).catch(function (e) { adminErr(e); btn.disabled = false; btn.textContent = "저장"; });
+      });
+    }
+
+    /* 반납 점검/수리 처리 모달 */
+    function openResolveModal(item) {
+      if (!item) return;
+      var root = EQ.openModal(
+        '<div class="eq-modal-head"><h3>점검 처리 — ' + EQ.esc(item.eq_code) + '</h3><button type="button" class="eq-modal-close" id="rsClose">×</button></div>' +
+        '<p class="eq-hint">' + EQ.esc(item.eq_name) + " · 현재 상태: <b>" + EQ.esc(EQ.statusLabel(item.status)) + "</b>" +
+        (item.note ? "<br>비고: " + EQ.esc(item.note) : "") + "</p>" +
+        '<div class="eq-form-row"><label>처리 결과</label><select id="rsResult">' +
+        '<option value="available">이상 없음 → 사용 가능</option>' +
+        (item.status === "inspect_needed" ? '<option value="repair">수리 필요 → 수리 중</option>' : "") +
+        "</select></div>" +
+        '<div class="eq-form-row"><label>처리 내용</label><input type="text" id="rsNote" placeholder="점검/수리 내용" /></div>' +
+        '<div class="eq-modal-actions"><button type="button" class="eq-btn" id="rsCancel">취소</button>' +
+        '<button type="button" class="eq-btn green" id="rsSave">처리</button></div>'
+      );
+      root.querySelector("#rsClose").addEventListener("click", EQ.closeModal);
+      root.querySelector("#rsCancel").addEventListener("click", EQ.closeModal);
+      var btn = root.querySelector("#rsSave");
+      btn.addEventListener("click", function () {
+        if (btn.disabled) return;
+        btn.disabled = true; btn.textContent = "처리 중…";
+        EQ.api.resolveInspection({
+          eq_code: item.eq_code,
+          result: root.querySelector("#rsResult").value,
+          note: root.querySelector("#rsNote").value.trim()
+        }).then(function (r) {
+          if (!r || !r.success) { EQ.toast((r && r.message) || "처리 실패", true); btn.disabled = false; btn.textContent = "처리"; return; }
+          EQ.closeModal(); afterAdminChange(r);
+        }).catch(function (e) { adminErr(e); btn.disabled = false; btn.textContent = "처리"; });
+      });
+    }
+
+    /* ── 시작 ── */
+    function boot(force) {
+      EQ.init();
+      refreshWho();
+      loadList(!!force);
+    }
+    boot(false);
+  })();
+  </script>
+</body>
+</html>
