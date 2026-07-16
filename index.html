@@ -3518,8 +3518,9 @@
       if (currentScreenKey === "home") refreshCurrentScreen();
       /* 식수 상태는 서버 기준으로 백그라운드 동기화 (로그인 완료 UI를 지연시키지 않음) */
       checkAndShowMealModal();
-      /* 팀회의 전달사항 읽지 않은 글 배지/안내 갱신 */
-      setTimeout(loadMeetingSummary, 300);
+      /* 팀회의 전달사항 배지/안내 — 저장된 값을 먼저 그리고 서버 최신값을 즉시 조회 */
+      applyStoredMeetingSummary();
+      loadMeetingSummary(true);
     }
 
     /* 저장된 세션에 필수 필드가 없을 때만 서버에서 사용자 정보 보완 (불필요한 재로그인 방지) */
@@ -3644,7 +3645,10 @@
       loginEmpNoInput.value = "";
       updateLoginUI();
 
-      /* 팀회의 배지/안내 숨김 */
+      /* 팀회의 배지/안내 숨김 + 세션 메모리 초기화 (localStorage 캐시는 user_id 별 키라 섞이지 않음) */
+      meetingSummaryLast = null;
+      meetingSummaryFetchedUid = "";
+      meetingSummaryFetchedAt = 0;
       applyMeetingSummaryUI(0, "");
 
       /* 10~12. 홈 화면으로 이동 — 이미 홈이면 중복 생성 없이 홈만 다시 렌더링
@@ -3976,8 +3980,21 @@
        팀회의 전달사항 — 홈/메뉴용 경량 요약 (본문은 불러오지 않음)
        - 메뉴 배지(읽지 않은 글 수) + 홈 한 줄 안내 갱신
        - 알림(notices) 기능과 완전히 분리
+       - 사용자별 마지막 요약을 localStorage 에 저장해 화면을 먼저 그리고,
+         동시에 서버 최신값을 조회해 도착 즉시 갱신한다.
+         (읽음 상태의 원본은 항상 스프레드시트 + user_id 기준)
        ========================================================= */
+    const MEETING_SUMMARY_CACHE_PREFIX = "hak_meeting_summary_v1_"; /* + user_id */
+    const MEETING_SUMMARY_CACHE_MAX_AGE_MS = 30 * 60 * 1000; /* 30분 지난 임시값은 무시 */
+    const MEETING_SUMMARY_MIN_INTERVAL_MS = 60 * 1000;       /* 강제 갱신이 아니면 60초 내 재조회 생략 */
+    const MEETING_SUMMARY_POLL_MS = 5 * 60 * 1000;           /* 저빈도 주기 확인(5분) */
+
     let meetingSummaryRunning = false;
+    let meetingSummaryQueuedForce = false; /* 조회 중 강제 갱신 요청이 오면 완료 후 1회만 재조회 */
+    let meetingSummaryLast = null;         /* { uid, unread, title } — 이번 세션 마지막 확인값 */
+    let meetingSummaryFetchedAt = 0;
+    let meetingSummaryFetchedUid = "";
+
     function applyMeetingSummaryUI(unread, latestTitle) {
       const badge = document.getElementById("meetingMenuBadge");
       if (badge) {
@@ -4000,25 +4017,85 @@
       }
     }
 
-    async function loadMeetingSummary() {
+    /* 저장된 값(세션 메모리 → localStorage 순)으로 배지/안내를 먼저 그린다.
+       임시 표시일 뿐이며 확정값은 항상 서버 응답으로 덮어쓴다. */
+    function applyStoredMeetingSummary() {
+      if (!currentUserData || !currentUserData.user_id) return false;
+      const uid = currentUserData.user_id;
+      if (meetingSummaryLast && meetingSummaryLast.uid === uid) {
+        applyMeetingSummaryUI(meetingSummaryLast.unread, meetingSummaryLast.title);
+        return true;
+      }
+      try {
+        const raw = localStorage.getItem(MEETING_SUMMARY_CACHE_PREFIX + uid);
+        if (!raw) return false;
+        const cached = JSON.parse(raw);
+        if (!cached || typeof cached.unread !== "number") return false;
+        if (Date.now() - (cached.ts || 0) > MEETING_SUMMARY_CACHE_MAX_AGE_MS) return false;
+        applyMeetingSummaryUI(cached.unread, cached.title || "");
+        return true;
+      } catch (error) {
+        return false;
+      }
+    }
+
+    /* force=true: 읽음/게시 등 변화 직후 — 최소 간격 무시하고 즉시 최신값 조회 */
+    async function loadMeetingSummary(force) {
       if (!currentUserData) { applyMeetingSummaryUI(0, ""); return; }
-      if (meetingSummaryRunning) return;
+      if (meetingSummaryRunning) {
+        if (force) meetingSummaryQueuedForce = true;
+        return;
+      }
+      const uid = currentUserData.user_id || "";
+      if (!force && meetingSummaryFetchedUid === uid && uid &&
+          Date.now() - meetingSummaryFetchedAt < MEETING_SUMMARY_MIN_INTERVAL_MS) {
+        return; /* 직전에 받은 최신값이 있으면 중복 호출 생략 */
+      }
       meetingSummaryRunning = true;
+      const perfStart = performance.now();
       try {
         const params = [
           "action=getMeetingSummary",
-          `user_id=${encodeURIComponent(currentUserData.user_id || "")}`,
+          `user_id=${encodeURIComponent(uid)}`,
           `emp_no=${encodeURIComponent(currentUserData.emp_no || "")}`
         ].join("&");
         const result = await jsonpRequest(`${WEB_APP_URL}?${params}`, "meetingSummaryCallback");
-        if (result && result.success) {
-          applyMeetingSummaryUI(Number(result.unread_count) || 0, result.latest_title || "");
+        console.log(`[HQAA perf] getMeetingSummary ${Math.round(performance.now() - perfStart)}ms`);
+        /* 응답 대기 중 로그아웃/사용자 전환이 일어났으면 반영하지 않음 */
+        if (result && result.success && currentUserData && (currentUserData.user_id || "") === uid) {
+          const unread = Number(result.unread_count) || 0;
+          const title = result.latest_title || "";
+          meetingSummaryLast = { uid, unread, title };
+          meetingSummaryFetchedAt = Date.now();
+          meetingSummaryFetchedUid = uid;
+          applyMeetingSummaryUI(unread, title);
+          if (uid) {
+            try {
+              localStorage.setItem(MEETING_SUMMARY_CACHE_PREFIX + uid,
+                JSON.stringify({ unread, title, ts: Date.now() }));
+            } catch (error) { /* 저장 실패해도 표시는 정상 */ }
+          }
         }
       } catch (error) {
         console.error("팀회의 요약 조회 오류:", error);
+        /* 실패 시 임시 캐시 값을 확정값으로 승격하지 않음(다음 갱신 시점에 재시도) */
       } finally {
         meetingSummaryRunning = false;
+        if (meetingSummaryQueuedForce) {
+          meetingSummaryQueuedForce = false;
+          setTimeout(() => loadMeetingSummary(true), 300);
+        }
       }
+    }
+
+    /* 탭 재활성화 + 저빈도 주기 확인 — 요약 API만 호출(목록/본문은 불러오지 않음) */
+    function startMeetingSummaryWatcher() {
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible" && currentUserData) loadMeetingSummary(false);
+      });
+      setInterval(() => {
+        if (currentUserData) loadMeetingSummary(false);
+      }, MEETING_SUMMARY_POLL_MS);
     }
 
     function openNoticeEditor(notice = null) {
@@ -5262,7 +5339,9 @@
         setTimeout(loadNotices, 0);
         setTimeout(loadMealSummary, 100);
         setTimeout(loadRoomStatus, 200);
-        setTimeout(loadMeetingSummary, 250);
+        /* 팀회의 요약: 저장된 값을 지연 없이 먼저 그린 뒤 서버 최신값 조회 */
+        applyStoredMeetingSummary();
+        setTimeout(loadMeetingSummary, 0);
         updateHomeMealStatus();
 
         const roomViewDateInput = document.getElementById("roomViewDate");
@@ -5669,7 +5748,7 @@
               <h1>${titleText}</h1>
             </div>
             <div class="screen-head-actions">
-              <a class="btn primary" href="team_meeting.html?api=${encodeURIComponent(WEB_APP_URL)}&v=20260715-1" target="_blank" rel="noopener noreferrer">새 창으로 열기</a>
+              <a class="btn primary" href="team_meeting.html?api=${encodeURIComponent(WEB_APP_URL)}&v=20260716-1" target="_blank" rel="noopener noreferrer">새 창으로 열기</a>
             </div>
           </div>
         </div>
@@ -5677,7 +5756,7 @@
           <div class="embedded-page-card">
             <iframe
               class="embedded-page-frame"
-              src="team_meeting.html?api=${encodeURIComponent(WEB_APP_URL)}&v=20260715-1"
+              src="team_meeting.html?api=${encodeURIComponent(WEB_APP_URL)}&v=20260716-1"
               title="${titleText}"
               loading="eager"
               onload="resizePortalFrame(this)">
@@ -8052,11 +8131,11 @@
       frame.style.height = height + "px";
     });
 
-    /* team_meeting.html(iframe)에서 읽음/게시 변화를 알리면 배지·홈 안내 갱신 */
+    /* team_meeting.html(iframe)에서 읽음/게시 변화를 알리면 배지·홈 안내 즉시 갱신 */
     window.addEventListener("message", function(event) {
       const data = event.data || {};
       if (data.type === "hak-meeting-read") {
-        loadMeetingSummary();
+        loadMeetingSummary(true);
       }
     });
 
@@ -8581,6 +8660,7 @@
       startAutoLogoutWatcher();
       startDatetimeClock();
       startMealDateWatcher();
+      startMeetingSummaryWatcher();
       checkAndShowMealModal();
 
       document.querySelectorAll("details").forEach((detailsEl) => {
