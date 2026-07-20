@@ -1086,6 +1086,13 @@
       background: #fff;
     }
 
+    /* 계측기 통합관리 등 "내부 스크롤" iframe — 화면 높이에 맞추고 콘텐츠만큼 늘리지 않음
+       (min-height 1120px 이 화면 맞춤 높이를 이기지 않도록 반드시 재정의) */
+    .embedded-page-frame--fit {
+      min-height: 480px;
+      height: 72vh;
+    }
+
     @media (max-width: 1200px) {
       .kpi-grid { grid-template-columns: repeat(2, 1fr); }
       .panel-grid,
@@ -5694,18 +5701,18 @@
               <p>전체 계측기 검색, 여러 대 동시 불출·반납, 검교정 관리를 한 화면에서 처리합니다.</p>
             </div>
             <div class="screen-head-actions">
-              <a class="btn primary" href="equipment/manager.html?v=20260720-1" target="_blank" rel="noopener noreferrer">새 창으로 열기</a>
+              <a class="btn primary" href="equipment/manager.html?v=20260720-2" target="_blank" rel="noopener noreferrer">새 창으로 열기</a>
             </div>
           </div>
         </div>
         <div class="screen-body">
           <div class="embedded-page-card">
             <iframe
-              class="embedded-page-frame"
-              src="equipment/manager.html?v=20260720-1"
+              class="embedded-page-frame embedded-page-frame--fit"
+              src="equipment/manager.html?v=20260720-2"
               title="${titleText}"
               loading="lazy"
-              onload="prepareEmbeddedPortalFrame(this)">
+              onload="prepareEmbeddedScrollFrame(this)">
             </iframe>
           </div>
         </div>
@@ -8021,8 +8028,9 @@
 
     window.resizePortalFrame = resizePortalFrame;
 
-    function prepareEmbeddedPortalFrame(frame) {
-      resizePortalFrame(frame);
+    /* iframe 내부의 로고/홈 링크가 iframe 안에서 포털을 다시 열지 않도록 최상위로 보내는 패치
+       (기존 prepareEmbeddedPortalFrame 에서 분리 — 높이 처리 방식과 무관하게 공용) */
+    function patchEmbeddedPortalLinks(frame) {
       if (!frame) return;
 
       try {
@@ -8106,7 +8114,41 @@
       }
     }
 
+    function prepareEmbeddedPortalFrame(frame) {
+      resizePortalFrame(frame);
+      patchEmbeddedPortalLinks(frame);
+    }
+
+    /* 계측기 통합관리 전용 iframe 처리 —
+       resizePortalFrame 처럼 콘텐츠 전체 높이(수천 px)로 늘리면 스크롤 주체가 부모 페이지가
+       되어 iframe 안의 하단 고정 선택 바·상단 고정 검색이 무력화된다.
+       대신 iframe 을 현재 화면 높이에 맞추고 내부 스크롤을 사용한다. */
+    function fitEmbeddedScrollFrame(frame) {
+      if (!frame) return;
+      const apply = function () {
+        try {
+          const rect = frame.getBoundingClientRect();
+          const top = Math.max(60, rect.top); /* 화면 위로 스크롤된 경우 과대 계산 방지 */
+          frame.style.height = Math.max(480, window.innerHeight - top - 16) + "px";
+        } catch (error) {
+          frame.style.height = "72vh";
+        }
+      };
+      apply();
+      setTimeout(apply, 300);
+      if (!frame.__fitResizeBound) {
+        frame.__fitResizeBound = true;
+        window.addEventListener("resize", apply);
+      }
+    }
+
+    function prepareEmbeddedScrollFrame(frame) {
+      fitEmbeddedScrollFrame(frame);
+      patchEmbeddedPortalLinks(frame);
+    }
+
     window.prepareEmbeddedPortalFrame = prepareEmbeddedPortalFrame;
+    window.prepareEmbeddedScrollFrame = prepareEmbeddedScrollFrame;
 
     window.addEventListener("message", function(event) {
       const data = event.data || {};
