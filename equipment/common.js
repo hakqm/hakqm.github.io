@@ -132,6 +132,18 @@
     return base + " " + p.h + ":" + pad2(p.mi);
   }
 
+  /* ── 검색 정규화 ──
+     소문자 + 공백/하이픈/슬래시 등 구분문자 제거 → "가공 치수"="가공치수", "dB"="db",
+     "버니어캘리퍼스"="버니어 캘리퍼스". 관리번호도 동일 규칙으로 비교되므로
+     Q-GB-020 / QGB020 / gb-020 모두 검색된다 (정확 검색 유지). */
+  function normSearch(s) {
+    return String(s == null ? "" : s).toLowerCase().replace(/[\s\-_\/·.,()\[\]]+/g, "");
+  }
+  /* 검색어를 공백 기준 토큰으로 나눠 각각 정규화 — 모든 토큰이 포함되어야 일치(AND) */
+  function searchTokens(q) {
+    return String(q || "").split(/\s+/).map(normSearch).filter(Boolean);
+  }
+
   var toastTimer = null;
   function toast(msg, isErr) {
     var el = document.getElementById("eqToast");
@@ -259,7 +271,13 @@
     });
   }
 
-  /* ── 공통 모달 인프라 ── */
+  /* ── 공통 모달 인프라 ──
+     닫힘 규칙 (openModal 옵션):
+       closeOnBackdrop : 바깥(회색) 클릭으로 닫기 허용 — 기본 false (거래·입력 모달 보호)
+       confirmOnDirty  : 입력 내용이 있으면 ESC 닫기 전 확인 — 기본 true
+       closeOnEscape   : ESC 로 닫기 허용 — 기본 true
+     닫히는 경로: X/취소 버튼(requestCloseModal), ESC(dirty 면 확인), 처리 성공(closeModal).
+     처리 중(setModalBusy(true))에는 어떤 경로로도 닫히지 않는다. */
   function ensureModalRoot() {
     var root = document.getElementById("eqModalRoot");
     if (!root) {
@@ -269,17 +287,93 @@
     }
     return root;
   }
-  function openModal(html) {
+  var modalCtx = { opts: {}, opener: null, busy: false, snapshot: null };
+
+  function snapshotModalInputs_(root) {
+    var vals = [];
+    root.querySelectorAll("input, select, textarea").forEach(function (el) {
+      if (el.type === "file") vals.push("");
+      else if (el.type === "checkbox" || el.type === "radio") vals.push(el.checked ? "1" : "0");
+      else vals.push(el.value);
+    });
+    return vals.join("");
+  }
+  function modalIsDirty() {
+    var root = document.getElementById("eqModalRoot");
+    if (!root || !root.querySelector(".eq-modal") || modalCtx.snapshot == null) return false;
+    var files = root.querySelectorAll('input[type="file"]');
+    for (var i = 0; i < files.length; i++) {
+      if (files[i].files && files[i].files.length) return true; /* 사진 선택됨 */
+    }
+    return snapshotModalInputs_(root) !== modalCtx.snapshot;
+  }
+  function openModal(html, opts) {
+    opts = opts || {};
     var root = ensureModalRoot();
+    modalCtx.opts = {
+      closeOnBackdrop: !!opts.closeOnBackdrop,
+      confirmOnDirty: opts.confirmOnDirty !== false,
+      closeOnEscape: opts.closeOnEscape !== false,
+      dirtyMessage: opts.dirtyMessage || "입력한 내용이 저장되지 않았습니다. 창을 닫으시겠습니까?"
+    };
+    modalCtx.opener = document.activeElement;
+    modalCtx.busy = false;
     root.innerHTML = '<div class="eq-modal-overlay show"><div class="eq-modal">' + html + "</div></div>";
     var ov = root.querySelector(".eq-modal-overlay");
-    ov.addEventListener("click", function (ev) { if (ev.target === ov) closeModal(); });
+    ov.addEventListener("click", function (ev) {
+      if (ev.target !== ov) return;
+      if (!modalCtx.opts.closeOnBackdrop) return; /* 거래 모달: 바깥 클릭으로 닫지 않음 */
+      requestCloseModal("backdrop");
+    });
+    document.body.classList.add("eq-modal-open"); /* 배경 스크롤 잠금 */
+    modalCtx.snapshot = snapshotModalInputs_(root);
+    /* 열릴 때 첫 입력 요소에 포커스 */
+    setTimeout(function () {
+      var m = root.querySelector(".eq-modal");
+      if (!m) return;
+      var f = m.querySelector('input:not([type="hidden"]):not([type="file"]):not(:disabled), select:not(:disabled), textarea:not(:disabled)');
+      if (f) { try { f.focus(); } catch (e) {} }
+    }, 30);
     return root;
+  }
+  function setModalBusy(busy) { modalCtx.busy = !!busy; }
+  /* 사용자 조작(X/취소/ESC/바깥 클릭)에 의한 닫기 요청 — 규칙 적용 */
+  function requestCloseModal(source) {
+    var root = document.getElementById("eqModalRoot");
+    if (!root || !root.querySelector(".eq-modal")) return;
+    if (modalCtx.busy) { toast("처리 중입니다. 잠시만 기다려주세요."); return; }
+    if (source === "escape") {
+      if (!modalCtx.opts.closeOnEscape) return;
+      if (modalCtx.opts.confirmOnDirty && modalIsDirty() && !confirm(modalCtx.opts.dirtyMessage)) return;
+    }
+    if (source === "backdrop" && modalCtx.opts.confirmOnDirty && modalIsDirty() && !confirm(modalCtx.opts.dirtyMessage)) return;
+    closeModal();
   }
   function closeModal() {
     var root = document.getElementById("eqModalRoot");
     if (root) root.innerHTML = "";
+    document.body.classList.remove("eq-modal-open");
+    modalCtx.snapshot = null;
+    modalCtx.busy = false;
+    /* 닫힐 때 원래 누른 버튼으로 포커스 복귀 */
+    if (modalCtx.opener && modalCtx.opener.focus && document.contains(modalCtx.opener)) {
+      try { modalCtx.opener.focus(); } catch (e) {}
+    }
+    modalCtx.opener = null;
   }
+  /* ESC 닫기 + Tab 포커스 트랩 (모달이 열려 있을 때만 동작) */
+  document.addEventListener("keydown", function (ev) {
+    var root = document.getElementById("eqModalRoot");
+    var modal = root && root.querySelector(".eq-modal");
+    if (!modal) return;
+    if (ev.key === "Escape") { ev.preventDefault(); requestCloseModal("escape"); return; }
+    if (ev.key !== "Tab") return;
+    var els = modal.querySelectorAll('a[href], button:not(:disabled), input:not([type="hidden"]):not(:disabled), select:not(:disabled), textarea:not(:disabled), label.eq-ri-photo-label');
+    if (!els.length) return;
+    var first = els[0], last = els[els.length - 1];
+    if (ev.shiftKey && document.activeElement === first) { ev.preventDefault(); last.focus(); }
+    else if (!ev.shiftKey && document.activeElement === last) { ev.preventDefault(); first.focus(); }
+  });
 
   /* ── 로그인 모달 (QR 접속 등 미로그인 사용자용) ── */
   function openLoginModal(onSuccess) {
@@ -290,7 +384,7 @@
       '<div class="eq-form-row"><label>사번</label><input type="text" id="eqLoginEmp" autocomplete="off" inputmode="numeric" /></div>' +
       '<div class="eq-modal-actions"><button type="button" class="eq-btn primary" id="eqLoginSubmit">로그인</button></div>'
     );
-    root.querySelector("#eqLoginClose").addEventListener("click", closeModal);
+    root.querySelector("#eqLoginClose").addEventListener("click", function () { requestCloseModal("button"); });
     var nameEl = root.querySelector("#eqLoginName");
     var empEl = root.querySelector("#eqLoginEmp");
     var btn = root.querySelector("#eqLoginSubmit");
@@ -299,15 +393,17 @@
       if (!name || !emp) { toast("이름과 사번을 입력해주세요.", true); return; }
       if (btn.disabled) return;
       btn.disabled = true; btn.textContent = "확인 중…";
+      setModalBusy(true);
       api.login(name, emp).then(function (r) {
         if (!r || !r.success) { toast((r && r.message) || "로그인에 실패했습니다.", true); return; }
         saveUser(r.user);
+        setModalBusy(false);
         closeModal();
         toast("로그인되었습니다.");
         if (onSuccess) onSuccess(r.user);
       }).catch(function (e) {
         console.error(e); toast("서버 연결 오류로 로그인하지 못했습니다.", true);
-      }).finally(function () { btn.disabled = false; btn.textContent = "로그인"; });
+      }).finally(function () { setModalBusy(false); btn.disabled = false; btn.textContent = "로그인"; });
     }
     btn.addEventListener("click", submit);
     empEl.addEventListener("keydown", function (ev) { if (ev.key === "Enter") submit(); });
@@ -357,8 +453,8 @@
       '<button type="button" class="eq-btn" id="eqCoCancel">취소</button>' +
       '<button type="button" class="eq-btn green" id="eqCoSubmit">📤 ' + items.length + "대 불출</button></div>"
     );
-    root.querySelector("#eqCoClose").addEventListener("click", closeModal);
-    root.querySelector("#eqCoCancel").addEventListener("click", closeModal);
+    root.querySelector("#eqCoClose").addEventListener("click", function () { requestCloseModal("button"); });
+    root.querySelector("#eqCoCancel").addEventListener("click", function () { requestCloseModal("button"); });
     root.querySelectorAll("[data-purpose]").forEach(function (b) {
       b.addEventListener("click", function () { root.querySelector("#eqCoPurpose").value = b.dataset.purpose; });
     });
@@ -379,6 +475,7 @@
       if (!purpose) { toast("사용 목적을 입력해주세요.", true); return; }
       if (!retDate) { toast("예상 반납일을 선택해주세요.", true); return; }
       btn.disabled = true; btn.textContent = "불출 처리 중…";
+      setModalBusy(true); /* 처리 중 모달 닫힘 방지 */
       api.checkoutBatch({
         eq_codes: items.map(function (i) { return i.eq_code; }).join(","),
         purpose: purpose, place: place, expected_return_date: retDate,
@@ -390,16 +487,19 @@
             msg += "\n" + r.failed.map(function (f) { return "· " + f.eq_code + ": " + f.reason; }).join("\n");
           }
           alert(msg);
+          setModalBusy(false);
           btn.disabled = false; btn.textContent = "📤 " + items.length + "대 불출";
           return;
         }
         saveRecent(purpose, place, project);
+        setModalBusy(false);
         closeModal();
         toast(r.message || "불출이 완료되었습니다.");
         if (onDone) onDone(r);
       }).catch(function (e) {
         console.error(e);
         alert("서버 오류로 불출하지 못했습니다. 목록을 새로고침한 뒤 실제 처리 여부를 확인해주세요.");
+        setModalBusy(false);
         btn.disabled = false; btn.textContent = "📤 " + items.length + "대 불출";
       });
     });
@@ -432,8 +532,8 @@
       '<button type="button" class="eq-btn" id="eqReCancel">취소</button>' +
       '<button type="button" class="eq-btn green" id="eqReSubmit">📥 ' + items.length + "대 반납</button></div>"
     );
-    root.querySelector("#eqReClose").addEventListener("click", closeModal);
-    root.querySelector("#eqReCancel").addEventListener("click", closeModal);
+    root.querySelector("#eqReClose").addEventListener("click", function () { requestCloseModal("button"); });
+    root.querySelector("#eqReCancel").addEventListener("click", function () { requestCloseModal("button"); });
 
     var photoData = {}; /* idx → dataURL */
     root.querySelectorAll(".eq-ri-cond").forEach(function (sel) {
@@ -452,10 +552,12 @@
         var idx = inp.dataset.idx;
         var stateEl = root.querySelector('.eq-ri-photo-label[data-idx="' + idx + '"] .eq-ri-photo-state');
         if (!inp.files || !inp.files[0]) { delete photoData[idx]; stateEl.textContent = "미첨부"; return; }
+        var fname = inp.files[0].name || "";
+        if (fname.length > 22) fname = fname.slice(0, 10) + "…" + fname.slice(-8);
         stateEl.textContent = "압축 중…";
         compressImage(inp.files[0]).then(function (dataUrl) {
           photoData[idx] = dataUrl;
-          stateEl.textContent = "첨부됨 ✓";
+          stateEl.textContent = "첨부됨 ✓ " + fname;
         }).catch(function (e) {
           console.error(e); delete photoData[idx];
           stateEl.textContent = "실패 — 다시 선택";
@@ -482,6 +584,7 @@
         payload.push({ eq_code: items[i].eq_code, condition: cond, note: note, idx: i });
       }
       btn.disabled = true;
+      setModalBusy(true); /* 사진 업로드·반납 처리 중 모달 닫힘 방지 */
 
       /* 1) 사진 업로드 (필요한 장비만, 순차) → 2) 일괄 반납
          사진 저장이 모두 성공해야 반납 거래를 진행한다 — 사진 실패 시 장비는 반납되지 않음 */
@@ -518,14 +621,17 @@
             msg += "\n" + r.failed.map(function (f) { return "· " + f.eq_code + ": " + f.reason; }).join("\n");
           }
           alert(msg);
+          setModalBusy(false);
           btn.disabled = false; btn.textContent = "📥 " + items.length + "대 반납";
           return;
         }
+        setModalBusy(false);
         closeModal();
         toast(r.message || "반납이 완료되었습니다.");
         if (onDone) onDone(r);
       }).catch(function (e) {
         console.error(e);
+        setModalBusy(false);
         if (e && e.isPhotoUpload) {
           /* 사진 단계 실패 — 반납은 진행되지 않았고, 입력값·선택 사진은 모달에 그대로 유지됨 */
           alert("반납 사진을 저장하지 못했습니다.\n" +
@@ -570,6 +676,10 @@
     openReturnModal: openReturnModal,
     openModal: openModal,
     closeModal: closeModal,
+    requestCloseModal: requestCloseModal,
+    setModalBusy: setModalBusy,
+    normSearch: normSearch,
+    searchTokens: searchTokens,
     compressImage: compressImage
   };
 })(window);
