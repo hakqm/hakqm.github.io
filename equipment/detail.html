@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>계측기 상세</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css?v=20260720-1" />
 </head>
 <body>
   <div class="wrap">
@@ -69,20 +69,23 @@
 
   <!-- 선택 요약 바 -->
   <div class="eq-cart" id="cart">
-    <div class="eq-cart-info" id="cartInfo">0대 선택</div>
-    <button type="button" class="eq-btn sm" id="cartClear">해제</button>
-    <button type="button" class="eq-btn sm green" id="cartCheckout">📤 선택 장비 불출</button>
+    <div class="eq-cart-row">
+      <div class="eq-cart-info" id="cartInfo">0대 선택</div>
+      <button type="button" class="eq-btn sm" id="cartClear">해제</button>
+      <button type="button" class="eq-btn sm green" id="cartCheckout">📤 선택 장비 불출</button>
+    </div>
   </div>
 
-  <script src="common.js"></script>
-  <script src="groups.js"></script>
+  <script src="common.js?v=20260720-1"></script>
+  <script src="groups.js?v=20260720-1"></script>
   <script>
   (function () {
     "use strict";
     var params = new URLSearchParams(location.search);
     var groupId = params.get("group") || "";
+    var focusEq = params.get("eq") || "";   /* 통합관리에서 넘어온 선택 설비번호 — 강조 + 자동 스크롤 */
     var group = window.EQUIPMENT_GROUPS[groupId];
-    var st = { data: null, selected: {}, mineSelected: {} };
+    var st = { data: null, selected: {}, mineSelected: {}, focusDone: false };
 
     if (!group) {
       document.querySelector(".wrap").innerHTML =
@@ -156,18 +159,19 @@
         if (i.status === "checked_out") {
           holder = i.holder_is_me ? "내가 불출" : (i.current_user_name ? i.current_user_name + (i.current_user_team ? " (" + i.current_user_team + ")" : "") : (i.current_user_team || "타 사용자"));
         }
-        return '<div class="eq-item' + (selectable ? " selectable" : " blocked") + (st.selected[i.eq_code] ? " selected" : "") + '" data-code="' + EQ.esc(i.eq_code) + '">' +
+        return '<div class="eq-item' + (selectable ? " selectable" : " blocked") + (st.selected[i.eq_code] ? " selected" : "") + (focusEq && i.eq_code === focusEq ? " highlight" : "") + '" data-code="' + EQ.esc(i.eq_code) + '">' +
           (selectable ? '<input type="checkbox" class="eq-check"' + (st.selected[i.eq_code] ? " checked" : "") + " />" : '<span class="eq-check"></span>') +
           '<div class="eq-body">' +
           '<div class="eq-head"><span class="eq-code">' + EQ.esc(i.eq_code) + "</span>" +
+          (focusEq && i.eq_code === focusEq ? '<span class="eq-cal cal-d30">선택한 장비</span>' : "") +
           EQ.statusBadge(i.active === "N" ? "retired" : i.status) +
           '<span class="eq-cal ' + cs.cls + '">' + cs.label + "</span></div>" +
           '<div class="eq-meta">' +
-          (i.maker ? "<span>" + EQ.esc(i.maker) + (i.model ? " " + EQ.esc(i.model) : "") + "</span>" : "") +
-          (i.spec ? "<span>" + EQ.esc(i.spec) + "</span>" : "") +
-          (i.serial_no ? "<span>No." + EQ.esc(i.serial_no) + "</span>" : "") +
+          (i.maker ? "<span>" + EQ.esc(i.maker) + (i.model ? " · " + EQ.esc(i.model) : "") + "</span>" : "") +
+          (i.spec ? "<span>규격 " + EQ.esc(i.spec) + "</span>" : "") +
+          (i.serial_no ? "<span>기기번호 " + EQ.esc(i.serial_no) + "</span>" : "") +
           "<span>📍 " + EQ.esc(EQ.siteText(i)) + "</span>" +
-          (i.next_cal_date ? "<span>🗓 점검예정 " + EQ.esc(i.next_cal_date) + "</span>" : "<span>🗓 점검예정 미등록</span>") +
+          (i.next_cal_date ? "<span>🗓 점검예정일 " + EQ.esc(EQ.fmtDate(i.next_cal_date)) + "</span>" : "<span>🗓 점검예정일 미등록</span>") +
           (holder ? "<span>👤 " + EQ.esc(holder) + "</span>" : "") +
           (!selectable && reason && i.status !== "checked_out" ? '<span style="color:var(--red);">⛔ ' + EQ.esc(reason) + "</span>" : "") +
           "</div></div>" +
@@ -191,6 +195,12 @@
       box.querySelectorAll("[data-cert]").forEach(function (b) {
         b.addEventListener("click", function () { EQ.openCert(b.dataset.cert); });
       });
+      /* 통합관리에서 선택해 넘어온 설비번호는 최초 1회 화면 중앙으로 스크롤 */
+      if (focusEq && !st.focusDone) {
+        st.focusDone = true;
+        var fEl = box.querySelector('.eq-item[data-code="' + focusEq + '"]');
+        if (fEl && fEl.scrollIntoView) fEl.scrollIntoView({ block: "center" });
+      }
       updateCart();
       renderMine(today);
     }
@@ -208,7 +218,7 @@
           return '<div class="eq-item selectable' + (st.mineSelected[i.eq_code] ? " selected" : "") + '" data-mcode="' + EQ.esc(i.eq_code) + '">' +
             '<input type="checkbox" class="eq-check"' + (st.mineSelected[i.eq_code] ? " checked" : "") + " />" +
             '<div class="eq-body"><div class="eq-head"><span class="eq-code">' + EQ.esc(i.eq_code) + "</span></div>" +
-            '<div class="eq-meta"><span>불출 ' + EQ.esc(i.checkout_time || "-") + "</span><span>반납예정 " + EQ.esc(i.expected_return_date || "-") + "</span></div></div></div>";
+            '<div class="eq-meta"><span>불출 ' + EQ.esc(i.checkout_time ? EQ.fmtDateTime(i.checkout_time) : "-") + "</span><span>반납예정 " + EQ.esc(i.expected_return_date ? EQ.fmtDate(i.expected_return_date) : "-") + "</span></div></div></div>";
         }).join("") + "</div>" +
         '<div style="margin-top:8px;"><button type="button" class="eq-btn sm green" id="unitReturn">📥 선택 장비 반납</button></div>';
       area.querySelectorAll("[data-mcode]").forEach(function (el) {
