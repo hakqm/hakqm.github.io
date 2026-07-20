@@ -107,15 +107,31 @@ body {
 .eq-item.highlight { border-color: var(--amber); box-shadow: 0 0 0 2px var(--amber) inset; }
 .eq-btn.sm.off { opacity: .5; cursor: default; pointer-events: none; }
 
-/* 검색·필터 상단 고정 (iframe 내부 보이는 영역 기준) */
+/* 검색·필터 상단 고정 (iframe 내부 보이는 영역 기준)
+   ※ 포털 index.html 이 계측기 iframe 을 화면 높이에 맞추고(내부 스크롤)
+   콘텐츠 높이만큼 늘리지 않아야 실제로 고정된다 (prepareEmbeddedScrollFrame) */
 .eq-sticky-card { position: sticky; top: 0; z-index: 80; padding: 10px 12px; box-shadow: 0 4px 12px rgba(20, 28, 48, .07); }
 .eq-count-line { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
 .eq-count-line .sel { color: var(--green); font-weight: 800; }
 
+/* 검색 입력 + 지우기 버튼 */
+.eq-search-wrap { position: relative; flex: 1; min-width: 160px; display: flex; }
+.eq-search-wrap input[type="text"] { width: 100%; padding-right: 32px; }
+.eq-search-clear {
+  position: absolute; right: 4px; top: 50%; transform: translateY(-50%);
+  border: 0; background: transparent; color: var(--muted);
+  font-size: 15px; line-height: 1; cursor: pointer; padding: 6px 8px;
+}
+.eq-search-clear:hover { color: var(--red); }
+
+/* 카드 용도 한 줄 (groups.js summary) */
+.eq-item .eq-use { font-size: 11.5px; color: var(--navy); margin-top: 2px; word-break: keep-all; }
+
 /* 선택 요약 바 (하단 고정 — 스크롤 위치와 무관하게 항상 접근 가능) */
 .eq-cart {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 900;
-  background: var(--navy-dark); color: #fff; padding: 10px 14px;
+  background: var(--navy-dark); color: #fff;
+  padding: 10px 14px calc(10px + env(safe-area-inset-bottom, 0px)); /* 모바일 하단 UI 안전 영역 */
   display: none;
   box-shadow: 0 -4px 16px rgba(0, 0, 0, .18);
 }
@@ -150,16 +166,31 @@ body {
   width: 100%; border: 1px solid var(--line); border-radius: 10px; padding: 9px 11px;
   font-size: 14px; background: #fff; color: var(--text); font-family: inherit;
 }
+/* 모달: 보이는 화면 중앙 정렬(margin:auto), 내용이 길면 모달 내부만 스크롤,
+   제목·버튼은 sticky 로 항상 접근 가능. 배경 스크롤은 body.eq-modal-open 으로 잠금 */
+body.eq-modal-open { overflow: hidden; }
 .eq-modal-overlay {
   position: fixed; inset: 0; background: rgba(20, 28, 48, .55); display: none;
-  align-items: flex-start; justify-content: center; z-index: 1000; padding: 24px 12px; overflow-y: auto;
+  justify-content: center; z-index: 1000; padding: 24px 12px; overflow-y: auto;
 }
 .eq-modal-overlay.show { display: flex; }
-.eq-modal { background: #fff; border-radius: 14px; max-width: 640px; width: 100%; padding: 18px; max-height: calc(100vh - 48px); overflow-y: auto; }
-.eq-modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.eq-modal {
+  background: #fff; border-radius: 14px; max-width: 640px; width: 100%; padding: 18px;
+  margin: auto; max-height: calc(100vh - 48px); overflow-y: auto;
+}
+.eq-modal-head {
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: -18px; z-index: 3; background: #fff;
+  margin: -18px -18px 10px; padding: 14px 18px 8px; border-radius: 14px 14px 0 0;
+}
 .eq-modal-head h3 { margin: 0; font-size: 16px; color: var(--navy-dark); }
 .eq-modal-close { border: 0; background: transparent; font-size: 22px; cursor: pointer; color: var(--muted); line-height: 1; }
-.eq-modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 12px; flex-wrap: wrap; }
+.eq-modal-actions {
+  display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap;
+  position: sticky; bottom: -18px; z-index: 3; background: #fff;
+  margin: 12px -18px -18px; padding: 10px 18px 14px; border-radius: 0 0 14px 14px;
+  box-shadow: 0 -8px 12px -10px rgba(0, 0, 0, .3);
+}
 .eq-sel-list { max-height: 180px; overflow-y: auto; border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; margin-bottom: 12px; }
 .eq-sel-item { font-size: 12.5px; padding: 3px 0; border-bottom: 1px dashed #eceff5; }
 .eq-sel-item:last-child { border-bottom: 0; }
