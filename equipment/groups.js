@@ -7,10 +7,18 @@
    3) equipment_master 의 해당 장비 행 eq_group 컬럼에 group_id 입력
    4) 대표 이미지는 equipment/img/, 성적서는 equipment/certs/ 에 업로드
    QR 은 종류별 공용:  /equipment/detail.html?group=<id>  (또는 기존 루트 URL)
+
+   [검색] summary(용도 한 줄)와 keywords(별칭·용도·측정 대상)는 통합관리 검색에 자동 반영됨.
+   - 직원이 장비명을 몰라도 "외측", "노기스", "도막" 같은 단어로 찾을 수 있게 하는 용도
+   - 코드 수정 없이 시트에서 관리하려면 equipment_groups 시트의 search_keywords 컬럼 사용
+     (쉼표/공백 구분 — groups.js keywords 와 자동으로 합쳐짐)
    ============================================================================ */
 window.EQUIPMENT_GROUPS = {
   vernier: {
     name: "버니어 캘리퍼스",
+    summary: "외측·내측·깊이·단차 등 치수 측정",
+    keywords: ["버니어", "버니어 캘리퍼스", "캘리퍼스", "노기스", "외측", "외경", "내측", "내경",
+               "깊이", "깊이 측정", "단차", "가공치수", "치수측정", "치수", "정밀측정", "길이"],
     image: "img/Q-GH-vernier.jpg",
     video: "https://www.youtube.com/embed/iTuMsyMcu9c",
     manual: "../manual.pdf",
@@ -33,6 +41,9 @@ window.EQUIPMENT_GROUPS = {
 
   sound_meter: {
     name: "소음 계측기",
+    summary: "작업장·설비 소음(dB) 측정",
+    keywords: ["소음", "소음측정", "소음계", "소음측정기", "데시벨", "dB", "음압", "소리",
+               "소음진동", "진동"],
     image: "img/Q-GH-sound-level-meter.jpg",
     video: "https://www.youtube.com/embed/pF7oPzfLevU",
     manual: "../manual_sound_level_meter.pdf",
@@ -55,6 +66,9 @@ window.EQUIPMENT_GROUPS = {
 
   coating_gauge: {
     name: "도막 두께 측정기",
+    summary: "도장·코팅(도막) 두께 측정",
+    keywords: ["도막", "도막두께", "도막측정기", "페인트두께", "페인트", "도장두께", "도장",
+               "코팅두께", "코팅", "피막두께", "피막"],
     image: "img/Q-GH-coating_thickness_gauge.jpg",
     video: "https://www.youtube.com/embed/MFkK95V31zk",
     manual: "",
@@ -77,6 +91,9 @@ window.EQUIPMENT_GROUPS = {
 
   micrometer: {
     name: "마이크로미터",
+    summary: "외경·두께 정밀(미세) 치수 측정",
+    keywords: ["마이크로미터", "마이크로", "두께", "외경", "정밀치수", "미세치수", "정밀측정",
+               "소형부품", "치수"],
     image: "img/Q-GH-micrometer.jpg",
     video: "https://www.youtube.com/embed/ZTiTrL18Rz0",
     manual: "../manual.pdf",
