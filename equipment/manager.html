@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>계측기 통합관리</title>
-  <link rel="stylesheet" href="style.css?v=20260720-1" />
+  <link rel="stylesheet" href="style.css?v=20260720-2" />
 </head>
 <body>
   <div class="wrap">
@@ -32,7 +32,8 @@
     </div>
   </div>
 
-  <script src="common.js?v=20260720-1"></script>
+  <script src="common.js?v=20260720-2"></script>
+  <script src="groups.js?v=20260720-2"></script>
   <script>
   (function () {
     "use strict";
@@ -75,6 +76,31 @@
       if (lb) lb.addEventListener("click", function () { EQ.openLoginModal(function () { boot(true); }); });
     }
 
+    /* ── 검색 인덱스 ──
+       입력 때마다 문자열을 조립하지 않도록 데이터 로딩 시 장비별 검색 문자열(_hay)을 1회 생성.
+       포함 정보: 관리번호·설비명·제조사·모델·규격·기기번호·위치·사업장 +
+       장비그룹(시트 group_name·search_keywords + groups.js name·summary·keywords·description)
+       → "외측", "노기스", "도막" 같은 용도·별칭 검색이 가능해진다. */
+    function buildSearchIndex() {
+      if (!st.data || !st.data.items) return;
+      var gmap = groupMap();
+      var reg = window.EQUIPMENT_GROUPS || {};
+      var groupText = {}; /* eq_group → 그룹 검색 텍스트 (그룹당 1회만 조립) */
+      st.data.items.forEach(function (i) {
+        var gid = i.eq_group || "";
+        if (groupText[gid] === undefined) {
+          var parts = [gid];
+          var g = gmap[gid];
+          if (g) parts.push(g.group_name || "", g.search_keywords || "");
+          var r = reg[gid];
+          if (r) parts.push(r.name || "", r.summary || "", (r.keywords || []).join(" "), r.description || "");
+          groupText[gid] = parts.join(" ");
+        }
+        i._hay = EQ.normSearch([i.eq_code, i.eq_name, i.maker, i.model, i.spec,
+          i.serial_no, i.location, i.site, groupText[gid]].join(" "));
+      });
+    }
+
     /* ── 데이터 로드 ── */
     function loadList(force) {
       if (st.loading) return Promise.resolve();
@@ -84,6 +110,7 @@
       return EQ.api.list().then(function (r) {
         if (!r || !r.success) throw new Error((r && r.message) || "목록을 불러오지 못했습니다.");
         st.data = r;
+        buildSearchIndex();
         /* 서버 기준 관리자 여부 반영 */
         document.getElementById("adminTab").style.display = r.is_manager ? "" : "none";
         updateMineCount();
@@ -143,18 +170,33 @@
     }
     function applyFilters(items, today) {
       var f = st.filters;
-      var q = f.q.toLowerCase();
+      var tokens = EQ.searchTokens(f.q); /* 공백/구분문자 차이 무시, 토큰 AND 일치 */
       return items.filter(function (i) {
         if (f.site && i.site !== f.site) return false;
         if (!statusFilterMatch(i, f.status)) return false;
         if (f.cal && !calFilterMatch(i, f.cal, today)) return false;
         if (f.group && i.eq_group !== f.group) return false;
-        if (q) {
-          var hay = (i.eq_code + " " + i.eq_name + " " + i.maker + " " + i.model + " " + i.spec + " " + i.serial_no + " " + i.location + " " + i.site).toLowerCase();
-          if (hay.indexOf(q) === -1) return false;
+        if (tokens.length) {
+          var hay = i._hay || EQ.normSearch(i.eq_code + " " + i.eq_name + " " + i.maker + " " + i.model);
+          for (var t = 0; t < tokens.length; t++) {
+            if (hay.indexOf(tokens[t]) === -1) return false;
+          }
         }
         return true;
       });
+    }
+
+    /* 검색 결과가 없을 때 — 등록된 장비 종류를 제안해 다시 찾도록 안내 */
+    function noResultHtml() {
+      var q = st.filters.q;
+      var chips = (st.data.groups || []).map(function (g) {
+        return '<button type="button" class="eq-chip" data-sg="' + EQ.esc(g.group_id) + '">' + EQ.esc(g.group_name) + "</button>";
+      }).join("");
+      return '<div class="eq-state-msg">' +
+        (q ? "“" + EQ.esc(q) + "”" + "에 맞는 장비가 없습니다." : "조건에 맞는 장비가 없습니다.") +
+        (chips ? '<br><span class="eq-muted">이런 종류를 찾으시나요?</span><br><div class="eq-chip-row" style="justify-content:center;margin-top:8px;">' + chips + "</div>" : "") +
+        '<div style="margin-top:8px;"><button type="button" class="eq-btn sm" id="nrReset">검색·필터 모두 지우기</button></div>' +
+        "</div>";
     }
 
     function renderAll() {
@@ -180,8 +222,10 @@
         /* 검색·필터: 스크롤해도 접근 가능하도록 상단 고정 (iframe 보이는 영역 기준) */
         '<div class="card eq-sticky-card">' +
         '<div class="eq-filter-row" style="margin-bottom:6px;">' +
-        '<input type="text" id="fQ" placeholder="장비 종류·관리번호·제조사·모델·규격·기기번호·위치 검색" value="' + EQ.esc(st.filters.q) + '" />' +
-        "</div>" +
+        '<div class="eq-search-wrap">' +
+        '<input type="text" id="fQ" placeholder="무엇을 측정하시나요? 예: 외경, 깊이, 노기스, 소음, 도막, 관리번호" value="' + EQ.esc(st.filters.q) + '" />' +
+        '<button type="button" class="eq-search-clear" id="fQClear" title="검색어 지우기 (ESC)"' + (st.filters.q ? "" : ' style="display:none;"') + ">✕</button>" +
+        "</div></div>" +
         '<div class="eq-chip-row" id="siteChips">' +
         ['<button type="button" class="eq-chip' + (st.filters.site === "" ? " active" : "") + '" data-site="">전체</button>',
          '<button type="button" class="eq-chip' + (st.filters.site === "김해" ? " active" : "") + '" data-site="김해">김해</button>',
@@ -215,7 +259,7 @@
         "</div></div>" +
         '<div class="card">' +
         '<div class="eq-list" id="eqList">' + shownItems.map(function (i) { return itemHtml(i, today, gmap); }).join("") + "</div>" +
-        (filtered.length ? "" : '<div class="eq-state-msg">조건에 맞는 장비가 없습니다.</div>') +
+        (filtered.length ? "" : noResultHtml()) +
         (filtered.length > st.shown ?
           '<div style="text-align:center;margin-top:10px;"><button type="button" class="eq-btn" id="moreBtn">더 보기 (' + shownItems.length + " / " + filtered.length + "대)</button></div>" : "") +
         "</div>";
@@ -226,6 +270,28 @@
       qEl.addEventListener("input", function () {
         clearTimeout(qTimer);
         qTimer = setTimeout(function () { st.filters.q = qEl.value.trim(); st.shown = PAGE_SIZE; renderAll(); }, 250);
+      });
+      /* ESC → 검색어 지우기 (검색창 포커스 상태에서) */
+      qEl.addEventListener("keydown", function (ev) {
+        if (ev.key !== "Escape" || !qEl.value) return;
+        ev.preventDefault(); ev.stopPropagation();
+        clearTimeout(qTimer);
+        st.filters.q = ""; st.shown = PAGE_SIZE; renderAll();
+      });
+      document.getElementById("fQClear").addEventListener("click", function () {
+        clearTimeout(qTimer);
+        st.filters.q = ""; st.shown = PAGE_SIZE; renderAll();
+        var q2 = document.getElementById("fQ"); if (q2) q2.focus();
+      });
+      /* 결과 없음 화면의 종류 제안 칩 → 해당 종류 필터로 전환 */
+      document.querySelectorAll("[data-sg]").forEach(function (c) {
+        c.addEventListener("click", function () {
+          st.filters.q = ""; st.filters.group = c.dataset.sg; st.shown = PAGE_SIZE; renderAll();
+        });
+      });
+      var nrReset = document.getElementById("nrReset");
+      if (nrReset) nrReset.addEventListener("click", function () {
+        st.filters = { q: "", site: "", status: "", cal: "", group: "" }; st.shown = PAGE_SIZE; renderAll();
       });
       document.querySelectorAll("#siteChips [data-site]").forEach(function (c) {
         c.addEventListener("click", function () { st.filters.site = c.dataset.site; st.shown = PAGE_SIZE; renderAll(); });
@@ -273,6 +339,9 @@
       var detailBtn = detail
         ? '<a class="eq-btn sm" href="' + EQ.esc(detail + (detail.indexOf("?") >= 0 ? "&" : "?") + "eq=" + encodeURIComponent(i.eq_code)) + '">상세보기</a>'
         : '<span class="eq-btn sm off" title="장비그룹 등록 시 상세보기가 활성화됩니다">상세 준비 중</span>';
+      /* 용도 한 줄 (groups.js summary) — 검색 결과가 왜 나왔는지 이해를 돕는 보조 표시 */
+      var reg = window.EQUIPMENT_GROUPS && i.eq_group ? window.EQUIPMENT_GROUPS[i.eq_group] : null;
+      var useLine = reg && reg.summary ? '<div class="eq-use">' + EQ.esc(reg.summary) + "</div>" : "";
       return '<div class="eq-item' + (selectable ? " selectable" : " blocked") + (selected ? " selected" : "") + '" data-code="' + EQ.esc(i.eq_code) + '">' +
         (selectable ? '<input type="checkbox" class="eq-check" data-code="' + EQ.esc(i.eq_code) + '"' + (selected ? " checked" : "") + " />" : '<span class="eq-check"></span>') +
         '<div class="eq-body">' +
@@ -280,6 +349,7 @@
         EQ.statusBadge(i.active === "N" ? "retired" : i.status) +
         '<span class="eq-cal ' + cs.cls + '">' + cs.label + "</span></div>" +
         '<div class="eq-code-line">관리번호 <b>' + EQ.esc(i.eq_code) + "</b></div>" +
+        useLine +
         '<div class="eq-meta">' +
         (makerModel ? "<span>" + EQ.esc(makerModel) + "</span>" : "") +
         (i.spec ? "<span>규격 " + EQ.esc(i.spec) + "</span>" : "") +
@@ -662,8 +732,8 @@
         '<div class="eq-modal-actions"><button type="button" class="eq-btn" id="calCancel">취소</button>' +
         '<button type="button" class="eq-btn green" id="calSave">저장</button></div>'
       );
-      root.querySelector("#calClose").addEventListener("click", EQ.closeModal);
-      root.querySelector("#calCancel").addEventListener("click", EQ.closeModal);
+      root.querySelector("#calClose").addEventListener("click", function () { EQ.requestCloseModal("button"); });
+      root.querySelector("#calCancel").addEventListener("click", function () { EQ.requestCloseModal("button"); });
       function resuggest() {
         root.querySelector("#calNext").value = addMonths(root.querySelector("#calDate").value || today, cycleMonths(root.querySelector("#calCycle").value));
       }
@@ -676,6 +746,7 @@
         var next = root.querySelector("#calNext").value;
         if (!calDate || !next) { EQ.toast("완료일과 다음 예정일을 입력해주세요.", true); return; }
         btn.disabled = true; btn.textContent = "저장 중…";
+        EQ.setModalBusy(true);
         EQ.api.completeCal({
           eq_code: item.eq_code, cal_date: calDate,
           cal_cycle: root.querySelector("#calCycle").value,
@@ -683,9 +754,9 @@
           cert_url: root.querySelector("#calCert").value.trim(),
           note: root.querySelector("#calNote").value.trim()
         }).then(function (r) {
-          if (!r || !r.success) { EQ.toast((r && r.message) || "저장 실패", true); btn.disabled = false; btn.textContent = "저장"; return; }
-          EQ.closeModal(); afterAdminChange(r);
-        }).catch(function (e) { adminErr(e); btn.disabled = false; btn.textContent = "저장"; });
+          if (!r || !r.success) { EQ.toast((r && r.message) || "저장 실패", true); EQ.setModalBusy(false); btn.disabled = false; btn.textContent = "저장"; return; }
+          EQ.setModalBusy(false); EQ.closeModal(); afterAdminChange(r);
+        }).catch(function (e) { adminErr(e); EQ.setModalBusy(false); btn.disabled = false; btn.textContent = "저장"; });
       });
     }
 
@@ -706,12 +777,13 @@
         '<div class="eq-modal-actions"><button type="button" class="eq-btn" id="edCancel">취소</button>' +
         '<button type="button" class="eq-btn green" id="edSave">저장</button></div>'
       );
-      root.querySelector("#edClose").addEventListener("click", EQ.closeModal);
-      root.querySelector("#edCancel").addEventListener("click", EQ.closeModal);
+      root.querySelector("#edClose").addEventListener("click", function () { EQ.requestCloseModal("button"); });
+      root.querySelector("#edCancel").addEventListener("click", function () { EQ.requestCloseModal("button"); });
       var btn = root.querySelector("#edSave");
       btn.addEventListener("click", function () {
         if (btn.disabled) return;
         btn.disabled = true; btn.textContent = "저장 중…";
+        EQ.setModalBusy(true);
         EQ.api.updateInfo({
           eq_code: item.eq_code,
           eq_name: root.querySelector("#edName").value.trim(),
@@ -721,9 +793,9 @@
           cert_url: root.querySelector("#edCert").value.trim(),
           note: root.querySelector("#edNote").value.trim()
         }).then(function (r) {
-          if (!r || !r.success) { EQ.toast((r && r.message) || "저장 실패", true); btn.disabled = false; btn.textContent = "저장"; return; }
-          EQ.closeModal(); afterAdminChange(r);
-        }).catch(function (e) { adminErr(e); btn.disabled = false; btn.textContent = "저장"; });
+          if (!r || !r.success) { EQ.toast((r && r.message) || "저장 실패", true); EQ.setModalBusy(false); btn.disabled = false; btn.textContent = "저장"; return; }
+          EQ.setModalBusy(false); EQ.closeModal(); afterAdminChange(r);
+        }).catch(function (e) { adminErr(e); EQ.setModalBusy(false); btn.disabled = false; btn.textContent = "저장"; });
       });
     }
 
@@ -742,20 +814,21 @@
         '<div class="eq-modal-actions"><button type="button" class="eq-btn" id="rsCancel">취소</button>' +
         '<button type="button" class="eq-btn green" id="rsSave">처리</button></div>'
       );
-      root.querySelector("#rsClose").addEventListener("click", EQ.closeModal);
-      root.querySelector("#rsCancel").addEventListener("click", EQ.closeModal);
+      root.querySelector("#rsClose").addEventListener("click", function () { EQ.requestCloseModal("button"); });
+      root.querySelector("#rsCancel").addEventListener("click", function () { EQ.requestCloseModal("button"); });
       var btn = root.querySelector("#rsSave");
       btn.addEventListener("click", function () {
         if (btn.disabled) return;
         btn.disabled = true; btn.textContent = "처리 중…";
+        EQ.setModalBusy(true);
         EQ.api.resolveInspection({
           eq_code: item.eq_code,
           result: root.querySelector("#rsResult").value,
           note: root.querySelector("#rsNote").value.trim()
         }).then(function (r) {
-          if (!r || !r.success) { EQ.toast((r && r.message) || "처리 실패", true); btn.disabled = false; btn.textContent = "처리"; return; }
-          EQ.closeModal(); afterAdminChange(r);
-        }).catch(function (e) { adminErr(e); btn.disabled = false; btn.textContent = "처리"; });
+          if (!r || !r.success) { EQ.toast((r && r.message) || "처리 실패", true); EQ.setModalBusy(false); btn.disabled = false; btn.textContent = "처리"; return; }
+          EQ.setModalBusy(false); EQ.closeModal(); afterAdminChange(r);
+        }).catch(function (e) { adminErr(e); EQ.setModalBusy(false); btn.disabled = false; btn.textContent = "처리"; });
       });
     }
 
