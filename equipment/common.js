@@ -19,11 +19,12 @@
 
   var STATUS_LABEL = {
     available: "사용 가능", checked_out: "불출 중", inspect_needed: "반납 점검 필요",
-    repair: "수리 중", lost: "분실", retired: "사용 중지"
+    return_inspection: "반납 점검 필요", repair: "수리 중", lost: "분실",
+    retired: "사용 중지", disabled: "사용 중지"
   };
   var STATUS_CLS = {
-    available: "ok", checked_out: "out", inspect_needed: "warn",
-    repair: "warn", lost: "bad", retired: "off"
+    available: "ok", checked_out: "out", inspect_needed: "warn", return_inspection: "warn",
+    repair: "warn", lost: "bad", retired: "off", disabled: "off"
   };
   var COND_LABEL = { normal: "정상", issue: "이상 있음", damaged: "파손", lost: "분실" };
 
@@ -104,6 +105,33 @@
   function todayStr() { var d = new Date(); return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate()); }
   function addDays(n) { var d = new Date(Date.now() + n * 86400000); return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate()); }
 
+  /* ── 한국식 날짜 표시 ──
+     서버·시트가 어떤 형태(yyyy-MM-dd, "Wed Apr 22 2026 … GMT+0900" 원문 등)로 보내도
+     화면에는 "2026년 7월 20일" / "2026년 7월 20일 11:30" 만 표시한다.
+     yyyy-MM-dd 는 문자열로 직접 분해해 시간대 변환으로 날짜가 밀리는 문제를 차단. */
+  function parseDateParts(v) {
+    if (v == null || v === "") return null;
+    var s = String(v).trim();
+    var m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?:[T ](\d{1,2}):(\d{2})(?::\d{2})?)?/);
+    if (m) return { y: +m[1], mo: +m[2], d: +m[3], h: m[4] != null ? +m[4] : null, mi: m[5] != null ? +m[5] : 0 };
+    var d = new Date(s);
+    if (!isNaN(d.getTime())) return { y: d.getFullYear(), mo: d.getMonth() + 1, d: d.getDate(), h: d.getHours(), mi: d.getMinutes() };
+    return null;
+  }
+  function fmtDate(v) {
+    var p = parseDateParts(v);
+    if (!p) return String(v == null ? "" : v);
+    return p.y + "년 " + p.mo + "월 " + p.d + "일";
+  }
+  function fmtDateTime(v) {
+    var p = parseDateParts(v);
+    if (!p) return String(v == null ? "" : v);
+    var base = p.y + "년 " + p.mo + "월 " + p.d + "일";
+    /* 자정(00:00)은 날짜만 저장된 값 — 불필요한 시간 표시 생략 */
+    if (p.h == null || (p.h === 0 && p.mi === 0)) return base;
+    return base + " " + p.h + ":" + pad2(p.mi);
+  }
+
   var toastTimer = null;
   function toast(msg, isErr) {
     var el = document.getElementById("eqToast");
@@ -121,7 +149,7 @@
   /* 검교정 상태 판정: ok / d30 / d7 / today / overdue / none */
   function calState(due, today) {
     today = today || todayStr();
-    if (!due) return { key: "none", label: "미등록", cls: "cal-none" };
+    if (!due) return { key: "none", label: "예정일 미등록", cls: "cal-none" };
     if (due < today) return { key: "overdue", label: "기한 경과", cls: "cal-overdue" };
     if (due === today) return { key: "today", label: "오늘 예정", cls: "cal-today" };
     var d7 = addDays(7), d30 = addDays(30);
@@ -195,9 +223,13 @@
     login: function (name, empNo) {
       return jsonp("login", { name: name, emp_no: empNo });
     },
-    uploadPhoto: function (dataUrl) {
+    uploadPhoto: function (dataUrl, eqCode, reqId) {
       var u = state.user || {};
-      return postJson({ action: "uploadEquipmentPhoto", data: dataUrl, user_id: u.user_id || "", emp_no: u.emp_no || "" });
+      return postJson({
+        action: "uploadEquipmentPhoto", data: dataUrl,
+        eq_code: eqCode || "", client_req_id: reqId || "",
+        user_id: u.user_id || "", emp_no: u.emp_no || ""
+      });
     }
   };
 
@@ -451,16 +483,25 @@
       }
       btn.disabled = true;
 
-      /* 1) 사진 업로드 (필요한 장비만, 순차) → 2) 일괄 반납 */
+      /* 1) 사진 업로드 (필요한 장비만, 순차) → 2) 일괄 반납
+         사진 저장이 모두 성공해야 반납 거래를 진행한다 — 사진 실패 시 장비는 반납되지 않음 */
       var uploads = payload.filter(function (p) { return photoData[p.idx]; });
       var uploaded = {};
       var chain = Promise.resolve();
       uploads.forEach(function (p, n) {
         chain = chain.then(function () {
           btn.textContent = "사진 업로드 중… (" + (n + 1) + "/" + uploads.length + ")";
-          return api.uploadPhoto(photoData[p.idx]).then(function (r) {
-            if (!r || !r.success || !r.url) throw new Error((r && r.message) || "사진 업로드에 실패했습니다.");
+          return api.uploadPhoto(photoData[p.idx], p.eq_code, reqId).then(function (r) {
+            if (!r || !r.success || !r.url) {
+              var err = new Error((r && r.message) || "");
+              err.isPhotoUpload = true;
+              throw err;
+            }
             uploaded[p.idx] = r.url;
+          }, function (e) {
+            var err = new Error((e && e.isPhotoUpload && e.message) || "네트워크 문제로 사진을 전송하지 못했습니다.");
+            err.isPhotoUpload = true;
+            throw err;
           });
         });
       });
@@ -485,7 +526,14 @@
         if (onDone) onDone(r);
       }).catch(function (e) {
         console.error(e);
-        alert(e.message || "서버 오류로 반납하지 못했습니다. 목록을 새로고침한 뒤 실제 처리 여부를 확인해주세요.");
+        if (e && e.isPhotoUpload) {
+          /* 사진 단계 실패 — 반납은 진행되지 않았고, 입력값·선택 사진은 모달에 그대로 유지됨 */
+          alert("반납 사진을 저장하지 못했습니다.\n" +
+            (e.message ? e.message + "\n" : "") +
+            "계측기 사진 저장 권한 설정을 확인해 주세요.\n입력한 반납 정보와 선택한 사진은 유지됩니다.");
+        } else {
+          alert(e.message || "서버 오류로 반납하지 못했습니다. 목록을 새로고침한 뒤 실제 처리 여부를 확인해주세요.");
+        }
         btn.disabled = false; btn.textContent = "📥 " + items.length + "대 반납";
       });
     });
@@ -508,6 +556,8 @@
     esc: esc,
     todayStr: todayStr,
     addDays: addDays,
+    fmtDate: fmtDate,
+    fmtDateTime: fmtDateTime,
     toast: toast,
     calState: calState,
     statusLabel: statusLabel,
