@@ -2577,6 +2577,120 @@
       .meal-count-grid { grid-template-columns: repeat(3, 1fr); }
     }
 
+    /* === 식수 현황 확인 모달 === */
+    .meal-status-open-btn {
+      display: inline-flex; align-items: center; gap: 4px;
+      min-height: 34px; padding: 7px 14px; border-radius: 999px;
+      border: 1px solid #c9d8ef; background: #eef4ff; color: #23407a;
+      font-size: 12px; font-weight: 900; cursor: pointer; white-space: nowrap;
+      transition: .18s ease;
+    }
+    .meal-status-open-btn:hover { background: #dfeaff; border-color: #a9c4ec; }
+
+    #mealStatusModal { overscroll-behavior: contain; }
+    .meal-status-card {
+      display: flex; flex-direction: column;
+      width: min(100%, 940px);
+      max-width: 940px;
+      max-height: calc(100vh - 36px);
+      max-height: calc(100dvh - 36px);
+      overflow: hidden;
+    }
+    #mealStatusModal .modal-head { flex: 0 0 auto; position: relative; z-index: 3; background: #fff; }
+    #mealStatusModal .modal-body {
+      flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden;
+      overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
+      padding: 16px 20px 20px;
+    }
+    .ms-toolbar {
+      position: sticky; top: 0; z-index: 4; background: #fff;
+      display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px;
+      padding-bottom: 12px; margin-bottom: 4px; border-bottom: 1px solid #eef1f6;
+    }
+    .ms-refresh-info { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
+    .ms-refresh-btn {
+      display: inline-flex; align-items: center; gap: 4px; min-height: 32px;
+      padding: 6px 12px; border-radius: 10px; border: 1px solid #cfd9e5;
+      background: #fff; color: #33445f; font-size: 12px; font-weight: 800; cursor: pointer;
+    }
+    .ms-refresh-btn:hover { background: #f2f6fc; }
+    .ms-refresh-btn:disabled { opacity: .55; cursor: default; }
+    .ms-dot { width: 8px; height: 8px; border-radius: 50%; background: #16a34a; flex-shrink: 0; }
+    .ms-dot.syncing { background: #f59e0b; animation: msPulse 1s ease-in-out infinite; }
+    .ms-dot.error { background: #dc2626; }
+    @keyframes msPulse { 0%,100% { opacity: 1; } 50% { opacity: .3; } }
+
+    .ms-summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
+    .ms-sum-item {
+      border: 1px solid #e5ebf4; border-radius: 12px; padding: 9px 8px; text-align: center; background: #fafcff;
+    }
+    .ms-sum-item strong { display: block; font-size: 19px; line-height: 1.1; color: var(--navy-dark); }
+    .ms-sum-item span { font-size: 11px; color: var(--muted); }
+    .ms-sum-item.ms-apply strong { color: #2d6b39; }
+    .ms-sum-item.ms-not strong { color: #b42318; }
+    .ms-sum-item.ms-pend strong { color: #8a5317; }
+    .ms-sum-item.ms-guest strong { color: #5b3da8; }
+    .ms-sum-item.ms-total {
+      grid-column: 1 / -1; display: flex; align-items: center; justify-content: center; gap: 8px;
+      background: linear-gradient(135deg, #eef4ff, #f8fbff); border-color: #d3e0f4;
+    }
+    .ms-sum-item.ms-total strong { font-size: 22px; }
+    .ms-sum-item.ms-total span { font-size: 12.5px; }
+    .ms-sum-group-label { grid-column: 1 / -1; font-size: 12.5px; font-weight: 900; color: #33445f; margin: 4px 0 -2px; }
+
+    .ms-filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 10px; }
+    .ms-seg { display: inline-flex; border: 1px solid #cfd9e5; border-radius: 10px; overflow: hidden; }
+    .ms-seg button {
+      border: none; background: #fff; color: #4b5a72; font-size: 12px; font-weight: 800;
+      padding: 7px 12px; cursor: pointer; border-right: 1px solid #eceff4;
+    }
+    .ms-seg button:last-child { border-right: none; }
+    .ms-seg button.active { background: var(--navy); color: #fff; }
+    .ms-search {
+      flex: 1 1 140px; min-width: 120px; border: 1px solid #cfd9e5; border-radius: 10px;
+      padding: 7px 12px; font-size: 13px; font: inherit; color: #1f2937; outline: none;
+    }
+    .ms-search:focus { border-color: var(--navy); box-shadow: 0 0 0 3px rgba(52,74,140,.08); }
+
+    .ms-error {
+      display: none; align-items: center; justify-content: space-between; gap: 10px;
+      padding: 10px 12px; border-radius: 10px; background: #fff5f5; border: 1px solid #fecaca;
+      color: #b42318; font-size: 12.5px; font-weight: 700; margin-bottom: 10px;
+    }
+    .ms-error.show { display: flex; }
+    .ms-error button {
+      border: 1px solid #f4a3a0; background: #fff; color: #b42318; border-radius: 8px;
+      padding: 5px 12px; font-size: 12px; font-weight: 800; cursor: pointer; flex-shrink: 0;
+    }
+
+    .ms-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1px solid #e5ebf4; border-radius: 12px; }
+    table.ms-table { width: 100%; border-collapse: collapse; min-width: 640px; font-size: 12.5px; }
+    table.ms-table thead th {
+      position: sticky; top: 0; background: #203a69; color: #fff; font-weight: 800;
+      padding: 9px 8px; text-align: center; white-space: nowrap; z-index: 1;
+    }
+    table.ms-table tbody td { padding: 8px; border-top: 1px solid #eef1f6; text-align: center; white-space: nowrap; }
+    table.ms-table tbody td.ms-td-name { text-align: left; font-weight: 700; color: #1f2937; }
+    table.ms-table tbody td.ms-td-team { text-align: left; color: #4b5a72; }
+    table.ms-table tbody tr.ms-area-bonsa td.ms-td-area { color: #23407a; font-weight: 800; }
+    table.ms-table tbody tr.ms-area-changnyeong td.ms-td-area { color: #8a5317; font-weight: 800; }
+    .ms-badge { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 11.5px; font-weight: 800; }
+    .ms-badge.applied { background: #e7f6ec; color: #1e7b44; }
+    .ms-badge.not_applied { background: #fdecea; color: #b42318; }
+    .ms-badge.pending { background: #fef3e2; color: #8a5317; }
+    .ms-auto-tag { font-size: 10px; color: #8a5317; font-weight: 800; margin-left: 3px; }
+    .ms-empty { padding: 24px; text-align: center; color: var(--muted); font-size: 13px; }
+    .ms-count-note { font-size: 12px; color: var(--muted); margin: 8px 2px 0; text-align: right; }
+
+    @media (max-width: 640px) {
+      #mealStatusModal { align-items: flex-start; padding: max(8px, env(safe-area-inset-top)) 8px max(8px, env(safe-area-inset-bottom)); }
+      .meal-status-card { width: 100%; max-width: none; max-height: calc(100dvh - 16px); border-radius: 16px; }
+      #mealStatusModal .modal-body { padding: 12px 14px 16px; }
+      #mealStatusModal .modal-close { width: 44px; height: 44px; font-size: 20px; }
+      .ms-summary { grid-template-columns: repeat(2, 1fr); }
+      .ms-search { font-size: 16px; }
+    }
+
     /* === 회의실 현황 === */
     .room-section { margin-top: 18px; }
     .room-section-head {
@@ -3110,6 +3224,12 @@
           <p style="font-weight:900;color:#22365e;font-size:15px;margin-bottom:6px;" data-i18n="mealLockTitle">신청이 마감되었습니다</p>
           <p id="mealLockDetail" style="font-size:13px;color:#667085;line-height:1.6;white-space:pre-line;"></p>
         </div>
+        <!-- 식수 신청 대상 아님 안내 -->
+        <div id="mealNotTargetMsg" class="meal-step hidden" style="text-align:center;padding:20px 0;">
+          <div style="font-size:28px;margin-bottom:8px;">🚫</div>
+          <p style="font-weight:900;color:#22365e;font-size:15px;margin-bottom:6px;">식수 신청 대상 계정이 아닙니다</p>
+          <p style="font-size:13px;color:#667085;line-height:1.6;">식수 신청 대상 설정은 관리자에게 문의해주세요.<br>(현황 확인은 이용하실 수 있습니다.)</p>
+        </div>
         <!-- 08:30 자동 미신청 처리 안내 (08:40 전 변경 가능) -->
         <div id="mealAutoNotice" class="hidden" style="margin-bottom:10px;padding:9px 12px;border-radius:10px;background:#fff7ed;border:1px solid #fcd9b8;font-size:12.5px;color:#8a5317;font-weight:700;line-height:1.6;"></div>
         <!-- Step 1: 중식 신청 여부 -->
@@ -3148,6 +3268,65 @@
             <button type="button" class="meal-btn meal-submit" id="mealSubmitBtn" data-i18n="mealSubmit">완료 — 식수 신청</button>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 식수 현황 확인 모달 -->
+  <div id="mealStatusModal" class="modal hidden" aria-hidden="true">
+    <div class="modal-card meal-status-card" role="dialog" aria-modal="true" aria-labelledby="mealStatusTitle">
+      <div class="modal-head">
+        <div style="flex:1;min-width:0;">
+          <h3 id="mealStatusTitle" class="modal-title">오늘의 식수 신청 현황</h3>
+          <p class="modal-desc" id="mealStatusDateDesc">날짜별 식수 신청 현황을 확인합니다.</p>
+        </div>
+        <button type="button" id="closeMealStatusBtn" class="modal-close" aria-label="닫기">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="ms-toolbar">
+          <div class="ms-refresh-info">
+            <span class="ms-dot" id="mealStatusDot"></span>
+            <span id="mealStatusUpdated">불러오는 중…</span>
+          </div>
+          <button type="button" class="ms-refresh-btn" id="mealStatusRefreshBtn">🔄 새로고침</button>
+        </div>
+
+        <div class="ms-error" id="mealStatusError">
+          <span id="mealStatusErrorMsg">현황을 불러오지 못했습니다.</span>
+          <button type="button" id="mealStatusRetryBtn">다시 시도</button>
+        </div>
+
+        <div class="ms-summary" id="mealStatusSummary"></div>
+
+        <div class="ms-filters">
+          <div class="ms-seg" id="mealStatusAreaSeg">
+            <button type="button" data-area="all" class="active">전체</button>
+            <button type="button" data-area="본사">본사</button>
+            <button type="button" data-area="창녕">창녕</button>
+          </div>
+          <div class="ms-seg" id="mealStatusStatusSeg">
+            <button type="button" data-status="all" class="active">전체</button>
+            <button type="button" data-status="applied">신청</button>
+            <button type="button" data-status="not_applied">미신청</button>
+            <button type="button" data-status="pending">미응답</button>
+          </div>
+          <input type="text" class="ms-search" id="mealStatusSearch" placeholder="이름 검색" autocomplete="off" />
+        </div>
+
+        <div class="ms-table-wrap">
+          <table class="ms-table">
+            <thead>
+              <tr>
+                <th>구분</th><th>이름</th><th>소속팀</th>
+                <th>중식</th><th>중식 손님</th><th>석식</th><th>석식 손님</th><th>처리시각</th>
+              </tr>
+            </thead>
+            <tbody id="mealStatusTbody">
+              <tr><td colspan="8" class="ms-empty">불러오는 중…</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="ms-count-note" id="mealStatusCountNote"></div>
       </div>
     </div>
   </div>
@@ -3640,6 +3819,7 @@
       /* 5~7. 열려 있는 모달/팝오버/드롭다운 정리
          (일정 선택 상태는 iframe 화면이 홈으로 교체되면서 함께 초기화됨) */
       closeMealModal();
+      closeMealStatusModal();
       closeRoomModal({ force: true });
       closeLoginModal();
       closeRoomTimeMenu();
@@ -4380,7 +4560,7 @@
           });
           /* 08:30 자동 미신청 사용자 — 08:40 전이면 변경 안내 팝업을
              사용자별·날짜별·브라우저 세션별 한 번만 자동으로 연다 */
-          if (result.is_auto && !isMealLocked()) {
+          if (result.is_auto && !isMealLocked() && isMealTargetUser()) {
             try {
               const popKey = `hak_meal_auto_popup_${getTodayStr()}_${currentUserData.user_id}`;
               if (!sessionStorage.getItem(popKey)) {
@@ -4389,8 +4569,8 @@
               }
             } catch (e) { /* sessionStorage 사용 불가 시 팝업 생략 */ }
           }
-        } else if (showModalIfNeeded && !isMealLocked()) {
-          /* 서버에도 기록 없음 → 신청 가능 시간(08:40 이전)에만 팝업 */
+        } else if (showModalIfNeeded && !isMealLocked() && isMealTargetUser()) {
+          /* 서버에도 기록 없음 → 신청 가능 시간(08:40 이전)에만 팝업 (대상자만) */
           setTimeout(openMealModal, 800);
         }
       } catch (e) {
@@ -4423,6 +4603,20 @@
       return mins >= MEAL_EDIT_CUTOFF_HOUR * 60 + MEAL_EDIT_CUTOFF_MINUTE;
     }
 
+    /* 식수 신청 대상자 여부 (서버 resolveMealTarget_ 와 동일 기준).
+       구 세션(meal_target/area 정보 없음)은 프론트에서 막지 않고 서버 검증에 위임 */
+    function isMealTargetUser() {
+      if (!currentUserData) return false;
+      const hasField = ("meal_target" in currentUserData) || ("area" in currentUserData);
+      const mt = String(currentUserData.meal_target || "").trim();
+      const mtU = mt.toUpperCase();
+      if (mt === "제외" || mtU === "N" || mtU === "X" || mt === "비대상") return false;
+      if (mt === "본사" || mt === "창녕") return true;
+      const area = String(currentUserData.area || "").trim();
+      if (area === "본사" || area === "창녕") return true;
+      return !hasField; /* 정보 없으면 허용(서버가 최종 검증), 있는데 대상 아니면 차단 */
+    }
+
     function openMealModal() {
       const modal = document.getElementById("mealModal");
       if (!modal) return;
@@ -4438,7 +4632,21 @@
       const step1    = document.getElementById("mealStep1");
       const step2    = document.getElementById("mealStep2");
       const autoNotice = document.getElementById("mealAutoNotice");
+      const notTarget = document.getElementById("mealNotTargetMsg");
       const data = getMealLocalData();
+
+      /* 식수 신청 대상이 아닌 계정 — 신청 폼 대신 안내만 표시 */
+      if (currentUserData && !isMealTargetUser()) {
+        if (notTarget) notTarget.classList.remove("hidden");
+        if (lockMsg) lockMsg.classList.add("hidden");
+        if (step1) step1.classList.add("hidden");
+        if (step2) step2.classList.add("hidden");
+        if (autoNotice) autoNotice.classList.add("hidden");
+        modal.classList.remove("hidden");
+        modal.setAttribute("aria-hidden", "false");
+        return;
+      }
+      if (notTarget) notTarget.classList.add("hidden");
 
       if (isMealLocked()) {
         if (lockMsg) lockMsg.classList.remove("hidden");
@@ -4585,6 +4793,252 @@
       } catch (e) {
         console.error("식수 현황 로드 오류:", e);
       }
+    }
+
+    /* =============================================
+       식수 현황 확인 모달 (실시간 polling)
+       - 모달 열 때 즉시 조회 + 25초 간격 자동 갱신
+       - 탭 숨김 시 조회 생략, 중복 요청 방지, 스크롤/필터 상태 보존
+       - 조회 실패 시 기존 표 유지 + 오류 안내/재시도
+    ============================================= */
+    const MEAL_STATUS_REFRESH_MS = 25000;
+    let mealStatusTimer = null;
+    let mealStatusInFlight = false;
+    let mealStatusData = null;                 // 마지막 성공 summary
+    let mealStatusFilters = { area: "all", status: "all", q: "" };
+
+    function setMealStatusDot(state) {
+      const dot = document.getElementById("mealStatusDot");
+      if (!dot) return;
+      dot.classList.remove("syncing", "error");
+      if (state === "syncing") dot.classList.add("syncing");
+      else if (state === "error") dot.classList.add("error");
+    }
+
+    function openMealStatusModal() {
+      if (!currentUserData || !currentUserData.user_id) {
+        openLoginFromScreen();
+        alert("식수 현황 확인은 로그인 후 이용 가능합니다.");
+        return;
+      }
+      const modal = document.getElementById("mealStatusModal");
+      if (!modal) return;
+      const desc = document.getElementById("mealStatusDateDesc");
+      if (desc) desc.textContent = `${getTodayStr()} · 대상자 전체 현황`;
+      /* 필터 초기화 */
+      mealStatusFilters = { area: "all", status: "all", q: "" };
+      syncMealStatusSegUI();
+      const searchEl = document.getElementById("mealStatusSearch");
+      if (searchEl) searchEl.value = "";
+
+      modal.classList.remove("hidden");
+      modal.setAttribute("aria-hidden", "false");
+      lockPageScroll();
+
+      fetchMealStatus(true);
+      startMealStatusTimer();
+    }
+
+    function closeMealStatusModal() {
+      const modal = document.getElementById("mealStatusModal");
+      if (!modal || modal.classList.contains("hidden")) return;
+      modal.classList.add("hidden");
+      modal.setAttribute("aria-hidden", "true");
+      stopMealStatusTimer();
+      unlockPageScroll();
+    }
+
+    function startMealStatusTimer() {
+      stopMealStatusTimer();
+      mealStatusTimer = setInterval(() => {
+        if (document.hidden) return;               /* 탭 숨김 시 불필요한 조회 생략 */
+        fetchMealStatus(false);
+      }, MEAL_STATUS_REFRESH_MS);
+    }
+    function stopMealStatusTimer() {
+      if (mealStatusTimer) { clearInterval(mealStatusTimer); mealStatusTimer = null; }
+    }
+
+    async function fetchMealStatus(isInitial) {
+      if (mealStatusInFlight) return;              /* 중복 실행 방지 */
+      if (!currentUserData || !currentUserData.user_id) return;
+      mealStatusInFlight = true;
+      setMealStatusDot("syncing");
+      const updatedEl = document.getElementById("mealStatusUpdated");
+      if (updatedEl) updatedEl.textContent = "갱신 중…";
+      const refreshBtn = document.getElementById("mealStatusRefreshBtn");
+      if (refreshBtn) refreshBtn.disabled = true;
+
+      try {
+        const params = [
+          "action=getMealSummary",
+          `date=${encodeURIComponent(getTodayStr())}`,
+          `user_id=${encodeURIComponent(currentUserData.user_id || "")}`,
+          `emp_no=${encodeURIComponent(currentUserData.emp_no || "")}`
+        ].join("&");
+        const result = await jsonpRequest(`${WEB_APP_URL}?${params}`, "mealStatusCallback");
+        if (!result || !result.success) {
+          throw new Error((result && result.message) || "식수 현황 조회 실패");
+        }
+        mealStatusData = result.summary || {};
+        hideMealStatusError();
+        renderMealStatus();                        /* 스크롤/필터 보존 렌더 */
+        setMealStatusDot("idle");
+        if (updatedEl) {
+          const now = new Date();
+          const hh = String(now.getHours()).padStart(2, "0");
+          const mm = String(now.getMinutes()).padStart(2, "0");
+          const ss = String(now.getSeconds()).padStart(2, "0");
+          updatedEl.textContent = `마지막 갱신 ${hh}:${mm}:${ss}`;
+        }
+      } catch (e) {
+        console.error("식수 현황 조회 오류:", e);
+        setMealStatusDot("error");
+        showMealStatusError((e && e.message) || "현황을 불러오지 못했습니다.");
+        if (updatedEl && mealStatusData) updatedEl.textContent = "갱신 실패 — 기존 현황 표시 중";
+        else if (updatedEl) updatedEl.textContent = "갱신 실패";
+        /* 실패해도 기존 표(mealStatusData)는 지우지 않음 */
+      } finally {
+        mealStatusInFlight = false;
+        if (refreshBtn) refreshBtn.disabled = false;
+      }
+    }
+
+    function showMealStatusError(msg) {
+      const box = document.getElementById("mealStatusError");
+      const m = document.getElementById("mealStatusErrorMsg");
+      if (m) m.textContent = msg;
+      if (box) box.classList.add("show");
+    }
+    function hideMealStatusError() {
+      const box = document.getElementById("mealStatusError");
+      if (box) box.classList.remove("show");
+    }
+
+    function mealStatusLabel(status) {
+      return status === "applied" ? "신청" : (status === "not_applied" ? "미신청" : "미응답");
+    }
+
+    function renderMealStatus() {
+      const s = mealStatusData;
+      if (!s) return;
+
+      /* ── 상단 요약 ── */
+      const total = s.total != null ? s.total : 0;
+      const sumEl = document.getElementById("mealStatusSummary");
+      if (sumEl) {
+        sumEl.innerHTML = `
+          <div class="ms-sum-item ms-total"><strong>${total}</strong><span>명 · 전체 식수 대상</span></div>
+          <div class="ms-sum-group-label">🍚 중식</div>
+          <div class="ms-sum-item ms-apply"><strong>${s.lunch_applied || 0}</strong><span>신청</span></div>
+          <div class="ms-sum-item ms-not"><strong>${s.lunch_not_applied || 0}</strong><span>미신청</span></div>
+          <div class="ms-sum-item ms-pend"><strong>${s.lunch_pending || 0}</strong><span>미응답</span></div>
+          <div class="ms-sum-item ms-guest"><strong>${s.lunch_guest_total || 0}</strong><span>외부손님</span></div>
+          <div class="ms-sum-group-label">🌙 석식</div>
+          <div class="ms-sum-item ms-apply"><strong>${s.dinner_applied || 0}</strong><span>신청</span></div>
+          <div class="ms-sum-item ms-not"><strong>${s.dinner_not_applied || 0}</strong><span>미신청</span></div>
+          <div class="ms-sum-item ms-pend"><strong>${s.dinner_pending || 0}</strong><span>미응답</span></div>
+          <div class="ms-sum-item ms-guest"><strong>${s.dinner_guest_total || 0}</strong><span>외부손님</span></div>
+        `;
+      }
+
+      /* ── 표(필터 적용, 스크롤 보존) ── */
+      const wrap = document.querySelector("#mealStatusModal .ms-table-wrap");
+      const prevScroll = wrap ? wrap.scrollTop : 0;
+      const prevScrollX = wrap ? wrap.scrollLeft : 0;
+
+      const details = Array.isArray(s.details) ? s.details : [];
+      const f = mealStatusFilters;
+      const q = (f.q || "").trim().toLowerCase();
+      const filtered = details.filter(d => {
+        if (f.area !== "all" && d.area !== f.area) return false;
+        if (f.status !== "all" && d.lunch_status !== f.status) return false;
+        if (q && String(d.name || "").toLowerCase().indexOf(q) === -1) return false;
+        return true;
+      });
+
+      const tbody = document.getElementById("mealStatusTbody");
+      if (tbody) {
+        if (!details.length) {
+          tbody.innerHTML = `<tr><td colspan="8" class="ms-empty">조회 권한이 없거나 대상자 현황이 없습니다.</td></tr>`;
+        } else if (!filtered.length) {
+          tbody.innerHTML = `<tr><td colspan="8" class="ms-empty">필터 조건에 해당하는 대상자가 없습니다.</td></tr>`;
+        } else {
+          tbody.innerHTML = filtered.map(d => {
+            const areaCls = d.area === "본사" ? "ms-area-bonsa" : (d.area === "창녕" ? "ms-area-changnyeong" : "");
+            const lunchBadge = `<span class="ms-badge ${d.lunch_status}">${mealStatusLabel(d.lunch_status)}</span>`;
+            const dinnerBadge = `<span class="ms-badge ${d.dinner_status}">${mealStatusLabel(d.dinner_status)}</span>`;
+            const autoTag = d.is_auto ? `<span class="ms-auto-tag">(자동)</span>` : "";
+            const timeCell = d.submitted_time
+              ? `<span title="${escapeHtml(d.submitted_at || "")}">${escapeHtml(d.submitted_time)}</span>${autoTag}`
+              : "-";
+            return `<tr class="${areaCls}">
+              <td class="ms-td-area">${escapeHtml(d.area || "")}</td>
+              <td class="ms-td-name">${escapeHtml(d.name || "")}</td>
+              <td class="ms-td-team">${escapeHtml(d.team || "")}</td>
+              <td>${lunchBadge}</td>
+              <td>${d.lunch_guest > 0 ? d.lunch_guest : "0"}</td>
+              <td>${dinnerBadge}</td>
+              <td>${d.dinner_guest > 0 ? d.dinner_guest : "0"}</td>
+              <td>${timeCell}</td>
+            </tr>`;
+          }).join("");
+        }
+      }
+
+      const note = document.getElementById("mealStatusCountNote");
+      if (note) note.textContent = details.length ? `표시 ${filtered.length}명 / 전체 ${details.length}명` : "";
+
+      /* 자동 갱신 시 스크롤 위치 초기화되지 않도록 복원 */
+      if (wrap) { wrap.scrollTop = prevScroll; wrap.scrollLeft = prevScrollX; }
+    }
+
+    function syncMealStatusSegUI() {
+      const areaSeg = document.getElementById("mealStatusAreaSeg");
+      if (areaSeg) areaSeg.querySelectorAll("button").forEach(b => {
+        b.classList.toggle("active", b.dataset.area === mealStatusFilters.area);
+      });
+      const statusSeg = document.getElementById("mealStatusStatusSeg");
+      if (statusSeg) statusSeg.querySelectorAll("button").forEach(b => {
+        b.classList.toggle("active", b.dataset.status === mealStatusFilters.status);
+      });
+    }
+
+    function bindMealStatusEvents() {
+      const closeBtn = document.getElementById("closeMealStatusBtn");
+      if (closeBtn) closeBtn.addEventListener("click", closeMealStatusModal);
+
+      const modal = document.getElementById("mealStatusModal");
+      if (modal) modal.addEventListener("click", (ev) => {
+        if (ev.target === modal) closeMealStatusModal();   /* 배경 클릭 닫기 */
+      });
+
+      const refreshBtn = document.getElementById("mealStatusRefreshBtn");
+      if (refreshBtn) refreshBtn.addEventListener("click", () => fetchMealStatus(false));
+      const retryBtn = document.getElementById("mealStatusRetryBtn");
+      if (retryBtn) retryBtn.addEventListener("click", () => fetchMealStatus(false));
+
+      const areaSeg = document.getElementById("mealStatusAreaSeg");
+      if (areaSeg) areaSeg.addEventListener("click", (ev) => {
+        const btn = ev.target.closest("button[data-area]");
+        if (!btn) return;
+        mealStatusFilters.area = btn.dataset.area;
+        syncMealStatusSegUI();
+        renderMealStatus();
+      });
+      const statusSeg = document.getElementById("mealStatusStatusSeg");
+      if (statusSeg) statusSeg.addEventListener("click", (ev) => {
+        const btn = ev.target.closest("button[data-status]");
+        if (!btn) return;
+        mealStatusFilters.status = btn.dataset.status;
+        syncMealStatusSegUI();
+        renderMealStatus();
+      });
+      const searchEl = document.getElementById("mealStatusSearch");
+      if (searchEl) searchEl.addEventListener("input", () => {
+        mealStatusFilters.q = searchEl.value || "";
+        renderMealStatus();
+      });
     }
 
     /* =============================================
@@ -5474,7 +5928,10 @@
             <div class="panel" id="mealSection">
               <div class="panel-title-row">
                 <h3>${t("mealStatusTitle")}</h3>
-                <span id="mealTodayLabel">${today}</span>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <button type="button" class="meal-status-open-btn" data-action="open-meal-status">📋 현황 확인</button>
+                  <span id="mealTodayLabel">${today}</span>
+                </div>
               </div>
               <div class="meal-count-grid">
                 <div class="meal-count-item mci-applying">
@@ -8430,6 +8887,11 @@
           return;
         }
 
+        if (actionButton.dataset.action === "open-meal-status") {
+          openMealStatusModal();
+          return;
+        }
+
         if (actionButton.dataset.action === "open-room-modal") {
           if (currentUserData) {
             openRoomModal(actionButton.dataset.room || "1");
@@ -8521,6 +8983,15 @@
 
       document.addEventListener("keydown", (event) => {
         const modalOpened = !loginModal.classList.contains("hidden");
+
+        /* 식수 현황 모달 Escape 닫기 (열려 있을 때 우선 처리) */
+        if (event.key === "Escape") {
+          const statusModal = document.getElementById("mealStatusModal");
+          if (statusModal && !statusModal.classList.contains("hidden")) {
+            closeMealStatusModal();
+            return;
+          }
+        }
 
         if (event.key === "Escape" && modalOpened) {
           pendingAction = null;
@@ -8700,6 +9171,7 @@
       bindScreenEvents();
       bindModalEvents();
       bindMealModalEvents();
+      bindMealStatusEvents();
       bindRoomModalEvents();
       bindLanguageEvents();
       bindMobileMenuEvents();
