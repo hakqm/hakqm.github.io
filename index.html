@@ -3283,7 +3283,7 @@
 
         <!-- 단일 화면 신청 폼 (v3): 대상자 · 중식 · 석식 · 저장 -->
         <div id="mealForm" class="meal-step">
-          <p class="meal-info-p" data-i18n="mealFormIntro">미응답자는 오전 8시 30분에 <strong>중식·석식 모두 신청</strong>으로 자동 처리됩니다. 자동 처리 후에도 오전 8시 40분 전까지 변경할 수 있습니다.</p>
+          <p class="meal-info-p" data-i18n="mealFormIntro">미응답자는 오전 8시 30분에 <strong>중식 신청 · 석식 미신청</strong>으로 자동 처리됩니다. 석식이 필요하면 직접 <strong>신청</strong>을 선택해주세요. 자동 처리 후에도 오전 8시 40분 전까지 변경할 수 있습니다.</p>
 
           <!-- 신청 대상자 -->
           <div class="meal-field">
@@ -3458,15 +3458,15 @@
         myRequestStatus: "내 신청 상태",
         requestChange: "신청 / 변경",
         loginToRequest: "로그인 후 신청 가능",
-        mealHomeInfo: "매일 자정 이후 식수 신청 팝업이 자동으로 표시됩니다. 미응답자는 오전 8시 30분에 중식·석식 모두 신청으로 자동 처리됩니다. 자동 신청 처리 후에도 오전 8시 40분 전까지 변경할 수 있습니다. 오전 8시 40분부터 당일 신청 변경이 마감됩니다. 연차·출장 등으로 직접 신청하지 못하는 경우 같은 파트 구성원이 대신 신청·변경할 수 있습니다.",
+        mealHomeInfo: "매일 자정 이후 식수 신청 팝업이 자동으로 표시됩니다. 미응답자는 오전 8시 30분에 중식은 신청, 석식은 미신청으로 자동 처리됩니다. 석식이 필요하면 직접 신청을 선택해주세요. 자동 처리 후에도 오전 8시 40분 전까지 변경할 수 있습니다. 오전 8시 40분부터 당일 신청 변경이 마감됩니다. 연차·출장 등으로 직접 신청하지 못하는 경우 같은 파트 구성원이 대신 신청·변경할 수 있습니다.",
         /* 식수 상태(동적) */
         checking: "확인 중...",
         checkingDetail: "서버에서 신청 상태 확인 중...",
         checkFailed: "확인 실패",
         checkFailedDetail: "상태 조회 실패 — 새로고침 후 다시 확인해주세요.",
-        autoApplied: "자동 신청",
-        autoAppliedLocked: "자동 신청 처리됨 (변경 마감)",
-        autoAppliedOpen: "자동 신청 처리됨 · 오전 8시 40분까지 변경 가능",
+        autoApplied: "자동 처리(중식 신청)",
+        autoAppliedLocked: "자동 처리됨 — 중식 신청 · 석식 미신청 (변경 마감)",
+        autoAppliedOpen: "자동 처리됨 — 중식 신청 · 석식 미신청 · 오전 8시 40분까지 변경 가능",
         autoProcessed: "자동 처리",
         autoProcessedLocked: "자동 처리됨 (변경 마감)",
         autoProcessedOpen: "자동 처리됨 · 오전 8시 40분까지 변경 가능",
@@ -3477,7 +3477,7 @@
         mealModalDescDefault: "오늘 식수(중식·석식) 여부를 선택해주세요.",
         mealTimer: "🕗 오전 8시 40분까지 신청·변경 가능",
         mealLockTitle: "신청이 마감되었습니다",
-        mealFormIntro: "미응답자는 오전 8시 30분에 <strong>중식·석식 모두 신청</strong>으로 자동 처리됩니다. 자동 처리 후에도 오전 8시 40분 전까지 변경할 수 있습니다.",
+        mealFormIntro: "미응답자는 오전 8시 30분에 <strong>중식 신청 · 석식 미신청</strong>으로 자동 처리됩니다. 석식이 필요하면 직접 <strong>신청</strong>을 선택해주세요. 자동 처리 후에도 오전 8시 40분 전까지 변경할 수 있습니다.",
         mealTargetLabel: "👤 신청 대상자",
         mealTargetHint: "연차·출장 등으로 직접 신청하지 못하는 <strong>같은 파트 구성원</strong>을 선택해 대신 신청·변경할 수 있습니다.",
         mealTargetSelfOnly: "같은 파트 구성원 정보가 없어 본인만 신청할 수 있습니다.",
@@ -3490,10 +3490,10 @@
         mealApplyNo: "✗ 미신청",
         mealSubmit: "저장",
         mealSaving: "저장 중...",
-        mealAutoNotice: "오전 8시 30분에 자동 신청 처리되었습니다. 오전 8시 40분까지 변경할 수 있습니다.",
+        mealAutoNotice: "오전 8시 30분에 자동 처리되었습니다(중식 신청 · 석식 미신청). 오전 8시 40분까지 변경할 수 있습니다.",
         mealProxyNotice: "다른 구성원(같은 파트)의 식수를 대신 신청·변경합니다.",
         mealCurrentLabel: "현재 저장 상태",
-        mealCurrentNone: "아직 신청 기록이 없습니다. (미응답 — 오전 8시 30분에 중식·석식 신청으로 자동 처리)",
+        mealCurrentNone: "아직 신청 기록이 없습니다. (미응답 — 오전 8시 30분에 중식 신청 · 석식 미신청으로 자동 처리)",
         /* 식수 alert */
         mealLoginRequired: "식수 신청은 로그인 후 이용 가능합니다.",
         mealSaveFail: "식수 신청 저장에 실패했습니다.",
@@ -3505,7 +3505,7 @@
         lockStatusNotRequestedAuto: "✗ 미신청 (자동 처리)",
         lockStatusRequestedAuto: "✓ 신청 (자동 처리)",
         lockStatusNotRequested: "✗ 미신청",
-        lockStatusNoResponse: "미응답 (신청 처리)",
+        lockStatusNoResponse: "미응답 (중식 신청 처리)",
         lockMyStatusLabel: "내 신청 상태",
         lockDetailPrefix: "오전 8시 40분 이후에는 당일 식수 신청을 변경할 수 없습니다."
       },
@@ -3542,14 +3542,14 @@
         myRequestStatus: "My Request Status",
         requestChange: "Request / Change",
         loginToRequest: "Login is required.",
-        mealHomeInfo: "The meal request popup appears automatically after midnight each day. Users who have not responded are automatically marked as requesting BOTH lunch and dinner at 8:30 AM. You may still change your request until 8:40 AM. Meal requests and changes close at 8:40 AM. If you cannot submit your own request (annual leave, business trip, etc.), a member of your own part may submit or change it for you.",
+        mealHomeInfo: "The meal request popup appears automatically after midnight each day. Users who have not responded are automatically marked at 8:30 AM as REQUESTING lunch and NOT requesting dinner. If you need dinner, please select it yourself. You may still change your request until 8:40 AM. Meal requests and changes close at 8:40 AM. If you cannot submit your own request (annual leave, business trip, etc.), a member of your own part may submit or change it for you.",
         checking: "Checking...",
         checkingDetail: "Checking your meal request status...",
         checkFailed: "Check Failed",
         checkFailedDetail: "Unable to retrieve your meal request status. Please refresh and try again.",
-        autoApplied: "Automatically Requested",
-        autoAppliedLocked: "Automatically marked as requested. Changes are closed.",
-        autoAppliedOpen: "Automatically marked as requested. Changes are available until 8:40 AM.",
+        autoApplied: "Auto-processed (lunch requested)",
+        autoAppliedLocked: "Auto-processed — lunch requested, dinner not requested. Changes are closed.",
+        autoAppliedOpen: "Auto-processed — lunch requested, dinner not requested. Changes are available until 8:40 AM.",
         autoProcessed: "Automatically Processed",
         autoProcessedLocked: "Automatically processed. Changes are closed.",
         autoProcessedOpen: "Automatically processed. Changes are available until 8:40 AM.",
@@ -3559,7 +3559,7 @@
         mealModalDescDefault: "Please select your meal (lunch/dinner) request for today.",
         mealTimer: "🕗 Requests and changes are available until 8:40 AM.",
         mealLockTitle: "Meal requests are closed.",
-        mealFormIntro: "Users who have not responded are automatically marked as requesting <strong>both lunch and dinner</strong> at 8:30 AM. You may still change it until 8:40 AM.",
+        mealFormIntro: "Users who have not responded are automatically marked at 8:30 AM as <strong>lunch requested · dinner not requested</strong>. If you need dinner, please select <strong>Request</strong> yourself. You may still change it until 8:40 AM.",
         mealTargetLabel: "👤 Request For",
         mealTargetHint: "You may select a <strong>member of your own part</strong> and submit or change their request when they cannot do it themselves.",
         mealTargetSelfOnly: "No part members are available, so you can only submit your own request.",
@@ -3572,10 +3572,10 @@
         mealApplyNo: "✗ Do Not Request",
         mealSubmit: "Save",
         mealSaving: "Saving...",
-        mealAutoNotice: "Automatically marked as requested at 8:30 AM. You may change it until 8:40 AM.",
+        mealAutoNotice: "Automatically processed at 8:30 AM (lunch requested · dinner not requested). You may change it until 8:40 AM.",
         mealProxyNotice: "You are submitting or changing the meal request of another member in your part.",
         mealCurrentLabel: "Currently saved",
-        mealCurrentNone: "No request on record yet. (No response — will be auto-set to lunch + dinner requested at 8:30 AM)",
+        mealCurrentNone: "No request on record yet. (No response — will be auto-set at 8:30 AM to lunch requested, dinner not requested)",
         mealLoginRequired: "Please log in to submit a meal request.",
         mealSaveFail: "Failed to save your meal request.",
         mealNetworkRetry: "Please check your network connection and try again.",
@@ -3585,7 +3585,7 @@
         lockStatusNotRequestedAuto: "✗ Not Requested (Auto)",
         lockStatusRequestedAuto: "✓ Requested (Auto)",
         lockStatusNotRequested: "✗ Not Requested",
-        lockStatusNoResponse: "No Response (Marked as Requested)",
+        lockStatusNoResponse: "No Response (lunch marked as requested)",
         lockMyStatusLabel: "My request status",
         lockDetailPrefix: "Meal requests and changes are unavailable after 8:40 AM."
       }
@@ -3861,8 +3861,8 @@
       pendingAction = null;
 
       /* 3. 식수 임시 상태 초기화 (v3: 외부손님 상태 없음, 대리 신청 상태 추가) */
-      mealLunchApplying = true;
-      mealDinnerApplying = true;
+      mealLunchApplying = MEAL_AUTO_LUNCH_APPLY;
+      mealDinnerApplying = MEAL_AUTO_DINNER_APPLY;
       mealPartMembers = [];
       mealSelectedUserId = "";
       mealPartLoading = false;
@@ -4508,7 +4508,7 @@
        - 자동 "신청" 처리 시작: 오전 08:30 (서버 트리거가 중식·석식 모두 O 처리)
        - 사용자 신청·변경 마감: 오전 08:40 (08:40:00부터 변경 불가)
        v3 변경점:
-       ① 미응답자 자동 처리 결과가 미신청 → 중식·석식 모두 "신청"
+       ① 미응답자 자동 처리 — 중식은 "신청", 석식은 "미신청"(기존 유지)
        ② 외부 손님 선택·입력 UI 폐지 (서버에서도 항상 0 저장)
        ③ 같은 파트(users.part) 구성원 대리 신청·변경 지원 (서버 재검증)
        ④ 다단계 팝업 → 대상자·중식·석식·저장 단일 화면
@@ -4518,8 +4518,13 @@
     const MEAL_EDIT_CUTOFF_HOUR = 8;
     const MEAL_EDIT_CUTOFF_MINUTE = 40;
 
-    let mealLunchApplying = true;      // 중식 신청 여부 (기본 신청 — 자동 처리 결과와 동일)
-    let mealDinnerApplying = true;     // 석식 신청 여부 (기본 신청 — 자동 처리 결과와 동일)
+    /* 08:30 자동 처리 기준 (Apps Script MEAL_AUTO_MARK_LUNCH / _DINNER 와 동일하게 유지).
+       미응답자에게 폼 기본값으로 미리 보여주는 값이기도 하다. */
+    const MEAL_AUTO_LUNCH_APPLY = true;    // 중식: 자동 신청(O)
+    const MEAL_AUTO_DINNER_APPLY = false;  // 석식: 자동 미신청(X) — 기존 운영 유지
+
+    let mealLunchApplying = MEAL_AUTO_LUNCH_APPLY;    // 중식 신청 여부 (기본 = 자동 처리 결과)
+    let mealDinnerApplying = MEAL_AUTO_DINNER_APPLY;  // 석식 신청 여부 (기본 = 자동 처리 결과)
 
     /* 대리 신청 상태 */
     let mealPartMembers = [];          // getMealPartMembers 결과 (같은 파트 대상자 + 당일 상태)
@@ -4585,11 +4590,13 @@
         short = mealStatusError ? t("checkFailed") : t("noResponse");
         detail = mealStatusError ? t("checkFailedDetail") : t("noResponse");
       } else if (data.isAuto) {
-        /* 08:30 자동 처리(v3 = 중식·석식 신청) — 08:40 전이면 변경 가능 안내 */
-        const bothApplied = !!data.applying && !!data.dinner;
-        short = bothApplied ? t("autoApplied") : t("autoProcessed");
-        const openKey = bothApplied ? "autoAppliedOpen" : "autoProcessedOpen";
-        const lockedKey = bothApplied ? "autoAppliedLocked" : "autoProcessedLocked";
+        /* 08:30 자동 처리(v3 = 중식 신청 / 석식 미신청) — 08:40 전이면 변경 가능 안내.
+           자동 처리 기본값 그대로면 구체 문구를, 그 외(수동 보정 등)는 일반 문구를 쓴다. */
+        const isStandardAuto = (!!data.applying === MEAL_AUTO_LUNCH_APPLY)
+          && (!!data.dinner === MEAL_AUTO_DINNER_APPLY);
+        short = isStandardAuto ? t("autoApplied") : t("autoProcessed");
+        const openKey = isStandardAuto ? "autoAppliedOpen" : "autoProcessedOpen";
+        const lockedKey = isStandardAuto ? "autoAppliedLocked" : "autoProcessedLocked";
         detail = `${mealChoiceText(!!data.applying, !!data.dinner)} — ${isMealLocked() ? t(lockedKey) : t(openKey)}`;
       } else {
         short = data.applying ? t("requested") : t("notRequested");
@@ -4801,9 +4808,9 @@
           mealLunchApplying = !!member.lunch_applying;
           mealDinnerApplying = !!member.dinner_applying;
         } else {
-          /* 미응답 — 08:30 자동 처리 결과(중식·석식 신청)를 기본값으로 제시 */
-          mealLunchApplying = true;
-          mealDinnerApplying = true;
+          /* 미응답 — 08:30 자동 처리 결과(중식 신청 / 석식 미신청)를 기본값으로 제시 */
+          mealLunchApplying = MEAL_AUTO_LUNCH_APPLY;
+          mealDinnerApplying = MEAL_AUTO_DINNER_APPLY;
         }
       } else {
         const data = getMealLocalData();
@@ -4811,8 +4818,8 @@
           mealLunchApplying = !!data.applying;
           mealDinnerApplying = !!data.dinner;
         } else {
-          mealLunchApplying = true;
-          mealDinnerApplying = true;
+          mealLunchApplying = MEAL_AUTO_LUNCH_APPLY;
+          mealDinnerApplying = MEAL_AUTO_DINNER_APPLY;
         }
       }
 
