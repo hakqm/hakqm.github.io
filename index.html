@@ -2524,6 +2524,74 @@
     .meal-btn[disabled] { opacity: .55; cursor: not-allowed; }
     .meal-form-divider { height: 1px; background: #eef0f4; margin: 2px 0; }
 
+    /* === 외부손님 (v3.1) — 기본 0명으로 접혀 있고 필요할 때만 펼쳐 입력 === */
+    .meal-guest-toggle {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 10px 12px;
+      border: 1px dashed #d3dcea;
+      border-radius: 12px;
+      background: #fbfcfe;
+      color: #52648a;
+      font-size: 12.5px;
+      font-weight: 800;
+      cursor: pointer;
+      box-sizing: border-box;
+    }
+    .meal-guest-toggle:hover { background: #f2f6fc; border-color: #c3d0e4; }
+    .meal-guest-toggle .mg-right { display: inline-flex; align-items: center; gap: 6px; }
+    .meal-guest-toggle .mg-value { color: #8a93a3; font-weight: 900; }
+    .meal-guest-toggle .mg-caret { font-size: 10px; color: #98a3b6; transition: transform .15s ease; }
+    .meal-guest-toggle[aria-expanded="true"] .mg-caret { transform: rotate(180deg); }
+    /* 0명이 아닐 때는 값이 눈에 띄도록 (접혀 있어도 입력 사실을 알 수 있게) */
+    .meal-guest-toggle.has-guest {
+      border-style: solid;
+      border-color: #fcd9b8;
+      background: #fff8ef;
+      color: #8a5317;
+    }
+    .meal-guest-toggle.has-guest .mg-value { color: #b45309; }
+    .meal-guest-panel {
+      display: grid;
+      gap: 10px;
+      margin-top: 8px;
+      padding: 12px;
+      border: 1px solid #e6ecf5;
+      border-radius: 12px;
+      background: #f7f9fc;
+    }
+    .meal-guest-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .meal-guest-name { font-size: 13px; font-weight: 800; color: #22365e; }
+    .meal-guest-stepper { display: inline-flex; align-items: center; gap: 6px; }
+    .mg-step {
+      width: 34px; height: 34px; flex-shrink: 0;
+      border: 1px solid #cfd9e5; border-radius: 10px; background: #fff;
+      color: #33445f; font-size: 17px; font-weight: 900; line-height: 1; cursor: pointer;
+    }
+    .mg-step:hover { background: #eef4ff; border-color: #b9cbe6; }
+    .mg-step:disabled { opacity: .4; cursor: not-allowed; }
+    .mg-num {
+      width: 62px; height: 34px; text-align: center;
+      border: 1px solid #cfd9e5; border-radius: 10px; background: #fff;
+      font-size: 14px; font-weight: 800; color: #1b365d; outline: none;
+      box-sizing: border-box; -moz-appearance: textfield;
+    }
+    .mg-num::-webkit-outer-spin-button,
+    .mg-num::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    .mg-num:focus { border-color: var(--navy); box-shadow: 0 0 0 4px rgba(52,74,140,.08); }
+    .mg-num:disabled { background: #f0f2f6; color: #a3abba; cursor: not-allowed; }
+    .mg-unit { font-size: 12.5px; font-weight: 800; color: #7c879c; }
+    .mg-reset {
+      justify-self: start;
+      padding: 6px 12px; border-radius: 9px; border: 1px solid #cfd9e5;
+      background: #fff; color: #52648a; font-size: 12px; font-weight: 800; cursor: pointer;
+    }
+    .mg-reset:hover { background: #f2f6fc; }
+    .meal-guest-row.is-off .meal-guest-name { color: #98a3b6; }
+
     /* === 홈 현황 스트립 === */
     .home-stat-strip {
       display: grid;
@@ -2684,6 +2752,13 @@
     .ms-sum-item.ms-total strong { font-size: 22px; }
     .ms-sum-item.ms-total span { font-size: 12.5px; }
     .ms-sum-group-label { grid-column: 1 / -1; font-size: 12.5px; font-weight: 900; color: #33445f; margin: 4px 0 -2px; }
+    /* v3.1 외부손님 표기 — 값이 있을 때만 렌더된다 */
+    .ms-sum-group-label .ms-guest-total { font-size: 11.5px; font-weight: 800; color: #b45309; }
+    .ms-guest-tag {
+      display: inline-block; margin-left: 4px; padding: 1px 6px; border-radius: 999px;
+      background: #fff3e3; border: 1px solid #fcd9b8; color: #b45309;
+      font-size: 11px; font-weight: 900; vertical-align: middle;
+    }
 
     .ms-filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 10px; }
     .ms-seg { display: inline-flex; border: 1px solid #cfd9e5; border-radius: 10px; overflow: hidden; }
@@ -3312,6 +3387,40 @@
             </div>
           </div>
 
+          <!-- 외부손님 (v3.1) — 기본 0명, 필요할 때만 펼쳐서 입력 -->
+          <div class="meal-guest-wrap">
+            <button type="button" class="meal-guest-toggle" id="mealGuestToggle"
+                    aria-expanded="false" aria-controls="mealGuestPanel">
+              <span data-i18n="mealGuestLabel">👥 외부손님</span>
+              <span class="mg-right">
+                <span class="mg-value" id="mealGuestSummary">0명</span>
+                <span class="mg-caret" aria-hidden="true">▼</span>
+              </span>
+            </button>
+            <div class="meal-guest-panel hidden" id="mealGuestPanel">
+              <p class="meal-field-hint" data-i18n="mealGuestHint">외부 방문자 식사가 있을 때만 인원을 입력하세요. 입력하지 않으면 <strong>0명</strong>으로 신청됩니다.</p>
+              <div class="meal-guest-row" id="mealLunchGuestRow">
+                <span class="meal-guest-name" data-i18n="mealGuestLunch">🍚 중식 외부손님</span>
+                <span class="meal-guest-stepper">
+                  <button type="button" class="mg-step" data-guest-step="lunch:-1" aria-label="중식 외부손님 1명 줄이기">−</button>
+                  <input type="number" class="mg-num" id="mealLunchGuestInput" value="0" min="0" max="20" step="1" inputmode="numeric" aria-label="중식 외부손님 인원">
+                  <button type="button" class="mg-step" data-guest-step="lunch:1" aria-label="중식 외부손님 1명 늘리기">+</button>
+                  <span class="mg-unit" data-i18n="mealGuestUnit">명</span>
+                </span>
+              </div>
+              <div class="meal-guest-row" id="mealDinnerGuestRow">
+                <span class="meal-guest-name" data-i18n="mealGuestDinner">🌙 석식 외부손님</span>
+                <span class="meal-guest-stepper">
+                  <button type="button" class="mg-step" data-guest-step="dinner:-1" aria-label="석식 외부손님 1명 줄이기">−</button>
+                  <input type="number" class="mg-num" id="mealDinnerGuestInput" value="0" min="0" max="20" step="1" inputmode="numeric" aria-label="석식 외부손님 인원">
+                  <button type="button" class="mg-step" data-guest-step="dinner:1" aria-label="석식 외부손님 1명 늘리기">+</button>
+                  <span class="mg-unit" data-i18n="mealGuestUnit">명</span>
+                </span>
+              </div>
+              <button type="button" class="mg-reset" id="mealGuestReset" data-i18n="mealGuestReset">0명으로 되돌리기</button>
+            </div>
+          </div>
+
           <!-- 선택된 대상자의 현재 저장 상태 -->
           <div class="meal-current-box" id="mealCurrentBox"></div>
 
@@ -3494,6 +3603,16 @@
         mealProxyNotice: "다른 구성원(같은 파트)의 식수를 대신 신청·변경합니다.",
         mealCurrentLabel: "현재 저장 상태",
         mealCurrentNone: "아직 신청 기록이 없습니다. (미응답 — 오전 8시 30분에 중식 신청 · 석식 미신청으로 자동 처리)",
+        /* 외부손님 (v3.1) */
+        mealGuestLabel: "👥 외부손님",
+        mealGuestHint: "외부 방문자 식사가 있을 때만 인원을 입력하세요. 입력하지 않으면 <strong>0명</strong>으로 신청됩니다.",
+        mealGuestLunch: "🍚 중식 외부손님",
+        mealGuestDinner: "🌙 석식 외부손님",
+        mealGuestUnit: "명",
+        mealGuestReset: "0명으로 되돌리기",
+        mealGuestNone: "0명",
+        mealGuestSuffix: "명",
+        mealGuestNeedApply: "신청한 끼니에만 외부손님을 추가할 수 있습니다.",
         /* 식수 alert */
         mealLoginRequired: "식수 신청은 로그인 후 이용 가능합니다.",
         mealSaveFail: "식수 신청 저장에 실패했습니다.",
@@ -3576,6 +3695,16 @@
         mealProxyNotice: "You are submitting or changing the meal request of another member in your part.",
         mealCurrentLabel: "Currently saved",
         mealCurrentNone: "No request on record yet. (No response — will be auto-set at 8:30 AM to lunch requested, dinner not requested)",
+        /* Outside guests (v3.1) */
+        mealGuestLabel: "👥 Outside guests",
+        mealGuestHint: "Enter a number only when outside visitors will join a meal. If left blank it is submitted as <strong>0</strong>.",
+        mealGuestLunch: "🍚 Lunch guests",
+        mealGuestDinner: "🌙 Dinner guests",
+        mealGuestUnit: "",
+        mealGuestReset: "Reset to 0",
+        mealGuestNone: "0",
+        mealGuestSuffix: "",
+        mealGuestNeedApply: "Guests can only be added to a meal you requested.",
         mealLoginRequired: "Please log in to submit a meal request.",
         mealSaveFail: "Failed to save your meal request.",
         mealNetworkRetry: "Please check your network connection and try again.",
@@ -4509,7 +4638,9 @@
        - 사용자 신청·변경 마감: 오전 08:40 (08:40:00부터 변경 불가)
        v3 변경점:
        ① 미응답자 자동 처리 — 중식은 "신청", 석식은 "미신청"(기존 유지)
-       ② 외부 손님 선택·입력 UI 폐지 (서버에서도 항상 0 저장)
+       ② 외부 손님 — v3.1(2026-07-31) 재도입. 기본 0명으로 접혀 있고, 필요할 때만
+          "👥 외부손님" 을 펼쳐 인원을 입력한다(미입력 시 0명 그대로 전송).
+          미신청한 끼니의 손님 수는 0 으로 정리(서버도 동일 기준).
        ③ 같은 파트(users.part) 구성원 대리 신청·변경 지원 (서버 재검증)
        ④ 다단계 팝업 → 대상자·중식·석식·저장 단일 화면
     ============================================= */
@@ -4525,6 +4656,14 @@
 
     let mealLunchApplying = MEAL_AUTO_LUNCH_APPLY;    // 중식 신청 여부 (기본 = 자동 처리 결과)
     let mealDinnerApplying = MEAL_AUTO_DINNER_APPLY;  // 석식 신청 여부 (기본 = 자동 처리 결과)
+
+    /* 외부손님 (v3.1 재도입) — 기본 0명.
+       평소에는 접혀 있어 신경 쓸 필요가 없고, 손님이 있을 때만 펼쳐서 입력한다.
+       상한은 서버 MEAL_GUEST_MAX 와 동일하게 유지할 것. */
+    const MEAL_GUEST_MAX = 20;
+    let mealLunchGuest = 0;            // 중식 외부손님 인원
+    let mealDinnerGuest = 0;           // 석식 외부손님 인원
+    let mealGuestPanelOpen = false;    // 입력 패널 펼침 여부 (값이 있으면 자동으로 펼침)
 
     /* 대리 신청 상태 */
     let mealPartMembers = [];          // getMealPartMembers 결과 (같은 파트 대상자 + 당일 상태)
@@ -4574,10 +4713,23 @@
     let mealStatusSyncing = false;
     let mealStatusError = false;
 
-    /* 중식·석식 신청 여부를 한 줄 문구로 (외부손님 표기 없음 — v3 폐지) */
-    function mealChoiceText(lunchApplying, dinnerApplying) {
-      const lunch = lunchApplying ? t("lunchRequested") : t("lunchNotRequested");
-      const dinner = dinnerApplying ? t("dinnerRequested") : `${t("dinnerRequested")} ${t("notRequested")}`;
+    /* 외부손님 인원 정규화 — 0 ~ MEAL_GUEST_MAX 정수 (서버 normalizeMealGuest_ 와 동일 기준) */
+    function normalizeMealGuest(v) {
+      const n = parseInt(v, 10);
+      if (isNaN(n) || n < 0) return 0;
+      return Math.min(n, MEAL_GUEST_MAX);
+    }
+
+    /* 중식·석식 신청 여부를 한 줄 문구로.
+       v3.1 — 외부손님이 있을 때만 "(+N명)" 을 덧붙인다(0명이면 기존과 동일한 문구). */
+    function mealChoiceText(lunchApplying, dinnerApplying, lunchGuest, dinnerGuest) {
+      const lg = normalizeMealGuest(lunchGuest);
+      const dg = normalizeMealGuest(dinnerGuest);
+      const guestTag = (n) => (n > 0 ? ` (+${n}${t("mealGuestSuffix")})` : "");
+      const lunch = (lunchApplying ? t("lunchRequested") : t("lunchNotRequested"))
+        + (lunchApplying ? guestTag(lg) : "");
+      const dinner = (dinnerApplying ? t("dinnerRequested") : `${t("dinnerRequested")} ${t("notRequested")}`)
+        + (dinnerApplying ? guestTag(dg) : "");
       return `${lunch} · ${dinner}`;
     }
 
@@ -4597,10 +4749,10 @@
         short = isStandardAuto ? t("autoApplied") : t("autoProcessed");
         const openKey = isStandardAuto ? "autoAppliedOpen" : "autoProcessedOpen";
         const lockedKey = isStandardAuto ? "autoAppliedLocked" : "autoProcessedLocked";
-        detail = `${mealChoiceText(!!data.applying, !!data.dinner)} — ${isMealLocked() ? t(lockedKey) : t(openKey)}`;
+        detail = `${mealChoiceText(!!data.applying, !!data.dinner, data.guestCount, data.dinnerGuest)} — ${isMealLocked() ? t(lockedKey) : t(openKey)}`;
       } else {
         short = data.applying ? t("requested") : t("notRequested");
-        detail = mealChoiceText(!!data.applying, !!data.dinner);
+        detail = mealChoiceText(!!data.applying, !!data.dinner, data.guestCount, data.dinnerGuest);
       }
       const el1 = document.getElementById("homeMealMyStatus");
       const el2 = document.getElementById("mealMyStatusDetail");
@@ -4719,6 +4871,61 @@
         if (yesEl) yesEl.classList.toggle("meal-yes-sel", !!pair.on);
         if (noEl) noEl.classList.toggle("meal-no-sel", !pair.on);
       });
+      syncMealGuestUI();   /* 미신청으로 바꾸면 해당 끼니 손님 수도 정리 */
+    }
+
+    /* 외부손님 입력 UI 반영
+       - 미신청 끼니는 손님 수를 0 으로 정리하고 입력을 잠근다(서버도 동일하게 0 저장)
+       - 요약 배지는 접혀 있어도 항상 보이므로 입력 사실을 놓치지 않는다 */
+    function syncMealGuestUI(activeInputId) {
+      mealLunchGuest = mealLunchApplying ? normalizeMealGuest(mealLunchGuest) : 0;
+      mealDinnerGuest = mealDinnerApplying ? normalizeMealGuest(mealDinnerGuest) : 0;
+
+      const rows = [
+        { rowId: "mealLunchGuestRow", inputId: "mealLunchGuestInput", key: "lunch", on: mealLunchApplying, value: mealLunchGuest },
+        { rowId: "mealDinnerGuestRow", inputId: "mealDinnerGuestInput", key: "dinner", on: mealDinnerApplying, value: mealDinnerGuest }
+      ];
+      rows.forEach((r) => {
+        const rowEl = document.getElementById(r.rowId);
+        const input = document.getElementById(r.inputId);
+        if (rowEl) rowEl.classList.toggle("is-off", !r.on);
+        if (input) {
+          /* 입력 중인 칸은 건드리지 않는다 (커서·부분 입력 보호 — blur 시 정리) */
+          if (r.inputId !== activeInputId && String(input.value) !== String(r.value)) input.value = r.value;
+          input.disabled = !r.on;
+          input.title = r.on ? "" : t("mealGuestNeedApply");
+        }
+        document.querySelectorAll(`.mg-step[data-guest-step^="${r.key}:"]`).forEach((btn) => {
+          const delta = parseInt((btn.dataset.guestStep || "").split(":")[1], 10) || 0;
+          btn.disabled = !r.on
+            || (delta < 0 && r.value <= 0)
+            || (delta > 0 && r.value >= MEAL_GUEST_MAX);
+        });
+      });
+
+      const total = mealLunchGuest + mealDinnerGuest;
+      const summary = document.getElementById("mealGuestSummary");
+      if (summary) {
+        if (total <= 0) {
+          summary.textContent = t("mealGuestNone");
+        } else {
+          const parts = [];
+          if (mealLunchGuest > 0) parts.push(`🍚 ${mealLunchGuest}`);
+          if (mealDinnerGuest > 0) parts.push(`🌙 ${mealDinnerGuest}`);
+          summary.textContent = `${parts.join(" · ")}${t("mealGuestSuffix")}`;
+        }
+      }
+
+      const toggle = document.getElementById("mealGuestToggle");
+      if (toggle) {
+        toggle.classList.toggle("has-guest", total > 0);
+        toggle.setAttribute("aria-expanded", mealGuestPanelOpen ? "true" : "false");
+      }
+      const panel = document.getElementById("mealGuestPanel");
+      if (panel) panel.classList.toggle("hidden", !mealGuestPanelOpen);
+
+      const resetBtn = document.getElementById("mealGuestReset");
+      if (resetBtn) resetBtn.disabled = total <= 0;
     }
 
     /* 현재 선택된 대상자 객체 (없으면 null) */
@@ -4736,7 +4943,7 @@
         /* 파트 목록을 못 불러온 경우 — 로컬 캐시(본인)로 대체 표시 */
         const data = getMealLocalData();
         if (data && data.responded) {
-          box.innerHTML = `<strong>${escapeHtml(t("mealCurrentLabel"))}</strong> · ${escapeHtml(mealChoiceText(!!data.applying, !!data.dinner))}${data.isAuto ? ` <span style="color:#8a5317;">(${escapeHtml(t("autoProcessed"))})</span>` : ""}`;
+          box.innerHTML = `<strong>${escapeHtml(t("mealCurrentLabel"))}</strong> · ${escapeHtml(mealChoiceText(!!data.applying, !!data.dinner, data.guestCount, data.dinnerGuest))}${data.isAuto ? ` <span style="color:#8a5317;">(${escapeHtml(t("autoProcessed"))})</span>` : ""}`;
         } else {
           box.textContent = t("mealCurrentNone");
         }
@@ -4748,7 +4955,7 @@
       }
       const autoTag = member.is_auto ? ` <span style="color:#8a5317;">(${escapeHtml(t("autoProcessed"))})</span>` : "";
       const timeTag = member.submitted_time ? ` <span style="color:#8a93a3;">${escapeHtml(member.submitted_time)}</span>` : "";
-      box.innerHTML = `<strong>${escapeHtml(t("mealCurrentLabel"))}</strong> · ${escapeHtml(mealChoiceText(!!member.lunch_applying, !!member.dinner_applying))}${autoTag}${timeTag}`;
+      box.innerHTML = `<strong>${escapeHtml(t("mealCurrentLabel"))}</strong> · ${escapeHtml(mealChoiceText(!!member.lunch_applying, !!member.dinner_applying, member.lunch_guest, member.dinner_guest))}${autoTag}${timeTag}`;
     }
 
     /* 대상자 선택 콤보 렌더 */
@@ -4807,21 +5014,33 @@
         if (member.responded) {
           mealLunchApplying = !!member.lunch_applying;
           mealDinnerApplying = !!member.dinner_applying;
+          mealLunchGuest = normalizeMealGuest(member.lunch_guest);
+          mealDinnerGuest = normalizeMealGuest(member.dinner_guest);
         } else {
           /* 미응답 — 08:30 자동 처리 결과(중식 신청 / 석식 미신청)를 기본값으로 제시 */
           mealLunchApplying = MEAL_AUTO_LUNCH_APPLY;
           mealDinnerApplying = MEAL_AUTO_DINNER_APPLY;
+          mealLunchGuest = 0;
+          mealDinnerGuest = 0;
         }
       } else {
         const data = getMealLocalData();
         if (data && data.responded) {
           mealLunchApplying = !!data.applying;
           mealDinnerApplying = !!data.dinner;
+          mealLunchGuest = normalizeMealGuest(data.guestCount);
+          mealDinnerGuest = normalizeMealGuest(data.dinnerGuest);
         } else {
           mealLunchApplying = MEAL_AUTO_LUNCH_APPLY;
           mealDinnerApplying = MEAL_AUTO_DINNER_APPLY;
+          mealLunchGuest = 0;
+          mealDinnerGuest = 0;
         }
       }
+
+      /* 이미 손님이 등록돼 있으면 패널을 펼쳐 보여주고, 0명이면 접어 둔다
+         (평소 사용자는 외부손님 입력을 볼 일이 없다) */
+      mealGuestPanelOpen = (mealLunchGuest + mealDinnerGuest) > 0;
 
       /* 안내 배너: 대리 신청 / 자동 처리 */
       if (autoNotice) {
@@ -4971,9 +5190,9 @@
        (전송 전에 responded:true 를 먼저 저장하지 않음)
        lunchApplying / dinnerApplying: 중식·석식 신청 여부
        targetUserId / targetEmpNo: 대리 신청 대상자 (생략 시 본인)
-       ※ v3 — 외부 손님은 폐지되어 항상 0 을 전송하고, 서버도 0 으로 강제한다.
+       lunchGuest / dinnerGuest: 외부손님 인원 (v3.1, 생략 시 0 — 서버도 0..20 으로 정규화)
        반환값: { success, message, ... } */
-    async function submitMealChoice(lunchApplying, dinnerApplying, targetUserId, targetEmpNo) {
+    async function submitMealChoice(lunchApplying, dinnerApplying, targetUserId, targetEmpNo, lunchGuest, dinnerGuest) {
       if (!currentUserData || !currentUserData.user_id) {
         return { success: false, message: "로그인 정보가 없어 식수 신청을 저장할 수 없습니다." };
       }
@@ -4981,6 +5200,10 @@
       const myUserId = String(currentUserData.user_id || "");
       const tUserId = String(targetUserId || myUserId);
       const isSelf = tUserId === myUserId;
+
+      /* 미신청 끼니의 손님 수는 0 (서버 submitMeal 과 동일 기준) */
+      const lg = lunchApplying ? normalizeMealGuest(lunchGuest) : 0;
+      const dg = dinnerApplying ? normalizeMealGuest(dinnerGuest) : 0;
 
       try {
         const params = [
@@ -4993,11 +5216,11 @@
           `target_user_id=${encodeURIComponent(tUserId)}`,
           `target_emp_no=${encodeURIComponent(targetEmpNo || (isSelf ? (currentUserData.emp_no || "") : ""))}`,
           `lunch=${lunchApplying ? "Y" : "N"}`,
-          `lunch_guest=0`,                                 // v3: 외부손님 폐지 (서버에서도 0 강제)
+          `lunch_guest=${lg}`,                              // v3.1 외부손님 (기본 0)
           `dinner=${dinnerApplying ? "Y" : "N"}`,
-          `dinner_guest=0`,                                // v3: 외부손님 폐지 (서버에서도 0 강제)
+          `dinner_guest=${dg}`,                             // v3.1 외부손님 (기본 0)
           `applying=${lunchApplying ? "Y" : "N"}`,          // 구 백엔드 호환
-          `guest_count=0`,                                 // 구 백엔드 호환
+          `guest_count=${lg}`,                              // 구 백엔드 호환
           "is_auto=N"
         ].join("&");
 
@@ -5013,9 +5236,9 @@
           saveMealLocalData({
             responded: true,
             applying: !!lunchApplying,             // 중식 신청 여부 (하위호환 키)
-            guestCount: 0,
+            guestCount: lg,                        // 중식 외부손님 (하위호환 키)
             dinner: !!dinnerApplying,              // 석식 신청 여부
-            dinnerGuest: 0,
+            dinnerGuest: dg,                       // 석식 외부손님
             isAuto: false,
             submittedAt: new Date().toISOString()
           });
@@ -5029,6 +5252,8 @@
           cached.responded = true;
           cached.lunch_applying = !!lunchApplying;
           cached.dinner_applying = !!dinnerApplying;
+          cached.lunch_guest = lg;
+          cached.dinner_guest = dg;
           cached.is_auto = false;
         }
 
@@ -5205,13 +5430,15 @@
       const total = s.total != null ? s.total : 0;
       const sumEl = document.getElementById("mealStatusSummary");
       if (sumEl) {
+        /* v3.1: 외부손님은 0명이면 표시하지 않는다(평소 화면은 기존과 동일) */
+        const guestTag = (n) => (n > 0 ? ` <span class="ms-guest-total">· 외부손님 ${n}명</span>` : "");
         sumEl.innerHTML = `
           <div class="ms-sum-item ms-total"><strong>${total}</strong><span>명 · 전체 식수 대상</span></div>
-          <div class="ms-sum-group-label">🍚 중식</div>
+          <div class="ms-sum-group-label">🍚 중식${guestTag(s.lunch_guest_total || 0)}</div>
           <div class="ms-sum-item ms-apply"><strong>${s.lunch_applied || 0}</strong><span>신청</span></div>
           <div class="ms-sum-item ms-not"><strong>${s.lunch_not_applied || 0}</strong><span>미신청</span></div>
           <div class="ms-sum-item ms-pend"><strong>${s.lunch_pending || 0}</strong><span>미응답</span></div>
-          <div class="ms-sum-group-label">🌙 석식</div>
+          <div class="ms-sum-group-label">🌙 석식${guestTag(s.dinner_guest_total || 0)}</div>
           <div class="ms-sum-item ms-apply"><strong>${s.dinner_applied || 0}</strong><span>신청</span></div>
           <div class="ms-sum-item ms-not"><strong>${s.dinner_not_applied || 0}</strong><span>미신청</span></div>
           <div class="ms-sum-item ms-pend"><strong>${s.dinner_pending || 0}</strong><span>미응답</span></div>
@@ -5242,8 +5469,10 @@
         } else {
           tbody.innerHTML = filtered.map(d => {
             const areaCls = d.area === "본사" ? "ms-area-bonsa" : (d.area === "창녕" ? "ms-area-changnyeong" : "");
-            const lunchBadge = `<span class="ms-badge ${d.lunch_status}">${mealStatusLabel(d.lunch_status)}</span>`;
-            const dinnerBadge = `<span class="ms-badge ${d.dinner_status}">${mealStatusLabel(d.dinner_status)}</span>`;
+            /* 외부손님이 있는 경우에만 "+N" 배지를 덧붙인다 */
+            const gTag = (n) => (n > 0 ? ` <span class="ms-guest-tag" title="외부손님 ${n}명">+${n}</span>` : "");
+            const lunchBadge = `<span class="ms-badge ${d.lunch_status}">${mealStatusLabel(d.lunch_status)}</span>${gTag(d.lunch_guest || 0)}`;
+            const dinnerBadge = `<span class="ms-badge ${d.dinner_status}">${mealStatusLabel(d.dinner_status)}</span>${gTag(d.dinner_guest || 0)}`;
             const autoTag = d.is_auto ? `<span class="ms-auto-tag">(자동)</span>` : "";
             const timeCell = d.submitted_time
               ? `<span title="${escapeHtml(d.submitted_at || "")}">${escapeHtml(d.submitted_time)}</span>${autoTag}`
@@ -5973,6 +6202,47 @@
         mealDinnerApplying = false; syncMealToggleUI();
       });
 
+      /* ── 외부손님 (v3.1) — 기본 0명, 접힌 상태 ── */
+      const guestToggle = document.getElementById("mealGuestToggle");
+      if (guestToggle) guestToggle.addEventListener("click", function () {
+        mealGuestPanelOpen = !mealGuestPanelOpen;
+        syncMealGuestUI();
+      });
+
+      const guestPanel = document.getElementById("mealGuestPanel");
+      if (guestPanel) {
+        /* ± 버튼 */
+        guestPanel.addEventListener("click", function (ev) {
+          const btn = ev.target.closest(".mg-step");
+          if (!btn || btn.disabled) return;
+          const [key, deltaStr] = String(btn.dataset.guestStep || "").split(":");
+          const delta = parseInt(deltaStr, 10) || 0;
+          if (key === "lunch") mealLunchGuest = normalizeMealGuest(mealLunchGuest + delta);
+          else if (key === "dinner") mealDinnerGuest = normalizeMealGuest(mealDinnerGuest + delta);
+          syncMealGuestUI();
+        });
+        /* 직접 입력 — 입력 중에는 값만 반영하고 커서를 방해하지 않는다 */
+        guestPanel.addEventListener("input", function (ev) {
+          const input = ev.target;
+          if (!input.classList || !input.classList.contains("mg-num")) return;
+          const v = normalizeMealGuest(input.value);
+          if (input.id === "mealLunchGuestInput") mealLunchGuest = v;
+          else if (input.id === "mealDinnerGuestInput") mealDinnerGuest = v;
+          syncMealGuestUI(input.id);
+        });
+        /* 포커스가 빠질 때 빈 칸·잘못된 값 정리 */
+        guestPanel.addEventListener("change", function (ev) {
+          if (ev.target.classList && ev.target.classList.contains("mg-num")) syncMealGuestUI();
+        });
+      }
+
+      const guestReset = document.getElementById("mealGuestReset");
+      if (guestReset) guestReset.addEventListener("click", function () {
+        mealLunchGuest = 0;
+        mealDinnerGuest = 0;
+        syncMealGuestUI();
+      });
+
       if (submitBtn) {
         submitBtn.addEventListener("click", async function () {
           /* 중복 클릭 방지 — 플래그 + 버튼 disabled 이중 차단 */
@@ -6003,9 +6273,11 @@
           /* 저장 값 스냅샷 — 전송 중 사용자가 토글을 바꿔도 메시지가 어긋나지 않게 */
           const sentLunch = mealLunchApplying;
           const sentDinner = mealDinnerApplying;
+          const sentLunchGuest = sentLunch ? normalizeMealGuest(mealLunchGuest) : 0;
+          const sentDinnerGuest = sentDinner ? normalizeMealGuest(mealDinnerGuest) : 0;
 
           try {
-            const result = await submitMealChoice(sentLunch, sentDinner, targetUserId, targetEmpNo);
+            const result = await submitMealChoice(sentLunch, sentDinner, targetUserId, targetEmpNo, sentLunchGuest, sentDinnerGuest);
 
             if (!result || !result.success) {
               /* 실패: 모달과 입력 내용 유지. 영어 모드는 서버 원문 대신 일반 영어 안내(원문은 콘솔) */
@@ -6020,7 +6292,7 @@
             closeMealModal();
             const who = isProxy ? `${member.name} — ` : "";
             const headline = isProxy ? t("mealCompleteProxy") : t("mealComplete");
-            alert(`${headline} ${who}${mealChoiceText(sentLunch, sentDinner)}`);
+            alert(`${headline} ${who}${mealChoiceText(sentLunch, sentDinner, sentLunchGuest, sentDinnerGuest)}`);
           } finally {
             mealSubmitting = false;
             submitBtn.disabled = false;
@@ -6065,8 +6337,8 @@
       let myMealDetail = t("noResponse");
       if (mealData && mealData.responded) {
         myMealStatus = mealData.applying ? t("requested") : t("notRequested");
-        /* v3: 외부손님 표기 폐지 — 중식·석식 신청 여부만 표시 */
-        myMealDetail = mealChoiceText(!!mealData.applying, !!mealData.dinner);
+        /* v3.1: 외부손님은 0명이 아닐 때만 "(+N명)" 으로 덧붙는다 */
+        myMealDetail = mealChoiceText(!!mealData.applying, !!mealData.dinner, mealData.guestCount, mealData.dinnerGuest);
       }
 
       const greeting = (() => {
