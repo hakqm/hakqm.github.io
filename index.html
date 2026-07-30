@@ -2465,17 +2465,64 @@
       font-weight: 800;
       white-space: nowrap;
     }
-    .meal-guest-input {
+    .meal-info-p { margin: 0; color: #53627a; font-size: 13.5px; line-height: 1.7; }
+
+    /* === 식수 신청 — 단일 화면 폼 (v3) === */
+    .meal-field { display: grid; gap: 8px; }
+    .meal-field-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12.5px;
+      font-weight: 900;
+      color: #22365e;
+      letter-spacing: .01em;
+    }
+    .meal-field-label .meal-field-req { color: #b42318; font-weight: 900; }
+    .meal-select {
       width: 100%;
       padding: 12px;
       border: 1px solid #cfd9e5;
       border-radius: 12px;
-      font-size: 14px;
+      font-size: 14.5px;
+      font-weight: 700;
+      color: #1b365d;
+      background: #fff;
       outline: none;
       box-sizing: border-box;
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2352648a' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 36px;
     }
-    .meal-guest-input:focus { border-color: var(--navy); box-shadow: 0 0 0 4px rgba(52,74,140,.08); }
-    .meal-info-p { margin: 0; color: #53627a; font-size: 13.5px; line-height: 1.7; }
+    .meal-select:focus { border-color: var(--navy); box-shadow: 0 0 0 4px rgba(52,74,140,.08); }
+    .meal-select:disabled { background-color: #f3f5f9; color: #8a93a3; cursor: not-allowed; }
+    .meal-field-hint { margin: 0; font-size: 12px; color: #7c879c; line-height: 1.6; word-break: keep-all; }
+    .meal-proxy-hint {
+      margin: 0;
+      padding: 8px 11px;
+      border-radius: 10px;
+      background: #eef4ff;
+      border: 1px solid #cfe0ff;
+      color: #22459b;
+      font-size: 12.5px;
+      font-weight: 700;
+      line-height: 1.6;
+    }
+    .meal-current-box {
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: #f7f9fc;
+      border: 1px solid #e6ecf5;
+      font-size: 12.5px;
+      color: #46586f;
+      line-height: 1.65;
+    }
+    .meal-current-box strong { color: #22365e; }
+    .meal-btn[disabled] { opacity: .55; cursor: not-allowed; }
+    .meal-form-divider { height: 1px; background: #eef0f4; margin: 2px 0; }
 
     /* === 홈 현황 스트립 === */
     .home-stat-strip {
@@ -2620,7 +2667,8 @@
     .ms-dot.error { background: #dc2626; }
     @keyframes msPulse { 0%,100% { opacity: 1; } 50% { opacity: .3; } }
 
-    .ms-summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
+    /* v3: 외부손님 항목 제거로 그룹당 3항목(신청·미신청·미응답) → 3열 */
+    .ms-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
     .ms-sum-item {
       border: 1px solid #e5ebf4; border-radius: 12px; padding: 9px 8px; text-align: center; background: #fafcff;
     }
@@ -2629,7 +2677,6 @@
     .ms-sum-item.ms-apply strong { color: #2d6b39; }
     .ms-sum-item.ms-not strong { color: #b42318; }
     .ms-sum-item.ms-pend strong { color: #8a5317; }
-    .ms-sum-item.ms-guest strong { color: #5b3da8; }
     .ms-sum-item.ms-total {
       grid-column: 1 / -1; display: flex; align-items: center; justify-content: center; gap: 8px;
       background: linear-gradient(135deg, #eef4ff, #f8fbff); border-color: #d3e0f4;
@@ -3041,6 +3088,7 @@
             <summary class="folder"><span class="node-icon">📁</span> QA</summary>
             <div class="subtree">
               <button class="tree-link" data-screen="qa_overview">🔗 QA 업무 FLOW</button>
+              <button type="button" class="tree-link" data-screen="qa_hvac_calculators_embed">🌐 HVAC 계산기 모음</button>
 
               <details>
                 <summary class="folder"><span class="node-icon">📂</span> 수입검사</summary>
@@ -3230,42 +3278,45 @@
           <p style="font-weight:900;color:#22365e;font-size:15px;margin-bottom:6px;">식수 신청 대상 계정이 아닙니다</p>
           <p style="font-size:13px;color:#667085;line-height:1.6;">식수 신청 대상 설정은 관리자에게 문의해주세요.<br>(현황 확인은 이용하실 수 있습니다.)</p>
         </div>
-        <!-- 08:30 자동 미신청 처리 안내 (08:40 전 변경 가능) -->
+        <!-- 08:30 자동 신청 처리 안내 (08:40 전 변경 가능) -->
         <div id="mealAutoNotice" class="hidden" style="margin-bottom:10px;padding:9px 12px;border-radius:10px;background:#fff7ed;border:1px solid #fcd9b8;font-size:12.5px;color:#8a5317;font-weight:700;line-height:1.6;"></div>
-        <!-- Step 1: 중식 신청 여부 -->
-        <div id="mealStep1" class="meal-step">
-          <p class="meal-info-p" data-i18n="mealStep1Q">오늘 <strong>중식</strong>을 신청하시겠습니까?<br>미응답자는 오전 8시 30분 이후 <strong>중식·석식 미신청</strong>으로 자동 처리됩니다.</p>
+
+        <!-- 단일 화면 신청 폼 (v3): 대상자 · 중식 · 석식 · 저장 -->
+        <div id="mealForm" class="meal-step">
+          <p class="meal-info-p" data-i18n="mealFormIntro">미응답자는 오전 8시 30분에 <strong>중식·석식 모두 신청</strong>으로 자동 처리됩니다. 자동 처리 후에도 오전 8시 40분 전까지 변경할 수 있습니다.</p>
+
+          <!-- 신청 대상자 -->
+          <div class="meal-field">
+            <label class="meal-field-label" for="mealTargetSelect"><span data-i18n="mealTargetLabel">👤 신청 대상자</span></label>
+            <select id="mealTargetSelect" class="meal-select" aria-describedby="mealTargetHint"></select>
+            <p class="meal-field-hint" id="mealTargetHint" data-i18n="mealTargetHint">연차·출장 등으로 직접 신청하지 못하는 <strong>같은 파트 구성원</strong>을 선택해 대신 신청·변경할 수 있습니다.</p>
+          </div>
+
+          <div class="meal-form-divider"></div>
+
+          <!-- 중식 -->
+          <div class="meal-field">
+            <span class="meal-field-label" data-i18n="mealLunchLabel">🍚 중식</span>
+            <div class="meal-btn-row" role="group" aria-label="중식 신청 여부">
+              <button type="button" class="meal-btn" id="mealLunchYes" data-i18n="mealApplyYes">✓ 신청</button>
+              <button type="button" class="meal-btn" id="mealLunchNo" data-i18n="mealApplyNo">✗ 미신청</button>
+            </div>
+          </div>
+
+          <!-- 석식 -->
+          <div class="meal-field">
+            <span class="meal-field-label" data-i18n="mealDinnerLabel">🌙 석식</span>
+            <div class="meal-btn-row" role="group" aria-label="석식 신청 여부">
+              <button type="button" class="meal-btn" id="mealDinnerYes" data-i18n="mealApplyYes">✓ 신청</button>
+              <button type="button" class="meal-btn" id="mealDinnerNo" data-i18n="mealApplyNo">✗ 미신청</button>
+            </div>
+          </div>
+
+          <!-- 선택된 대상자의 현재 저장 상태 -->
+          <div class="meal-current-box" id="mealCurrentBox"></div>
+
           <div class="meal-btn-row">
-            <button type="button" class="meal-btn" id="mealBtnYes" data-i18n="mealBtnYes">✓ 중식 신청</button>
-            <button type="button" class="meal-btn meal-no-sel" id="mealBtnNo" data-i18n="mealBtnNo">✗ 미신청</button>
-          </div>
-        </div>
-        <!-- Step 2: 외부 손님 + 석식(선택) -->
-        <div id="mealStep2" class="meal-step hidden">
-          <!-- 중식 외부 손님 (중식 신청 시에만 표시) -->
-          <div id="mealLunchGuestSection">
-            <p class="meal-info-p" data-i18n="lunchGuestQ">중식 외부 손님이 있으십니까?</p>
-            <div class="meal-btn-row">
-              <button type="button" class="meal-btn" id="mealGuestNone" data-i18n="guestNone">없음</button>
-              <button type="button" class="meal-btn" id="mealGuestHas" data-i18n="guestHas">있음</button>
-            </div>
-            <div id="mealGuestCountWrap" class="hidden">
-              <input type="number" id="mealGuestCount" class="meal-guest-input" placeholder="중식 외부 손님 인원 수 (명)" data-i18n-ph="lunchGuestPh" min="1" max="99" />
-            </div>
-          </div>
-          <!-- 석식 신청 (필요 시) -->
-          <div style="margin-top:14px;border-top:1px solid #eef0f4;padding-top:12px;">
-            <p class="meal-info-p"><span data-i18n="dinnerQ">🌙 석식도 신청하시겠습니까?</span> <span style="font-weight:600;color:#8a93a3;font-size:12px;" data-i18n="dinnerQOptional">(필요 시 선택)</span></p>
-            <div class="meal-btn-row">
-              <button type="button" class="meal-btn meal-yes-sel" id="mealDinnerNo" data-i18n="dinnerNo">석식 미신청</button>
-              <button type="button" class="meal-btn" id="mealDinnerYes" data-i18n="dinnerYes">석식 신청</button>
-            </div>
-            <div id="mealDinnerGuestWrap" class="hidden">
-              <input type="number" id="mealDinnerGuestCount" class="meal-guest-input" placeholder="석식 외부 손님 인원 수 (명, 없으면 0)" data-i18n-ph="dinnerGuestPh" min="0" max="99" />
-            </div>
-          </div>
-          <div class="meal-btn-row">
-            <button type="button" class="meal-btn meal-submit" id="mealSubmitBtn" data-i18n="mealSubmit">완료 — 식수 신청</button>
+            <button type="button" class="meal-btn meal-submit" id="mealSubmitBtn" data-i18n="mealSubmit">저장</button>
           </div>
         </div>
       </div>
@@ -3318,11 +3369,11 @@
             <thead>
               <tr>
                 <th>구분</th><th>이름</th><th>소속팀</th>
-                <th>중식</th><th>중식 손님</th><th>석식</th><th>석식 손님</th><th>처리시각</th>
+                <th>중식</th><th>석식</th><th>처리시각</th>
               </tr>
             </thead>
             <tbody id="mealStatusTbody">
-              <tr><td colspan="8" class="ms-empty">불러오는 중…</td></tr>
+              <tr><td colspan="6" class="ms-empty">불러오는 중…</td></tr>
             </tbody>
           </table>
         </div>
@@ -3407,15 +3458,18 @@
         myRequestStatus: "내 신청 상태",
         requestChange: "신청 / 변경",
         loginToRequest: "로그인 후 신청 가능",
-        mealHomeInfo: "매일 자정 이후 식수 신청 팝업이 자동으로 표시됩니다. 미응답자는 오전 8시 30분 이후 중식·석식 미신청으로 자동 처리됩니다. 자동 미신청 처리 후에도 오전 8시 40분 전까지 변경할 수 있습니다. 오전 8시 40분부터 당일 신청 변경이 마감됩니다.",
+        mealHomeInfo: "매일 자정 이후 식수 신청 팝업이 자동으로 표시됩니다. 미응답자는 오전 8시 30분에 중식·석식 모두 신청으로 자동 처리됩니다. 자동 신청 처리 후에도 오전 8시 40분 전까지 변경할 수 있습니다. 오전 8시 40분부터 당일 신청 변경이 마감됩니다. 연차·출장 등으로 직접 신청하지 못하는 경우 같은 파트 구성원이 대신 신청·변경할 수 있습니다.",
         /* 식수 상태(동적) */
         checking: "확인 중...",
         checkingDetail: "서버에서 신청 상태 확인 중...",
         checkFailed: "확인 실패",
         checkFailedDetail: "상태 조회 실패 — 새로고침 후 다시 확인해주세요.",
-        autoNotRequested: "자동 미신청",
-        autoNotRequestedLocked: "자동 미신청 처리됨 (변경 마감)",
-        autoNotRequestedOpen: "자동 미신청 처리됨 · 오전 8시 40분까지 변경 가능",
+        autoApplied: "자동 신청",
+        autoAppliedLocked: "자동 신청 처리됨 (변경 마감)",
+        autoAppliedOpen: "자동 신청 처리됨 · 오전 8시 40분까지 변경 가능",
+        autoProcessed: "자동 처리",
+        autoProcessedLocked: "자동 처리됨 (변경 마감)",
+        autoProcessedOpen: "자동 처리됨 · 오전 8시 40분까지 변경 가능",
         requested: "신청",
         notRequested: "미신청",
         /* 식수 모달 */
@@ -3423,32 +3477,35 @@
         mealModalDescDefault: "오늘 식수(중식·석식) 여부를 선택해주세요.",
         mealTimer: "🕗 오전 8시 40분까지 신청·변경 가능",
         mealLockTitle: "신청이 마감되었습니다",
-        mealStep1Q: "오늘 <strong>중식</strong>을 신청하시겠습니까?<br>미응답자는 오전 8시 30분 이후 <strong>중식·석식 미신청</strong>으로 자동 처리됩니다.",
-        mealBtnYes: "✓ 중식 신청",
-        mealBtnNo: "✗ 미신청",
-        lunchGuestQ: "중식 외부 손님이 있으십니까?",
-        guestNone: "없음",
-        guestHas: "있음",
-        lunchGuestPh: "중식 외부 손님 인원 수 (명)",
-        dinnerQ: "🌙 석식도 신청하시겠습니까?",
-        dinnerQOptional: "(필요 시 선택)",
-        dinnerNo: "석식 미신청",
-        dinnerYes: "석식 신청",
-        dinnerGuestPh: "석식 외부 손님 인원 수 (명, 없으면 0)",
-        mealSubmit: "완료 — 식수 신청",
+        mealFormIntro: "미응답자는 오전 8시 30분에 <strong>중식·석식 모두 신청</strong>으로 자동 처리됩니다. 자동 처리 후에도 오전 8시 40분 전까지 변경할 수 있습니다.",
+        mealTargetLabel: "👤 신청 대상자",
+        mealTargetHint: "연차·출장 등으로 직접 신청하지 못하는 <strong>같은 파트 구성원</strong>을 선택해 대신 신청·변경할 수 있습니다.",
+        mealTargetSelfOnly: "같은 파트 구성원 정보가 없어 본인만 신청할 수 있습니다.",
+        mealTargetLoading: "대상자 목록을 불러오는 중입니다...",
+        mealTargetLoadFail: "대상자 목록을 불러오지 못했습니다. 본인 신청만 가능합니다.",
+        mealTargetSelfSuffix: "(본인)",
+        mealLunchLabel: "🍚 중식",
+        mealDinnerLabel: "🌙 석식",
+        mealApplyYes: "✓ 신청",
+        mealApplyNo: "✗ 미신청",
+        mealSubmit: "저장",
         mealSaving: "저장 중...",
-        mealAutoNotice: "오전 8시 30분에 자동 미신청 처리되었습니다. 오전 8시 40분까지 변경할 수 있습니다.",
+        mealAutoNotice: "오전 8시 30분에 자동 신청 처리되었습니다. 오전 8시 40분까지 변경할 수 있습니다.",
+        mealProxyNotice: "다른 구성원(같은 파트)의 식수를 대신 신청·변경합니다.",
+        mealCurrentLabel: "현재 저장 상태",
+        mealCurrentNone: "아직 신청 기록이 없습니다. (미응답 — 오전 8시 30분에 중식·석식 신청으로 자동 처리)",
         /* 식수 alert */
         mealLoginRequired: "식수 신청은 로그인 후 이용 가능합니다.",
-        lunchGuestCountReq: "중식 외부 손님 인원 수를 입력해주세요.",
         mealSaveFail: "식수 신청 저장에 실패했습니다.",
         mealNetworkRetry: "네트워크 상태를 확인 후 다시 시도해주세요.",
         mealComplete: "식수 신청 완료!",
+        mealCompleteProxy: "대리 신청 완료!",
         /* 마감 상태 내 신청 표시 */
         lockStatusRequested: "✓ 신청",
         lockStatusNotRequestedAuto: "✗ 미신청 (자동 처리)",
+        lockStatusRequestedAuto: "✓ 신청 (자동 처리)",
         lockStatusNotRequested: "✗ 미신청",
-        lockStatusNoResponse: "미응답 (미신청 처리)",
+        lockStatusNoResponse: "미응답 (신청 처리)",
         lockMyStatusLabel: "내 신청 상태",
         lockDetailPrefix: "오전 8시 40분 이후에는 당일 식수 신청을 변경할 수 없습니다."
       },
@@ -3485,44 +3542,50 @@
         myRequestStatus: "My Request Status",
         requestChange: "Request / Change",
         loginToRequest: "Login is required.",
-        mealHomeInfo: "The meal request popup appears automatically after midnight each day. Users who have not responded will be automatically marked as not requesting lunch or dinner after 8:30 AM. You may still change your request until 8:40 AM. Meal requests and changes close at 8:40 AM.",
+        mealHomeInfo: "The meal request popup appears automatically after midnight each day. Users who have not responded are automatically marked as requesting BOTH lunch and dinner at 8:30 AM. You may still change your request until 8:40 AM. Meal requests and changes close at 8:40 AM. If you cannot submit your own request (annual leave, business trip, etc.), a member of your own part may submit or change it for you.",
         checking: "Checking...",
         checkingDetail: "Checking your meal request status...",
         checkFailed: "Check Failed",
         checkFailedDetail: "Unable to retrieve your meal request status. Please refresh and try again.",
-        autoNotRequested: "Automatically Marked as Not Requested",
-        autoNotRequestedLocked: "Automatically marked as not requested. Changes are closed.",
-        autoNotRequestedOpen: "Automatically marked as not requested. Changes are available until 8:40 AM.",
+        autoApplied: "Automatically Requested",
+        autoAppliedLocked: "Automatically marked as requested. Changes are closed.",
+        autoAppliedOpen: "Automatically marked as requested. Changes are available until 8:40 AM.",
+        autoProcessed: "Automatically Processed",
+        autoProcessedLocked: "Automatically processed. Changes are closed.",
+        autoProcessedOpen: "Automatically processed. Changes are available until 8:40 AM.",
         requested: "Requested",
         notRequested: "Not Requested",
         mealModalTitle: "🍱 Today's Meal Request",
         mealModalDescDefault: "Please select your meal (lunch/dinner) request for today.",
         mealTimer: "🕗 Requests and changes are available until 8:40 AM.",
         mealLockTitle: "Meal requests are closed.",
-        mealStep1Q: "Would you like to request <strong>lunch</strong> today?<br>Users who have not responded will be automatically marked as <strong>not requesting lunch or dinner</strong> after 8:30 AM.",
-        mealBtnYes: "✓ Request Lunch",
-        mealBtnNo: "✗ Do Not Request Lunch",
-        lunchGuestQ: "Will you have any guests for lunch?",
-        guestNone: "No",
-        guestHas: "Yes",
-        lunchGuestPh: "Number of lunch guests",
-        dinnerQ: "🌙 Would you also like to request dinner?",
-        dinnerQOptional: "(Optional)",
-        dinnerNo: "No Dinner",
-        dinnerYes: "Request Dinner",
-        dinnerGuestPh: "Number of dinner guests (enter 0 if none)",
-        mealSubmit: "Submit Meal Request",
+        mealFormIntro: "Users who have not responded are automatically marked as requesting <strong>both lunch and dinner</strong> at 8:30 AM. You may still change it until 8:40 AM.",
+        mealTargetLabel: "👤 Request For",
+        mealTargetHint: "You may select a <strong>member of your own part</strong> and submit or change their request when they cannot do it themselves.",
+        mealTargetSelfOnly: "No part members are available, so you can only submit your own request.",
+        mealTargetLoading: "Loading the member list...",
+        mealTargetLoadFail: "Failed to load the member list. Only your own request is available.",
+        mealTargetSelfSuffix: "(me)",
+        mealLunchLabel: "🍚 Lunch",
+        mealDinnerLabel: "🌙 Dinner",
+        mealApplyYes: "✓ Request",
+        mealApplyNo: "✗ Do Not Request",
+        mealSubmit: "Save",
         mealSaving: "Saving...",
-        mealAutoNotice: "Automatically marked as not requested at 8:30 AM. You may change your request until 8:40 AM.",
+        mealAutoNotice: "Automatically marked as requested at 8:30 AM. You may change it until 8:40 AM.",
+        mealProxyNotice: "You are submitting or changing the meal request of another member in your part.",
+        mealCurrentLabel: "Currently saved",
+        mealCurrentNone: "No request on record yet. (No response — will be auto-set to lunch + dinner requested at 8:30 AM)",
         mealLoginRequired: "Please log in to submit a meal request.",
-        lunchGuestCountReq: "Please enter the number of lunch guests.",
         mealSaveFail: "Failed to save your meal request.",
         mealNetworkRetry: "Please check your network connection and try again.",
         mealComplete: "Your meal request has been submitted!",
+        mealCompleteProxy: "The request has been submitted on their behalf.",
         lockStatusRequested: "✓ Requested",
         lockStatusNotRequestedAuto: "✗ Not Requested (Auto)",
+        lockStatusRequestedAuto: "✓ Requested (Auto)",
         lockStatusNotRequested: "✗ Not Requested",
-        lockStatusNoResponse: "No Response (Marked as Not Requested)",
+        lockStatusNoResponse: "No Response (Marked as Requested)",
         lockMyStatusLabel: "My request status",
         lockDetailPrefix: "Meal requests and changes are unavailable after 8:40 AM."
       }
@@ -3536,12 +3599,6 @@
       if (dict[key] != null) return dict[key];
       if (I18N.ko[key] != null) return I18N.ko[key];
       return key;
-    }
-
-    /* 외부 손님 인원 표기: 한국어 "외부 N명", 영어 "N Guests" */
-    function guestText(n) {
-      if (currentLang === "en") return `${n} ${n === 1 ? "Guest" : "Guests"}`;
-      return `외부 ${n}명`;
     }
 
     function loadSavedLanguage() {
@@ -3558,7 +3615,7 @@
       document.querySelectorAll("[data-i18n]").forEach((el) => {
         const key = el.getAttribute("data-i18n");
         const val = t(key);
-        /* HTML 태그가 포함된 문구(mealStep1Q 등)는 innerHTML 로 적용 */
+        /* HTML 태그가 포함된 문구(mealFormIntro, mealTargetHint 등)는 innerHTML 로 적용 */
         if (val.indexOf("<") !== -1) el.innerHTML = val;
         else el.textContent = val;
       });
@@ -3803,11 +3860,13 @@
       clearLoginData();
       pendingAction = null;
 
-      /* 3. 식수 임시 상태 초기화 */
-      mealGuestSelected = false;
-      mealLunchApplying = false;
-      mealDinnerApplying = false;
-      mealDinnerGuestSelected = false;
+      /* 3. 식수 임시 상태 초기화 (v3: 외부손님 상태 없음, 대리 신청 상태 추가) */
+      mealLunchApplying = true;
+      mealDinnerApplying = true;
+      mealPartMembers = [];
+      mealSelectedUserId = "";
+      mealPartLoading = false;
+      mealSubmitting = false;
       mealStatusSyncing = false;
       mealStatusError = false;
 
@@ -4444,20 +4503,29 @@
     }
 
     /* =============================================
-       식수 신청 기능
+       식수 신청 기능 v3 (2026-07-30)
        운영 시간 (Apps Script 와 동일 기준, 상수로 통일):
-       - 자동 미신청 처리 시작: 오전 08:30 (서버 트리거가 처리)
+       - 자동 "신청" 처리 시작: 오전 08:30 (서버 트리거가 중식·석식 모두 O 처리)
        - 사용자 신청·변경 마감: 오전 08:40 (08:40:00부터 변경 불가)
+       v3 변경점:
+       ① 미응답자 자동 처리 결과가 미신청 → 중식·석식 모두 "신청"
+       ② 외부 손님 선택·입력 UI 폐지 (서버에서도 항상 0 저장)
+       ③ 같은 파트(users.part) 구성원 대리 신청·변경 지원 (서버 재검증)
+       ④ 다단계 팝업 → 대상자·중식·석식·저장 단일 화면
     ============================================= */
     const MEAL_AUTO_MARK_HOUR = 8;
     const MEAL_AUTO_MARK_MINUTE = 30;
     const MEAL_EDIT_CUTOFF_HOUR = 8;
     const MEAL_EDIT_CUTOFF_MINUTE = 40;
 
-    let mealGuestSelected = false;     // 중식 외부손님 있음 여부
-    let mealLunchApplying = false;     // 중식 신청 여부
-    let mealDinnerApplying = false;    // 석식 신청 여부
-    let mealDinnerGuestSelected = false;
+    let mealLunchApplying = true;      // 중식 신청 여부 (기본 신청 — 자동 처리 결과와 동일)
+    let mealDinnerApplying = true;     // 석식 신청 여부 (기본 신청 — 자동 처리 결과와 동일)
+
+    /* 대리 신청 상태 */
+    let mealPartMembers = [];          // getMealPartMembers 결과 (같은 파트 대상자 + 당일 상태)
+    let mealSelectedUserId = "";       // 현재 선택된 대상자 user_id
+    let mealPartLoading = false;
+    let mealSubmitting = false;        // 저장 중복 클릭 방지
 
     function getTodayStr() {
       const now = new Date();
@@ -4501,6 +4569,13 @@
     let mealStatusSyncing = false;
     let mealStatusError = false;
 
+    /* 중식·석식 신청 여부를 한 줄 문구로 (외부손님 표기 없음 — v3 폐지) */
+    function mealChoiceText(lunchApplying, dinnerApplying) {
+      const lunch = lunchApplying ? t("lunchRequested") : t("lunchNotRequested");
+      const dinner = dinnerApplying ? t("dinnerRequested") : `${t("dinnerRequested")} ${t("notRequested")}`;
+      return `${lunch} · ${dinner}`;
+    }
+
     function updateHomeMealStatus() {
       const data = getMealLocalData();
       let short, detail;
@@ -4509,15 +4584,16 @@
       } else if (!data || !data.responded) {
         short = mealStatusError ? t("checkFailed") : t("noResponse");
         detail = mealStatusError ? t("checkFailedDetail") : t("noResponse");
-      } else if (data.isAuto && !data.applying && !data.dinner) {
-        /* 08:30 자동 미신청 처리 — 08:40 전이면 변경 가능 안내 */
-        short = t("autoNotRequested");
-        detail = isMealLocked() ? t("autoNotRequestedLocked") : t("autoNotRequestedOpen");
+      } else if (data.isAuto) {
+        /* 08:30 자동 처리(v3 = 중식·석식 신청) — 08:40 전이면 변경 가능 안내 */
+        const bothApplied = !!data.applying && !!data.dinner;
+        short = bothApplied ? t("autoApplied") : t("autoProcessed");
+        const openKey = bothApplied ? "autoAppliedOpen" : "autoProcessedOpen";
+        const lockedKey = bothApplied ? "autoAppliedLocked" : "autoProcessedLocked";
+        detail = `${mealChoiceText(!!data.applying, !!data.dinner)} — ${isMealLocked() ? t(lockedKey) : t(openKey)}`;
       } else {
         short = data.applying ? t("requested") : t("notRequested");
-        detail = data.applying ? t("lunchRequested") : t("lunchNotRequested");
-        if (data.applying && data.guestCount > 0) detail += ` (${guestText(data.guestCount)})`;
-        if (data.dinner) detail += ` + ${t("dinnerRequested")}${data.dinnerGuest > 0 ? ` (${guestText(data.dinnerGuest)})` : ""}`;
+        detail = mealChoiceText(!!data.applying, !!data.dinner);
       }
       const el1 = document.getElementById("homeMealMyStatus");
       const el2 = document.getElementById("mealMyStatusDetail");
@@ -4527,7 +4603,7 @@
 
     /* 서버 기준 내 식수 상태 동기화
        1) getMyMealStatus 호출 → 2) 응답 기록 있으면 팝업 없이 상태 표시 + 로컬 캐시 갱신
-          (단, 08:30 자동 미신청 사용자는 08:40 전이면 세션당 한 번 변경 안내 팝업)
+          (단, 08:30 자동 처리 사용자는 08:40 전이면 세션당 한 번 변경 안내 팝업)
        3) 응답 기록 없으면 신청 가능 시간(08:40 이전)에만 팝업
        4) 서버 오류 시 미응답으로 단정하지 않고 팝업 표시 안 함(기존 로컬 캐시는 보조로만 사용) */
     async function syncMyMealStatus(showModalIfNeeded) {
@@ -4558,7 +4634,7 @@
             isAuto: !!result.is_auto,
             submittedAt: result.submitted_at || ""
           });
-          /* 08:30 자동 미신청 사용자 — 08:40 전이면 변경 안내 팝업을
+          /* 08:30 자동 처리(v3 = 중식·석식 신청) 사용자 — 08:40 전이면 변경 안내 팝업을
              사용자별·날짜별·브라우저 세션별 한 번만 자동으로 연다 */
           if (result.is_auto && !isMealLocked() && isMealTargetUser()) {
             try {
@@ -4617,6 +4693,194 @@
       return !hasField; /* 정보 없으면 허용(서버가 최종 검증), 있는데 대상 아니면 차단 */
     }
 
+    /* 로그인 사용자가 admin 인지 (기존 관리자 권한 유지 — 서버가 최종 검증) */
+    function isMealAdminUser() {
+      return !!currentUserData && String(currentUserData.role || "").trim().toLowerCase() === "admin";
+    }
+
+    /* ── 단일 화면 폼 UI 보조 ───────────────────────────────── */
+
+    /* 중식/석식 토글 버튼 선택 상태 반영 */
+    function syncMealToggleUI() {
+      const pairs = [
+        { yes: "mealLunchYes", no: "mealLunchNo", on: mealLunchApplying },
+        { yes: "mealDinnerYes", no: "mealDinnerNo", on: mealDinnerApplying }
+      ];
+      pairs.forEach((pair) => {
+        const yesEl = document.getElementById(pair.yes);
+        const noEl = document.getElementById(pair.no);
+        if (yesEl) yesEl.classList.toggle("meal-yes-sel", !!pair.on);
+        if (noEl) noEl.classList.toggle("meal-no-sel", !pair.on);
+      });
+    }
+
+    /* 현재 선택된 대상자 객체 (없으면 null) */
+    function getSelectedMealMember() {
+      if (!mealSelectedUserId) return null;
+      return mealPartMembers.find((m) => m.user_id === mealSelectedUserId) || null;
+    }
+
+    /* 대상자의 "현재 저장 상태" 안내 박스 갱신 */
+    function renderMealCurrentBox() {
+      const box = document.getElementById("mealCurrentBox");
+      if (!box) return;
+      const member = getSelectedMealMember();
+      if (!member) {
+        /* 파트 목록을 못 불러온 경우 — 로컬 캐시(본인)로 대체 표시 */
+        const data = getMealLocalData();
+        if (data && data.responded) {
+          box.innerHTML = `<strong>${escapeHtml(t("mealCurrentLabel"))}</strong> · ${escapeHtml(mealChoiceText(!!data.applying, !!data.dinner))}${data.isAuto ? ` <span style="color:#8a5317;">(${escapeHtml(t("autoProcessed"))})</span>` : ""}`;
+        } else {
+          box.textContent = t("mealCurrentNone");
+        }
+        return;
+      }
+      if (!member.responded) {
+        box.textContent = t("mealCurrentNone");
+        return;
+      }
+      const autoTag = member.is_auto ? ` <span style="color:#8a5317;">(${escapeHtml(t("autoProcessed"))})</span>` : "";
+      const timeTag = member.submitted_time ? ` <span style="color:#8a93a3;">${escapeHtml(member.submitted_time)}</span>` : "";
+      box.innerHTML = `<strong>${escapeHtml(t("mealCurrentLabel"))}</strong> · ${escapeHtml(mealChoiceText(!!member.lunch_applying, !!member.dinner_applying))}${autoTag}${timeTag}`;
+    }
+
+    /* 대상자 선택 콤보 렌더 */
+    function renderMealTargetOptions() {
+      const sel = document.getElementById("mealTargetSelect");
+      const hint = document.getElementById("mealTargetHint");
+      if (!sel) return;
+
+      if (mealPartLoading) {
+        sel.innerHTML = `<option value="">${escapeHtml(t("mealTargetLoading"))}</option>`;
+        sel.disabled = true;
+        if (hint) hint.textContent = t("mealTargetLoading");
+        return;
+      }
+
+      if (!mealPartMembers.length) {
+        /* 목록 조회 실패 또는 파트 정보 없음 — 본인 신청만 (서버가 최종 검증) */
+        const myName = (currentUserData && currentUserData.name) || "";
+        sel.innerHTML = `<option value="${escapeHtml((currentUserData && currentUserData.user_id) || "")}">${escapeHtml(myName)} ${escapeHtml(t("mealTargetSelfSuffix"))}</option>`;
+        sel.disabled = true;
+        mealSelectedUserId = (currentUserData && currentUserData.user_id) || "";
+        if (hint) hint.textContent = t("mealTargetSelfOnly");
+        return;
+      }
+
+      sel.innerHTML = mealPartMembers.map((m) => {
+        const suffix = m.is_self ? ` ${t("mealTargetSelfSuffix")}` : (m.team ? ` · ${m.team}` : "");
+        const statusMark = m.responded
+          ? ` [${m.lunch_applying ? t("requested") : t("notRequested")}]`
+          : ` [${t("noResponse")}]`;
+        return `<option value="${escapeHtml(m.user_id)}">${escapeHtml(m.name + suffix + statusMark)}</option>`;
+      }).join("");
+      sel.disabled = mealPartMembers.length <= 1;
+
+      if (!mealPartMembers.some((m) => m.user_id === mealSelectedUserId)) {
+        const self = mealPartMembers.find((m) => m.is_self);
+        mealSelectedUserId = self ? self.user_id : mealPartMembers[0].user_id;
+      }
+      sel.value = mealSelectedUserId;
+
+      if (hint) {
+        if (mealPartMembers.length <= 1) {
+          hint.textContent = t("mealTargetSelfOnly");
+        } else {
+          hint.innerHTML = t("mealTargetHint");
+        }
+      }
+    }
+
+    /* 선택된 대상자의 저장 상태를 토글/안내에 반영 */
+    function applyMealTargetState() {
+      const member = getSelectedMealMember();
+      const autoNotice = document.getElementById("mealAutoNotice");
+
+      if (member) {
+        if (member.responded) {
+          mealLunchApplying = !!member.lunch_applying;
+          mealDinnerApplying = !!member.dinner_applying;
+        } else {
+          /* 미응답 — 08:30 자동 처리 결과(중식·석식 신청)를 기본값으로 제시 */
+          mealLunchApplying = true;
+          mealDinnerApplying = true;
+        }
+      } else {
+        const data = getMealLocalData();
+        if (data && data.responded) {
+          mealLunchApplying = !!data.applying;
+          mealDinnerApplying = !!data.dinner;
+        } else {
+          mealLunchApplying = true;
+          mealDinnerApplying = true;
+        }
+      }
+
+      /* 안내 배너: 대리 신청 / 자동 처리 */
+      if (autoNotice) {
+        const isProxy = !!member && !member.is_self;
+        const isAuto = member ? !!member.is_auto : !!(getMealLocalData() || {}).isAuto;
+        const msgs = [];
+        if (isProxy) msgs.push(t("mealProxyNotice"));
+        if (isAuto) msgs.push(t("mealAutoNotice"));
+        if (msgs.length) {
+          autoNotice.textContent = msgs.join(" ");
+          autoNotice.classList.remove("hidden");
+        } else {
+          autoNotice.classList.add("hidden");
+        }
+      }
+
+      syncMealToggleUI();
+      renderMealCurrentBox();
+    }
+
+    /* 같은 파트 대상자 목록 + 당일 상태 조회 (서버가 권한 판정) */
+    async function loadMealPartMembers() {
+      if (!currentUserData || !currentUserData.user_id) {
+        mealPartMembers = [];
+        renderMealTargetOptions();
+        applyMealTargetState();
+        return;
+      }
+      mealPartLoading = true;
+      let showNotTargetOnly = false;
+      renderMealTargetOptions();
+      try {
+        const params = [
+          "action=getMealPartMembers",
+          `date=${encodeURIComponent(getTodayStr())}`,
+          `user_id=${encodeURIComponent(currentUserData.user_id || "")}`,
+          `emp_no=${encodeURIComponent(currentUserData.emp_no || "")}`
+        ].join("&");
+        const result = await jsonpRequest(`${WEB_APP_URL}?${params}`, "mealPartMembersCallback");
+        if (!result || !result.success || !Array.isArray(result.members)) {
+          throw new Error((result && result.message) || "대상자 목록 조회 실패");
+        }
+        mealPartMembers = result.members;
+        /* 본인이 식수 대상이 아니고 대리 신청할 파트원도 없으면 안내 화면으로 전환 */
+        showNotTargetOnly = (result.my_is_target === false && !mealPartMembers.length);
+      } catch (e) {
+        console.error("식수 대상자 목록 조회 오류:", e);
+        mealPartMembers = [];
+        const hint = document.getElementById("mealTargetHint");
+        if (hint) hint.textContent = t("mealTargetLoadFail");
+      } finally {
+        mealPartLoading = false;
+        if (showNotTargetOnly) {
+          const form = document.getElementById("mealForm");
+          const notTarget = document.getElementById("mealNotTargetMsg");
+          const autoNotice = document.getElementById("mealAutoNotice");
+          if (form) form.classList.add("hidden");
+          if (autoNotice) autoNotice.classList.add("hidden");
+          if (notTarget) notTarget.classList.remove("hidden");
+        } else {
+          renderMealTargetOptions();
+          applyMealTargetState();
+        }
+      }
+    }
+
     function openMealModal() {
       const modal = document.getElementById("mealModal");
       if (!modal) return;
@@ -4629,18 +4893,18 @@
       /* 08:40 이후 잠금 처리 (Apps Script submitMeal 잠금 기준과 동일) */
       const lockMsg  = document.getElementById("mealLockMsg");
       const lockDetail = document.getElementById("mealLockDetail");
-      const step1    = document.getElementById("mealStep1");
-      const step2    = document.getElementById("mealStep2");
+      const form     = document.getElementById("mealForm");
       const autoNotice = document.getElementById("mealAutoNotice");
       const notTarget = document.getElementById("mealNotTargetMsg");
       const data = getMealLocalData();
 
-      /* 식수 신청 대상이 아닌 계정 — 신청 폼 대신 안내만 표시 */
-      if (currentUserData && !isMealTargetUser()) {
+      /* 식수 신청 대상이 아닌 계정 — 신청 폼 대신 안내만 표시
+         (단, admin 또는 같은 파트 대리 신청 권한이 있으면 폼을 열어 대리 신청 허용) */
+      const canProxyOnly = isMealAdminUser() || !!String((currentUserData && currentUserData.part) || "").trim();
+      if (currentUserData && !isMealTargetUser() && !canProxyOnly) {
         if (notTarget) notTarget.classList.remove("hidden");
         if (lockMsg) lockMsg.classList.add("hidden");
-        if (step1) step1.classList.add("hidden");
-        if (step2) step2.classList.add("hidden");
+        if (form) form.classList.add("hidden");
         if (autoNotice) autoNotice.classList.add("hidden");
         modal.classList.remove("hidden");
         modal.setAttribute("aria-hidden", "false");
@@ -4650,12 +4914,18 @@
 
       if (isMealLocked()) {
         if (lockMsg) lockMsg.classList.remove("hidden");
-        if (step1)   step1.classList.add("hidden");
-        if (step2)   step2.classList.add("hidden");
+        if (form) form.classList.add("hidden");
         if (autoNotice) autoNotice.classList.add("hidden");
-        const myStatus = data && data.responded
-          ? (data.applying ? t("lockStatusRequested") : (data.isAuto ? t("lockStatusNotRequestedAuto") : t("lockStatusNotRequested")))
-          : t("lockStatusNoResponse");
+        let myStatus;
+        if (data && data.responded) {
+          if (data.applying) {
+            myStatus = data.isAuto ? t("lockStatusRequestedAuto") : t("lockStatusRequested");
+          } else {
+            myStatus = data.isAuto ? t("lockStatusNotRequestedAuto") : t("lockStatusNotRequested");
+          }
+        } else {
+          myStatus = t("lockStatusNoResponse");
+        }
         if (lockDetail) lockDetail.textContent = `${t("lockDetailPrefix")}\n${t("lockMyStatusLabel")}: ${myStatus}`;
         modal.classList.remove("hidden");
         modal.setAttribute("aria-hidden", "false");
@@ -4663,51 +4933,25 @@
       }
 
       if (lockMsg) lockMsg.classList.add("hidden");
-      if (step1) step1.classList.remove("hidden");
-      if (step2) step2.classList.add("hidden");
+      if (form) form.classList.remove("hidden");
 
-      /* 08:30 자동 미신청 처리된 사용자 안내 — 08:40 전까지 변경 가능 */
-      if (autoNotice) {
-        if (data && data.responded && data.isAuto) {
-          autoNotice.textContent = t("mealAutoNotice");
-          autoNotice.classList.remove("hidden");
-        } else {
-          autoNotice.classList.add("hidden");
-        }
-      }
+      /* 저장 버튼 상태 초기화 (이전 실패로 비활성 상태가 남지 않도록) */
+      mealSubmitting = false;
+      const submitBtn = document.getElementById("mealSubmitBtn");
+      if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = t("mealSubmit"); }
 
-      const gcWrap = document.getElementById("mealGuestCountWrap");
-      if (gcWrap) gcWrap.classList.add("hidden");
-
-      const guestNone = document.getElementById("mealGuestNone");
-      const guestHas = document.getElementById("mealGuestHas");
-      if (guestNone) { guestNone.classList.remove("meal-yes-sel"); guestNone.classList.remove("meal-no-sel"); }
-      if (guestHas) { guestHas.classList.remove("meal-yes-sel"); guestHas.classList.remove("meal-no-sel"); }
-
-      const gcInput = document.getElementById("mealGuestCount");
-      if (gcInput) gcInput.value = "";
-
-      /* 석식 옵션 초기화 (기본: 석식 미신청) */
-      const dNo  = document.getElementById("mealDinnerNo");
-      const dYes = document.getElementById("mealDinnerYes");
-      if (dNo)  dNo.classList.add("meal-yes-sel");
-      if (dYes) dYes.classList.remove("meal-yes-sel");
-      const dWrap = document.getElementById("mealDinnerGuestWrap");
-      if (dWrap) dWrap.classList.add("hidden");
-      const dInput = document.getElementById("mealDinnerGuestCount");
-      if (dInput) dInput.value = "";
-
-      mealGuestSelected = false;
-      mealLunchApplying = false;
-      mealDinnerApplying = false;
-      mealDinnerGuestSelected = false;
+      /* 본인을 기본 대상자로 두고 즉시 표시 → 파트 목록은 비동기로 채움 */
+      mealSelectedUserId = (currentUserData && currentUserData.user_id) || "";
+      applyMealTargetState();
 
       modal.classList.remove("hidden");
       modal.setAttribute("aria-hidden", "false");
+
+      loadMealPartMembers();
     }
 
     /* 팝업을 닫는 것만으로는 어떤 값도 저장하지 않음.
-       식수 데이터 저장은 ① 사용자의 실제 제출, ② 서버의 08:30 자동 미신청 처리 두 경우뿐 */
+       식수 데이터 저장은 ① 사용자의 실제 제출, ② 서버의 08:30 자동 신청 처리 두 경우뿐 */
     function closeMealModal() {
       const modal = document.getElementById("mealModal");
       if (modal) {
@@ -4718,30 +4962,36 @@
 
     /* 식수 신청 전송 — 서버 저장 success 확인 후에만 로컬 캐시/화면 갱신
        (전송 전에 responded:true 를 먼저 저장하지 않음)
-       lunchApplying: 중식 신청 여부, lunchGuest: 중식 외부손님 수
-       dinnerApplying: 석식 신청 여부, dinnerGuest: 석식 외부손님 수
-       반환값: { success, message } */
-    async function submitMealChoice(lunchApplying, lunchGuest, dinnerApplying, dinnerGuest, isAuto, reason) {
+       lunchApplying / dinnerApplying: 중식·석식 신청 여부
+       targetUserId / targetEmpNo: 대리 신청 대상자 (생략 시 본인)
+       ※ v3 — 외부 손님은 폐지되어 항상 0 을 전송하고, 서버도 0 으로 강제한다.
+       반환값: { success, message, ... } */
+    async function submitMealChoice(lunchApplying, dinnerApplying, targetUserId, targetEmpNo) {
       if (!currentUserData || !currentUserData.user_id) {
         return { success: false, message: "로그인 정보가 없어 식수 신청을 저장할 수 없습니다." };
       }
+
+      const myUserId = String(currentUserData.user_id || "");
+      const tUserId = String(targetUserId || myUserId);
+      const isSelf = tUserId === myUserId;
 
       try {
         const params = [
           "action=submitMeal",
           `date=${encodeURIComponent(getTodayStr())}`,
-          `user_id=${encodeURIComponent(currentUserData.user_id || "")}`,
+          `user_id=${encodeURIComponent(myUserId)}`,
           `user_name=${encodeURIComponent(currentUserData.name || "")}`,
           `emp_no=${encodeURIComponent(currentUserData.emp_no || "")}`,
           `team=${encodeURIComponent(currentUserData.team || "")}`,
+          `target_user_id=${encodeURIComponent(tUserId)}`,
+          `target_emp_no=${encodeURIComponent(targetEmpNo || (isSelf ? (currentUserData.emp_no || "") : ""))}`,
           `lunch=${lunchApplying ? "Y" : "N"}`,
-          `lunch_guest=${encodeURIComponent(lunchGuest || 0)}`,
+          `lunch_guest=0`,                                 // v3: 외부손님 폐지 (서버에서도 0 강제)
           `dinner=${dinnerApplying ? "Y" : "N"}`,
-          `dinner_guest=${encodeURIComponent(dinnerGuest || 0)}`,
-          `applying=${lunchApplying ? "Y" : "N"}`,        // 구 백엔드 호환
-          `guest_count=${encodeURIComponent(lunchGuest || 0)}`,
-          `is_auto=${isAuto ? "Y" : "N"}`,
-          `reason=${encodeURIComponent(reason || "")}`
+          `dinner_guest=0`,                                // v3: 외부손님 폐지 (서버에서도 0 강제)
+          `applying=${lunchApplying ? "Y" : "N"}`,          // 구 백엔드 호환
+          `guest_count=0`,                                 // 구 백엔드 호환
+          "is_auto=N"
         ].join("&");
 
         const result = await jsonpRequest(`${WEB_APP_URL}?${params}`, "mealSubmitCallback");
@@ -4750,27 +5000,48 @@
           return { success: false, message: (result && result.message) || "식수 신청 저장에 실패했습니다." };
         }
 
-        /* 서버 저장 성공 → 이때만 로컬 캐시와 화면 갱신 */
-        saveMealLocalData({
-          responded: true,
-          applying: lunchApplying,               // 중식 신청 여부 (하위호환 키)
-          guestCount: lunchGuest || 0,
-          dinner: !!dinnerApplying,              // 석식 신청 여부
-          dinnerGuest: dinnerGuest || 0,
-          isAuto: !!isAuto,
-          reason: reason || "",
-          submittedAt: new Date().toISOString()
-        });
-        mealStatusError = false;
-        updateHomeMealStatus();
-
-        if (currentScreenKey === "home") {
-          setTimeout(loadMealSummary, 200);
+        /* 서버 저장 성공 → 본인 신청일 때만 로컬 캐시/홈 카드 갱신
+           (다른 사람 대리 신청 결과를 내 상태로 덮어쓰지 않는다) */
+        if (isSelf) {
+          saveMealLocalData({
+            responded: true,
+            applying: !!lunchApplying,             // 중식 신청 여부 (하위호환 키)
+            guestCount: 0,
+            dinner: !!dinnerApplying,              // 석식 신청 여부
+            dinnerGuest: 0,
+            isAuto: false,
+            submittedAt: new Date().toISOString()
+          });
+          mealStatusError = false;
+          updateHomeMealStatus();
         }
+
+        /* 대상자 목록 캐시의 상태도 즉시 반영 (모달을 다시 열지 않아도 최신값) */
+        const cached = mealPartMembers.find((m) => m.user_id === tUserId);
+        if (cached) {
+          cached.responded = true;
+          cached.lunch_applying = !!lunchApplying;
+          cached.dinner_applying = !!dinnerApplying;
+          cached.is_auto = false;
+        }
+
+        /* 저장 성공 후 현황 즉시 갱신 (홈 집계 + 열려 있는 현황 모달) */
+        refreshMealStatusViews();
         return result;
       } catch (e) {
         console.error("식수 신청 전송 오류:", e);
         return { success: false, message: (e && e.message) || "식수 신청 전송 중 오류가 발생했습니다." };
+      }
+    }
+
+    /* 식수 현황 화면 갱신 — 홈 집계 카드 + 현황 확인 모달(열려 있을 때) */
+    function refreshMealStatusViews() {
+      if (currentScreenKey === "home") {
+        setTimeout(loadMealSummary, 200);
+      }
+      const statusModal = document.getElementById("mealStatusModal");
+      if (statusModal && !statusModal.classList.contains("hidden")) {
+        setTimeout(() => fetchMealStatus(false), 250);
       }
     }
 
@@ -4933,12 +5204,10 @@
           <div class="ms-sum-item ms-apply"><strong>${s.lunch_applied || 0}</strong><span>신청</span></div>
           <div class="ms-sum-item ms-not"><strong>${s.lunch_not_applied || 0}</strong><span>미신청</span></div>
           <div class="ms-sum-item ms-pend"><strong>${s.lunch_pending || 0}</strong><span>미응답</span></div>
-          <div class="ms-sum-item ms-guest"><strong>${s.lunch_guest_total || 0}</strong><span>외부손님</span></div>
           <div class="ms-sum-group-label">🌙 석식</div>
           <div class="ms-sum-item ms-apply"><strong>${s.dinner_applied || 0}</strong><span>신청</span></div>
           <div class="ms-sum-item ms-not"><strong>${s.dinner_not_applied || 0}</strong><span>미신청</span></div>
           <div class="ms-sum-item ms-pend"><strong>${s.dinner_pending || 0}</strong><span>미응답</span></div>
-          <div class="ms-sum-item ms-guest"><strong>${s.dinner_guest_total || 0}</strong><span>외부손님</span></div>
         `;
       }
 
@@ -4960,9 +5229,9 @@
       const tbody = document.getElementById("mealStatusTbody");
       if (tbody) {
         if (!details.length) {
-          tbody.innerHTML = `<tr><td colspan="8" class="ms-empty">조회 권한이 없거나 대상자 현황이 없습니다.</td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="6" class="ms-empty">조회 권한이 없거나 대상자 현황이 없습니다.</td></tr>`;
         } else if (!filtered.length) {
-          tbody.innerHTML = `<tr><td colspan="8" class="ms-empty">필터 조건에 해당하는 대상자가 없습니다.</td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="6" class="ms-empty">필터 조건에 해당하는 대상자가 없습니다.</td></tr>`;
         } else {
           tbody.innerHTML = filtered.map(d => {
             const areaCls = d.area === "본사" ? "ms-area-bonsa" : (d.area === "창녕" ? "ms-area-changnyeong" : "");
@@ -4977,9 +5246,7 @@
               <td class="ms-td-name">${escapeHtml(d.name || "")}</td>
               <td class="ms-td-team">${escapeHtml(d.team || "")}</td>
               <td>${lunchBadge}</td>
-              <td>${d.lunch_guest > 0 ? d.lunch_guest : "0"}</td>
               <td>${dinnerBadge}</td>
-              <td>${d.dinner_guest > 0 ? d.dinner_guest : "0"}</td>
               <td>${timeCell}</td>
             </tr>`;
           }).join("");
@@ -5665,108 +5932,73 @@
       });
     }
 
+    /* 식수 신청 모달 이벤트 — 단일 화면(대상자 · 중식 · 석식 · 저장) */
     function bindMealModalEvents() {
       const closeBtn = document.getElementById("closeMealModalBtn");
       if (closeBtn) closeBtn.addEventListener("click", closeMealModal);
-      const yesBtn   = document.getElementById("mealBtnYes");
-      const noBtn    = document.getElementById("mealBtnNo");
-      const gNoneBtn = document.getElementById("mealGuestNone");
-      const gHasBtn  = document.getElementById("mealGuestHas");
-      const dNoBtn   = document.getElementById("mealDinnerNo");
-      const dYesBtn  = document.getElementById("mealDinnerYes");
+
+      const targetSel = document.getElementById("mealTargetSelect");
+      const lunchYesBtn = document.getElementById("mealLunchYes");
+      const lunchNoBtn  = document.getElementById("mealLunchNo");
+      const dinnerYesBtn = document.getElementById("mealDinnerYes");
+      const dinnerNoBtn  = document.getElementById("mealDinnerNo");
       const submitBtn = document.getElementById("mealSubmitBtn");
 
-      /* step2 로 이동 — 중식 신청 여부에 따라 중식 손님 섹션 표시/숨김 */
-      function goToStep2(lunchApplying) {
-        mealLunchApplying = lunchApplying;
-        const step1 = document.getElementById("mealStep1");
-        const step2 = document.getElementById("mealStep2");
-        const lunchGuestSection = document.getElementById("mealLunchGuestSection");
-        if (step1) step1.classList.add("hidden");
-        if (step2) step2.classList.remove("hidden");
-        if (lunchGuestSection) lunchGuestSection.style.display = lunchApplying ? "" : "none";
-      }
-
-      if (yesBtn) yesBtn.addEventListener("click", function () { goToStep2(true); });
-      if (noBtn)  noBtn.addEventListener("click",  function () { goToStep2(false); });
-
-      if (gNoneBtn) {
-        gNoneBtn.addEventListener("click", function () {
-          mealGuestSelected = false;
-          gNoneBtn.classList.add("meal-yes-sel");
-          if (gHasBtn) gHasBtn.classList.remove("meal-yes-sel");
-          const gcWrap = document.getElementById("mealGuestCountWrap");
-          if (gcWrap) gcWrap.classList.add("hidden");
+      /* 대상자 변경 → 그 사람의 현재 신청 상태를 폼에 불러옴 */
+      if (targetSel) {
+        targetSel.addEventListener("change", function () {
+          mealSelectedUserId = targetSel.value || "";
+          applyMealTargetState();
         });
       }
 
-      if (gHasBtn) {
-        gHasBtn.addEventListener("click", function () {
-          mealGuestSelected = true;
-          gHasBtn.classList.add("meal-yes-sel");
-          if (gNoneBtn) gNoneBtn.classList.remove("meal-yes-sel");
-          const gcWrap = document.getElementById("mealGuestCountWrap");
-          if (gcWrap) gcWrap.classList.remove("hidden");
-          setTimeout(function () {
-            const gcInput = document.getElementById("mealGuestCount");
-            if (gcInput) gcInput.focus();
-          }, 50);
-        });
-      }
-
-      /* 석식 토글 */
-      if (dNoBtn) {
-        dNoBtn.addEventListener("click", function () {
-          mealDinnerApplying = false;
-          dNoBtn.classList.add("meal-yes-sel");
-          if (dYesBtn) dYesBtn.classList.remove("meal-yes-sel");
-          const dWrap = document.getElementById("mealDinnerGuestWrap");
-          if (dWrap) dWrap.classList.add("hidden");
-        });
-      }
-      if (dYesBtn) {
-        dYesBtn.addEventListener("click", function () {
-          mealDinnerApplying = true;
-          dYesBtn.classList.add("meal-yes-sel");
-          if (dNoBtn) dNoBtn.classList.remove("meal-yes-sel");
-          const dWrap = document.getElementById("mealDinnerGuestWrap");
-          if (dWrap) dWrap.classList.remove("hidden");
-          setTimeout(function () {
-            const dInput = document.getElementById("mealDinnerGuestCount");
-            if (dInput) dInput.focus();
-          }, 50);
-        });
-      }
+      /* 중식 / 석식 토글 */
+      if (lunchYesBtn) lunchYesBtn.addEventListener("click", function () {
+        mealLunchApplying = true; syncMealToggleUI();
+      });
+      if (lunchNoBtn) lunchNoBtn.addEventListener("click", function () {
+        mealLunchApplying = false; syncMealToggleUI();
+      });
+      if (dinnerYesBtn) dinnerYesBtn.addEventListener("click", function () {
+        mealDinnerApplying = true; syncMealToggleUI();
+      });
+      if (dinnerNoBtn) dinnerNoBtn.addEventListener("click", function () {
+        mealDinnerApplying = false; syncMealToggleUI();
+      });
 
       if (submitBtn) {
         submitBtn.addEventListener("click", async function () {
-          if (submitBtn.disabled) return; /* 중복 전송 방지 */
+          /* 중복 클릭 방지 — 플래그 + 버튼 disabled 이중 차단 */
+          if (mealSubmitting || submitBtn.disabled) return;
 
-          /* 중식 외부 손님 */
-          let lunchGuest = 0;
-          if (mealLunchApplying && mealGuestSelected) {
-            const gcInput = document.getElementById("mealGuestCount");
-            lunchGuest = parseInt((gcInput && gcInput.value) || "0", 10) || 0;
-            if (lunchGuest <= 0) {
-              alert(t("lunchGuestCountReq"));
+          const member = getSelectedMealMember();
+          const targetUserId = member ? member.user_id : (mealSelectedUserId || (currentUserData && currentUserData.user_id) || "");
+          const targetEmpNo = member ? member.emp_no : "";
+          const isProxy = !!member && !member.is_self;
+
+          /* 화면 단계 권한 확인 — 같은 파트(또는 admin)만 대리 신청.
+             서버(canEditMealFor_)에서도 동일 기준으로 재검증한다. */
+          if (isProxy && !isMealAdminUser()) {
+            const myPart = String((currentUserData && currentUserData.part) || "").trim();
+            const tPart = String(member.part || "").trim();
+            if (!myPart || !tPart || myPart !== tPart) {
+              alert("같은 파트 구성원만 대신 신청·변경할 수 있습니다.");
               return;
             }
           }
-          /* 석식 외부 손님 */
-          let dinnerGuest = 0;
-          if (mealDinnerApplying) {
-            const dInput = document.getElementById("mealDinnerGuestCount");
-            dinnerGuest = parseInt((dInput && dInput.value) || "0", 10) || 0;
-            if (dinnerGuest < 0) dinnerGuest = 0;
-          }
 
           /* 1) 저장 버튼 비활성화 → 2) 서버 전송 → 3) success 확인 후에만 모달 닫기/저장 */
+          mealSubmitting = true;
           submitBtn.disabled = true;
           const origLabel = submitBtn.textContent;
           submitBtn.textContent = t("mealSaving");
 
+          /* 저장 값 스냅샷 — 전송 중 사용자가 토글을 바꿔도 메시지가 어긋나지 않게 */
+          const sentLunch = mealLunchApplying;
+          const sentDinner = mealDinnerApplying;
+
           try {
-            const result = await submitMealChoice(mealLunchApplying, lunchGuest, mealDinnerApplying, dinnerGuest, false);
+            const result = await submitMealChoice(sentLunch, sentDinner, targetUserId, targetEmpNo);
 
             if (!result || !result.success) {
               /* 실패: 모달과 입력 내용 유지. 영어 모드는 서버 원문 대신 일반 영어 안내(원문은 콘솔) */
@@ -5779,14 +6011,11 @@
             }
 
             closeMealModal();
-            const lunchMsg = mealLunchApplying
-              ? `${t("lunchRequested")}${lunchGuest > 0 ? ` (${guestText(lunchGuest)})` : ""}`
-              : t("lunchNotRequested");
-            const dinnerMsg = mealDinnerApplying
-              ? ` · ${t("dinnerRequested")}${dinnerGuest > 0 ? ` (${guestText(dinnerGuest)})` : ""}`
-              : "";
-            alert(`${t("mealComplete")} ${lunchMsg}${dinnerMsg}`);
+            const who = isProxy ? `${member.name} — ` : "";
+            const headline = isProxy ? t("mealCompleteProxy") : t("mealComplete");
+            alert(`${headline} ${who}${mealChoiceText(sentLunch, sentDinner)}`);
           } finally {
+            mealSubmitting = false;
             submitBtn.disabled = false;
             submitBtn.textContent = origLabel;
           }
@@ -5826,12 +6055,11 @@
       const today = getTodayStr();
       const mealData = getMealLocalData();
       let myMealStatus = t("noResponse");
-      let myMealApplying = false;
-      let myGuestCount = 0;
+      let myMealDetail = t("noResponse");
       if (mealData && mealData.responded) {
         myMealStatus = mealData.applying ? t("requested") : t("notRequested");
-        myMealApplying = mealData.applying;
-        myGuestCount = mealData.guestCount || 0;
+        /* v3: 외부손님 표기 폐지 — 중식·석식 신청 여부만 표시 */
+        myMealDetail = mealChoiceText(!!mealData.applying, !!mealData.dinner);
       }
 
       const greeting = (() => {
@@ -5953,7 +6181,7 @@
               <div class="meal-my-row">
                 <div>
                   <span style="font-size:12px;color:var(--muted);">${t("myRequestStatus")}</span>
-                  <strong id="mealMyStatusDetail" style="display:block;margin-top:2px;font-size:15px;word-break:keep-all;">${myMealStatus}${myMealApplying && myGuestCount > 0 ? ` (${guestText(myGuestCount)})` : ""}</strong>
+                  <strong id="mealMyStatusDetail" style="display:block;margin-top:2px;font-size:15px;word-break:keep-all;">${escapeHtml(myMealDetail)}</strong>
                 </div>
                 ${currentUserData
                   ? `<button type="button" class="home-action-btn" data-action="open-meal">${t("requestChange")}</button>`
@@ -6340,6 +6568,24 @@
           </div>
         </div>
       `;
+    }
+
+    /* 로컬 HTML 자동화 도구 공용 iframe 화면 —
+       fuelcellReportEmbedScreen 과 동일 구조(iframe 실행 + 새 창 열기)를 재사용한다.
+       (중복 구현을 만들지 않기 위한 이름만 명확한 래퍼) */
+    function localToolEmbedScreen(titleText, fileName, frameId, description) {
+      return fuelcellReportEmbedScreen(titleText, fileName, frameId, description);
+    }
+
+    /* QA — HVAC 계산기 모음 (통합 단일 파일: hvac_calculators_suite.html)
+       공기밀도 / 동압→풍속·풍량 / 규격풍량→동압 / AHU 냉방능력 4종 탭 통합 */
+    function hvacCalculatorsEmbedScreen(titleText) {
+      return localToolEmbedScreen(
+        titleText,
+        "hvac_calculators_suite.html?v=20260730-1",
+        "hvacCalculatorsFrame",
+        "공기밀도 · 동압→풍속·풍량 · 규격풍량→동압(95/100/105/110%) · AHU 냉방능력 계산기를 탭으로 한 화면에서 사용합니다."
+      );
     }
 
     function steelMaterialCheckEmbedScreen(titleText) {
@@ -6996,6 +7242,22 @@
             "inputs": "SPEC, 도면, 절차서",
             "output": "출하승인서",
             "system": "-"
+          },
+          {
+            "step": "9",
+            "task": "도금성적서 자동화",
+            "work": "아연도금(용융아연도금) 두께 측정값 기반 검사기록서 자동 생성 — 부재별 시편 샘플링·합부 판정 포함",
+            "inputs": "부재 목록(VD List), 도금 두께 측정 데이터, 도금 규격(예: 75㎛ min.)",
+            "output": "Galvanizing Inspection Report (.xlsx)",
+            "system": "HTML 자동화"
+          },
+          {
+            "step": "10",
+            "task": "용접기록서 자동화",
+            "work": "용접 검사기록서(WIR / Welding Record) 자동 생성 — 용접부 항목·검사 결과 정리",
+            "inputs": "GRD ITEM LIST, WPS, 용접 검사 데이터, 도면",
+            "output": "용접기록서 (.xlsx)",
+            "system": "HTML 자동화"
           }
         ]
       },
@@ -7601,7 +7863,10 @@
       "qa_equipment_hub_embed",
       "qa_equipment_checkout_embed",
       "qa_equipment_return_embed",
+      "qa_hvac_calculators_embed",
       "hvac_004_2",
+      "hvac_004_9",
+      "hvac_004_10",
       "hvac_005_3",
       "fan_004_2",
       "marine_004_1",
@@ -7620,7 +7885,10 @@
     }
 
     const CUSTOM_SCREEN_LABELS = {
-      "merchant_003_6": "6. 검사 결과 실적 등록"
+      "merchant_003_6": "6. 검사 결과 실적 등록",
+      /* 산업공조 공정간 검사에 추가된 실행 도구 — 단계 번호 없이 기능명으로 표시 */
+      "hvac_004_9": "도금성적서 자동화",
+      "hvac_004_10": "용접기록서 자동화"
     };
 
     function decorateScreenLabel(screenKey, label) {
@@ -7866,6 +8134,27 @@
         html: () => steelMaterialCheckEmbedScreen("산업공조 / 공정간 검사 / 자재검사")
       };
 
+      /* 산업공조 > 공정간 검사 — 도금성적서 / 용접기록서 자동화 (로컬 HTML 도구) */
+      screens["hvac_004_9"] = {
+        tab: "산업공조 > 공정간 검사 > 도금성적서 자동화",
+        html: () => localToolEmbedScreen(
+          "산업공조 / 공정간 검사 / 도금성적서 자동화",
+          "industrial_hvac_plating_report.html?v=20260730-1",
+          "platingReportFrame",
+          "아연도금 검사기록서(Galvanizing Inspection Report) 자동 생성 화면을 작업영역 안에서 바로 사용할 수 있습니다."
+        )
+      };
+
+      screens["hvac_004_10"] = {
+        tab: "산업공조 > 공정간 검사 > 용접기록서 자동화",
+        html: () => localToolEmbedScreen(
+          "산업공조 / 공정간 검사 / 용접기록서 자동화",
+          "industrial_hvac_welding_record.html?v=20260730-1",
+          "weldingRecordFrame",
+          "용접 검사기록서(WIR / Welding Record) 자동 생성 화면을 작업영역 안에서 바로 사용할 수 있습니다."
+        )
+      };
+
       screens["hvac_005_3"] = {
         tab: "산업공조 > 완제품 검사 > Damper 검사",
         html: () => fuelcellReportEmbedScreen(
@@ -7954,6 +8243,12 @@
       qa_equipment_return_embed: {
         tab: "QA > 계측기관리 > 계측기 통합관리",
         html: () => equipmentEmbedScreen("QA / 계측기관리 / 계측기 통합관리")
+      },
+
+      /* QA 메뉴 바로 아래 실행 항목 (하위 프로세스 폴더에 속하지 않음) */
+      qa_hvac_calculators_embed: {
+        tab: "QA > HVAC 계산기 모음",
+        html: () => hvacCalculatorsEmbedScreen("QA / HVAC 계산기 모음")
       },
 
       qa_001_1: {
