@@ -1,0 +1,1296 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>HVAC 계산기 모음 — HQAA</title>
+<!--
+  ============================================================================
+  HVAC 계산기 모음 (HVAC Calculators Suite) — 단일 파일 통합판
+  ----------------------------------------------------------------------------
+  통합 대상 (hvac_calculators_suite_updated_v2 폴더의 개별 HTML 4종)
+    ① air_density.html                    → 공기밀도
+    ② flow_calc_v2_en_split_kfactor.html   → 동압 → 풍속·풍량
+    ③ Dp_from_spec_with_K.html             → 규격풍량 → 풍속·동압(95/100/105/110%)
+    ④ ahu_cooling_capacity.html            → AHU 냉방능력 시험 성적표
+
+  ● 계산식은 원본과 100% 동일하게 유지 (반올림 자리수까지 동일)
+  ● ID/함수/CSS 충돌 방지: 계산기별 ID 접두어(ad- / fc- / dp- / ahu-),
+    전체 스크립트는 하나의 IIFE 안에서만 동작 (전역 오염 없음)
+  ● 외부 CDN 의존 제거 (원본 ①의 MathJax·polyfill.io 제거 → 수식은 순수 HTML 표기)
+  ● 포털 iframe(resizePortalFrame, 최소 높이 980px) 환경을 고려해
+    body 최소 높이를 고정 → 탭 전환 시 iframe 높이가 흔들리지 않음
+  ============================================================================
+-->
+<style>
+  /* ── 디자인 토큰 ───────────────────────────────────────── */
+  :root {
+    --navy:      #16324f;
+    --navy-2:    #1e4976;
+    --brand:     #2563eb;
+    --brand-dk:  #1d4ed8;
+    --bg:        #eef2f7;
+    --card:      #ffffff;
+    --line:      #dbe3ee;
+    --line-soft: #eaeff6;
+    --ink:       #14243a;
+    --ink-2:     #46586f;
+    --muted:     #7b899d;
+    --soft:      #f5f8fc;
+    --out-bg:    #f4f8ff;
+    --out-line:  #cfe0f8;
+    --out-ink:   #0f3f7a;
+    --ok:        #15803d;
+    --warn:      #b45309;
+    --radius:    12px;
+    --shadow:    0 1px 2px rgba(19,38,63,.06), 0 8px 24px rgba(19,38,63,.06);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Segoe UI", "Malgun Gothic", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", sans-serif;
+    font-size: 14px;
+    line-height: 1.55;
+    -webkit-text-size-adjust: 100%;
+    /* 포털 iframe 높이(최소 980px) 안에서 탭 전환 시 스크롤 점프를 막기 위한 최소 높이 */
+    min-height: 960px;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 18px 16px 28px; }
+
+  /* ── 헤더 ─────────────────────────────────────────────── */
+  .suite-head {
+    background: linear-gradient(135deg, var(--navy) 0%, var(--navy-2) 100%);
+    color: #fff;
+    border-radius: var(--radius) var(--radius) 0 0;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+  .suite-mark {
+    width: 40px; height: 40px; flex: 0 0 40px;
+    border-radius: 10px;
+    background: rgba(255,255,255,.13);
+    border: 1px solid rgba(255,255,255,.22);
+    display: grid; place-items: center;
+    font-size: 19px;
+  }
+  .suite-title { min-width: 0; }
+  .suite-title h1 { margin: 0; font-size: 18px; font-weight: 800; letter-spacing: -.01em; }
+  .suite-title p  { margin: 2px 0 0; font-size: 11.5px; color: #b9cde6; letter-spacing: .04em; text-transform: uppercase; }
+  .suite-meta {
+    margin-left: auto;
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  }
+  .chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 5px 11px; border-radius: 999px;
+    background: rgba(255,255,255,.12);
+    border: 1px solid rgba(255,255,255,.2);
+    font-size: 11.5px; font-weight: 700; white-space: nowrap;
+  }
+
+  /* ── 탭 ───────────────────────────────────────────────── */
+  .tabbar {
+    display: flex;
+    background: #10243b;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .tabbar::-webkit-scrollbar { display: none; }
+  .tabbtn {
+    flex: 1 1 0;
+    min-width: 150px;
+    padding: 12px 14px 10px;
+    border: 0;
+    background: transparent;
+    color: #93aecd;
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 700;
+    line-height: 1.35;
+    text-align: center;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: background .15s, color .15s;
+    white-space: nowrap;
+  }
+  .tabbtn:hover { background: rgba(255,255,255,.06); color: #cfe0f5; }
+  .tabbtn[aria-selected="true"] {
+    background: var(--bg);
+    color: var(--navy);
+    border-bottom-color: var(--brand);
+  }
+  .tabbtn .tabno {
+    display: inline-grid; place-items: center;
+    width: 18px; height: 18px; margin-right: 6px;
+    border-radius: 5px;
+    background: rgba(255,255,255,.14);
+    font-size: 11px; font-weight: 800;
+    vertical-align: 1px;
+  }
+  .tabbtn[aria-selected="true"] .tabno { background: var(--brand); color: #fff; }
+
+  /* ── 패널 / 카드 ──────────────────────────────────────── */
+  .panels { padding-top: 16px; }
+  .panel { display: none; }
+  .panel.is-active { display: block; }
+
+  .panel-lead {
+    margin: 0 0 14px;
+    padding: 11px 14px;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--brand);
+    border-radius: 8px;
+    font-size: 12.5px;
+    color: var(--ink-2);
+  }
+  .panel-lead strong { color: var(--navy); }
+
+  .cols {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    gap: 16px;
+    align-items: start;
+  }
+  .cols-wide { grid-template-columns: minmax(0, 1fr); }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .card + .card { margin-top: 16px; }
+  .card-head {
+    display: flex; align-items: center; gap: 8px;
+    padding: 11px 16px;
+    background: var(--soft);
+    border-bottom: 1px solid var(--line);
+  }
+  .card-head h2 {
+    margin: 0; font-size: 13px; font-weight: 800; color: var(--navy);
+    letter-spacing: -.005em;
+  }
+  .card-head .step {
+    display: inline-grid; place-items: center;
+    width: 20px; height: 20px; border-radius: 6px;
+    background: var(--navy); color: #fff;
+    font-size: 11px; font-weight: 800;
+  }
+  .card-head .tag {
+    margin-left: auto;
+    font-size: 10.5px; font-weight: 800; letter-spacing: .06em;
+    color: var(--muted); text-transform: uppercase;
+  }
+  .card-body { padding: 16px; }
+
+  /* ── 입력 ─────────────────────────────────────────────── */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(158px, 1fr));
+    gap: 12px;
+  }
+  .grid-2 { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+  .f-full { grid-column: 1 / -1; }
+  .field { display: grid; gap: 5px; min-width: 0; }
+  .field > label {
+    font-size: 11.5px; font-weight: 700; color: var(--ink-2);
+    display: flex; align-items: baseline; gap: 5px;
+  }
+  .field > label .u {
+    font-weight: 700; color: var(--brand);
+    font-size: 11px;
+    padding: 1px 6px; border-radius: 5px;
+    background: #eaf1fe;
+  }
+  .field > label .opt { color: var(--muted); font-weight: 600; font-size: 10.5px; }
+  .field input, .field select {
+    width: 100%;
+    padding: 9px 11px;
+    border: 1px solid #c9d4e3;
+    border-radius: 8px;
+    background: #fff;
+    color: var(--ink);
+    font-family: inherit;
+    font-size: 14px;
+    font-variant-numeric: tabular-nums;
+    outline: none;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .field select { cursor: pointer; }
+  .field input:focus, .field select:focus {
+    border-color: var(--brand);
+    box-shadow: 0 0 0 3px rgba(37,99,235,.13);
+  }
+  .btnrow { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 15px; }
+  .btn {
+    flex: 1 1 auto;
+    min-width: 130px;
+    padding: 11px 18px;
+    border: 1px solid transparent;
+    border-radius: 9px;
+    font-family: inherit;
+    font-size: 13.5px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: background .15s, border-color .15s, color .15s;
+  }
+  .btn-primary { background: var(--brand); color: #fff; }
+  .btn-primary:hover { background: var(--brand-dk); }
+  .btn-ghost { background: #fff; border-color: #c9d4e3; color: var(--ink-2); flex: 0 0 auto; min-width: 108px; }
+  .btn-ghost:hover { background: var(--soft); border-color: var(--brand); color: var(--brand); }
+  .is-hidden { display: none !important; }
+
+  /* ── 결과 ─────────────────────────────────────────────── */
+  .card-out .card-head { background: #eaf1fd; border-bottom-color: var(--out-line); }
+  .card-out .card-head h2 { color: #10396f; }
+  .card-out .card-head .step { background: var(--brand); }
+
+  .out-hero {
+    padding: 15px 16px;
+    background: linear-gradient(180deg, var(--out-bg), #fff);
+    border-bottom: 1px solid var(--out-line);
+    text-align: center;
+  }
+  .out-hero .k {
+    font-size: 11px; font-weight: 800; letter-spacing: .07em;
+    color: #4a6d9c; text-transform: uppercase;
+  }
+  .out-hero .v {
+    display: block; margin-top: 3px;
+    font-size: 32px; font-weight: 800; line-height: 1.1;
+    color: #0f3f7a;
+    font-variant-numeric: tabular-nums;
+    word-break: break-all;
+  }
+  .out-hero .v .su { font-size: 15px; font-weight: 700; color: #5a7ba8; margin-left: 4px; }
+
+  .out-list { padding: 6px 16px 14px; }
+  .out-row {
+    display: flex; align-items: baseline; justify-content: space-between;
+    gap: 12px; padding: 9px 0;
+    border-bottom: 1px dashed var(--line-soft);
+  }
+  .out-row:last-child { border-bottom: 0; }
+  .out-row .k { font-size: 12.5px; color: var(--ink-2); font-weight: 600; }
+  .out-row .k small { display: block; color: var(--muted); font-weight: 500; font-size: 10.5px; }
+  .out-row .v {
+    font-size: 16px; font-weight: 800; color: var(--navy);
+    font-variant-numeric: tabular-nums; white-space: nowrap;
+  }
+  .out-row .v .su { font-size: 11.5px; font-weight: 700; color: var(--muted); margin-left: 3px; }
+  .out-row.is-key .v { color: #0f3f7a; font-size: 18px; }
+
+  /* ── 표 ───────────────────────────────────────────────── */
+  .tbl-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table.tbl {
+    width: 100%; min-width: 380px;
+    border-collapse: collapse;
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+  }
+  table.tbl th, table.tbl td {
+    border: 1px solid var(--line);
+    padding: 9px 10px;
+    text-align: right;
+  }
+  table.tbl thead th {
+    background: var(--soft); color: var(--navy);
+    font-size: 11.5px; font-weight: 800;
+    text-align: center; white-space: nowrap;
+  }
+  table.tbl th:first-child, table.tbl td:first-child { text-align: left; }
+  table.tbl tbody tr.is-base { background: #eff6ff; }
+  table.tbl tbody tr.is-base td { font-weight: 800; color: #0f3f7a; }
+  table.tbl td.mid { text-align: center; }
+
+  /* AHU 성적표 */
+  table.sheet { width: 100%; min-width: 460px; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+  table.sheet th, table.sheet td { border: 1px solid var(--line); padding: 9px 10px; text-align: center; }
+  table.sheet thead th { background: var(--soft); color: var(--navy); font-size: 11.5px; font-weight: 800; white-space: nowrap; }
+  table.sheet td.item { text-align: left; font-weight: 600; color: var(--ink-2); }
+  table.sheet td.mark { background: #fffbeb; font-weight: 700; }
+  table.sheet tr.total td { background: #eff6ff; font-weight: 800; color: #0f3f7a; font-size: 15px; }
+  table.sheet tr.total td.item { color: var(--navy); font-size: 13px; }
+
+  /* ── 참고/수식 ────────────────────────────────────────── */
+  details.ref {
+    margin-top: 14px;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  details.ref > summary {
+    padding: 10px 14px;
+    background: var(--soft);
+    font-size: 12px; font-weight: 800; color: var(--navy);
+    cursor: pointer;
+    list-style: none;
+  }
+  details.ref > summary::-webkit-details-marker { display: none; }
+  details.ref > summary::before { content: "▸ "; color: var(--brand); }
+  details.ref[open] > summary::before { content: "▾ "; }
+  .ref-body { padding: 14px; }
+  .eq {
+    margin: 0 0 10px;
+    padding: 10px 12px;
+    background: #0f2438;
+    color: #dbe9fb;
+    border-radius: 8px;
+    font-family: "Cascadia Mono", Consolas, "Courier New", monospace;
+    font-size: 12.5px;
+    line-height: 1.85;
+    overflow-x: auto;
+    white-space: pre;
+  }
+  table.vars { width: 100%; min-width: 340px; border-collapse: collapse; font-size: 12.5px; }
+  table.vars th, table.vars td { border: 1px solid var(--line); padding: 7px 9px; text-align: left; }
+  table.vars thead th { background: var(--soft); color: var(--navy); font-size: 11.5px; font-weight: 800; }
+  table.vars td:first-child {
+    width: 84px; white-space: nowrap; font-weight: 800; color: #0f3f7a;
+    font-family: "Cascadia Mono", Consolas, monospace;
+  }
+  .note {
+    margin: 12px 0 0; padding: 10px 12px;
+    background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px;
+    font-size: 12px; color: #7c5109; line-height: 1.7;
+  }
+  .note strong { color: #6b4507; }
+
+  .foot {
+    margin-top: 18px; padding-top: 14px;
+    border-top: 1px solid var(--line);
+    font-size: 11.5px; color: var(--muted); text-align: center; line-height: 1.8;
+  }
+
+  /* ── 반응형 ───────────────────────────────────────────── */
+  @media (max-width: 900px) {
+    .cols { grid-template-columns: minmax(0, 1fr); }
+  }
+  @media (max-width: 640px) {
+    body { min-height: 0; }
+    .wrap { padding: 12px 11px 22px; }
+    .suite-head { padding: 13px 14px; gap: 11px; }
+    .suite-title h1 { font-size: 15.5px; }
+    .suite-meta { margin-left: 0; width: 100%; }
+    .tabbtn { min-width: 128px; font-size: 12px; padding: 11px 10px 9px; }
+    .card-body { padding: 13px; }
+    .out-hero .v { font-size: 27px; }
+    .btn { min-width: 100%; }
+    .btn-ghost { min-width: 100%; }
+  }
+  @media print {
+    body { background: #fff; min-height: 0; }
+    .tabbar, .btnrow { display: none !important; }
+    .panel { display: block !important; page-break-after: always; }
+    .card { box-shadow: none; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="suite-head">
+    <div class="suite-mark" aria-hidden="true">🌀</div>
+    <div class="suite-title">
+      <h1>HVAC 계산기 모음</h1>
+      <p>HVAC Calculators Suite · Air Density / Flow / ΔP / Cooling Capacity</p>
+    </div>
+    <div class="suite-meta">
+      <span class="chip">SI 단위</span>
+      <span class="chip">기준: 20&#8451; · 50 %RH · 1013.25 hPa</span>
+    </div>
+  </header>
+
+  <nav class="tabbar" role="tablist" aria-label="계산기 선택">
+    <button type="button" class="tabbtn" role="tab" id="tabbtn-ad"  aria-controls="panel-ad"  aria-selected="true"><span class="tabno">1</span>공기밀도</button>
+    <button type="button" class="tabbtn" role="tab" id="tabbtn-fc"  aria-controls="panel-fc"  aria-selected="false"><span class="tabno">2</span>동압 → 풍속·풍량</button>
+    <button type="button" class="tabbtn" role="tab" id="tabbtn-dp"  aria-controls="panel-dp"  aria-selected="false"><span class="tabno">3</span>규격풍량 → 동압</button>
+    <button type="button" class="tabbtn" role="tab" id="tabbtn-ahu" aria-controls="panel-ahu" aria-selected="false"><span class="tabno">4</span>AHU 냉방능력</button>
+  </nav>
+
+  <div class="panels">
+
+    <!-- ══════════════ ① 공기밀도 ══════════════ -->
+    <section class="panel is-active" id="panel-ad" role="tabpanel" aria-labelledby="tabbtn-ad">
+      <p class="panel-lead">
+        온도 · 상대습도 · 기압으로 <strong>습공기 밀도 ρ</strong> 를 계산합니다.
+        풍속·풍량·동압 계산의 기준값으로 사용됩니다.
+      </p>
+
+      <div class="cols">
+        <div class="card">
+          <div class="card-head"><span class="step">IN</span><h2>입력값</h2><span class="tag">Input</span></div>
+          <div class="card-body">
+            <div class="grid">
+              <div class="field">
+                <label for="ad-temp">온도 <span class="u">&#8451;</span></label>
+                <input type="number" id="ad-temp" step="0.1" value="20" placeholder="예: 20" />
+              </div>
+              <div class="field">
+                <label for="ad-rh">상대습도 <span class="u">%RH</span></label>
+                <input type="number" id="ad-rh" step="0.1" value="50" placeholder="예: 50" />
+              </div>
+              <div class="field">
+                <label for="ad-press">기압 <span class="u">hPa</span></label>
+                <input type="number" id="ad-press" step="0.01" value="1013.25" placeholder="예: 1013.25" />
+              </div>
+            </div>
+            <div class="btnrow">
+              <button type="button" class="btn btn-primary" id="ad-calc">계산하기</button>
+              <button type="button" class="btn btn-ghost" id="ad-reset">기본값</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card card-out">
+          <div class="card-head"><span class="step">R</span><h2>계산 결과</h2><span class="tag">Result</span></div>
+          <div class="out-hero">
+            <span class="k">공기밀도 ρ</span>
+            <span class="v" id="ad-out-rho">&ndash;<span class="su">kg/m&sup3;</span></span>
+          </div>
+          <div class="out-list">
+            <div class="out-row"><span class="k">절대온도 T<sub>k</sub></span><span class="v" id="ad-out-tk">&ndash;<span class="su">K</span></span></div>
+            <div class="out-row"><span class="k">포화수증기압 e<sub>s</sub></span><span class="v" id="ad-out-es">&ndash;<span class="su">Pa</span></span></div>
+            <div class="out-row"><span class="k">수증기 분압 p<sub>v</sub></span><span class="v" id="ad-out-pv">&ndash;<span class="su">Pa</span></span></div>
+            <div class="out-row"><span class="k">건조공기 분압 p<sub>d</sub></span><span class="v" id="ad-out-pd">&ndash;<span class="su">Pa</span></span></div>
+          </div>
+        </div>
+      </div>
+
+      <details class="ref">
+        <summary>계산식 &amp; 기호 설명</summary>
+        <div class="ref-body">
+          <div class="eq">ρ  = p_d / (R_d · T_k) + p_v / (R_v · T_k)
+p_d = p − p_v
+p_v = (RH / 100) × e_s
+e_s = 6.112 × exp( 17.67·T / (T + 243.5) ) × 100
+T_k = T + 273.15</div>
+          <div class="tbl-scroll">
+            <table class="vars">
+              <thead><tr><th>기호</th><th>의미 (단위)</th></tr></thead>
+              <tbody>
+                <tr><td>T</td><td>온도 Temperature (&#8451;)</td></tr>
+                <tr><td>RH</td><td>상대습도 Relative Humidity (%)</td></tr>
+                <tr><td>p</td><td>기압 Atmospheric Pressure (hPa → Pa 로 변환)</td></tr>
+                <tr><td>T_k</td><td>절대온도 Absolute Temperature (K)</td></tr>
+                <tr><td>p_d</td><td>건조공기 분압 (Pa)</td></tr>
+                <tr><td>p_v</td><td>수증기 분압 (Pa)</td></tr>
+                <tr><td>e_s</td><td>포화수증기압 (Pa)</td></tr>
+                <tr><td>R_d</td><td>건조공기 기체상수 287.05 J/kg·K</td></tr>
+                <tr><td>R_v</td><td>수증기 기체상수 461.495 J/kg·K</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </details>
+    </section>
+
+    <!-- ══════════════ ② 동압 → 풍속·풍량 ══════════════ -->
+    <section class="panel" id="panel-fc" role="tabpanel" aria-labelledby="tabbtn-fc">
+      <p class="panel-lead">
+        <strong>1단계</strong> T/RH/기압 → 공기밀도 &nbsp;·&nbsp;
+        <strong>2단계</strong> 동압 + K-Factor → 풍속 &nbsp;·&nbsp;
+        <strong>3단계</strong> 덕트 단면적 → 풍량 및 규격 대비 비율
+      </p>
+
+      <div class="cols">
+        <div>
+          <div class="card">
+            <div class="card-head"><span class="step">1</span><h2>공기밀도 조건</h2><span class="tag">Density</span></div>
+            <div class="card-body">
+              <div class="grid">
+                <div class="field">
+                  <label for="fc-t">온도 <span class="u">&#8451;</span></label>
+                  <input type="number" id="fc-t" step="0.1" value="20" />
+                </div>
+                <div class="field">
+                  <label for="fc-rh">상대습도 <span class="u">%RH</span></label>
+                  <input type="number" id="fc-rh" step="0.1" value="50" />
+                </div>
+                <div class="field">
+                  <label for="fc-p">기압 <span class="u">hPa</span></label>
+                  <input type="number" id="fc-p" step="0.01" value="1013.25" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head"><span class="step">2</span><h2>동압 · 덕트 조건</h2><span class="tag">Flow</span></div>
+            <div class="card-body">
+              <div class="grid grid-2">
+                <div class="field">
+                  <label for="fc-q">동압 q <span class="u">Pa</span></label>
+                  <input type="number" id="fc-q" step="0.1" placeholder="예: 25" />
+                </div>
+                <div class="field">
+                  <label for="fc-k">K-Factor <span class="opt">기본 1</span></label>
+                  <input type="number" id="fc-k" step="0.001" value="1" />
+                </div>
+                <div class="field">
+                  <label for="fc-shape">덕트 형상</label>
+                  <select id="fc-shape">
+                    <option value="circ" selected>원형 (Circle)</option>
+                    <option value="rect">사각 (Rectangle)</option>
+                  </select>
+                </div>
+                <div class="field" id="fc-box-d">
+                  <label for="fc-d">지름 D <span class="u">m</span></label>
+                  <input type="number" id="fc-d" step="0.001" placeholder="예: 0.5" />
+                </div>
+                <div class="field is-hidden" id="fc-box-w">
+                  <label for="fc-w">폭 W <span class="u">m</span></label>
+                  <input type="number" id="fc-w" step="0.001" placeholder="예: 0.6" />
+                </div>
+                <div class="field is-hidden" id="fc-box-h">
+                  <label for="fc-h">높이 H <span class="u">m</span></label>
+                  <input type="number" id="fc-h" step="0.001" placeholder="예: 0.4" />
+                </div>
+                <div class="field f-full">
+                  <label for="fc-spec">규격 풍량 <span class="u">m&sup3;/h</span> <span class="opt">선택 입력</span></label>
+                  <input type="number" id="fc-spec" step="1" placeholder="예: 2500" />
+                </div>
+              </div>
+              <div class="btnrow">
+                <button type="button" class="btn btn-primary" id="fc-calc">전체 계산</button>
+                <button type="button" class="btn btn-ghost" id="fc-reset">초기화</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card card-out">
+          <div class="card-head"><span class="step">R</span><h2>계산 결과</h2><span class="tag">Result</span></div>
+          <div class="out-hero">
+            <span class="k">풍량 Q</span>
+            <span class="v" id="fc-out-Q">&ndash;<span class="su">m&sup3;/h</span></span>
+          </div>
+          <div class="out-list">
+            <div class="out-row is-key"><span class="k">풍속 v</span><span class="v" id="fc-out-v">&ndash;<span class="su">m/s</span></span></div>
+            <div class="out-row"><span class="k">공기밀도 ρ</span><span class="v" id="fc-out-rho">&ndash;<span class="su">kg/m&sup3;</span></span></div>
+            <div class="out-row"><span class="k">덕트 단면적 A</span><span class="v" id="fc-out-A">&ndash;<span class="su">m&sup2;</span></span></div>
+            <div class="out-row"><span class="k">규격 대비 <small>Q / Spec</small></span><span class="v" id="fc-out-pct">&ndash;<span class="su">%</span></span></div>
+          </div>
+        </div>
+      </div>
+
+      <details class="ref">
+        <summary>계산식 &amp; 기호 설명</summary>
+        <div class="ref-body">
+          <div class="eq">ρ = ρ(T, RH, p)                     … ① 공기밀도와 동일
+v = K × √( 2·q / ρ )                [m/s]
+A = π·D² / 4   (원형)   또는   W × H  (사각)   [m²]
+Q = v × A × 3600                    [m³/h]
+Q/Spec = Q / Q_spec × 100           [%]</div>
+          <div class="tbl-scroll">
+            <table class="vars">
+              <thead><tr><th>기호</th><th>의미 (단위)</th></tr></thead>
+              <tbody>
+                <tr><td>q</td><td>동압 Dynamic Pressure (Pa)</td></tr>
+                <tr><td>K</td><td>K-Factor (풍속 보정계수, 무차원)</td></tr>
+                <tr><td>v</td><td>풍속 Air Velocity (m/s)</td></tr>
+                <tr><td>A</td><td>덕트 단면적 Duct Area (m&sup2;)</td></tr>
+                <tr><td>Q</td><td>풍량 Airflow (m&sup3;/h)</td></tr>
+                <tr><td>Q_spec</td><td>규격 풍량 Spec Airflow (m&sup3;/h)</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="note"><strong>표시 자리수</strong> ρ 4자리 · v 3자리 · A 4자리 · Q 1자리 · Q/Spec 1자리 (원본 계산기와 동일)</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ══════════════ ③ 규격풍량 → 풍속·동압 ══════════════ -->
+    <section class="panel" id="panel-dp" role="tabpanel" aria-labelledby="tabbtn-dp">
+      <p class="panel-lead">
+        규격 풍량과 덕트 단면적으로 <strong>100% 풍속</strong> 을 구하고,
+        <strong>95 / 100 / 105 / 110%</strong> 각 풍량에서의 <strong>동압 q</strong> 를 계산합니다.
+        (시험 시 목표 동압 확인용)
+      </p>
+
+      <div class="cols">
+        <div>
+          <div class="card">
+            <div class="card-head"><span class="step">1</span><h2>공기밀도 조건</h2><span class="tag">Density</span></div>
+            <div class="card-body">
+              <div class="grid">
+                <div class="field">
+                  <label for="dp-t">온도 <span class="u">&#8451;</span></label>
+                  <input type="number" id="dp-t" step="0.1" value="20" />
+                </div>
+                <div class="field">
+                  <label for="dp-rh">상대습도 <span class="u">%RH</span></label>
+                  <input type="number" id="dp-rh" step="0.1" value="50" />
+                </div>
+                <div class="field">
+                  <label for="dp-p">기압 <span class="u">hPa</span></label>
+                  <input type="number" id="dp-p" step="0.01" value="1013.25" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head"><span class="step">2</span><h2>규격 풍량 · 덕트 · K-Factor</h2><span class="tag">Spec</span></div>
+            <div class="card-body">
+              <div class="grid grid-2">
+                <div class="field">
+                  <label for="dp-spec">규격 풍량 Q<sub>spec</sub> <span class="u">m&sup3;/h</span></label>
+                  <input type="number" id="dp-spec" step="1" placeholder="예: 2500" />
+                </div>
+                <div class="field">
+                  <label for="dp-k">K-Factor <span class="opt">기본 1.00</span></label>
+                  <input type="number" id="dp-k" step="0.01" value="1.00" />
+                </div>
+                <div class="field">
+                  <label for="dp-shape">덕트 형상</label>
+                  <select id="dp-shape">
+                    <option value="circ" selected>원형 (Circle)</option>
+                    <option value="rect">사각 (Rectangle)</option>
+                  </select>
+                </div>
+                <div class="field" id="dp-box-d">
+                  <label for="dp-d">지름 D <span class="u">m</span></label>
+                  <input type="number" id="dp-d" step="0.001" placeholder="예: 0.5" />
+                </div>
+                <div class="field is-hidden" id="dp-box-w">
+                  <label for="dp-w">폭 W <span class="u">m</span></label>
+                  <input type="number" id="dp-w" step="0.001" placeholder="예: 0.6" />
+                </div>
+                <div class="field is-hidden" id="dp-box-h">
+                  <label for="dp-h">높이 H <span class="u">m</span></label>
+                  <input type="number" id="dp-h" step="0.001" placeholder="예: 0.4" />
+                </div>
+              </div>
+              <div class="btnrow">
+                <button type="button" class="btn btn-primary" id="dp-calc">계산하기</button>
+                <button type="button" class="btn btn-ghost" id="dp-reset">초기화</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card card-out">
+          <div class="card-head"><span class="step">R</span><h2>계산 결과</h2><span class="tag">Result</span></div>
+          <div class="out-hero">
+            <span class="k">풍속 v @ 100%</span>
+            <span class="v" id="dp-out-v">&ndash;<span class="su">m/s</span></span>
+          </div>
+          <div class="out-list">
+            <div class="out-row"><span class="k">공기밀도 ρ</span><span class="v" id="dp-out-rho">&ndash;<span class="su">kg/m&sup3;</span></span></div>
+            <div class="out-row"><span class="k">덕트 단면적 A</span><span class="v" id="dp-out-A">&ndash;<span class="su">m&sup2;</span></span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><span class="step">T</span><h2>풍량 단계별 동압</h2><span class="tag">95 / 100 / 105 / 110 %</span></div>
+        <div class="card-body">
+          <div class="tbl-scroll">
+            <table class="tbl">
+              <thead>
+                <tr><th>풍량 단계</th><th>풍량 (m&sup3;/h)</th><th>풍속 (m/s)</th><th>동압 q (Pa)</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>95 %</td>  <td id="dp-q95">&ndash;</td>  <td id="dp-v95">&ndash;</td>  <td id="dp-dp95">&ndash;</td></tr>
+                <tr class="is-base"><td>100 % <span style="font-weight:600;color:#5a7ba8;">(기준)</span></td><td id="dp-q100">&ndash;</td><td id="dp-v100">&ndash;</td><td id="dp-dp100">&ndash;</td></tr>
+                <tr><td>105 %</td> <td id="dp-q105">&ndash;</td> <td id="dp-v105">&ndash;</td> <td id="dp-dp105">&ndash;</td></tr>
+                <tr><td>110 %</td> <td id="dp-q110">&ndash;</td> <td id="dp-v110">&ndash;</td> <td id="dp-dp110">&ndash;</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <details class="ref">
+        <summary>계산식 &amp; 기호 설명</summary>
+        <div class="ref-body">
+          <div class="eq">A   = π·D² / 4   (원형)   또는   W × H  (사각)   [m²]
+v   = Q / (A × 3600)                              [m/s]
+q   = 0.5 · ρ · v² / K²                           [Pa]
+Q(%) = Q_spec × 0.95 / 1.00 / 1.05 / 1.10         [m³/h]</div>
+          <div class="tbl-scroll">
+            <table class="vars">
+              <thead><tr><th>기호</th><th>의미 (단위)</th></tr></thead>
+              <tbody>
+                <tr><td>Q_spec</td><td>규격 풍량 Spec Airflow (m&sup3;/h)</td></tr>
+                <tr><td>K</td><td>K-Factor (무차원, 0 이하 또는 미입력 시 1.0 적용)</td></tr>
+                <tr><td>v</td><td>각 풍량 단계의 풍속 (m/s)</td></tr>
+                <tr><td>q</td><td>동압 Dynamic Pressure (Pa)</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="note">
+            <strong>K-Factor 적용 위치</strong> 이 계산기는 원본과 동일하게
+            <b>q = 0.5·ρ·v² / K²</b> 로 계산합니다. (② 계산기의 v = K·√(2q/ρ) 와 역관계)
+            표시 자리수는 A 4자리 · v 3자리 · 풍량 1자리 · 동압 2자리입니다.
+          </p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ══════════════ ④ AHU 냉방능력 ══════════════ -->
+    <section class="panel" id="panel-ahu" role="tabpanel" aria-labelledby="tabbtn-ahu">
+      <p class="panel-lead">
+        입·출구 <strong>건구온도 · 상대습도</strong> 와 <strong>풍량</strong> 을 입력하면
+        습구온도 · 공기밀도 · 엔탈피 · <strong>냉방능력</strong> 이 자동 계산됩니다.
+        (값 변경 시 즉시 재계산)
+      </p>
+
+      <div class="cols cols-wide">
+        <div class="card">
+          <div class="card-head"><span class="step">IN</span><h2>시험 조건 입력</h2><span class="tag">Input</span></div>
+          <div class="card-body">
+            <div class="grid grid-2">
+              <div class="field">
+                <label for="ahu-inletDb">입구 건구온도 DB <span class="u">&#8451;</span></label>
+                <input type="number" id="ahu-inletDb" step="0.01" value="25.33" />
+              </div>
+              <div class="field">
+                <label for="ahu-inletRh">입구 상대습도 <span class="u">%RH</span></label>
+                <input type="number" id="ahu-inletRh" step="0.01" value="54.79" />
+              </div>
+              <div class="field">
+                <label for="ahu-outletDb">출구 건구온도 DB <span class="u">&#8451;</span></label>
+                <input type="number" id="ahu-outletDb" step="0.01" value="10.35" />
+              </div>
+              <div class="field">
+                <label for="ahu-outletRh">출구 상대습도 <span class="u">%RH</span></label>
+                <input type="number" id="ahu-outletRh" step="0.01" value="96.40" />
+              </div>
+              <div class="field">
+                <label for="ahu-airflow">풍량 <span class="u">m&sup3;/h</span></label>
+                <input type="number" id="ahu-airflow" step="0.1" value="13812" />
+              </div>
+              <div class="field">
+                <label for="ahu-press">대기압 <span class="u">hPa</span></label>
+                <input type="number" id="ahu-press" step="0.01" value="1013.25" />
+              </div>
+              <div class="field f-full">
+                <label for="ahu-basis">냉방능력 적용 밀도 기준</label>
+                <select id="ahu-basis">
+                  <option value="outlet" selected>출구 밀도 (Outlet density)</option>
+                  <option value="inlet">입구 밀도 (Inlet density)</option>
+                  <option value="average">평균 밀도 (Average density)</option>
+                </select>
+              </div>
+            </div>
+            <div class="btnrow">
+              <button type="button" class="btn btn-primary" id="ahu-calc">계산하기</button>
+              <button type="button" class="btn btn-ghost" id="ahu-reset">샘플값 복원</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card card-out">
+        <div class="card-head"><span class="step">R</span><h2>냉방능력</h2><span class="tag">Cooling Capacity</span></div>
+        <div class="out-hero">
+          <span class="k">Cooling Capacity</span>
+          <span class="v" id="ahu-out-cap">&ndash;<span class="su">kW</span></span>
+        </div>
+        <div class="out-list">
+          <div class="out-row is-key"><span class="k">엔탈피 차 Δh <small>입구 − 출구</small></span><span class="v" id="ahu-out-dh">&ndash;<span class="su">kJ/kg</span></span></div>
+          <div class="out-row"><span class="k">적용 밀도</span><span class="v" id="ahu-out-rho">&ndash;<span class="su">kg/m&sup3;</span></span></div>
+          <div class="out-row"><span class="k">풍량</span><span class="v" id="ahu-out-flow">&ndash;<span class="su">m&sup3;/h</span></span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><span class="step">S</span><h2>시험 성적표 (자동 계산)</h2><span class="tag">Test Sheet</span></div>
+        <div class="card-body">
+          <div class="tbl-scroll">
+            <table class="sheet">
+              <thead>
+                <tr><th>검사 항목</th><th>입구 (Inlet)</th><th>출구 (Outlet)</th><th>단위</th></tr>
+              </thead>
+              <tbody>
+                <tr><td class="item">건구온도 (DB)</td><td class="mark" id="ahu-r-inDb">-</td><td class="mark" id="ahu-r-outDb">-</td><td>&#8451;</td></tr>
+                <tr><td class="item">습구온도 (WB)</td><td id="ahu-r-inWb">-</td><td id="ahu-r-outWb">-</td><td>&#8451;</td></tr>
+                <tr><td class="item">상대습도 (RH)</td><td class="mark" id="ahu-r-inRh">-</td><td class="mark" id="ahu-r-outRh">-</td><td>%</td></tr>
+                <tr><td class="item">공기밀도</td><td id="ahu-r-inRho">-</td><td id="ahu-r-outRho">-</td><td>kg/m&sup3;</td></tr>
+                <tr><td class="item">절대습도 (습도비)</td><td id="ahu-r-inW">-</td><td id="ahu-r-outW">-</td><td>kg/kg'</td></tr>
+                <tr><td class="item">엔탈피</td><td id="ahu-r-inH">-</td><td id="ahu-r-outH">-</td><td>kJ/kg</td></tr>
+                <tr><td class="item">대기압</td><td colspan="2" id="ahu-r-press">-</td><td>hPa</td></tr>
+                <tr><td class="item">풍량</td><td colspan="2" id="ahu-r-flow">-</td><td>m&sup3;/h</td></tr>
+                <tr><td class="item">엔탈피 차 (입구 − 출구)</td><td colspan="2" id="ahu-r-dh">-</td><td>kJ/kg</td></tr>
+                <tr><td class="item">적용 밀도</td><td colspan="2" id="ahu-r-rhoApplied">-</td><td>kg/m&sup3;</td></tr>
+                <tr class="total"><td class="item">냉방능력 (Cooling Capacity)</td><td colspan="2" id="ahu-r-cap">-</td><td>kW</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <details class="ref">
+        <summary>계산식 &amp; 기호 설명</summary>
+        <div class="ref-body">
+          <div class="eq">Q   = V̇ × ρ × Δh / 3600                                  [kW]
+Δh  = h_inlet − h_outlet                                 [kJ/kg]
+e_s = 611.21 × exp( (18.678 − T/234.5) × (T / (257.14 + T)) )   … Buck 식 [Pa]
+W   = 0.62198 × p_v / (P − p_v)                          [kg/kg' 건공기]
+ρ   = p_d / (R_d·T_k) + p_v / (R_v·T_k)                  [kg/m³]
+h   = (1.006·T + W·(2501 + 1.86·T)) / (1 + W)            [kJ/kg 습공기]
+WB  : 포화 엔탈피 = 대상 엔탈피 가 되는 온도를 이분법(80회)으로 수치해석</div>
+          <div class="tbl-scroll">
+            <table class="vars">
+              <thead><tr><th>기호</th><th>의미 (단위)</th></tr></thead>
+              <tbody>
+                <tr><td>V̇</td><td>풍량 Air Flow Rate (m&sup3;/h)</td></tr>
+                <tr><td>ρ</td><td>적용 공기밀도 (kg/m&sup3;) — 출구 / 입구 / 평균 중 선택</td></tr>
+                <tr><td>Δh</td><td>입·출구 엔탈피 차 (kJ/kg)</td></tr>
+                <tr><td>W</td><td>절대습도(습도비) Humidity Ratio (kg/kg' 건공기)</td></tr>
+                <tr><td>h</td><td>습공기 질량기준 엔탈피 (kJ/kg)</td></tr>
+                <tr><td>WB</td><td>습구온도 Wet-Bulb Temperature (&#8451;)</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="note">
+            <strong>엔탈피 기준</strong> 현장 검사 성적표 관행에 맞춰 <b>습공기 질량기준</b>(h_da / (1+W))으로 계산합니다.
+            기존 샘플 성적표와 값을 맞추려면 적용 밀도를 <b>출구 밀도</b>로 두십시오.
+            습구온도는 건구온도·상대습도·기압에서 수치해석으로 역산하며, RH ≥ 100% 이면 WB = DB 입니다.
+          </p>
+        </div>
+      </details>
+    </section>
+
+  </div>
+
+  <p class="foot">
+    HI AIR KOREA · HQAA 품질 업무 포털 &nbsp;|&nbsp; HVAC 계산기 모음 (통합판)<br />
+    모든 계산식은 통합 전 개별 계산기와 동일합니다. 계산 결과는 참고값이며 최종 판정은 해당 검사절차서를 따릅니다.
+  </p>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ==========================================================
+     공통 유틸
+  ========================================================== */
+  function $(id) { return document.getElementById(id); }
+
+  function num(id) { return parseFloat(($(id) || {}).value); }
+
+  /* 숫자 포맷 — 유한수만 자리수 고정, 아니면 "–" */
+  function fmt(x, n) {
+    return Number.isFinite(x) ? Number(x).toFixed(n) : "–";
+  }
+
+  /* 단위(su) 스팬을 유지하면서 값만 교체 */
+  function setVal(id, text) {
+    var el = $(id);
+    if (!el) return;
+    var su = el.querySelector(".su");
+    el.textContent = text;
+    if (su) el.appendChild(su);
+  }
+
+  function setText(id, text) {
+    var el = $(id);
+    if (el) el.textContent = text;
+  }
+
+  /* ==========================================================
+     공유 물성 함수
+     ① / ② / ③ 은 동일한 Magnus 계열 습공기 밀도식을 사용한다.
+        (원본 3개 파일의 airDensity() 를 하나로 통합 — 값 동일)
+  ========================================================== */
+  var R_DRY = 287.05;      // J/kg·K
+  var R_VAPOR = 461.495;   // J/kg·K
+
+  /* 포화수증기압 (Magnus, 원본 ①②③ 과 동일) [Pa] */
+  function satVpMagnus(Tc) {
+    return 6.112 * Math.exp((17.67 * Tc) / (Tc + 243.5)) * 100.0;
+  }
+
+  /* 습공기 밀도 — 상세 중간값까지 반환 */
+  function airDensityDetail(Tc, rhPercent, pHpa) {
+    var Tk = Tc + 273.15;
+    var rh = rhPercent / 100.0;
+    var p = pHpa * 100.0;            // hPa → Pa
+    var es = satVpMagnus(Tc);
+    var pv = rh * es;
+    var pd = p - pv;
+    var rho = pd / (R_DRY * Tk) + pv / (R_VAPOR * Tk);
+    return { Tk: Tk, es: es, pv: pv, pd: pd, rho: rho };
+  }
+
+  function airDensity(Tc, rhPercent, pHpa) {
+    return airDensityDetail(Tc, rhPercent, pHpa).rho;
+  }
+
+  /* 덕트 단면적 — 형상별. 유효하지 않으면 { ok:false, msg } */
+  function ductArea(shape, dId, wId, hId) {
+    if (shape === "circ") {
+      var D = num(dId);
+      if (!(D > 0)) return { ok: false, msg: "지름 D (m) 를 입력해주세요." };
+      return { ok: true, A: Math.PI * (D * D) / 4.0 };
+    }
+    var W = num(wId), H = num(hId);
+    if (!(W > 0) || !(H > 0)) return { ok: false, msg: "폭 W 와 높이 H (m) 를 입력해주세요." };
+    return { ok: true, A: W * H };
+  }
+
+  /* 형상 선택에 따른 입력칸 표시 전환 (공용) */
+  function bindShapeToggle(selId, circIds, rectIds) {
+    var sel = $(selId);
+    if (!sel) return;
+    function apply() {
+      var isCirc = sel.value === "circ";
+      circIds.forEach(function (id) { var el = $(id); if (el) el.classList.toggle("is-hidden", !isCirc); });
+      rectIds.forEach(function (id) { var el = $(id); if (el) el.classList.toggle("is-hidden", isCirc); });
+    }
+    sel.addEventListener("change", apply);
+    apply();
+  }
+
+  /* ==========================================================
+     탭 전환
+  ========================================================== */
+  var TABS = [
+    { btn: "tabbtn-ad",  panel: "panel-ad"  },
+    { btn: "tabbtn-fc",  panel: "panel-fc"  },
+    { btn: "tabbtn-dp",  panel: "panel-dp"  },
+    { btn: "tabbtn-ahu", panel: "panel-ahu" }
+  ];
+
+  function activateTab(index) {
+    TABS.forEach(function (tab, i) {
+      var btn = $(tab.btn), panel = $(tab.panel);
+      var on = (i === index);
+      if (btn) btn.setAttribute("aria-selected", on ? "true" : "false");
+      if (panel) panel.classList.toggle("is-active", on);
+    });
+    /* 포털 iframe 높이 재조정 힌트 (부모가 있을 때만, 실패해도 무해) */
+    try {
+      if (window.parent && window.parent !== window && typeof window.parent.resizePortalFrame === "function") {
+        var frames = window.parent.document.querySelectorAll("iframe");
+        for (var k = 0; k < frames.length; k++) {
+          if (frames[k].contentWindow === window) { window.parent.resizePortalFrame(frames[k]); break; }
+        }
+      }
+    } catch (e) { /* cross-origin 등 — 무시 */ }
+  }
+
+  TABS.forEach(function (tab, i) {
+    var btn = $(tab.btn);
+    if (btn) btn.addEventListener("click", function () { activateTab(i); });
+  });
+
+  /* ==========================================================
+     ① 공기밀도 (원본: air_density.html)
+  ========================================================== */
+  var AD_DEFAULT = { temp: "20", rh: "50", press: "1013.25" };
+
+  function adCalc() {
+    var T = num("ad-temp"), RH = num("ad-rh"), P = num("ad-press");
+    if (!Number.isFinite(T) || !Number.isFinite(RH) || !Number.isFinite(P)) {
+      setVal("ad-out-rho", "⚠ 입력값 확인");
+      setVal("ad-out-tk", "–"); setVal("ad-out-es", "–");
+      setVal("ad-out-pv", "–"); setVal("ad-out-pd", "–");
+      return;
+    }
+    var d = airDensityDetail(T, RH, P);
+    setVal("ad-out-rho", fmt(d.rho, 4));   // 원본과 동일: 소수 4자리
+    setVal("ad-out-tk", fmt(d.Tk, 2));
+    setVal("ad-out-es", fmt(d.es, 1));
+    setVal("ad-out-pv", fmt(d.pv, 1));
+    setVal("ad-out-pd", fmt(d.pd, 1));
+  }
+
+  if ($("ad-calc")) $("ad-calc").addEventListener("click", adCalc);
+  if ($("ad-reset")) $("ad-reset").addEventListener("click", function () {
+    $("ad-temp").value = AD_DEFAULT.temp;
+    $("ad-rh").value = AD_DEFAULT.rh;
+    $("ad-press").value = AD_DEFAULT.press;
+    adCalc();
+  });
+  ["ad-temp", "ad-rh", "ad-press"].forEach(function (id) {
+    var el = $(id);
+    if (el) el.addEventListener("keydown", function (ev) { if (ev.key === "Enter") adCalc(); });
+  });
+
+  /* ==========================================================
+     ② 동압 → 풍속·풍량 (원본: flow_calc_v2_en_split_kfactor.html)
+        v = K · √(2q/ρ) , A, Q = v·A·3600 , Q/Spec
+  ========================================================== */
+  bindShapeToggle("fc-shape", ["fc-box-d"], ["fc-box-w", "fc-box-h"]);
+
+  function fcDensity() {
+    var T = num("fc-t"), RH = num("fc-rh"), P = num("fc-p");
+    if (!Number.isFinite(T) || !Number.isFinite(RH) || !Number.isFinite(P)) return NaN;
+    return airDensity(T, RH, P);
+  }
+
+  function fcRefreshDensity() {
+    var rho = fcDensity();
+    setVal("fc-out-rho", fmt(rho, 4));
+    return rho;
+  }
+
+  function fcCalc() {
+    var rho = fcRefreshDensity();
+    if (!Number.isFinite(rho)) { alert("온도 / 상대습도 / 기압을 올바르게 입력해주세요."); return; }
+
+    var q = num("fc-q");
+    if (!(q >= 0)) { alert("동압 q (Pa) 를 입력해주세요."); return; }
+
+    var K = num("fc-k") || 1;                       // 원본과 동일: 미입력/0 이면 1
+    var v = K * Math.sqrt(2 * q / rho);             // m/s
+    setVal("fc-out-v", fmt(v, 3));
+
+    var area = ductArea($("fc-shape").value, "fc-d", "fc-w", "fc-h");
+    if (!area.ok) { alert(area.msg); return; }
+    setVal("fc-out-A", fmt(area.A, 4));
+
+    var Q = v * area.A * 3600.0;                    // m³/h
+    setVal("fc-out-Q", fmt(Q, 1));
+
+    var spec = num("fc-spec");
+    var pct = (spec && spec > 0) ? (Q / spec * 100.0) : NaN;
+    setVal("fc-out-pct", Number.isFinite(pct) ? fmt(pct, 1) : "–");
+  }
+
+  if ($("fc-calc")) $("fc-calc").addEventListener("click", fcCalc);
+  if ($("fc-reset")) $("fc-reset").addEventListener("click", function () {
+    $("fc-t").value = "20"; $("fc-rh").value = "50"; $("fc-p").value = "1013.25";
+    $("fc-q").value = ""; $("fc-k").value = "1";
+    $("fc-shape").value = "circ";
+    $("fc-d").value = ""; $("fc-w").value = ""; $("fc-h").value = ""; $("fc-spec").value = "";
+    $("fc-shape").dispatchEvent(new Event("change"));
+    ["fc-out-v", "fc-out-A", "fc-out-Q", "fc-out-pct"].forEach(function (id) { setVal(id, "–"); });
+    fcRefreshDensity();
+  });
+  ["fc-t", "fc-rh", "fc-p"].forEach(function (id) {
+    var el = $(id);
+    if (el) el.addEventListener("change", fcRefreshDensity);
+  });
+
+  /* ==========================================================
+     ③ 규격풍량 → 풍속·동압 (원본: Dp_from_spec_with_K.html)
+        v = Q/(A·3600) , q = 0.5·ρ·v² / K²   ← 원본 계산식 그대로
+  ========================================================== */
+  bindShapeToggle("dp-shape", ["dp-box-d"], ["dp-box-w", "dp-box-h"]);
+
+  var DP_LEVELS = [
+    { key: "95",  factor: 0.95 },
+    { key: "100", factor: 1.00 },
+    { key: "105", factor: 1.05 },
+    { key: "110", factor: 1.10 }
+  ];
+
+  function dpDensity() {
+    var T = num("dp-t"), RH = num("dp-rh"), P = num("dp-p");
+    if (!Number.isFinite(T) || !Number.isFinite(RH) || !Number.isFinite(P)) return NaN;
+    return airDensity(T, RH, P);
+  }
+
+  function dpRefreshDensity() {
+    var rho = dpDensity();
+    setVal("dp-out-rho", fmt(rho, 4));
+    return rho;
+  }
+
+  function dpClearTable() {
+    DP_LEVELS.forEach(function (lv) {
+      setText("dp-q" + lv.key, "–");
+      setText("dp-v" + lv.key, "–");
+      setText("dp-dp" + lv.key, "–");
+    });
+  }
+
+  function dpCalc() {
+    var rho = dpRefreshDensity();
+    if (!Number.isFinite(rho)) { alert("온도 / 상대습도 / 기압을 올바르게 입력해주세요."); return; }
+
+    var Qspec = num("dp-spec");
+    if (!(Qspec > 0)) { alert("규격 풍량 (m³/h) 을 입력해주세요."); return; }
+
+    var Kraw = num("dp-k");
+    var K = (Number.isFinite(Kraw) && Kraw > 0) ? Kraw : 1.0;   // 원본과 동일
+
+    var area = ductArea($("dp-shape").value, "dp-d", "dp-w", "dp-h");
+    if (!area.ok) { alert(area.msg); return; }
+    var A = area.A;
+    setVal("dp-out-A", fmt(A, 4));
+
+    var v100 = (Qspec / 3600.0) / A;
+    setVal("dp-out-v", fmt(v100, 3));
+
+    DP_LEVELS.forEach(function (lv) {
+      var Q = Qspec * lv.factor;
+      var v = (Q / 3600.0) / A;
+      var q = 0.5 * rho * v * v / (K * K);          // 원본 qFromQ() 와 동일
+      setText("dp-q" + lv.key, fmt(Q, 1));
+      setText("dp-v" + lv.key, fmt(v, 3));
+      setText("dp-dp" + lv.key, fmt(q, 2));
+    });
+  }
+
+  if ($("dp-calc")) $("dp-calc").addEventListener("click", dpCalc);
+  if ($("dp-reset")) $("dp-reset").addEventListener("click", function () {
+    $("dp-t").value = "20"; $("dp-rh").value = "50"; $("dp-p").value = "1013.25";
+    $("dp-spec").value = ""; $("dp-k").value = "1.00";
+    $("dp-shape").value = "circ";
+    $("dp-d").value = ""; $("dp-w").value = ""; $("dp-h").value = "";
+    $("dp-shape").dispatchEvent(new Event("change"));
+    setVal("dp-out-v", "–"); setVal("dp-out-A", "–");
+    dpClearTable();
+    dpRefreshDensity();
+  });
+  ["dp-t", "dp-rh", "dp-p"].forEach(function (id) {
+    var el = $(id);
+    if (el) el.addEventListener("change", dpRefreshDensity);
+  });
+
+  /* ==========================================================
+     ④ AHU 냉방능력 (원본: ahu_cooling_capacity.html)
+        Buck 포화수증기압 + 습도비 + 습공기 엔탈피 + 이분법 습구온도
+  ========================================================== */
+  var AHU_SAMPLE = {
+    inletDb: "25.33", inletRh: "54.79",
+    outletDb: "10.35", outletRh: "96.40",
+    airflow: "13812", press: "1013.25", basis: "outlet"
+  };
+
+  /* Buck 식 포화수증기압 [Pa] — HVAC 범위에서 정확 */
+  function ahuSatVp(Tc) {
+    return 611.21 * Math.exp((18.678 - (Tc / 234.5)) * (Tc / (257.14 + Tc)));
+  }
+
+  function ahuHumidityRatio(Tc, rh, pHpa) {
+    var P = pHpa * 100.0;
+    var pv = (rh / 100.0) * ahuSatVp(Tc);
+    return 0.62198 * pv / (P - pv);
+  }
+
+  function ahuDensity(Tc, rh, pHpa) {
+    var Tk = Tc + 273.15;
+    var P = pHpa * 100.0;
+    var pv = (rh / 100.0) * ahuSatVp(Tc);
+    var pd = P - pv;
+    return pd / (R_DRY * Tk) + pv / (R_VAPOR * Tk);
+  }
+
+  /* 습공기 질량기준 엔탈피 [kJ/kg] */
+  function ahuEnthalpy(Tc, rh, pHpa) {
+    var W = ahuHumidityRatio(Tc, rh, pHpa);
+    var hDa = 1.006 * Tc + W * (2501 + 1.86 * Tc);   // kJ/kg 건공기
+    return hDa / (1 + W);
+  }
+
+  function ahuSatHumidityRatio(Tc, pHpa) {
+    var P = pHpa * 100.0;
+    var pws = ahuSatVp(Tc);
+    return 0.62198 * pws / (P - pws);
+  }
+
+  function ahuSatEnthalpy(Tc, pHpa) {
+    var Ws = ahuSatHumidityRatio(Tc, pHpa);
+    var hDa = 1.006 * Tc + Ws * (2501 + 1.86 * Tc);
+    return hDa / (1 + Ws);
+  }
+
+  /* 습구온도 — 포화 엔탈피 = 대상 엔탈피 가 되는 온도를 이분법(80회)으로 */
+  function ahuWetBulb(Tdb, rh, pHpa) {
+    if (rh <= 0) return NaN;
+    if (rh >= 100) return Tdb;
+    var targetH = ahuEnthalpy(Tdb, rh, pHpa);
+    var low = -50, high = Tdb;
+    for (var i = 0; i < 80; i++) {
+      var mid = (low + high) / 2;
+      if (ahuSatEnthalpy(mid, pHpa) > targetH) high = mid; else low = mid;
+    }
+    return (low + high) / 2;
+  }
+
+  function ahuCalc() {
+    var inletDb = num("ahu-inletDb");
+    var inletRh = num("ahu-inletRh");
+    var outletDb = num("ahu-outletDb");
+    var outletRh = num("ahu-outletRh");
+    var airflow = num("ahu-airflow");
+    var pressure = num("ahu-press");
+    var basis = ($("ahu-basis") || {}).value || "outlet";
+
+    var vals = [inletDb, inletRh, outletDb, outletRh, airflow, pressure];
+    var invalid = vals.some(function (v) { return !Number.isFinite(v); });
+    if (invalid) { alert("모든 값을 입력해주세요."); return; }
+    if (airflow <= 0 || pressure <= 0) { alert("풍량과 대기압은 0 보다 커야 합니다."); return; }
+
+    var inWb = ahuWetBulb(inletDb, inletRh, pressure);
+    var outWb = ahuWetBulb(outletDb, outletRh, pressure);
+    var inRho = ahuDensity(inletDb, inletRh, pressure);
+    var outRho = ahuDensity(outletDb, outletRh, pressure);
+    var inW = ahuHumidityRatio(inletDb, inletRh, pressure);
+    var outW = ahuHumidityRatio(outletDb, outletRh, pressure);
+    var inH = ahuEnthalpy(inletDb, inletRh, pressure);
+    var outH = ahuEnthalpy(outletDb, outletRh, pressure);
+    var deltaH = inH - outH;
+
+    var rhoApplied = outRho, rhoLabel = "출구 밀도";
+    if (basis === "inlet") { rhoApplied = inRho; rhoLabel = "입구 밀도"; }
+    else if (basis === "average") { rhoApplied = (inRho + outRho) / 2; rhoLabel = "평균 밀도"; }
+
+    var capacity = airflow * rhoApplied * deltaH / 3600.0;
+
+    /* 상단 강조 결과 */
+    setVal("ahu-out-cap", fmt(capacity, 1));
+    setVal("ahu-out-dh", fmt(deltaH, 2));
+    setVal("ahu-out-rho", fmt(rhoApplied, 3));
+    setVal("ahu-out-flow", fmt(airflow, 1));
+
+    /* 성적표 */
+    setText("ahu-r-inDb", fmt(inletDb, 2));
+    setText("ahu-r-outDb", fmt(outletDb, 2));
+    setText("ahu-r-inWb", fmt(inWb, 2));
+    setText("ahu-r-outWb", fmt(outWb, 2));
+    setText("ahu-r-inRh", fmt(inletRh, 2));
+    setText("ahu-r-outRh", fmt(outletRh, 2));
+    setText("ahu-r-inRho", fmt(inRho, 3));
+    setText("ahu-r-outRho", fmt(outRho, 3));
+    setText("ahu-r-inW", fmt(inW, 5));
+    setText("ahu-r-outW", fmt(outW, 5));
+    setText("ahu-r-inH", fmt(inH, 2));
+    setText("ahu-r-outH", fmt(outH, 2));
+    setText("ahu-r-press", fmt(pressure, 2));
+    setText("ahu-r-flow", fmt(airflow, 1));
+    setText("ahu-r-dh", fmt(deltaH, 2));
+    setText("ahu-r-rhoApplied", rhoLabel + " = " + fmt(rhoApplied, 3));
+    setText("ahu-r-cap", fmt(capacity, 1));
+  }
+
+  if ($("ahu-calc")) $("ahu-calc").addEventListener("click", ahuCalc);
+  if ($("ahu-basis")) $("ahu-basis").addEventListener("change", ahuCalc);
+  if ($("ahu-reset")) $("ahu-reset").addEventListener("click", function () {
+    $("ahu-inletDb").value = AHU_SAMPLE.inletDb;
+    $("ahu-inletRh").value = AHU_SAMPLE.inletRh;
+    $("ahu-outletDb").value = AHU_SAMPLE.outletDb;
+    $("ahu-outletRh").value = AHU_SAMPLE.outletRh;
+    $("ahu-airflow").value = AHU_SAMPLE.airflow;
+    $("ahu-press").value = AHU_SAMPLE.press;
+    $("ahu-basis").value = AHU_SAMPLE.basis;
+    ahuCalc();
+  });
+
+  /* ==========================================================
+     초기화 — 기본값으로 즉시 계산 (원본의 window load 동작과 동일)
+  ========================================================== */
+  adCalc();
+  fcRefreshDensity();
+  dpRefreshDensity();
+  ahuCalc();
+})();
+</script>
+</body>
+</html>

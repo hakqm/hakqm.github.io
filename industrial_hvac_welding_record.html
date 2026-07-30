@@ -1,0 +1,1474 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>용접기록서 자동화</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#f1f5f9;font-family:"Apple SD Gothic Neo","Malgun Gothic",sans-serif;font-size:14px}
+button{cursor:pointer;font-family:inherit}
+input,textarea,select{font-family:inherit}
+.hidden{display:none!important}
+.tab-content{display:none}
+.tab-content.active{display:block}
+.card{background:#fff;border:0.5px solid #e2e8f0;border-radius:10px;padding:20px 22px;margin-bottom:14px}
+.card-title{font-size:14px;font-weight:700;color:#1e293b;margin-bottom:16px;padding-bottom:11px;border-bottom:0.5px solid #e2e8f0}
+.row{display:flex;gap:14px;margin-bottom:14px;flex-wrap:wrap}
+.btn{padding:8px 16px;border-radius:7px;border:0.5px solid #cbd5e1;background:#f8fafc;color:#1e293b;font-size:13px;font-weight:600}
+.btn-primary{background:#1a3a5c;color:#fff;border-color:transparent}
+.btn-green{background:#27ae60;color:#fff;border-color:transparent}
+.btn-gray{background:#475569;color:#fff;border-color:transparent}
+.pill{display:inline-flex;align-items:center;gap:6px;background:#f8fafc;border:1px solid #cbd5e1;border-radius:20px;padding:4px 12px;font-size:12px;margin:3px}
+.field-wrap{position:relative;flex:1}
+.field-label{font-size:12px;color:#64748b;margin-bottom:4px;font-weight:600}
+.field-input{width:100%;padding:8px 10px;border:1.5px solid #cbd5e1;border-radius:5px;font-size:13px;background:#fff;color:#1e293b;outline:none}
+.field-input:focus{border-color:#3b82f6}
+.dropdown{position:fixed;background:#fff;border:2px solid #3b82f6;border-radius:7px;max-height:280px;overflow-y:auto;box-shadow:0 8px 28px rgba(0,0,0,.35);z-index:9999;display:none}
+.dropdown.open{display:block}
+.dropdown-header{padding:6px 14px;font-size:11px;color:#64748b;background:#f8fafc;border-bottom:1px solid #e2e8f0}
+.dropdown-item{display:flex;align-items:center;padding:10px 8px 10px 14px;font-size:13px;cursor:pointer;border-bottom:1px solid #e2e8f0}
+.dropdown-item:hover{background:#dbeafe}
+.dropdown-del{padding:10px 13px;color:#94a3b8;font-size:13px;border-left:1px solid #e2e8f0;flex-shrink:0}
+.dropdown-del:hover{color:#e74c3c;background:#fee2e2}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center}
+.modal{background:#fff;border-radius:12px;padding:28px 32px;box-shadow:0 12px 40px rgba(0,0,0,.25)}
+.drag-zone{border:2px dashed #94a3b8;border-radius:10px;padding:32px 20px;text-align:center;cursor:pointer;background:#f8fafc}
+.drag-zone.over{border-color:#3b82f6;background:#eff6ff}
+.tbl{border-collapse:collapse;min-width:1500px}
+.tbl th{padding:10px 8px;font-size:12px;font-weight:700;color:#64748b;background:#f8fafc;text-align:center;white-space:nowrap;border:2px solid #64748b}
+.tbl td{padding:0;vertical-align:middle;background:#fff;border:2px solid #94a3b8;height:56px}
+.tbl td input{width:100%;padding:8px;border:none;font-size:13px;background:transparent;color:#1e293b;outline:none}
+.tbl-num{text-align:center;font-size:15px;font-weight:700;color:#64748b;width:50px}
+.dl-box{margin-top:14px;padding:18px;background:#f0faf4;border:2px solid #a5d6a7;border-radius:10px;text-align:center}
+</style>
+</head>
+<body>
+
+<!-- 헤더 -->
+<div style="background:#1a3a5c;padding:14px 22px;display:flex;align-items:center;justify-content:space-between">
+  <div>
+    <div style="color:#fff;font-weight:700;font-size:17px">⚡ 용접보고서 자동화</div>
+    <div style="color:#90b8d8;font-size:11px;margin-top:2px">WELDING REPORT AUTOMATION SYSTEM</div>
+  </div>
+  <button class="btn-green btn" id="btnMakeXlsx" onclick="makeXlsx()">📥 파일 생성</button>
+</div>
+
+<!-- 탭 -->
+<div id="jsError" style="display:none;padding:20px;color:#fff;background:#e74c3c;font-family:monospace;font-size:13px;white-space:pre-wrap"></div>
+<div id="jsRunning" style="padding:20px;color:#1a3a5c;font-size:15px">⏳ JavaScript 실행 중... 이 메시지가 계속 보이면 JS가 차단된 것입니다.</div>
+<div id="tabBar" style="background:#1e2d3d;display:flex;padding:0 18px"></div>
+
+<!-- 내용 -->
+<div style="padding:18px;max-width:1600px;margin:0 auto">
+
+  <!-- 탭0: 기본정보 -->
+  <div id="tab0" class="tab-content active">
+    <div class="card">
+      <div class="card-title">문서 기본정보</div>
+      <div class="row">
+        <div class="field-wrap" id="fw-docNo"></div>
+      </div>
+      <div class="row">
+        <div class="field-wrap" id="fw-cust" style="flex:1"></div>
+        <div class="field-wrap" id="fw-proj" style="flex:2"></div>
+      </div>
+      <div class="row">
+        <div class="field-wrap" id="fw-prod" style="flex:2"></div>
+        <div class="field-wrap" id="fw-drwNo" style="flex:2"></div>
+      </div>
+      <div class="row">
+        <div class="field-wrap" id="fw-wirDocNo" style="flex:1"></div>
+        <div class="field-wrap" id="fw-devClass" style="flex:2"></div>
+      </div>
+      <div class="row">
+        <div class="field-wrap" id="fw-specNo" style="flex:2"></div>
+        <div class="field-wrap" id="fw-procedureNo" style="flex:1"></div>
+      </div>
+    </div>
+    <div class="card" style="background:#f0f7ff;border-color:#bed3f5">
+      <div style="font-size:13px;color:#1a3a5c">용접기록서 및 용접육안검사보고서를 동시에 생성합니다.</div><div style="font-size:13px;color:#1a3a5c;margin-top:6px">입력 이력은 이 브라우저에 저장됩니다.</div>
+    </div>
+    <div id="dlBox0"></div>
+  </div>
+
+  <!-- 탭1: 제품번호 -->
+  <div id="tab1" class="tab-content">
+    <div class="card">
+      <div class="card-title">제품번호 입력</div>
+      <div style="margin-bottom:18px">
+        <div class="field-label">📎 엑셀 파일 드래그 또는 선택</div>
+        <div class="drag-zone" id="dropZone" onclick="document.getElementById('pFileInput').click()">
+          <div style="font-size:36px;margin-bottom:8px">📂</div>
+          <div style="font-size:14px;font-weight:700;color:#1e293b;margin-bottom:4px">엑셀 파일을 여기에 드래그하세요</div>
+          <div style="font-size:12px;color:#64748b">또는 클릭해서 선택 · xlsx / xls / csv</div>
+        </div>
+        <input type="file" id="pFileInput" accept=".xlsx,.xls,.csv" style="display:none" onchange="importExcel(this.files[0]);this.value=''"/>
+      </div>
+      <div style="border-top:0.5px solid #e2e8f0;padding-top:16px">
+        <div class="field-label">✏️ 직접 입력 (줄바꿈 또는 쉼표로 구분)</div>
+        <div style="display:flex;gap:10px">
+          <textarea id="pInput" rows="4" style="flex:1;padding:8px 10px;border:1.5px solid #cbd5e1;border-radius:6px;font-size:13px;resize:vertical;outline:none" placeholder="0-624-Y-VR-0001&#10;0-624-Y-VR-0002"></textarea>
+          <button class="btn btn-primary" style="align-self:flex-start" onclick="addProducts()">+ 추가</button>
+        </div>
+      </div>
+    </div>
+    <div class="card" id="productCard">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <div class="card-title" style="margin-bottom:0">등록된 제품번호</div>
+        <div id="qtyBadge" style="background:#e8f5e9;border:1px solid #a5d6a7;border-radius:7px;padding:6px 14px;font-size:14px;font-weight:700;color:#2e7d32">수량: -</div>
+      </div>
+      <div id="productList" style="display:flex;flex-wrap:wrap">
+        <div style="text-align:center;color:#94a3b8;padding:28px 0;font-size:13px;width:100%">등록된 제품번호가 없습니다.</div>
+      </div>
+      <div style="margin-top:14px;display:flex;justify-content:flex-end">
+        <button class="btn" onclick="clearProducts()">전체 삭제</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 탭2: 작업내역 -->
+  <div id="tab2" class="tab-content">
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <div class="card-title" style="margin-bottom:0" id="entryTitle">작업 내역 (1 / 3행)</div>
+        <div style="display:flex;gap:8px">
+          <button class="btn" style="font-size:12px;padding:7px 13px" onclick="openLoadDlg()">📂 불러오기</button>
+          <button class="btn btn-gray" style="font-size:12px;padding:7px 13px" onclick="openSaveDlg()">💾 템플릿 저장</button>
+          <button class="btn btn-primary" id="btnAddRow" onclick="addRow()">+ 행 추가</button>
+        </div>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="tbl" id="entryTable">
+          <thead id="entryHead"></thead>
+          <tbody id="entryBody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card" style="text-align:center">
+      <button class="btn btn-green" style="border-radius:9px;padding:13px 36px;font-size:15px;margin-bottom:8px" onclick="makeXlsx()">📥 엑셀 파일 생성</button>
+      <div id="dlBox2"></div>
+    </div>
+  </div>
+
+  <!-- 탭3: 승인문서 -->
+  <div id="tab3" class="tab-content">
+    <div class="card">
+      <div class="card-title">📄 승인문서 관리</div>
+      <div class="drag-zone" id="pdfDropZone" onclick="document.getElementById('pdfInput').click()">
+        <div style="font-size:30px;margin-bottom:6px">📎</div>
+        <div style="font-size:14px;font-weight:700;color:#1e293b;margin-bottom:4px">승인문서(PDF) 업로드</div>
+        <div style="font-size:12px;color:#64748b">브라우저에 저장됩니다 · 최대 5개</div>
+      </div>
+      <input type="file" id="pdfInput" accept="application/pdf" style="display:none" onchange="uploadPdf(this.files[0]);this.value=''"/>
+      <div id="pdfBtnList" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px"></div>
+    </div>
+    <div id="pdfViewer"></div>
+    <div id="pdfEmpty" class="card" style="text-align:center;color:#94a3b8;padding:50px;font-size:14px">
+      <div style="font-size:40px;margin-bottom:12px">📋</div>
+      <div style="font-weight:600;margin-bottom:8px">업로드된 승인문서가 없습니다</div>
+      <div style="font-size:13px">PDF를 업로드하면 다음 방문 시에도 유지됩니다.</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- 저장 다이얼로그 -->
+<div id="saveDlg" class="modal-bg hidden">
+  <div class="modal" style="width:380px">
+    <div style="font-size:16px;font-weight:700;color:#1a3a5c;margin-bottom:16px">💾 템플릿 저장</div>
+    <input id="tplNameInput" placeholder="템플릿 이름 입력" style="width:100%;padding:9px 12px;border:1.5px solid #94a3b8;border-radius:7px;font-size:13px;outline:none;margin-bottom:16px" onkeydown="if(event.key==='Enter')saveTpl()"/>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn" onclick="closeSaveDlg()">취소</button>
+      <button class="btn btn-primary" onclick="saveTpl()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 불러오기 다이얼로그 -->
+<div id="loadDlg" class="modal-bg hidden">
+  <div class="modal" style="width:480px;max-height:70vh;display:flex;flex-direction:column">
+    <div style="font-size:16px;font-weight:700;color:#1a3a5c;margin-bottom:16px">📂 템플릿 불러오기</div>
+    <div id="tplList" style="overflow-y:auto;flex:1"></div>
+    <div style="margin-top:16px;display:flex;justify-content:flex-end">
+      <button class="btn" onclick="closeLoadDlg()">닫기</button>
+    </div>
+  </div>
+</div>
+
+<script>
+window.onerror = function(msg, url, line, col, err) {
+  document.getElementById("jsError").style.display = "block";
+  document.getElementById("jsError").textContent = "❌ JS 오류\n" + msg + "\n라인: " + line + "\n" + (err ? err.stack : "");
+  return false;
+};
+window.addEventListener("unhandledrejection", function(e) {
+  document.getElementById("jsError").style.display = "block";
+  document.getElementById("jsError").textContent = "❌ Promise 오류\n" + (e.reason ? e.reason.stack || e.reason : e);
+});
+/* ── 상수 ── */
+const LOGO_B64 = "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";
+const SIGN_B64 = "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";
+const MAX_E = 2;
+const WFIELDS = [
+  {k:"date",  lb:"날짜",         tp:"date", w:130},
+  {k:"desc",  lb:"용접내용",     w:200, hk:"desc"},
+  {k:"procNo",lb:"공정번호",     w:105, hk:"procNo"},
+  {k:"welder",lb:"용접사/ID",    w:130, hk:"welder"},
+  {k:"method",lb:"용접방법",     w:105, hk:"method", pre:["FCAW","SMAW","GTAW","SAW","GMAW","EGW"]},
+  {k:"wps",   lb:"WPS NO.",      w:160, hk:"wps"},
+  {k:"part",  lb:"부품명",       w:115, hk:"part"},
+  {k:"mat",   lb:"재질",         w:175, hk:"mat"},
+  {k:"aws",   lb:"AWS No.",      w:115, hk:"aws"},
+  {k:"heat",  lb:"Heat/Lot No.", w:135, hk:"heat"},
+  {k:"sz",    lb:"Size",         w:90,  hk:"sz"},
+  {k:"rmk",   lb:"비고",         w:150, hk:"rmk"},
+];
+const HKEYS = ["docNo","cust","proj","prod","drwNo","wirDocNo","devClass","specNo","procedureNo","desc","welder","method","wps","part","mat","aws","heat","sz","rmk"];
+const TABS  = ["📋 기본정보","📦 제품번호","🔧 작업내역","📄 승인문서"];
+const FIELDS_META = {
+  docNo: {lb:"WR 문서번호", ph:"예) WR-NCD230801"},
+  cust:  {lb:"고객",    ph:"예) KHNP"},
+  proj:  {lb:"공사명",  ph:"예) SAEUL #3,4 M254"},
+  prod:  {lb:"제품명",  ph:"예) Control Damper"},
+  drwNo:   {lb:"도면번호",     ph:"예) M254-DG-A02-05 Rev.3"},
+  wirDocNo:{lb:"WVIR 문서번호",  ph:"예) WVIR-NCD230801"},
+  devClass:{lb:"기기등급 (CLASS)",ph:"예) Q CLASS"},
+  specNo:  {lb:"기술규격서번호", ph:"예) 9-154-M254 Rev.1"},
+  procedureNo:{lb:"절차서번호",     ph:"예) M254-TP-A01-01 Rev.1"},
+};
+
+/* ── 상태 ── */
+const state = {
+  form: {docNo:"",cust:"",proj:"",prod:"",drwNo:"",pNos:[],wirDocNo:"",devClass:"",specNo:"",procedureNo:""},
+  entries: [mkE(),mkE()],
+  hist: {},
+  tpls: [],
+  pdfList: [],
+  selPdf: null,
+  selPdfName: "",
+  pdfScale: 1.4,
+  activeTab: 0,
+};
+
+function mkE() {
+  return {date:"",desc:"",procedureNo:"",welder:"",method:"",wps:"",part:"",mat:"",aws:"",heat:"",sz:"",rmk:""};
+}
+
+/* ── localStorage ── */
+const ls = {
+  get(k) { try { const v=localStorage.getItem(k); return v?JSON.parse(v):[]; } catch { return []; } },
+  set(k,v) { try { localStorage.setItem(k,JSON.stringify(v)); } catch {} },
+};
+
+/* ── IndexedDB PDF 저장소 ── */
+const pdfDB = (() => {
+  const DB_NAME = 'weldingPDF', STORE = 'pdfs', VERSION = 1;
+  function openDB() {
+    return new Promise((res, rej) => {
+      const req = indexedDB.open(DB_NAME, VERSION);
+      req.onupgradeneeded = e => e.target.result.createObjectStore(STORE);
+      req.onsuccess = e => res(e.target.result);
+      req.onerror   = e => rej(e.target.error);
+    });
+  }
+  return {
+    async save(name, arrayBuffer) {
+      const db = await openDB();
+      return new Promise((res, rej) => {
+        const tx = db.transaction(STORE, 'readwrite');
+        tx.objectStore(STORE).put(arrayBuffer, name);
+        tx.oncomplete = () => res();
+        tx.onerror    = e => rej(e.target.error);
+      });
+    },
+    async load(name) {
+      const db = await openDB();
+      return new Promise((res, rej) => {
+        const req = db.transaction(STORE, 'readonly').objectStore(STORE).get(name);
+        req.onsuccess = e => res(e.target.result || null);
+        req.onerror   = e => rej(e.target.error);
+      });
+    },
+    async remove(name) {
+      const db = await openDB();
+      return new Promise((res, rej) => {
+        const tx = db.transaction(STORE, 'readwrite');
+        tx.objectStore(STORE).delete(name);
+        tx.oncomplete = () => res();
+        tx.onerror    = e => rej(e.target.error);
+      });
+    },
+  };
+})();
+
+/* ArrayBuffer → base64 */
+function ab2b64(ab) {
+  const bytes = new Uint8Array(ab);
+  let bin = '';
+  for (let i = 0; i < bytes.length; i += 8192)
+    bin += String.fromCharCode(...bytes.subarray(i, i + 8192));
+  return btoa(bin);
+}
+
+/* ── 초기화 ── */
+function init() {
+  document.getElementById("jsRunning").style.display = "none";
+  // 탭 버튼
+  const bar = document.getElementById("tabBar");
+  TABS.forEach((t,i) => {
+    const btn = document.createElement("button");
+    btn.textContent = t;
+    btn.style.cssText = "padding:12px 18px;font-size:13px;font-weight:600;cursor:pointer;border:none;background:none;color:#7fa8c9;border-bottom:3px solid transparent;transition:color .15s";
+    btn.onclick = () => switchTab(i);
+    btn.id = "tabBtn"+i;
+    bar.appendChild(btn);
+  });
+  switchTab(0);
+
+  // 이력 로드
+  HKEYS.forEach(k => { state.hist[k] = ls.get("wr:"+k); });
+  state.tpls = ls.get("wr:tpls");
+
+  // 기본정보 필드 생성
+  Object.entries(FIELDS_META).forEach(([k,m]) => {
+    const wrap = document.getElementById("fw-"+k);
+    if (!wrap) return;
+    wrap.innerHTML = "";
+    createAutoIn(wrap, k, m.lb, m.ph, v => {
+      state.form[k] = v;
+    });
+  });
+
+  // 작업내역 테이블 헤더
+  const head = document.getElementById("entryHead");
+  const tr = document.createElement("tr");
+  const th0 = document.createElement("th"); th0.textContent="순번"; th0.style.width="50px"; tr.appendChild(th0);
+  WFIELDS.forEach(f => {
+    const th = document.createElement("th");
+    th.textContent = f.lb; th.style.minWidth = f.w+"px"; th.style.width = f.w+"px";
+    tr.appendChild(th);
+  });
+  const thd = document.createElement("th"); thd.textContent="삭제"; thd.style.width="50px"; tr.appendChild(thd);
+  head.appendChild(tr);
+  renderRows();
+
+  // 드래그앤드롭
+  setupDragZone("dropZone", file => importExcel(file));
+  setupDragZone("pdfDropZone", file => uploadPdf(file));
+
+  // PDF 목록 로드
+  state.pdfList = ls.get("wr:pdfList");
+  renderPdfBtns();
+  updatePdfEmpty();
+  if (state.pdfList.length) {
+    pdfDB.load(state.pdfList[0].name).then(ab => {
+      if (ab) {
+        state.selPdf = ab2b64(ab);
+        state.selPdfName = state.pdfList[0].name;
+        renderPdfViewer();
+      }
+    });
+  }
+}
+
+/* ── 탭 전환 ── */
+function switchTab(i) {
+  document.querySelectorAll(".tab-content").forEach(el => el.classList.remove("active"));
+  document.getElementById("tab"+i).classList.add("active");
+  document.querySelectorAll("#tabBar button").forEach((btn,j) => {
+    btn.style.color = j===i ? "#fff" : "#7fa8c9";
+    btn.style.borderBottom = j===i ? "3px solid #3b82f6" : "3px solid transparent";
+  });
+  state.activeTab = i;
+}
+
+/* ── 자동완성 입력 ── */
+function createAutoIn(wrap, key, label, placeholder, onChange) {
+  const lbl = document.createElement("div");
+  lbl.className = "field-label"; lbl.textContent = label;
+  const inp = document.createElement("input");
+  inp.className = "field-input"; inp.placeholder = placeholder || "";
+  inp.value = state.form[key] || "";
+  const dd = document.createElement("div"); dd.className = "dropdown";
+
+  function showDd(filter) {
+    const hist = state.hist[key] || [];
+    const items = filter ? hist.filter(x => x.toLowerCase().includes(filter.toLowerCase())) : hist;
+    if (!items.length) { dd.classList.remove("open"); return; }
+    dd.innerHTML = "";
+    const hdr = document.createElement("div");
+    hdr.className = "dropdown-header"; hdr.textContent = "이력 "+hist.length+"개";
+    dd.appendChild(hdr);
+    items.slice(0,12).forEach(x => {
+      const row = document.createElement("div"); row.className = "dropdown-item";
+      const span = document.createElement("span"); span.textContent = x; span.style.flex="1";
+      const del = document.createElement("span"); del.className = "dropdown-del"; del.textContent = "✕";
+      del.onmousedown = e => {
+        e.preventDefault(); e.stopPropagation();
+        state.hist[key] = (state.hist[key]||[]).filter(h => h!==x);
+        ls.set("wr:"+key, state.hist[key]);
+        showDd(inp.value);
+      };
+      row.onmousedown = e => {
+        e.preventDefault();
+        inp.value = x; onChange(x); saveHist(key,x);
+        dd.classList.remove("open");
+      };
+      row.appendChild(span); row.appendChild(del); dd.appendChild(row);
+    });
+    const rect = inp.getBoundingClientRect();
+    dd.style.top = (rect.bottom+2)+"px";
+    dd.style.left = rect.left+"px";
+    dd.style.width = Math.max(rect.width,220)+"px";
+    dd.classList.add("open");
+  }
+
+  inp.addEventListener("input", e => { onChange(e.target.value); showDd(e.target.value); });
+  inp.addEventListener("focus", () => showDd(""));
+  inp.addEventListener("blur", () => {
+    setTimeout(()=>dd.classList.remove("open"),150);
+    saveHist(key, inp.value);
+  });
+
+  wrap.appendChild(lbl); wrap.appendChild(inp); document.body.appendChild(dd);
+}
+
+function saveHist(key, val) {
+  if (!val || !val.trim()) return;
+  const arr = state.hist[key] || [];
+  const next = [val, ...arr.filter(x=>x!==val)].slice(0,20);
+  state.hist[key] = next;
+  ls.set("wr:"+key, next);
+}
+
+/* ── 작업내역 ── */
+function renderRows() {
+  const tbody = document.getElementById("entryBody");
+  tbody.innerHTML = "";
+  state.entries.forEach((en,i) => {
+    const tr = document.createElement("tr");
+    const numTd = document.createElement("td");
+    numTd.className = "tbl-num"; numTd.textContent = i+1; tr.appendChild(numTd);
+
+    WFIELDS.forEach(f => {
+      const td = document.createElement("td");
+      td.style.minWidth = f.w+"px"; td.style.width = f.w+"px";
+      if (f.tp === "date") {
+        const inp = document.createElement("input");
+        inp.type = "date"; inp.value = en[f.k] || "";
+        inp.onchange = e => { state.entries[i][f.k] = e.target.value; };
+        td.appendChild(inp);
+      } else {
+        // 자동완성 인풋
+        const inp = document.createElement("input");
+        inp.className = "field-input";
+        inp.style.cssText = "border:none;border-radius:0";
+        inp.value = en[f.k] || "";
+        const hk = f.hk || f.k;
+        const pre = f.pre || [];
+        const dd = document.createElement("div"); dd.className = "dropdown";
+
+        function showDd2(filter) {
+          const hist = state.hist[hk] || [];
+          const all = [...new Set([...pre, ...hist])];
+          const items = filter ? all.filter(x=>x.toLowerCase().includes(filter.toLowerCase())) : all;
+          if (!items.length) { dd.classList.remove("open"); return; }
+          dd.innerHTML = "";
+          if (hist.length) {
+            const hdr = document.createElement("div");
+            hdr.className = "dropdown-header"; hdr.textContent = "이력 "+hist.length+"개"; dd.appendChild(hdr);
+          }
+          items.slice(0,12).forEach(x => {
+            const row = document.createElement("div"); row.className = "dropdown-item";
+            const span = document.createElement("span"); span.textContent = x; span.style.flex="1";
+            const isPre = pre.includes(x);
+            if (!isPre) {
+              const del = document.createElement("span"); del.className = "dropdown-del"; del.textContent = "✕";
+              del.onmousedown = e2 => {
+                e2.preventDefault(); e2.stopPropagation();
+                state.hist[hk] = (state.hist[hk]||[]).filter(h=>h!==x);
+                ls.set("wr:"+hk, state.hist[hk]); showDd2(inp.value);
+              };
+              row.appendChild(span); row.appendChild(del);
+            } else { row.appendChild(span); }
+            row.onmousedown = e2 => {
+              e2.preventDefault(); inp.value = x;
+              state.entries[i][f.k] = x; saveHist(hk,x);
+              dd.classList.remove("open");
+            };
+            dd.appendChild(row);
+          });
+          const rect = inp.getBoundingClientRect();
+          dd.style.top=(rect.bottom+2)+"px"; dd.style.left=rect.left+"px";
+          dd.style.width=Math.max(rect.width,220)+"px"; dd.classList.add("open");
+        }
+        inp.addEventListener("input", e => { state.entries[i][f.k]=e.target.value; showDd2(e.target.value); });
+        inp.addEventListener("focus", () => showDd2(""));
+        inp.addEventListener("blur", () => { setTimeout(()=>dd.classList.remove("open"),150); saveHist(hk,inp.value); });
+        td.appendChild(inp); document.body.appendChild(dd);
+      }
+      tr.appendChild(td);
+    });
+
+    const delTd = document.createElement("td");
+    delTd.style.textAlign="center";
+    const delBtn = document.createElement("button");
+    delBtn.textContent="✕"; delBtn.style.cssText="background:none;border:none;color:#e74c3c;font-size:18px;font-weight:700;cursor:pointer";
+    delBtn.onclick = () => {
+      if (state.entries.length > 1) state.entries.splice(i,1);
+      else state.entries[0] = mkE();
+      renderRows(); updateEntryTitle();
+    };
+    delTd.appendChild(delBtn); tr.appendChild(delTd);
+    tbody.appendChild(tr);
+  });
+  updateEntryTitle();
+}
+
+function addRow() {
+  if (state.entries.length >= MAX_E) return;
+  state.entries.push(mkE()); renderRows(); updateEntryTitle();
+}
+function updateEntryTitle() {
+  document.getElementById("entryTitle").textContent = `작업 내역 (${state.entries.length} / ${MAX_E}행)`;
+  document.getElementById("btnAddRow").disabled = state.entries.length >= MAX_E;
+}
+
+/* ── 제품번호 ── */
+function setupDragZone(id, onDrop) {
+  const el = document.getElementById(id);
+  el.addEventListener("dragover", e => { e.preventDefault(); el.classList.add("over"); });
+  el.addEventListener("dragleave", () => el.classList.remove("over"));
+  el.addEventListener("drop", e => { e.preventDefault(); el.classList.remove("over"); onDrop(e.dataTransfer.files[0]); });
+}
+
+function addProducts() {
+  const txt = document.getElementById("pInput").value;
+  const nos = txt.split(/[\n,，、]/).map(s=>s.trim()).filter(Boolean);
+  if (!nos.length) return;
+  state.form.pNos = [...new Set([...state.form.pNos, ...nos])];
+  document.getElementById("pInput").value = "";
+  renderProducts();
+}
+function clearProducts() { state.form.pNos = []; renderProducts(); }
+function renderProducts() {
+  const list = document.getElementById("productList");
+  const badge = document.getElementById("qtyBadge");
+  badge.textContent = state.form.pNos.length ? "수량: "+state.form.pNos.length+" Sets" : "수량: -";
+  if (!state.form.pNos.length) {
+    list.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:28px 0;font-size:13px;width:100%">등록된 제품번호가 없습니다.</div>';
+    return;
+  }
+  list.innerHTML = "";
+  state.form.pNos.forEach((n,i) => {
+    const pill = document.createElement("div"); pill.className="pill";
+    const span = document.createElement("span"); span.textContent = n;
+    const btn = document.createElement("button");
+    btn.textContent="✕"; btn.style.cssText="background:none;border:none;color:#e74c3c;font-size:13px;cursor:pointer";
+    btn.onclick = () => { state.form.pNos.splice(i,1); renderProducts(); };
+    pill.appendChild(span); pill.appendChild(btn); list.appendChild(pill);
+  });
+}
+
+function importExcel(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    loadXLSXLib(() => {
+      const wb = XLSX.read(new Uint8Array(e.target.result), {type:"array"});
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, {header:1,raw:false});
+      const nos = [];
+      rows.forEach(r => (r||[]).forEach(c => { const s=String(c||"").trim(); if(s) nos.push(s); }));
+      state.form.pNos = nos;
+      renderProducts();
+    });
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function loadXLSXLib(cb) {
+  if (window.XLSX) { cb(); return; }
+  const s = document.createElement("script");
+  s.src = "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
+  s.onload = cb; document.head.appendChild(s);
+}
+
+/* ── 템플릿 ── */
+function openSaveDlg() { document.getElementById("saveDlg").classList.remove("hidden"); document.getElementById("tplNameInput").focus(); }
+function closeSaveDlg() { document.getElementById("saveDlg").classList.add("hidden"); document.getElementById("tplNameInput").value=""; }
+function saveTpl() {
+  const name = document.getElementById("tplNameInput").value.trim();
+  if (!name) return;
+  const tpl = {name, date: new Date().toLocaleDateString("ko-KR"), entries: state.entries.map(e=>({...e}))};
+  state.tpls = [tpl, ...state.tpls.filter(t=>t.name!==name)].slice(0,30);
+  ls.set("wr:tpls", state.tpls);
+  closeSaveDlg();
+}
+function openLoadDlg() {
+  const list = document.getElementById("tplList");
+  list.innerHTML = "";
+  if (!state.tpls.length) { list.innerHTML='<div style="text-align:center;color:#94a3b8;padding:30px;font-size:14px">저장된 템플릿이 없습니다.</div>'; }
+  state.tpls.forEach(t => {
+    const row = document.createElement("div");
+    row.style.cssText = "display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:8px;border:1px solid #e2e8f0;margin-bottom:8px;background:#f8fafc";
+    row.innerHTML = `<div style="flex:1"><div style="font-size:14px;font-weight:700;color:#1a3a5c">${t.name}</div><div style="font-size:12px;color:#64748b;margin-top:2px">${t.date} · ${t.entries.length}행</div></div>`;
+    const loadBtn = document.createElement("button"); loadBtn.className="btn btn-primary"; loadBtn.style.fontSize="13px"; loadBtn.textContent="불러오기";
+    loadBtn.onclick = () => { state.entries = t.entries.map(e=>({...e})); renderRows(); closeLoadDlg(); };
+    const delBtn = document.createElement("button"); delBtn.className="btn"; delBtn.style.cssText="border-color:#fca5a5;background:#fff5f5;color:#e74c3c;font-size:12px"; delBtn.textContent="삭제";
+    delBtn.onclick = () => { state.tpls = state.tpls.filter(x=>x.name!==t.name); ls.set("wr:tpls",state.tpls); openLoadDlg(); };
+    row.appendChild(loadBtn); row.appendChild(delBtn); list.appendChild(row);
+  });
+  document.getElementById("loadDlg").classList.remove("hidden");
+}
+function closeLoadDlg() { document.getElementById("loadDlg").classList.add("hidden"); }
+
+/* ── PDF ── */
+function uploadPdf(file) {
+  if (!file || file.type!=="application/pdf") { alert("PDF 파일만 가능합니다"); return; }
+  const reader = new FileReader();
+  reader.onload = async ev => {
+    try {
+      await pdfDB.save(file.name, ev.target.result);
+    } catch(e) { alert("PDF 저장 오류: "+e.message); return; }
+    // base64로 변환해 뷰어에 표시
+    const b64 = ab2b64(ev.target.result);
+    state.selPdf = b64; state.selPdfName = file.name;
+    state.pdfList = [{name:file.name}, ...state.pdfList.filter(p=>p.name!==file.name)].slice(0,10);
+    ls.set("wr:pdfList", state.pdfList);
+    state.selPdf = b64; state.selPdfName = file.name;
+    renderPdfBtns(); renderPdfViewer(); updatePdfEmpty();
+  };
+  reader.readAsArrayBuffer(file);
+}
+function renderPdfBtns() {
+  const wrap = document.getElementById("pdfBtnList"); wrap.innerHTML="";
+  state.pdfList.forEach(p => {
+    const div = document.createElement("div"); div.style.display="flex";div.style.alignItems="center";div.style.gap="6px";
+    const btn = document.createElement("button"); btn.className="btn";
+    btn.style.cssText = (state.selPdfName===p.name ? "border:2px solid #3b82f6;background:#eff6ff;color:#1d4ed8;" : "border-color:#e2e8f0;") + "font-size:13px;font-weight:600";
+    btn.textContent = "📄 "+p.name;
+    btn.onclick = async () => {
+      if (state.selPdfName===p.name && state.selPdf) { return; }
+      const ab = await pdfDB.load(p.name);
+      if (!ab) { alert("PDF를 찾을 수 없습니다"); return; }
+      state.selPdf=ab2b64(ab); state.selPdfName=p.name;
+      renderPdfBtns(); renderPdfViewer();
+    };
+    const del = document.createElement("button"); del.style.cssText="background:none;border:none;color:#94a3b8;font-size:13px;cursor:pointer"; del.textContent="✕";
+    del.onclick = async () => {
+      await pdfDB.remove(p.name);
+      state.pdfList = state.pdfList.filter(x=>x.name!==p.name);
+      ls.set("wr:pdfList",state.pdfList);
+      if(state.selPdfName===p.name){state.selPdf=null;state.selPdfName="";document.getElementById("pdfViewer").innerHTML="";}
+      renderPdfBtns(); updatePdfEmpty();
+    };
+    div.appendChild(btn); div.appendChild(del); wrap.appendChild(div);
+  });
+}
+function updatePdfEmpty() {
+  document.getElementById("pdfEmpty").style.display = state.pdfList.length ? "none" : "";
+}
+let _pdfDoc = null;
+
+function renderPdfViewer() {
+  if (!state.selPdf) return;
+  const wrap = document.getElementById("pdfViewer");
+  wrap.innerHTML = '<div class="card" style="padding:40px;text-align:center;color:#64748b">⏳ PDF 렌더링 중...</div>';
+  const loadPdfJs = (cb) => {
+    if (window.pdfjsLib) { cb(window.pdfjsLib); return; }
+    const s=document.createElement("script");
+    s.src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
+    s.onload=()=>{window.pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";cb(window.pdfjsLib);};
+    document.head.appendChild(s);
+  };
+  loadPdfJs(async lib => {
+    const bin=atob(state.selPdf); const arr=new Uint8Array(bin.length);
+    for(let i=0;i<bin.length;i++) arr[i]=bin.charCodeAt(i);
+    _pdfDoc = await lib.getDocument({data:arr}).promise;
+
+    wrap.innerHTML = `
+      <div class="card" style="padding:0;overflow:hidden">
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 16px;background:#f1f5f9;border-bottom:1px solid #e2e8f0;flex-wrap:wrap">
+          <span style="font-size:12px;color:#64748b;font-weight:600" id="pdfName">${state.selPdfName}</span>
+          <span style="font-size:12px;color:#94a3b8" id="pdfPageCount"></span>
+          <div style="margin-left:auto;display:flex;align-items:center;gap:8px">
+            <button onclick="changePdfScale(-0.2)" style="width:32px;height:32px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center">−</button>
+            <span id="pdfScaleLabel" style="font-size:13px;font-weight:600;color:#1e293b;min-width:44px;text-align:center">${Math.round(state.pdfScale*100)}%</span>
+            <button onclick="changePdfScale(0.2)" style="width:32px;height:32px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center">+</button>
+            <button onclick="resetPdfScale()" style="padding:6px 12px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;font-size:12px;cursor:pointer;color:#64748b">초기화</button>
+          </div>
+        </div>
+        <div id="pdfPages" style="background:#525659;padding:16px;display:flex;flex-direction:column;align-items:center;gap:12px;max-height:80vh;overflow-y:auto"></div>
+      </div>`;
+    renderPdfPages();
+  });
+}
+
+async function renderPdfPages() {
+  if (!_pdfDoc) return;
+  const pages = document.getElementById("pdfPages");
+  if (!pages) return;
+  pages.innerHTML = "";
+  const count = _pdfDoc.numPages;
+  const countEl = document.getElementById("pdfPageCount");
+  if (countEl) countEl.textContent = count + "페이지";
+  for (let i=1; i<=count; i++) {
+    const page = await _pdfDoc.getPage(i);
+    const vp = page.getViewport({scale: state.pdfScale});
+    const canvas = document.createElement("canvas");
+    canvas.width = vp.width; canvas.height = vp.height;
+    canvas.style.cssText = "box-shadow:0 2px 12px rgba(0,0,0,.5);max-width:100%;";
+    pages.appendChild(canvas);
+    page.render({canvasContext: canvas.getContext("2d"), viewport: vp});
+  }
+  const label = document.getElementById("pdfScaleLabel");
+  if (label) label.textContent = Math.round(state.pdfScale*100)+"%";
+}
+
+function changePdfScale(delta) {
+  const next = Math.round((state.pdfScale + delta) * 10) / 10;
+  if (next < 0.4 || next > 3.0) return;
+  state.pdfScale = next;
+  renderPdfPages();
+}
+
+function resetPdfScale() {
+  state.pdfScale = 1.4;
+  renderPdfPages();
+}
+
+
+/* ── 육안검사레포트 Excel 생성 ── */
+async function buildWIRExcelB64(form) {
+  if(!window.ExcelJS){await new Promise((res,rej)=>{const s=document.createElement("script");s.src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js";s.onload=res;s.onerror=rej;document.head.appendChild(s);});}
+
+  const wb=new window.ExcelJS.Workbook();
+  const ws=wb.addWorksheet("육안검사레포트");
+
+  const BLK={argb:"FF000000"};
+  const bs=s=>(s&&s!==null)?{style:s,color:BLK}:undefined;
+  const mkBd=(l="thin",r="thin",t="thin",b="thin")=>{
+    const o={};
+    if(l&&l!==null)o.left=bs(l); if(r&&r!==null)o.right=bs(r);
+    if(t&&t!==null)o.top=bs(t);  if(b&&b!==null)o.bottom=bs(b);
+    return o;
+  };
+  function C(addr,val,{bold=false,sz=9,color=BLK,ha="center",va="middle",wrap=true,l="thin",r="thin",t="thin",b="thin"}={}){
+    const cell=ws.getCell(addr);
+    cell.value=val!=null?String(val):"";
+    cell.font={bold,size:sz,color,name:"맑은 고딕"};
+    cell.alignment={horizontal:ha,vertical:va,wrapText:wrap};
+    cell.border=mkBd(l,r,t,b);
+  }
+
+  /* 열 너비: A-L 모두 8 */
+  Array(12).fill(8).forEach((w,i)=>ws.getColumn(i+1).width=w);
+
+  /* 행 높이 (×1.25 보정 적용) */
+  const HH=[37.5,37.5,50,50,137.5,50,37.5,25,50,50,50,50,50,50,50,50,37.5,37.5,137.5,25,26.25];
+  HH.forEach((h,i)=>{const row=ws.getRow(i+1);row.height=h;row.customHeight=true;});
+
+  /* ── Row 1: 로고 영역 + 제목 + 문서번호 ── */
+  C("A1","",{l:"medium",t:"medium",r:"thin",b:"thin"});
+  C("C1","WELDING VISUAL INSPECTION REPORT",{bold:true,sz:14,ha:"center",t:"medium",l:"thin",r:"thin",b:"thin"});
+  C("I1","문서번호 (Doc. No.)",{bold:true,sz:9,t:"medium",l:"thin",r:"thin",b:"thin"});
+  C("K1",form.wirDocNo||"",{sz:9,ha:"center",t:"medium",l:"thin",r:"thin",b:"thin"});
+
+  /* ── Row 2: 페이지 ── */
+  /* Row2 C-H는 C1:H2 병합에 포함 */
+  C("I2","페이지 (Page No.)",{bold:true,sz:9,ha:"center"});
+  C("K2","1 OF 1",{sz:9,ha:"center"});
+
+  /* ── Row 3: 고객명 / 공사명 ── */
+  C("A3","고객명\n(Customer)",{bold:true,sz:9,ha:"center",l:"medium"});
+  C("C3",form.cust||"",{sz:9,ha:"center"});
+  C("G3","공사명\n(Project Name)",{bold:true,sz:9,ha:"center"});
+  C("I3",form.proj||"",{sz:9,ha:"center"});
+
+  /* ── Row 4: 기기등급 / 기술규격서번호 ── */
+  C("A4","기기등급\n(CLASS)",{bold:true,sz:9,ha:"center",l:"medium"});
+  C("C4",form.devClass||"",{sz:9,ha:"center"});
+  C("G4","기술규격서 번호\n(Spec. No.)",{bold:true,sz:9,ha:"center"});
+  C("I4",form.specNo||"",{sz:9,ha:"center"});
+
+  /* ── Row 5: 검사품목 / 검사수량 ── */
+  C("A5","검사품목\n(Item Name)",{bold:true,sz:9,ha:"center",va:"middle",l:"medium"});
+  C("C5",form.pNos.length>0?form.pNos.join(", "):form.prod||"",{sz:8,ha:"center",va:"middle"});
+  C("I5","검사수량\n(Q'ty)",{bold:true,sz:9,ha:"center"});
+  C("K5",form.pNos.length>0?form.pNos.length+" Sets":"",{sz:9,ha:"center"});
+
+  /* ── Row 6: 도면번호 / 절차서번호 ── */
+  C("A6","도면번호\n(DWG No.)",{bold:true,sz:9,ha:"center",l:"medium"});
+  C("C6",form.drwNo||"",{sz:9,ha:"center"});
+  C("I6","절차서 번호\n(Procedure No.)",{bold:true,sz:9,ha:"center"});
+  C("K6",form.procedureNo||"",{sz:9,ha:"center"});
+
+  /* ── Row 7-8: 테이블 헤더 ── */
+  C("A7","번호",{bold:true,sz:9,l:"medium"});
+  C("B7","검사 및 점검 항목",{bold:true,sz:9});
+  C("I7","검사결과",{bold:true,sz:9});
+  C("K7","비      고",{bold:true,sz:9});
+  C("I8","만족",{bold:true,sz:9});
+  C("J8","불만족",{bold:true,sz:9});
+
+  /* ── 검사 항목 Rows 9-15 ── */
+  const ITEMS=[
+    "용접부에 크기나 위치에 관계없이 균열이 없는가?",
+    "용접금속의 인접한 층간 및 용접 금속과 모재 간에 완전한 융합이 되었는가?",
+    "모든 크레이터는 규정된 용접크기를 얻을 수 있도록 채워졌는가?",
+    "KEPIC SWS 5540 의 용접형상의 합격 여부를 만족하는가?",
+    "KEPIC SWS 6330(SWT6111)의 육안검사 기준에서 용접크기를 만족하는가?",
+    "언더컷의 깊이를 만족하는가? (모재 두께 22mm미만인 경우 1mm 초과해서는 안됨)",
+    "기공이 KEPIC SWS 6330(SWT6111)의 육안검사 기준에 만족하는가?",
+  ];
+  ITEMS.forEach((item,i)=>{
+    const r=9+i;
+    C(`A${r}`,i+1,{sz:9,l:"medium"});
+    C(`B${r}`,item,{sz:9,ha:"left"});
+    C(`I${r}`,"□",{sz:11});
+    C(`J${r}`,"□",{sz:11});
+    C(`K${r}`,"",{sz:9});
+  });
+
+  /* ── Row 16: BLANK ── */
+  C("A16","",{sz:9,l:"medium"});
+  C("B16","- BLANK -",{sz:9,color:{argb:"FF000000"}});
+  C("I16","",{sz:9}); C("J16","",{sz:9}); C("K16","",{sz:9});
+
+  /* ── Row 17: 비고 ── */
+  C("A17","비고",{bold:true,sz:9,ha:"left",va:"top",l:"medium"});
+
+  /* ── Row 18: 결과 ── */
+  C("A18","결  과  (RESULT)",{bold:true,sz:11,ha:"center",l:"medium"});
+  C("E18","□ ACCEPT                    □ REJECT",{bold:true,sz:11,ha:"center"});
+
+  /* ── Rows 19-20: 서명 ── */
+  C("A19","INSPECTED BY : ",{sz:9,ha:"left",va:"top",bold:true,l:"medium",b:null});
+  C("D19","CHECKED BY : ",  {sz:9,ha:"left",va:"top",bold:true,b:null});
+  C("G19","APPROVED BY : ", {sz:9,ha:"left",va:"top",bold:true,b:null});
+  C("J19","WITNESSED BY : ",{sz:9,ha:"left",va:"top",bold:true,b:null});
+  C("A20","DATE : ",{sz:9,ha:"left",l:"medium",t:null});
+  C("D20","DATE : ",{sz:9,ha:"left",t:null});
+  C("G20","DATE : ",{sz:9,ha:"left",t:null});
+  C("J20","DATE : ",{sz:9,ha:"left",t:null});
+
+  /* ── Row 21: 회사명 ── */
+  C("J21","HI AIR KOREA Co.,Ltd.",{sz:9,ha:"right",va:"bottom",l:null,r:null,t:null,b:null});
+
+  /* ── 병합 ── */
+  const merges=[
+    "A1:B2","C1:H2","I1:J1","K1:L1",
+    "I2:J2","K2:L2",
+    "A3:B3","C3:F3","G3:H3","I3:L3",
+    "A4:B4","C4:F4","G4:H4","I4:L4",
+    "A5:B5","C5:H5","I5:J5","K5:L5",
+    "A6:B6","C6:H6","I6:J6","K6:L6",
+    "A7:A8","B7:H8","I7:J7","K7:L8",
+    "B9:H9","B10:H10","B11:H11","B12:H12","B13:H13","B14:H14","B15:H15","B16:H16",
+    "K9:L9","K10:L10","K11:L11","K12:L12","K13:L13","K14:L14","K15:L15",
+    "K16:L16",
+    "A17:L17","A18:D18","E18:L18",
+    "A19:C19","D19:F19","G19:I19","J19:L19",
+    "A20:C20","D20:F20","G20:I20","J20:L20",
+    "J21:L21",
+  ];
+  merges.forEach(rng=>{try{ws.mergeCells(rng);}catch(e){}});
+
+  /* ── A1:L18 모든 테두리 + 굵은 상자 테두리 ── */
+  const thick={style:"medium",color:BLK};
+  const thin={style:"thin",color:BLK};
+  for(let r=1;r<=18;r++){
+    for(let c=1;c<=12;c++){
+      const cell=ws.getCell(r,c);
+      const bd=Object.assign({},cell.border||{});
+      if(!bd.top)    bd.top=thin;
+      if(!bd.bottom) bd.bottom=thin;
+      if(!bd.left)   bd.left=thin;
+      if(!bd.right)  bd.right=thin;
+      if(r===1)  bd.top=thick;
+      if(r===18) bd.bottom=thick;
+      if(c===1)  bd.left=thick;
+      if(c===12) bd.right=thick;
+      cell.border=bd;
+    }
+  }
+
+  /* ── A19:L20 굵은 상자 테두리 ── */
+  const thick2={style:"medium",color:BLK};
+  for(let r=19;r<=20;r++){
+    for(let c=1;c<=12;c++){
+      const cell=ws.getCell(r,c);
+      const bd=Object.assign({},cell.border||{});
+      if(r===19) bd.top=thick2;
+      if(r===20) bd.bottom=thick2;
+      if(c===1)  bd.left=thick2;
+      if(c===12) bd.right=thick2;
+      cell.border=bd;
+    }
+  }
+
+  /* ── 인쇄: A4 세로 ── */
+  ws.pageSetup={paperSize:9,orientation:"portrait",fitToPage:true,fitToWidth:1,fitToHeight:1,horizontalCentered:true};
+
+  /* 로고: 모든 셀/높이 작업 완료 후 마지막에 삽입 */
+  const logoId=wb.addImage({base64:LOGO_B64,extension:"jpeg"});
+  ws.addImage(logoId,{tl:{col:0.08,row:0.10},ext:{width:103,height:72},editAs:"absolute"});
+
+  const buf=await wb.xlsx.writeBuffer();
+  const bytes=new Uint8Array(buf);let bin="";
+  for(let i=0;i<bytes.length;i+=8192)bin+=String.fromCharCode(...bytes.subarray(i,i+8192));
+  return btoa(bin);
+}
+
+/* ── 엑셀 생성 ── */
+async function makeXlsx() {
+  const btn = document.getElementById("btnMakeXlsx");
+  btn.textContent="생성 중..."; btn.disabled=true;
+  try {
+    const form = {...state.form, entries: state.entries};
+    const mime = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+
+    // 파일 1: 용접기록서
+    const b64_wr  = await buildExcelB64(form);
+    const href_wr = "data:"+mime+";base64,"+b64_wr;
+    const name_wr = "용접기록서_"+(state.form.docNo||"draft")+".xlsx";
+
+    // 파일 2: 육안검사레포트
+    const b64_wir  = await buildWIRExcelB64(form);
+    const href_wir = "data:"+mime+";base64,"+b64_wir;
+    const name_wir = "용접육안검사보고서_"+(state.form.wirDocNo||state.form.docNo||"draft")+".xlsx";
+
+    const dlHtml = `
+      <div class="dl-box">
+        <div style="font-size:13px;color:#2e7d32;margin-bottom:12px;font-weight:700">✅ 파일 2개 준비 완료!</div>
+        <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+          <a href="${href_wr}" download="${name_wr}" style="display:inline-flex;align-items:center;gap:8px;background:#27ae60;color:#fff;padding:12px 24px;border-radius:8px;font-size:14px;font-weight:700;text-decoration:none">📄 용접기록서 저장</a>
+          <a href="${href_wir}" download="${name_wir}" style="display:inline-flex;align-items:center;gap:8px;background:#27ae60;color:#fff;padding:12px 24px;border-radius:8px;font-size:14px;font-weight:700;text-decoration:none">📋 용접육안검사보고서 저장</a>
+        </div>
+      </div>`;
+    document.getElementById("dlBox0").innerHTML = dlHtml;
+    document.getElementById("dlBox2").innerHTML = dlHtml;
+  } catch(e) { alert("생성 오류: "+e.message); }
+  finally { btn.textContent="📥 파일 생성"; btn.disabled=false; }
+}
+
+/* ── buildExcelB64 ── */
+async function buildExcelB64(form) {
+  if (!window.ExcelJS) {
+    await new Promise((res, rej) => {
+      const s = document.createElement("script");
+      s.src = "https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js";
+      s.onload = res;
+      s.onerror = rej;
+      document.head.appendChild(s);
+    });
+  }
+  const wb = new window.ExcelJS.Workbook();
+  const ws = wb.addWorksheet("용접기록서");
+  const logoId = wb.addImage({
+    base64: LOGO_B64,
+    extension: "jpeg"
+  });
+  ws.addImage(logoId, {
+    tl: {
+      col: 0.16,
+      row: 0.24
+    },
+    ext: {
+      width: 85,
+      height: 64
+    },
+    editAs: "absolute"
+  });
+  const signId = wb.addImage({
+    base64: SIGN_B64,
+    extension: "jpeg"
+  });
+  ws.addImage(signId, {
+    tl: {
+      col: 3,
+      row: 15.13
+    },
+    ext: {
+      width: 50,
+      height: 52
+    },
+    editAs: "absolute"
+  });
+  const RED = {
+      argb: "FFFF0000"
+    },
+    BLK = {
+      argb: "FF000000"
+    };
+  const bs = s => s && s !== null ? {
+    style: s,
+    color: BLK
+  } : undefined;
+  const mkBd = (l = "thin", r = "thin", t = "thin", b = "thin") => {
+    const o = {};
+    if (l && l !== null) o.left = bs(l);
+    if (r && r !== null) o.right = bs(r);
+    if (t && t !== null) o.top = bs(t);
+    if (b && b !== null) o.bottom = bs(b);
+    return o;
+  };
+  function C(addr, val, {
+    bold = false,
+    sz = 9,
+    color = BLK,
+    ha = "center",
+    va = "middle",
+    wrap = true,
+    l = "thin",
+    r = "thin",
+    t = "thin",
+    b = "thin"
+  } = {}) {
+    const cell = ws.getCell(addr);
+    cell.value = val != null ? String(val) : "";
+    cell.font = {
+      bold,
+      size: sz,
+      color,
+      name: "맑은 고딕"
+    };
+    cell.alignment = {
+      horizontal: ha,
+      vertical: va,
+      wrapText: wrap
+    };
+    cell.border = mkBd(l, r, t, b);
+  }
+  [4.78, 7.78, 12.78, 4.78, 2.78, 2.78, 7.78, 5.78, 13.78, 7.78, 4.78, 9.00, 7.55, 8.66, 5.78, 5.78, 8.0].forEach((w, i) => ws.getColumn(i + 1).width = w);
+  [40, 40, 20.1, 30.0, 78.8, 20.2, 32.2, 31.25, 31.25, 31.25, 31.25, 31.25, 31.25, 17.2, 12.8, 30.0, 15.0, 30.0, 15.0, 25.0, 18.75].forEach((h, i) => {const row=ws.getRow(i+1);row.height=h;row.customHeight=true;});
+  C("C1", "WELDING RECORD\n용 접  기록서", {
+    bold: true,
+    sz: 22,
+    t: "medium",
+    l: "thin",
+    r: "thin",
+    b: "thin"
+  });
+  C("M1", "No.\n번호", {
+    sz: 11,
+    t: "medium",
+    l: "thin",
+    r: "thin",
+    b: "thin"
+  });
+  C("N1", form.docNo, {
+    sz: 10,
+    color: BLK,
+    t: "medium",
+    l: "thin",
+    r: "medium",
+    b: "thin"
+  });
+  C("M2", "Page                페이지", {
+    sz: 11,
+    t: "thin",
+    l: "thin",
+    r: "thin",
+    b: "thin"
+  });
+  C("N2", "1 of 1", {
+    sz: 10,
+    t: "thin",
+    l: "thin",
+    r: "medium",
+    b: "thin"
+  });
+  C("A3", "고 객", {
+    bold: true,
+    sz: 11,
+    l: "medium",
+    r: "thin"
+  });
+  C("C3", "공사명", {
+    bold: true,
+    sz: 11
+  });
+  C("D3", "제품명", {
+    bold: true,
+    sz: 11
+  });
+  C("H3", "제품번호", {
+    bold: true,
+    sz: 11
+  });
+  C("M3", "수량", {
+    bold: true,
+    sz: 11
+  });
+  C("N3", "도면번호", {
+    bold: true,
+    sz: 11,
+    r: "medium"
+  });
+  C("A4", form.cust, {
+    sz: 10,
+    color: BLK,
+    l: "medium",
+    r: "thin"
+  });
+  C("C4", form.proj, {
+    sz: 10,
+    color: BLK
+  });
+  C("D4", form.prod, {
+    sz: 10,
+    color: BLK
+  });
+  C("H4", form.pNos.join(", "), {
+    sz: 8,
+    color: BLK
+  });
+  C("M4", form.pNos.length > 0 ? `${form.pNos.length} Sets` : "", {
+    sz: 10,
+    color: BLK
+  });
+  C("N4", form.drwNo, {
+    sz: 10,
+    color: BLK,
+    r: "medium"
+  });
+  C("A6", "순번No", {
+    sz: 9,
+    l: "medium"
+  });
+  C("B6", "작업날짜\nDate", {
+    sz: 9
+  });
+  C("C6", "용접 내용\nWelding Description", {
+    sz: 9
+  });
+  C("E6", "공정\n번호", {
+    sz: 9
+  });
+  C("G6", "용접사\n/ I.D NO", {
+    sz: 9
+  });
+  C("H6", "용접\n방법", {
+    sz: 9
+  });
+  C("I6", "WPS NO.", {
+    sz: 9
+  });
+  C("J6", "모재(Base Metal)", {
+    sz: 9
+  });
+  C("M6", "용접봉(Filler Metal)", {
+    sz: 9
+  });
+  C("P6", "비 고 Remark", {
+    sz: 9
+  });
+  C("Q6", "확인\nVerification", {
+    sz: 9,
+    r: "medium"
+  });
+  C("J7", "부품명", {
+    sz: 9
+  });
+  C("K7", "재질", {
+    sz: 9
+  });
+  C("M7", "AWS No.", {
+    sz: 9
+  });
+  C("N7", "Heat/Lot No.", {
+    sz: 9
+  });
+  C("O7", "size", {
+    sz: 9
+  });
+  for (let i = 0; i < 3; i++) {
+    const en = form.entries[i] || {};
+    const col = BLK;
+    const r1 = 8 + i * 2,
+      r2 = r1 + 1;
+    const empty = i === 2;
+    C(`A${r1}`, empty ? "" : i + 1, {
+      sz: 10,
+      l: "medium"
+    });
+    C(`B${r1}`, empty ? "" : en.date || "", {
+      sz: 8,
+      color: col
+    });
+    C(`C${r1}`, empty ? "- BLANK -" : en.desc || "", {
+      sz: i < 2 ? 9 : 8,
+      color: col
+    });
+    C(`E${r1}`, empty ? "" : en.procNo || "", {
+      sz: 8,
+      color: col
+    });
+    C(`G${r1}`, empty ? "" : en.welder || "", {
+      sz: 8,
+      color: col
+    });
+    C(`H${r1}`, empty ? "" : en.method || "", {
+      sz: 8,
+      color: col,
+      b: "dotted"
+    });
+    C(`I${r1}`, empty ? "" : en.wps || "", {
+      sz: 8,
+      color: col,
+      b: "dotted"
+    });
+    C(`J${r1}`, empty ? "" : en.part || "", {
+      sz: 8,
+      color: col,
+      b: "dotted"
+    });
+    C(`K${r1}`, empty ? "" : en.mat || "", {
+      sz: 8,
+      color: col,
+      b: "dotted"
+    });
+    C(`M${r1}`, empty ? "" : en.aws || "", {
+      sz: 8,
+      color: col,
+      b: "dotted"
+    });
+    C(`N${r1}`, empty ? "" : en.heat || "", {
+      sz: 8,
+      color: col,
+      b: "dotted"
+    });
+    C(`O${r1}`, empty ? "" : en.sz || "", {
+      sz: 8,
+      color: col,
+      b: "dotted"
+    });
+    C(`P${r1}`, empty ? "" : en.rmk || "", {
+      sz: 8,
+      color: col,
+      b: "dotted"
+    });
+    C(`Q${r1}`, "", {
+      sz: 9,
+      r: "medium"
+    });
+    C(`H${r2}`, empty ? "" : "-", {
+      sz: 8,
+      t: "dotted"
+    });
+    C(`I${r2}`, empty ? "" : "-", {
+      sz: 8,
+      t: "dotted"
+    });
+    C(`J${r2}`, empty ? "" : "-", {
+      sz: 8,
+      t: "dotted"
+    });
+    C(`K${r2}`, empty ? "" : "-", {
+      sz: 8,
+      t: "dotted"
+    });
+    C(`M${r2}`, empty ? "" : "-", {
+      sz: 8,
+      t: "dotted"
+    });
+    C(`N${r2}`, empty ? "" : "-", {
+      sz: 8,
+      t: "dotted"
+    });
+    C(`O${r2}`, empty ? "" : "-", {
+      sz: 8,
+      t: "dotted"
+    });
+    C(`P${r2}`, empty ? "" : "-", {
+      sz: 8,
+      t: "dotted"
+    });
+    C(`Q${r2}`, "", {
+      r: "medium"
+    });
+  }
+  C("A14", "REMARK :   \n               ", {
+    sz: 10,
+    ha: "left",
+    va: "top",
+    l: "medium",
+    r: "medium"
+  });
+  C("A16", "작업 확인 :", {
+    sz: 11,
+    l: "medium"
+  });
+  C("C16", "황 동 찬", {
+    sz: 11,
+    ha: "left"
+  });
+  C("F16", "작성자 :", {
+    sz: 11
+  });
+  C("L16", "", {
+    l: "thin",
+    r: "medium",
+    t: "thin",
+    b: "medium"
+  });
+  C("J17", "Date", {
+    sz: 11
+  });
+  C("A18", "특이사항 :", {
+    sz: 11,
+    l: "medium"
+  });
+  C("C18", "N / A", {
+    sz: 11
+  });
+  C("F18", "승인자 :", {
+    sz: 11
+  });
+  C("J19", "Date", {
+    sz: 11
+  });
+  C("A20", "NQAP-0901-03", {
+    sz: 11,
+    ha: "left",
+    va: "bottom",
+    l: null,
+    r: null,
+    t: null,
+    b: null
+  });
+  C("N20", "  HI AIR KOREA Co.,Ltd.", {
+    sz: 11,
+    ha: "right",
+    va: "bottom",
+    l: null,
+    r: null,
+    t: null,
+    b: null
+  });
+  C("Q20", "", {
+    l: null,
+    r: null,
+    t: null,
+    b: null
+  });
+  ["A1:B2", "C1:L2", "N1:Q1", "N2:Q2", "A3:B3", "D3:G3", "H3:L3", "N3:Q3", "A4:B5", "C4:C5", "D4:G5", "H4:L5", "M4:M5", "N4:Q5", "A6:A7", "B6:B7", "C6:D7", "E6:F7", "G6:G7", "H6:H7", "I6:I7", "J6:L6", "M6:O6", "P6:P7", "Q6:Q7", "K7:L7", ...Array.from({
+    length: 3
+  }, (_, i) => {
+    const r1 = 8 + i * 2,
+      r2 = r1 + 1;
+    return [`A${r1}:A${r2}`, `B${r1}:B${r2}`, `C${r1}:D${r2}`, `E${r1}:F${r2}`, `G${r1}:G${r2}`, `K${r1}:L${r1}`, `K${r2}:L${r2}`, `Q${r1}:Q${r2}`];
+  }).flat(), "A14:Q15", "A16:B17", "C16:E17", "F16:G16", "L16:Q19", "J17:K17", "A18:B19", "C18:E19", "F18:G18", "J19:K19", "A20:C20", "N20:Q20"].forEach(range => ws.mergeCells(range));
+
+  /* ── F16:K19 : 내부 테두리 제거 후 바깥 테두리만 + 서명/날짜 밑줄 ── */
+  for (let r = 16; r <= 19; r++) {
+    for (let c = 6; c <= 11; c++) {
+      // F=6, K=11
+      const cell = ws.getCell(r, c);
+      const bd = {};
+      // 바깥 테두리
+      if (r === 16) bd.top = bs("thin");
+      if (r === 19) bd.bottom = bs("thin");
+      if (c === 6) bd.left = bs("thin");
+      if (c === 11) bd.right = bs("thin");
+      // 이름/서명 밑줄: H~K (16행, 18행)
+      if ((r === 16 || r === 18) && c >= 8) bd.bottom = bs("thin");
+      // 날짜 밑줄: H~I (19행만) — 17행 제거
+      if (r === 19 && c >= 8 && c <= 9) bd.bottom = bs("thin");
+      cell.border = bd;
+    }
+  }
+
+  /* ── 행 높이 강제 적용 (ExcelJS ×0.8 변환 보정: 원하는값 ×1.25 입력) ── */
+  [{
+    r: 1,
+    h: 40
+  }, {
+    r: 2,
+    h: 40
+  }, {
+    r: 8,
+    h: 31.25
+  }, {
+    r: 9,
+    h: 31.25
+  }, {
+    r: 10,
+    h: 31.25
+  }, {
+    r: 11,
+    h: 31.25
+  }, {
+    r: 12,
+    h: 31.25
+  }, {
+    r: 13,
+    h: 31.25
+  }, {
+    r: 16,
+    h: 37.5
+  }, {
+    r: 17,
+    h: 18.75
+  }, {
+    r: 18,
+    h: 37.5
+  }, {
+    r: 19,
+    h: 18.75
+  }].forEach(({
+    r,
+    h
+  }) => {
+    const row = ws.getRow(r);
+    row.height = h;
+    row.customHeight = true;
+  });
+
+  /* ── 인쇄 설정: A4 가로방향 ── */
+  ws.pageSetup = {
+    paperSize: 9,
+    // 9 = A4
+    orientation: "landscape",
+    fitToPage: true,
+    fitToWidth: 1,
+    fitToHeight: 1,
+    horizontalCentered: true
+  };
+
+  /* ── A1:Q19 굵은 바깥 테두리 ── */
+  const thick = {
+    style: "medium",
+    color: BLK
+  };
+  for (let r = 1; r <= 19; r++) {
+    for (let c = 1; c <= 17; c++) {
+      const cell = ws.getCell(r, c);
+      const bd = Object.assign({}, cell.border || {});
+      if (r === 1) bd.top = thick;
+      if (r === 19) bd.bottom = thick;
+      if (c === 1) bd.left = thick;
+      if (c === 17) bd.right = thick;
+      cell.border = bd;
+    }
+  }
+  const buf = await wb.xlsx.writeBuffer();
+  const bytes = new Uint8Array(buf);
+  let bin = "";
+  for (let i = 0; i < bytes.length; i += 8192) bin += String.fromCharCode(...bytes.subarray(i, i + 8192));
+  return btoa(bin);
+}
+
+/* ── 시작 ── */
+try {
+  init();
+} catch(e) {
+  document.getElementById("jsError").style.display = "block";
+  document.getElementById("jsError").textContent = "❌ init() 오류\n" + e.stack;
+}
+</script>
+</body>
+</html>
