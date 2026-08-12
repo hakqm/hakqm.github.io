@@ -4320,17 +4320,22 @@
       document.getElementById("noticeHistCloseBtn").onclick = () => modal.remove();
     }
 
-    async function loadNotices() {
+    /* preloaded 를 넘기면 서버를 호출하지 않고 그 결과로 바로 그린다
+       (홈 번들 getHomeBundle 에서 사용) */
+    async function loadNotices(preloaded) {
       const listEl = document.getElementById("noticeList");
       const statusEl = document.getElementById("noticeStatus");
       if (!listEl || !statusEl || noticeRequestRunning) return;
 
       noticeRequestRunning = true;
-      statusEl.textContent = "알림을 불러오는 중입니다.";
+      if (!preloaded) statusEl.textContent = "알림을 불러오는 중입니다.";
 
       try {
-        const url = `${WEB_APP_URL}?action=getNotices&limit=20`;
-        const result = await jsonpRequest(url, "noticeListCallback");
+        let result = preloaded;
+        if (!result) {
+          const url = `${WEB_APP_URL}?action=getNotices&limit=20`;
+          result = await jsonpRequest(url, "noticeListCallback");
+        }
 
         if (!result.success) {
           noticeCache = [];
@@ -4414,6 +4419,26 @@
     }
 
     /* force=true: 읽음/게시 등 변화 직후 — 최소 간격 무시하고 즉시 최신값 조회 */
+    /* 서버 요약 응답을 화면/로컬캐시에 반영 — 직접 조회와 홈 번들이 공유 */
+    function applyMeetingSummaryResult(result, uid) {
+      /* 응답 대기 중 로그아웃/사용자 전환이 일어났으면 반영하지 않음 */
+      if (!result || !result.success) return;
+      if (!currentUserData || (currentUserData.user_id || "") !== uid) return;
+
+      const unread = Number(result.unread_count) || 0;
+      const title = result.latest_title || "";
+      meetingSummaryLast = { uid, unread, title };
+      meetingSummaryFetchedAt = Date.now();
+      meetingSummaryFetchedUid = uid;
+      applyMeetingSummaryUI(unread, title);
+      if (uid) {
+        try {
+          localStorage.setItem(MEETING_SUMMARY_CACHE_PREFIX + uid,
+            JSON.stringify({ unread, title, ts: Date.now() }));
+        } catch (error) { /* 저장 실패해도 표시는 정상 */ }
+      }
+    }
+
     async function loadMeetingSummary(force) {
       if (!currentUserData) { applyMeetingSummaryUI(0, ""); return; }
       if (meetingSummaryRunning) {
@@ -4435,21 +4460,7 @@
         ].join("&");
         const result = await jsonpRequest(`${WEB_APP_URL}?${params}`, "meetingSummaryCallback");
         console.log(`[HQAA perf] getMeetingSummary ${Math.round(performance.now() - perfStart)}ms`);
-        /* 응답 대기 중 로그아웃/사용자 전환이 일어났으면 반영하지 않음 */
-        if (result && result.success && currentUserData && (currentUserData.user_id || "") === uid) {
-          const unread = Number(result.unread_count) || 0;
-          const title = result.latest_title || "";
-          meetingSummaryLast = { uid, unread, title };
-          meetingSummaryFetchedAt = Date.now();
-          meetingSummaryFetchedUid = uid;
-          applyMeetingSummaryUI(unread, title);
-          if (uid) {
-            try {
-              localStorage.setItem(MEETING_SUMMARY_CACHE_PREFIX + uid,
-                JSON.stringify({ unread, title, ts: Date.now() }));
-            } catch (error) { /* 저장 실패해도 표시는 정상 */ }
-          }
-        }
+        applyMeetingSummaryResult(result, uid);
       } catch (error) {
         console.error("팀회의 요약 조회 오류:", error);
         /* 실패 시 임시 캐시 값을 확정값으로 승격하지 않음(다음 갱신 시점에 재시도) */
@@ -5277,11 +5288,14 @@
       }
     }
 
-    async function loadMealSummary() {
+    async function loadMealSummary(preloaded) {
       try {
-        const today = getTodayStr();
-        const url = `${WEB_APP_URL}?action=getMealSummary&date=${encodeURIComponent(today)}`;
-        const result = await jsonpRequest(url, "mealSummaryCallback");
+        let result = preloaded;
+        if (!result) {
+          const today = getTodayStr();
+          const url = `${WEB_APP_URL}?action=getMealSummary&date=${encodeURIComponent(today)}`;
+          result = await jsonpRequest(url, "mealSummaryCallback");
+        }
         if (result && result.success) {
           const s = result.summary || {};
           const applyEl = document.getElementById("mealCountApplying");
@@ -5645,15 +5659,18 @@
       grid.innerHTML = [1,2,3,4,5].map(no => renderRoomCard(no, roomMap[no], isToday, loading)).join("");
     }
 
-    async function loadRoomStatus(dateStr) {
+    async function loadRoomStatus(dateStr, preloaded) {
       const today = getTodayStr();
       const targetDate = dateStr || (document.getElementById("roomViewDate")?.value) || today;
       const isToday = targetDate === today;
       /* 카드 레이아웃을 유지한 채 배지만 '조회중'으로 표시 (이전 캐시 데이터가 있으면 그대로 두고 배지만 교체) */
-      renderRoomGrid(roomStatusCache, targetDate, isToday, true);
+      if (!preloaded) renderRoomGrid(roomStatusCache, targetDate, isToday, true);
       try {
-        const url = `${WEB_APP_URL}?action=getRoomStatus&date=${encodeURIComponent(targetDate)}`;
-        const result = await jsonpRequest(url, "roomStatusCallback");
+        let result = preloaded;
+        if (!result) {
+          const url = `${WEB_APP_URL}?action=getRoomStatus&date=${encodeURIComponent(targetDate)}`;
+          result = await jsonpRequest(url, "roomStatusCallback");
+        }
         if (result && result.success) {
           roomStatusCache = result.reservations || [];
           renderRoomGrid(roomStatusCache, targetDate, isToday);
@@ -6302,14 +6319,65 @@
       }
     }
 
+    /* =========================================================
+       홈 화면 번들 로딩 (2026-08-12)
+       기존에는 홈 진입 시 4개 API 를 동시에 쐈다. Apps Script 는 요청을
+       병렬 처리하지 못하고 줄을 세우므로 큐가 포화돼 무작위 실패가 났다.
+       → getHomeBundle 한 번으로 묶어 실행 슬롯 점유를 1/4 로 줄인다.
+
+       Apps Script 가 아직 재배포되지 않았다면 getHomeBundle 이 없으므로
+       기존 개별 호출로 자동 폴백한다(구버전과 호환).
+       ========================================================= */
+    let homeBundleRunning = false;
+
+    function loadHomeIndividually() {
+      setTimeout(loadNotices, 0);
+      setTimeout(loadMealSummary, 100);
+      setTimeout(loadRoomStatus, 200);
+      setTimeout(loadMeetingSummary, 0);
+    }
+
+    async function loadHomeBundle() {
+      if (homeBundleRunning) return;
+      homeBundleRunning = true;
+
+      const today = getTodayStr();
+      const uid = currentUserData ? (currentUserData.user_id || "") : "";
+      const empNo = currentUserData ? (currentUserData.emp_no || "") : "";
+
+      try {
+        const params = [
+          "action=getHomeBundle",
+          `date=${encodeURIComponent(today)}`,
+          "limit=20",
+          `user_id=${encodeURIComponent(uid)}`,
+          `emp_no=${encodeURIComponent(empNo)}`
+        ].join("&");
+
+        const perfStart = performance.now();
+        const result = await jsonpRequest(`${WEB_APP_URL}?${params}`, "homeBundleCallback", { timeoutMs: 20000 });
+        console.log(`[HQAA perf] getHomeBundle ${Math.round(performance.now() - perfStart)}ms`);
+
+        /* 구버전 Apps Script 는 알 수 없는 action 이라 success:false 를 반환한다 */
+        if (!result || !result.success) throw new Error("getHomeBundle 미지원");
+
+        if (result.notices) loadNotices(result.notices);
+        if (result.meal)    loadMealSummary(result.meal);
+        if (result.room)    loadRoomStatus(today, result.room);
+        if (result.meeting && uid) applyMeetingSummaryResult(result.meeting, uid);
+      } catch (error) {
+        console.warn("홈 번들 실패 — 개별 조회로 대체합니다:", error);
+        loadHomeIndividually();
+      } finally {
+        homeBundleRunning = false;
+      }
+    }
+
     function afterScreenRender(key) {
       if (key === "home") {
-        setTimeout(loadNotices, 0);
-        setTimeout(loadMealSummary, 100);
-        setTimeout(loadRoomStatus, 200);
         /* 팀회의 요약: 저장된 값을 지연 없이 먼저 그린 뒤 서버 최신값 조회 */
         applyStoredMeetingSummary();
-        setTimeout(loadMeetingSummary, 0);
+        loadHomeBundle();
         updateHomeMealStatus();
 
         const roomViewDateInput = document.getElementById("roomViewDate");
