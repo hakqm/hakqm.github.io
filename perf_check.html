@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HQAA 포털 속도 진단</title>
+<style>
+  :root {
+    --bg: #f4f6f9; --card: #fff; --text: #1f2937; --muted: #6b7280;
+    --line: #e5e7eb; --accent: #2563eb;
+    --ok: #059669; --warn: #d97706; --bad: #dc2626;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f172a; --card: #1e293b; --text: #e2e8f0; --muted: #94a3b8;
+      --line: #334155; --accent: #60a5fa;
+      --ok: #34d399; --warn: #fbbf24; --bad: #f87171;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 20px; background: var(--bg); color: var(--text);
+    font-family: "Malgun Gothic", -apple-system, "Segoe UI", sans-serif;
+    font-size: 14px; line-height: 1.6;
+  }
+  .wrap { max-width: 900px; margin: 0 auto; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  .sub { color: var(--muted); font-size: 13px; margin-bottom: 20px; }
+  .card {
+    background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+    padding: 16px; margin-bottom: 14px;
+  }
+  .card h2 { font-size: 15px; margin: 0 0 12px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
+  button {
+    background: var(--accent); color: #fff; border: 0; border-radius: 8px;
+    padding: 11px 20px; font-size: 14px; font-weight: 600; cursor: pointer;
+    font-family: inherit;
+  }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  button.ghost { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+  input {
+    background: var(--bg); color: var(--text); border: 1px solid var(--line);
+    border-radius: 6px; padding: 8px 10px; font-size: 14px; font-family: inherit;
+    width: 150px;
+  }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
+  .tblwrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 560px; }
+  th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--line); }
+  th { color: var(--muted); font-weight: 600; font-size: 12px; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .ok { color: var(--ok); font-weight: 600; }
+  .warn { color: var(--warn); font-weight: 600; }
+  .bad { color: var(--bad); font-weight: 600; }
+  .bar { height: 6px; border-radius: 3px; background: var(--accent); min-width: 2px; }
+  #verdict p { margin: 0 0 10px; }
+  #verdict .head { font-size: 16px; font-weight: 700; }
+  .note { color: var(--muted); font-size: 12px; margin-top: 10px; }
+  code { background: var(--bg); padding: 1px 5px; border-radius: 4px; font-size: 12px; }
+  .log { font-size: 12px; color: var(--muted); white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>HQAA 포털 속도 진단</h1>
+  <div class="sub">
+    느림의 원인이 <b>내 PC/브라우저</b>인지 <b>Apps Script 서버</b>인지 구분합니다.
+    측정 중에는 다른 탭 작업을 멈춰주세요. (약 30~60초 소요)
+  </div>
+
+  <div class="card">
+    <div class="row">
+      <input id="inName" placeholder="이름 (선택)">
+      <input id="inEmp" placeholder="사번 (선택)">
+      <button id="btnRun">진단 시작</button>
+      <button id="btnCopy" class="ghost" disabled>결과 복사</button>
+    </div>
+    <div class="note">
+      이름/사번을 넣으면 로그인이 필요한 API(팀회의 요약, 내 식수 상태)까지 측정합니다.
+      포털에 이미 로그인한 상태면 자동으로 채워집니다. 비워도 핵심 진단은 가능합니다.
+    </div>
+    <div class="log" id="status" style="margin-top:10px;"></div>
+  </div>
+
+  <div class="card" id="verdictCard" style="display:none;">
+    <h2>진단 결과</h2>
+    <div id="verdict"></div>
+  </div>
+
+  <div class="card" id="envCard" style="display:none;">
+    <h2>1. 내 PC / 브라우저 성능 (서버와 무관)</h2>
+    <div class="tblwrap"><table id="tblEnv"></table></div>
+  </div>
+
+  <div class="card" id="netCard" style="display:none;">
+    <h2>2. Apps Script 기본 왕복 시간 (시트 읽기 없음)</h2>
+    <div class="tblwrap"><table id="tblNet"></table></div>
+    <div class="note">
+      존재하지 않는 action을 호출해 <b>네트워크 + Apps Script 실행 준비</b> 시간만 측정합니다.
+      여기서 이미 느리면 시트 구조와 무관한 구글 인프라/네트워크 문제입니다.
+    </div>
+  </div>
+
+  <div class="card" id="apiCard" style="display:none;">
+    <h2>3. API별 응답 시간 (시트 읽기 포함)</h2>
+    <div class="tblwrap"><table id="tblApi"></table></div>
+    <div class="note">
+      <b>순수 시트비용 = 응답시간 − 기본 왕복시간</b>. 이 값이 큰 API가 병목입니다.
+    </div>
+  </div>
+
+  <div class="card" id="homeCard" style="display:none;">
+    <h2>4. 홈 화면 실제 로딩 시뮬레이션</h2>
+    <div class="tblwrap"><table id="tblHome"></table></div>
+    <div class="note">
+      홈 화면은 4개 API를 동시에 호출합니다. Apps Script는 같은 사용자의 요청을
+      <b>동시에 처리하지 못하고 줄 세우는</b> 특성이 있어, 실제로는 합계에 가까운 시간이 걸립니다.
+    </div>
+  </div>
+
+  <div class="card" id="pageCard" style="display:none;">
+    <h2>5. 페이지 파일 자체 로딩</h2>
+    <div class="tblwrap"><table id="tblPage"></table></div>
+  </div>
+
+</div>
+
+<script>
+"use strict";
+
+var WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwn9I60-14GHDQk_rNF_uJYBpig-Bovl7Qqje_eGGjcFmZJZfqQgtpUg6necytvlQQ-/exec";
+var LOGIN_STORAGE_KEY = "hak_login_user";
+
+var $ = function (id) { return document.getElementById(id); };
+var R = {};                       /* 측정 결과 누적 */
+
+function setStatus(msg) { $("status").textContent = msg; }
+
+function todayStr() {
+  var d = new Date();
+  var p = function (n) { return String(n).padStart(2, "0"); };
+  return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate());
+}
+
+/* ── JSONP 호출 + 소요시간 측정 ───────────────────────────────── */
+function jsonp(query, timeoutMs) {
+  timeoutMs = timeoutMs || 25000;
+  return new Promise(function (resolve) {
+    var cb = "__perf_" + Date.now() + "_" + Math.floor(Math.random() * 1e6);
+    var s = document.createElement("script");
+    var t0 = performance.now();
+    var done = false;
+
+    var finish = function (out) {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      try { delete window[cb]; } catch (e) { window[cb] = undefined; }
+      s.remove();
+      resolve(out);
+    };
+    var timer = setTimeout(function () {
+      finish({ ms: timeoutMs, ok: false, err: "시간초과" });
+    }, timeoutMs);
+
+    window[cb] = function (res) {
+      finish({ ms: performance.now() - t0, ok: true, res: res });
+    };
+    s.onerror = function () {
+      finish({ ms: performance.now() - t0, ok: false, err: "연결오류" });
+    };
+
+    s.src = WEB_APP_URL + "?" + query + "&callback=" + cb + "&_=" + Date.now();
+    document.body.appendChild(s);
+  });
+}
+
+/* ── 표 렌더 ──────────────────────────────────────────────────── */
+function renderTable(el, headers, rows) {
+  var h = "<tr>" + headers.map(function (x) { return "<th>" + x + "</th>"; }).join("") + "</tr>";
+  var b = rows.map(function (r) {
+    return "<tr>" + r.map(function (c, i) {
+      var cls = (typeof c === "object" && c.cls) ? c.cls : (i > 0 ? "num" : "");
+      var v = (typeof c === "object") ? c.v : c;
+      return '<td class="' + cls + '">' + v + "</td>";
+    }).join("") + "</tr>";
+  }).join("");
+  el.innerHTML = h + b;
+}
+
+function ms(v) { return v == null ? "—" : Math.round(v).toLocaleString() + " ms"; }
+
+function grade(v, okMax, warnMax) {
+  if (v == null) return { v: "—", cls: "num" };
+  var cls = v <= okMax ? "ok" : (v <= warnMax ? "warn" : "bad");
+  var label = v <= okMax ? "양호" : (v <= warnMax ? "보통" : "느림");
+  return { v: label, cls: cls };
+}
+
+/* ── 1. PC / 브라우저 성능 ────────────────────────────────────── */
+function benchCPU() {
+  var t0 = performance.now(), x = 0;
+  for (var i = 1; i <= 5000000; i++) x += Math.sqrt(i) % 7;
+  var el = performance.now() - t0;
+  if (x < 0) console.log(x);          /* 최적화 제거 방지 */
+  return el;
+}
+
+function benchDOM() {
+  var t0 = performance.now();
+  var box = document.createElement("div");
+  box.style.cssText = "position:absolute;left:-9999px;top:0;";
+  document.body.appendChild(box);
+  var html = "";
+  for (var i = 0; i < 3000; i++) {
+    html += '<div class="r"><span>행 ' + i + '</span><span>값</span></div>';
+  }
+  box.innerHTML = html;
+  void box.offsetHeight;              /* 강제 레이아웃 */
+  var el = performance.now() - t0;
+  box.remove();
+  return el;
+}
+
+function runEnv() {
+  var cpu = benchCPU();
+  var dom = benchDOM();
+  R.cpu = cpu; R.dom = dom;
+
+  var rows = [
+    ["JS 연산 속도 (500만회)", ms(cpu), grade(cpu, 60, 150)],
+    ["DOM 렌더 속도 (3000행)", ms(dom), grade(dom, 80, 200)],
+    ["CPU 코어 수", (navigator.hardwareConcurrency || "?") + " 개", { v: "", cls: "" }],
+    ["브라우저 메모리 한도", (navigator.deviceMemory ? navigator.deviceMemory + " GB 이상" : "확인 불가"), { v: "", cls: "" }]
+  ];
+
+  if (performance.memory) {
+    var used = performance.memory.usedJSHeapSize / 1048576;
+    var lim = performance.memory.jsHeapSizeLimit / 1048576;
+    R.heapPct = used / lim * 100;
+    rows.push([
+      "현재 JS 메모리 사용",
+      Math.round(used) + " / " + Math.round(lim) + " MB",
+      grade(R.heapPct, 50, 80)
+    ]);
+  }
+
+  renderTable($("tblEnv"), ["항목", "측정값", "판정"], rows);
+  $("envCard").style.display = "";
+}
+
+/* ── 2. Apps Script 기본 왕복 ─────────────────────────────────── */
+async function runPing() {
+  var list = [];
+  for (var i = 0; i < 4; i++) {
+    setStatus("2/5 · Apps Script 기본 왕복 측정 중… (" + (i + 1) + "/4)");
+    var r = await jsonp("action=__perfping__");
+    list.push(r.ok ? r.ms : null);
+  }
+  var valid = list.filter(function (v) { return v != null; });
+  R.pingMin = valid.length ? Math.min.apply(null, valid) : null;
+  R.pingAvg = valid.length ? valid.reduce(function (a, b) { return a + b; }, 0) / valid.length : null;
+
+  var rows = list.map(function (v, i) {
+    return [(i === 0 ? "1회차 (콜드 스타트)" : (i + 1) + "회차"), ms(v), grade(v, 900, 2000)];
+  });
+  rows.push([{ v: "<b>최소 / 평균</b>", cls: "" }, { v: "<b>" + ms(R.pingMin) + " / " + ms(R.pingAvg) + "</b>", cls: "num" }, grade(R.pingMin, 900, 2000)]);
+
+  renderTable($("tblNet"), ["측정", "왕복 시간", "판정"], rows);
+  $("netCard").style.display = "";
+}
+
+/* ── 3. API별 응답 시간 ───────────────────────────────────────── */
+async function runApis(auth) {
+  var date = todayStr();
+  var tests = [
+    { key: "getNotices", label: "공지사항 (getNotices)", q: "action=getNotices&limit=5" },
+    { key: "getRoomStatus", label: "회의실 현황 (getRoomStatus)", q: "action=getRoomStatus&date=" + date },
+    { key: "getMealSummary", label: "식수 요약 (getMealSummary)", q: "action=getMealSummary&date=" + date }
+  ];
+  if (auth) {
+    tests.push({
+      key: "getMeetingSummary", label: "팀회의 요약 (getMeetingSummary)",
+      q: "action=getMeetingSummary&user_id=" + encodeURIComponent(auth.user_id) + "&emp_no=" + encodeURIComponent(auth.emp_no)
+    });
+    tests.push({
+      key: "getMyMealStatus", label: "내 식수 상태 (getMyMealStatus)",
+      q: "action=getMyMealStatus&date=" + date + "&user_id=" + encodeURIComponent(auth.user_id) + "&emp_no=" + encodeURIComponent(auth.emp_no)
+    });
+    tests.push({
+      key: "getMealSummaryAuth", label: "식수 상세 명단 (인증 포함)",
+      q: "action=getMealSummary&date=" + date + "&user_id=" + encodeURIComponent(auth.user_id) + "&emp_no=" + encodeURIComponent(auth.emp_no)
+    });
+  }
+
+  var rows = [];
+  R.api = {};
+
+  for (var i = 0; i < tests.length; i++) {
+    var t = tests[i];
+    setStatus("3/5 · API 응답 측정 중… (" + (i + 1) + "/" + tests.length + ") " + t.label);
+
+    var a = await jsonp(t.q);
+    var b = await jsonp(t.q);
+    var best = (a.ok && b.ok) ? Math.min(a.ms, b.ms) : (a.ok ? a.ms : (b.ok ? b.ms : null));
+    var sheetCost = (best != null && R.pingMin != null) ? Math.max(0, best - R.pingMin) : null;
+
+    R.api[t.key] = { label: t.label, first: a.ok ? a.ms : null, second: b.ok ? b.ms : null, best: best, sheetCost: sheetCost };
+
+    var detail = "";
+    if (a.ok && a.res && a.res.success === false) detail = " <span class='warn'>(" + (a.res.message || "실패") + ")</span>";
+    if (!a.ok) detail = " <span class='bad'>(" + a.err + ")</span>";
+
+    rows.push([
+      t.label + detail,
+      ms(a.ok ? a.ms : null),
+      ms(b.ok ? b.ms : null),
+      { v: "<b>" + ms(sheetCost) + "</b>", cls: "num" },
+      grade(sheetCost, 700, 1800)
+    ]);
+  }
+
+  renderTable($("tblApi"), ["API", "1회차", "2회차", "순수 시트비용", "판정"], rows);
+  $("apiCard").style.display = "";
+}
+
+/* ── 4. 홈 화면 시뮬레이션 ────────────────────────────────────── */
+async function runHomeSim(auth) {
+  setStatus("4/5 · 홈 화면 동시 호출 시뮬레이션…");
+  var date = todayStr();
+  var qs = [
+    "action=getNotices&limit=5",
+    "action=getMealSummary&date=" + date,
+    "action=getRoomStatus&date=" + date
+  ];
+  if (auth) {
+    qs.push("action=getMeetingSummary&user_id=" + encodeURIComponent(auth.user_id) + "&emp_no=" + encodeURIComponent(auth.emp_no));
+  }
+
+  var t0 = performance.now();
+  var results = await Promise.all(qs.map(function (q) { return jsonp(q); }));
+  var wall = performance.now() - t0;
+
+  var sum = results.reduce(function (a, r) { return a + (r.ok ? r.ms : 0); }, 0);
+  var slowest = Math.max.apply(null, results.map(function (r) { return r.ok ? r.ms : 0; }));
+  R.homeWall = wall;
+  R.homeSlowest = slowest;
+  R.homeSerialized = wall > slowest * 1.6;   /* 가장 느린 것보다 훨씬 크면 줄서기 발생 */
+
+  renderTable($("tblHome"), ["항목", "시간", "판정"], [
+    ["동시 호출 " + qs.length + "개 → 전부 완료까지", ms(wall), grade(wall, 2500, 5000)],
+    ["가장 느린 단일 API", ms(slowest), { v: "", cls: "" }],
+    ["개별 시간 단순 합계", ms(sum), { v: "", cls: "" }],
+    ["동시 처리 여부", R.homeSerialized ? "<b>줄서기 발생(직렬 처리)</b>" : "정상 병렬 처리",
+      R.homeSerialized ? { v: "문제", cls: "bad" } : { v: "양호", cls: "ok" }]
+  ]);
+  $("homeCard").style.display = "";
+}
+
+/* ── 5. 페이지 파일 로딩 ──────────────────────────────────────── */
+async function runPageLoad() {
+  setStatus("5/5 · 페이지 파일 로딩 측정…");
+  var rows = [];
+
+  var nav = performance.getEntriesByType("navigation")[0];
+  if (nav) {
+    rows.push(["이 진단 페이지 서버 응답(TTFB)", ms(nav.responseStart - nav.requestStart), grade(nav.responseStart - nav.requestStart, 300, 800)]);
+  }
+
+  try {
+    var t0 = performance.now();
+    var res = await fetch("index.html", { cache: "no-store" });
+    var buf = await res.arrayBuffer();
+    var el = performance.now() - t0;
+    var kb = buf.byteLength / 1024;
+    R.indexKB = kb;
+    R.indexMs = el;
+    rows.push(["index.html 다운로드 (캐시 무시)", ms(el), grade(el, 1200, 3000)]);
+    rows.push(["index.html 크기", Math.round(kb).toLocaleString() + " KB", grade(kb, 250, 400)]);
+
+    var t1 = performance.now();
+    await (await fetch("index.html")).arrayBuffer();
+    var el2 = performance.now() - t1;
+    R.indexCachedMs = el2;
+    rows.push(["index.html 재요청 (캐시 사용)", ms(el2), grade(el2, 300, 900)]);
+    rows.push(["캐시 효과", el < el2 * 1.3 ? "거의 없음" : "약 " + Math.round((1 - el2 / el) * 100) + "% 단축",
+      el < el2 * 1.3 ? { v: "캐시 삭제 무의미", cls: "warn" } : { v: "캐시 유효", cls: "ok" }]);
+  } catch (err) {
+    rows.push(["index.html 측정", "실패 — GitHub Pages 주소에서 열어주세요", { v: "N/A", cls: "warn" }]);
+  }
+
+  renderTable($("tblPage"), ["항목", "측정값", "판정"], rows);
+  $("pageCard").style.display = "";
+}
+
+/* ── 종합 판정 ────────────────────────────────────────────────── */
+function renderVerdict(auth) {
+  var out = [];
+  var pcSlow = (R.cpu > 150) || (R.dom > 200);
+  var pcMid = (R.cpu > 60) || (R.dom > 80);
+  var netSlow = R.pingMin != null && R.pingMin > 2000;
+  var netMid = R.pingMin != null && R.pingMin > 900;
+
+  var worst = null, worstMs = -1;
+  Object.keys(R.api || {}).forEach(function (k) {
+    var a = R.api[k];
+    if (a.sheetCost != null && a.sheetCost > worstMs) { worstMs = a.sheetCost; worst = a; }
+  });
+
+  /* 주원인 결정 */
+  var cause, causeCls;
+  if (worst && worstMs > 1500) {
+    cause = "Apps Script 서버 (시트 읽기)"; causeCls = "bad";
+  } else if (netSlow) {
+    cause = "네트워크 / Apps Script 인프라"; causeCls = "bad";
+  } else if (pcSlow) {
+    cause = "내 PC / 브라우저"; causeCls = "bad";
+  } else if (R.homeSerialized) {
+    cause = "Apps Script 요청 줄서기"; causeCls = "warn";
+  } else if (netMid || pcMid) {
+    cause = pcMid && !netMid ? "내 PC / 브라우저 (경미)" : "서버 응답 (경미)"; causeCls = "warn";
+  } else {
+    cause = "뚜렷한 병목 없음"; causeCls = "ok";
+  }
+
+  out.push('<p class="head">주 원인: <span class="' + causeCls + '">' + cause + "</span></p>");
+
+  out.push("<p><b>내 PC/브라우저</b> — JS 연산 " + ms(R.cpu) + ", DOM 렌더 " + ms(R.dom) + ". " +
+    (pcSlow ? '<span class="bad">평균보다 확연히 느립니다. 브라우저 확장 프로그램·백그라운드 프로그램 영향을 의심하세요.</span>'
+      : pcMid ? '<span class="warn">약간 느린 편이지만 치명적이지 않습니다.</span>'
+        : '<span class="ok">정상입니다. PC 문제가 아닙니다.</span>') + "</p>");
+
+  out.push("<p><b>서버 기본 왕복</b> — 최소 " + ms(R.pingMin) + ". " +
+    (netSlow ? '<span class="bad">시트를 전혀 읽지 않는데도 느립니다. 사내망/구글 인프라 지연입니다.</span>'
+      : '<span class="ok">Apps Script 자체 응답은 정상 범위입니다.</span>') + "</p>");
+
+  if (worst) {
+    out.push("<p><b>가장 무거운 API</b> — " + worst.label + ", 순수 시트비용 " + ms(worstMs) + ". " +
+      (worstMs > 1500 ? '<span class="bad">이 API의 시트 데이터가 누적되어 매번 전체를 읽고 있습니다. 서버 캐시 또는 데이터 정리가 필요합니다.</span>'
+        : worstMs > 700 ? '<span class="warn">아직 견딜 만하지만 데이터가 더 쌓이면 문제가 됩니다.</span>'
+          : '<span class="ok">시트 읽기 비용은 낮습니다.</span>') + "</p>");
+  }
+
+  out.push("<p><b>홈 화면 전체</b> — " + ms(R.homeWall) + " 소요. " +
+    (R.homeSerialized ? '<span class="warn">동시 호출이 병렬 처리되지 않고 순서대로 처리되었습니다. 홈 API를 하나로 합치면 크게 개선됩니다.</span>'
+      : '<span class="ok">동시 처리가 정상 동작합니다.</span>') + "</p>");
+
+  if (R.indexKB) {
+    out.push("<p><b>페이지 파일</b> — index.html " + Math.round(R.indexKB).toLocaleString() + " KB, 다운로드 " + ms(R.indexMs) +
+      ", 캐시 사용 시 " + ms(R.indexCachedMs) + ". " +
+      (R.indexKB > 400 ? '<span class="bad">단일 파일이 지나치게 큽니다. 파싱만으로도 수백 ms가 소모됩니다.</span>'
+        : R.indexKB > 250 ? '<span class="warn">파일이 큰 편입니다. 기능 분리를 검토하세요.</span>'
+          : '<span class="ok">적정 크기입니다.</span>') + "</p>");
+  }
+
+  /* 캐시 삭제 효과 */
+  var cacheHelps = (R.indexCachedMs != null && R.indexMs != null && R.indexCachedMs < R.indexMs * 0.7);
+  out.push('<p style="border-top:1px solid var(--line);padding-top:10px;"><b>캐시를 삭제하면 빨라질까?</b> ' +
+    (cacheHelps
+      ? '<span class="warn">아니요 — 오히려 느려집니다.</span> 캐시가 실제로 로딩을 단축시키고 있으므로, 삭제하면 매번 전체를 다시 받게 됩니다.'
+      : '<span class="warn">아니요.</span> 이 페이지의 느림은 캐시가 아니라 서버 응답 시간에서 발생합니다.') +
+    ' 캐시 삭제는 <b>코드를 수정했는데 반영이 안 될 때만</b> 의미가 있습니다.</p>');
+
+  if (!auth) {
+    out.push('<p class="note">※ 이름/사번을 입력하지 않아 로그인 필요 API(팀회의·내 식수)는 측정에서 빠졌습니다.</p>');
+  }
+
+  $("verdict").innerHTML = out.join("");
+  $("verdictCard").style.display = "";
+}
+
+/* ── 결과 텍스트 복사 ─────────────────────────────────────────── */
+function buildReport() {
+  var L = [];
+  L.push("[HQAA 포털 속도 진단] " + new Date().toLocaleString("ko-KR"));
+  L.push("UA: " + navigator.userAgent);
+  L.push("");
+  L.push("PC: JS " + ms(R.cpu) + " / DOM " + ms(R.dom) + " / 코어 " + (navigator.hardwareConcurrency || "?"));
+  L.push("서버 기본왕복: 최소 " + ms(R.pingMin) + " / 평균 " + ms(R.pingAvg));
+  L.push("");
+  L.push("API별 (1회차 / 2회차 / 순수시트비용)");
+  Object.keys(R.api || {}).forEach(function (k) {
+    var a = R.api[k];
+    L.push("  - " + a.label + ": " + ms(a.first) + " / " + ms(a.second) + " / " + ms(a.sheetCost));
+  });
+  L.push("");
+  L.push("홈 동시호출 완료: " + ms(R.homeWall) + " (최장 단일 " + ms(R.homeSlowest) + ", 줄서기=" + (R.homeSerialized ? "예" : "아니오") + ")");
+  if (R.indexKB) {
+    L.push("index.html: " + Math.round(R.indexKB) + " KB / 다운 " + ms(R.indexMs) + " / 캐시 " + ms(R.indexCachedMs));
+  }
+  return L.join("\n");
+}
+
+/* ── 로그인 정보 확보 ─────────────────────────────────────────── */
+function readStoredLogin() {
+  try {
+    var raw = localStorage.getItem(LOGIN_STORAGE_KEY);
+    if (!raw) return null;
+    var p = JSON.parse(raw);
+    var u = p.user || p;
+    if (u && u.user_id && u.emp_no) return { user_id: String(u.user_id), emp_no: String(u.emp_no), name: u.name || "" };
+  } catch (e) {}
+  return null;
+}
+
+async function resolveAuth() {
+  var stored = readStoredLogin();
+  if (stored) return stored;
+
+  var name = $("inName").value.trim();
+  var emp = $("inEmp").value.trim();
+  if (!name || !emp) return null;
+
+  setStatus("로그인 확인 중…");
+  var r = await jsonp("action=login&name=" + encodeURIComponent(name) + "&emp_no=" + encodeURIComponent(emp));
+  if (r.ok && r.res && r.res.success && r.res.user) {
+    R.loginMs = r.ms;
+    return { user_id: String(r.res.user.user_id), emp_no: String(r.res.user.emp_no), name: r.res.user.name };
+  }
+  return null;
+}
+
+/* ── 실행 ─────────────────────────────────────────────────────── */
+$("btnRun").addEventListener("click", async function () {
+  var btn = $("btnRun");
+  btn.disabled = true;
+  $("btnCopy").disabled = true;
+  R = {};
+
+  try {
+    setStatus("1/5 · PC 성능 측정 중…");
+    await new Promise(function (r) { setTimeout(r, 50); });
+    runEnv();
+
+    var auth = await resolveAuth();
+    await runPing();
+    await runApis(auth);
+    await runHomeSim(auth);
+    await runPageLoad();
+
+    renderVerdict(auth);
+    setStatus("진단 완료.");
+    $("btnCopy").disabled = false;
+    $("verdictCard").scrollIntoView({ behavior: "smooth", block: "start" });
+  } catch (err) {
+    setStatus("진단 중 오류: " + (err && err.message ? err.message : err));
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+$("btnCopy").addEventListener("click", function () {
+  var txt = buildReport();
+  navigator.clipboard.writeText(txt).then(
+    function () { setStatus("결과가 클립보드에 복사되었습니다."); },
+    function () { setStatus(txt); }
+  );
+});
+
+/* 저장된 로그인 자동 표시 */
+(function () {
+  var s = readStoredLogin();
+  if (s) {
+    $("inName").value = s.name || "";
+    $("inEmp").value = s.emp_no || "";
+    setStatus("포털 로그인 정보를 찾았습니다 (" + (s.name || s.emp_no) + "). 바로 진단 가능합니다.");
+  }
+})();
+</script>
+</body>
+</html>
