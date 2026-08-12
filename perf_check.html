@@ -253,19 +253,27 @@ function runEnv() {
 /* ── 2. Apps Script 기본 왕복 ─────────────────────────────────── */
 async function runPing() {
   var list = [];
-  for (var i = 0; i < 4; i++) {
-    setStatus("2/5 · Apps Script 기본 왕복 측정 중… (" + (i + 1) + "/4)");
-    var r = await jsonp("action=__perfping__");
-    list.push(r.ok ? r.ms : null);
+  for (var i = 0; i < 6; i++) {
+    setStatus("2/5 · Apps Script 기본 왕복 측정 중… (" + (i + 1) + "/6)");
+    list.push(await jsonp("action=__perfping__"));
   }
-  var valid = list.filter(function (v) { return v != null; });
+  var valid = list.filter(function (r) { return r.ok; }).map(function (r) { return r.ms; });
   R.pingMin = valid.length ? Math.min.apply(null, valid) : null;
   R.pingAvg = valid.length ? valid.reduce(function (a, b) { return a + b; }, 0) / valid.length : null;
+  R.pingFail = list.length - valid.length;
+  R.pingTotal = list.length;
+  R.pingTimeouts = list.filter(function (r) { return !r.ok && r.err === "시간초과"; }).length;
+  R.pingErrors = list.filter(function (r) { return !r.ok && r.err === "연결오류"; }).length;
 
-  var rows = list.map(function (v, i) {
-    return [(i === 0 ? "1회차 (콜드 스타트)" : (i + 1) + "회차"), ms(v), grade(v, 900, 2000)];
+  var rows = list.map(function (r, i) {
+    var label = (i === 0 ? "1회차 (콜드 스타트)" : (i + 1) + "회차");
+    if (r.ok) return [label, ms(r.ms), grade(r.ms, 900, 2000)];
+    return [label, { v: "<b>실패 — " + r.err + "</b>", cls: "num bad" }, { v: "실패", cls: "bad" }];
   });
-  rows.push([{ v: "<b>최소 / 평균</b>", cls: "" }, { v: "<b>" + ms(R.pingMin) + " / " + ms(R.pingAvg) + "</b>", cls: "num" }, grade(R.pingMin, 900, 2000)]);
+  rows.push([{ v: "<b>최소 / 평균 (성공분)</b>", cls: "" }, { v: "<b>" + ms(R.pingMin) + " / " + ms(R.pingAvg) + "</b>", cls: "num" }, grade(R.pingMin, 900, 2000)]);
+  rows.push([{ v: "<b>실패율</b>", cls: "" },
+    { v: "<b>" + R.pingFail + " / " + R.pingTotal + "</b> (시간초과 " + R.pingTimeouts + ", 연결오류 " + R.pingErrors + ")", cls: "num" },
+    R.pingFail === 0 ? { v: "양호", cls: "ok" } : { v: "문제", cls: "bad" }]);
 
   renderTable($("tblNet"), ["측정", "왕복 시간", "판정"], rows);
   $("netCard").style.display = "";
@@ -310,12 +318,16 @@ async function runApis(auth) {
 
     var detail = "";
     if (a.ok && a.res && a.res.success === false) detail = " <span class='warn'>(" + (a.res.message || "실패") + ")</span>";
-    if (!a.ok) detail = " <span class='bad'>(" + a.err + ")</span>";
+
+    var cell = function (r) {
+      if (r.ok) return { v: ms(r.ms), cls: "num" };
+      return { v: "<b>실패 · " + r.err + "</b>", cls: "num bad" };
+    };
 
     rows.push([
       t.label + detail,
-      ms(a.ok ? a.ms : null),
-      ms(b.ok ? b.ms : null),
+      cell(a),
+      cell(b),
       { v: "<b>" + ms(sheetCost) + "</b>", cls: "num" },
       grade(sheetCost, 700, 1800)
     ]);
@@ -431,9 +443,12 @@ function renderVerdict(auth) {
       : pcMid ? '<span class="warn">약간 느린 편이지만 치명적이지 않습니다.</span>'
         : '<span class="ok">정상입니다. PC 문제가 아닙니다.</span>') + "</p>");
 
-  out.push("<p><b>서버 기본 왕복</b> — 최소 " + ms(R.pingMin) + ". " +
-    (netSlow ? '<span class="bad">시트를 전혀 읽지 않는데도 느립니다. 사내망/구글 인프라 지연입니다.</span>'
-      : '<span class="ok">Apps Script 자체 응답은 정상 범위입니다.</span>') + "</p>");
+  out.push("<p><b>서버 기본 왕복</b> — 최소 " + ms(R.pingMin) + ", 실패 " + R.pingFail + "/" + R.pingTotal +
+    " (시간초과 " + R.pingTimeouts + ", 연결오류 " + R.pingErrors + "). " +
+    (R.pingFail > 0
+      ? '<span class="bad">시트를 전혀 읽지 않는 요청조차 실패합니다. Apps Script 실행 자체가 한계에 걸려 있습니다.</span>'
+      : netSlow ? '<span class="bad">시트를 전혀 읽지 않는데도 느립니다. 사내망/구글 인프라 지연입니다.</span>'
+        : '<span class="ok">Apps Script 자체 응답은 정상 범위입니다.</span>') + "</p>");
 
   if (worst) {
     out.push("<p><b>가장 무거운 API</b> — " + worst.label + ", 순수 시트비용 " + ms(worstMs) + ". " +
@@ -478,11 +493,15 @@ function buildReport() {
   L.push("");
   L.push("PC: JS " + ms(R.cpu) + " / DOM " + ms(R.dom) + " / 코어 " + (navigator.hardwareConcurrency || "?"));
   L.push("서버 기본왕복: 최소 " + ms(R.pingMin) + " / 평균 " + ms(R.pingAvg));
+  L.push("서버 기본왕복 실패: " + R.pingFail + "/" + R.pingTotal +
+    " (시간초과 " + R.pingTimeouts + ", 연결오류 " + R.pingErrors + ")");
   L.push("");
   L.push("API별 (1회차 / 2회차 / 순수시트비용)");
   Object.keys(R.api || {}).forEach(function (k) {
     var a = R.api[k];
-    L.push("  - " + a.label + ": " + ms(a.first) + " / " + ms(a.second) + " / " + ms(a.sheetCost));
+    L.push("  - " + a.label + ": " +
+      (a.first != null ? ms(a.first) : "실패") + " / " +
+      (a.second != null ? ms(a.second) : "실패") + " / " + ms(a.sheetCost));
   });
   L.push("");
   L.push("홈 동시호출 완료: " + ms(R.homeWall) + " (최장 단일 " + ms(R.homeSlowest) + ", 줄서기=" + (R.homeSerialized ? "예" : "아니오") + ")");
