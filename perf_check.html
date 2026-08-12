@@ -260,8 +260,13 @@ async function runPing() {
   var valid = list.filter(function (r) { return r.ok; }).map(function (r) { return r.ms; });
   R.pingMin = valid.length ? Math.min.apply(null, valid) : null;
   R.pingAvg = valid.length ? valid.reduce(function (a, b) { return a + b; }, 0) / valid.length : null;
+  R.pingMax = valid.length ? Math.max.apply(null, valid) : null;
   R.pingFail = list.length - valid.length;
   R.pingTotal = list.length;
+  /* 기준선이 흔들리면 "응답시간 − 최소기준선" 으로 계산한 시트비용은 의미가 없다.
+     큐 대기가 시트 읽기 비용으로 잘못 계상되기 때문이다. */
+  R.pingSpread = (R.pingMin && R.pingMax) ? (R.pingMax / R.pingMin) : 1;
+  R.pingUnstable = (R.pingFail > 0) || (R.pingSpread > 3);
   R.pingTimeouts = list.filter(function (r) { return !r.ok && r.err === "시간초과"; }).length;
   R.pingErrors = list.filter(function (r) { return !r.ok && r.err === "연결오류"; }).length;
 
@@ -274,6 +279,9 @@ async function runPing() {
   rows.push([{ v: "<b>실패율</b>", cls: "" },
     { v: "<b>" + R.pingFail + " / " + R.pingTotal + "</b> (시간초과 " + R.pingTimeouts + ", 연결오류 " + R.pingErrors + ")", cls: "num" },
     R.pingFail === 0 ? { v: "양호", cls: "ok" } : { v: "문제", cls: "bad" }]);
+  rows.push([{ v: "<b>기준선 편차 (최대÷최소)</b>", cls: "" },
+    { v: "<b>" + R.pingSpread.toFixed(1) + "배</b> (" + ms(R.pingMin) + " ~ " + ms(R.pingMax) + ")", cls: "num" },
+    R.pingUnstable ? { v: "불안정", cls: "bad" } : { v: "안정", cls: "ok" }]);
 
   renderTable($("tblNet"), ["측정", "왕복 시간", "판정"], rows);
   $("netCard").style.display = "";
@@ -420,9 +428,12 @@ function renderVerdict(auth) {
     if (a.sheetCost != null && a.sheetCost > worstMs) { worstMs = a.sheetCost; worst = a; }
   });
 
-  /* 주원인 결정 */
+  /* 주원인 결정 — 기준선이 불안정하면 시트비용은 신뢰할 수 없으므로
+     "큐 포화" 를 먼저 판정한다 (시트 읽기로 오진하지 않도록) */
   var cause, causeCls;
-  if (worst && worstMs > 1500) {
+  if (R.pingUnstable) {
+    cause = "Apps Script 실행 큐 포화 (동시 실행 한도)"; causeCls = "bad";
+  } else if (worst && worstMs > 1500) {
     cause = "Apps Script 서버 (시트 읽기)"; causeCls = "bad";
   } else if (netSlow) {
     cause = "네트워크 / Apps Script 인프라"; causeCls = "bad";
@@ -450,7 +461,12 @@ function renderVerdict(auth) {
       : netSlow ? '<span class="bad">시트를 전혀 읽지 않는데도 느립니다. 사내망/구글 인프라 지연입니다.</span>'
         : '<span class="ok">Apps Script 자체 응답은 정상 범위입니다.</span>') + "</p>");
 
-  if (worst) {
+  if (R.pingUnstable) {
+    out.push('<p><b>시트비용 수치는 이번 측정에서 무효입니다.</b> ' +
+      '시트를 전혀 읽지 않는 기준 요청이 ' + ms(R.pingMin) + " ~ " + ms(R.pingMax) + '로 ' + R.pingSpread.toFixed(1) + '배나 출렁였습니다. ' +
+      '"시트비용 = 응답시간 − 최소 기준선" 이므로, 하필 혼잡한 순간에 걸린 API는 <b>큐에서 기다린 시간이 시트 읽기 비용으로 잘못 계상</b>됩니다. ' +
+      '이때는 특정 API를 범인으로 지목할 수 없습니다.</p>');
+  } else if (worst) {
     out.push("<p><b>가장 무거운 API</b> — " + worst.label + ", 순수 시트비용 " + ms(worstMs) + ". " +
       (worstMs > 1500 ? '<span class="bad">이 API의 시트 데이터가 누적되어 매번 전체를 읽고 있습니다. 서버 캐시 또는 데이터 정리가 필요합니다.</span>'
         : worstMs > 700 ? '<span class="warn">아직 견딜 만하지만 데이터가 더 쌓이면 문제가 됩니다.</span>'
