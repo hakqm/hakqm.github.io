@@ -31,6 +31,7 @@
     padding: 16px; margin-bottom: 14px;
   }
   .card h2 { font-size: 15px; margin: 0 0 12px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
+  .card h3 { font-size: 13px; margin: 16px 0 8px; color: var(--muted); }
   button {
     background: var(--accent); color: #fff; border: 0; border-radius: 8px;
     padding: 11px 20px; font-size: 14px; font-weight: 600; cursor: pointer;
@@ -52,12 +53,22 @@
   .ok { color: var(--ok); font-weight: 600; }
   .warn { color: var(--warn); font-weight: 600; }
   .bad { color: var(--bad); font-weight: 600; }
-  .bar { height: 6px; border-radius: 3px; background: var(--accent); min-width: 2px; }
   #verdict p { margin: 0 0 10px; }
   #verdict .head { font-size: 16px; font-weight: 700; }
   .note { color: var(--muted); font-size: 12px; margin-top: 10px; }
+  .flag {
+    display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 8px;
+    border-radius: 999px; border: 1px solid var(--line); color: var(--muted);
+    margin-left: 6px; vertical-align: middle;
+  }
+  .flag.info { border-color: var(--accent); color: var(--accent); }
   code { background: var(--bg); padding: 1px 5px; border-radius: 4px; font-size: 12px; }
   .log { font-size: 12px; color: var(--muted); white-space: pre-wrap; }
+  .meta { font-size: 12px; color: var(--muted); margin-top: 8px; }
+  .banner {
+    border: 1px solid var(--warn); color: var(--warn); background: transparent;
+    border-radius: 8px; padding: 8px 12px; font-size: 12px; margin-top: 10px;
+  }
 </style>
 </head>
 <body>
@@ -65,8 +76,8 @@
 
   <h1>HQAA 포털 속도 진단</h1>
   <div class="sub">
-    느림의 원인이 <b>내 PC/브라우저</b>인지 <b>Apps Script 서버</b>인지 구분합니다.
-    측정 중에는 다른 탭 작업을 멈춰주세요. (약 30~60초 소요)
+    느림이 <b>내 PC/브라우저</b>·<b>정적 파일</b>·<b>Apps Script 요청 경로</b>·<b>Apps Script 내부 처리</b>
+    중 어디에서 발생하는지 구간을 나눠 측정합니다. 측정 중에는 다른 탭 작업을 멈춰주세요. (약 40~80초 소요)
   </div>
 
   <div class="card">
@@ -77,10 +88,12 @@
       <button id="btnCopy" class="ghost" disabled>결과 복사</button>
     </div>
     <div class="note">
-      이름/사번을 넣으면 로그인이 필요한 API(팀회의 요약, 내 식수 상태)까지 측정합니다.
+      이름/사번을 넣으면 로그인이 필요한 항목(팀회의 요약, 내 식수 상태)까지 측정합니다.
       포털에 이미 로그인한 상태면 자동으로 채워집니다. 비워도 핵심 진단은 가능합니다.
     </div>
+    <div class="meta" id="runMeta"></div>
     <div class="log" id="status" style="margin-top:10px;"></div>
+    <div class="banner" id="deployBanner" style="display:none;"></div>
   </div>
 
   <div class="card" id="verdictCard" style="display:none;">
@@ -94,28 +107,44 @@
   </div>
 
   <div class="card" id="netCard" style="display:none;">
-    <h2>2. Apps Script 기본 왕복 시간 (시트 읽기 없음)</h2>
+    <h2>2. Apps Script 기본 왕복 시간 <span class="flag info">기준선</span></h2>
     <div class="tblwrap"><table id="tblNet"></table></div>
     <div class="note">
-      존재하지 않는 action을 호출해 <b>네트워크 + Apps Script 실행 준비</b> 시간만 측정합니다.
-      여기서 이미 느리면 시트 구조와 무관한 구글 인프라/네트워크 문제입니다.
-    </div>
-  </div>
-
-  <div class="card" id="apiCard" style="display:none;">
-    <h2>3. API별 응답 시간 (시트 읽기 포함)</h2>
-    <div class="tblwrap"><table id="tblApi"></table></div>
-    <div class="note">
-      <b>순수 시트비용 = 응답시간 − 기본 왕복시간</b>. 이 값이 큰 API가 병목입니다.
+      시트·Drive·캐시를 전혀 열지 않는 전용 진단 요청(<code>action=perfPing</code>)으로
+      <b>요청 경로 + Apps Script 실행 시작</b> 비용만 측정합니다.
+      여기서 이미 느리거나 편차가 크면 시트 데이터와 무관한 구간의 문제입니다.
     </div>
   </div>
 
   <div class="card" id="homeCard" style="display:none;">
-    <h2>4. 홈 화면 실제 로딩 시뮬레이션</h2>
+    <h2>3. 홈 화면 실제 로딩 <span class="flag info">실제 호출 방식</span></h2>
+    <div class="note" style="margin-top:0;margin-bottom:10px;">
+      현재 포털 홈은 <code>getHomeBundle</code> <b>1회 호출</b>로 공지·식수·회의실·팀회의를 한 번에 받습니다.
+      이 항목은 그 방식 그대로 반복 측정합니다.
+    </div>
     <div class="tblwrap"><table id="tblHome"></table></div>
+
+    <h3>요약</h3>
+    <div class="tblwrap"><table id="tblHomeSum"></table></div>
+
+    <h3>서버 내부 처리 분해 (진단 모드 응답)</h3>
+    <div class="tblwrap"><table id="tblHomeParts"></table></div>
     <div class="note">
-      홈 화면은 4개 API를 동시에 호출합니다. Apps Script는 같은 사용자의 요청을
-      <b>동시에 처리하지 못하고 줄 세우는</b> 특성이 있어, 실제로는 합계에 가까운 시간이 걸립니다.
+      <b>네트워크·실행대기 = 브라우저 왕복 − 서버 내부 처리시간</b>.
+      이 값이 크면 시트 처리가 아니라 요청 진입/실행 시작 구간이 오래 걸린 것입니다.
+    </div>
+  </div>
+
+  <div class="card" id="apiCard" style="display:none;">
+    <h2>4. 개별 API 진단 <span class="flag">실제 홈 호출 방식 아님</span></h2>
+    <div class="note" style="margin-top:0;margin-bottom:10px;">
+      홈 화면은 이 API들을 개별 호출하지 않습니다(3번 항목이 실제 방식입니다).
+      아래는 <b>병목이 어느 데이터에서 발생하는지 위치를 좁히기 위한 개별 진단</b>입니다.
+    </div>
+    <div class="tblwrap"><table id="tblApi"></table></div>
+    <div class="note">
+      <b>순수 시트비용 = 응답시간 − 기본 왕복 최소시간</b>(참고값).
+      기준선이 불안정하면 대기시간이 시트 비용으로 잘못 계산되므로 이 열은 표시하지 않습니다.
     </div>
   </div>
 
@@ -132,10 +161,17 @@
 var WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwn9I60-14GHDQk_rNF_uJYBpig-Bovl7Qqje_eGGjcFmZJZfqQgtpUg6necytvlQQ-/exec";
 var LOGIN_STORAGE_KEY = "hak_login_user";
 
-var $ = function (id) { return document.getElementById(id); };
-var R = {};                       /* 측정 결과 누적 */
+var PING_RUNS = 6;    /* 기준선 반복 횟수 */
+var HOME_RUNS = 4;    /* getHomeBundle 반복 횟수 (실제 홈은 1회 호출) */
 
-function setStatus(msg) { $("status").textContent = msg; }
+var $ = function (id) { return document.getElementById(id); };
+
+/* 측정 결과는 전부 이 객체 하나에만 쌓는다.
+   진단 시작 시 통째로 새로 만들어 이전 측정값이 섞이지 않게 한다. */
+var R = null;
+var runCounter = 0;
+
+function setStatus(msg) { $("status").textContent = msg || ""; }
 
 function todayStr() {
   var d = new Date();
@@ -181,21 +217,87 @@ function renderTable(el, headers, rows) {
   var h = "<tr>" + headers.map(function (x) { return "<th>" + x + "</th>"; }).join("") + "</tr>";
   var b = rows.map(function (r) {
     return "<tr>" + r.map(function (c, i) {
-      var cls = (typeof c === "object" && c.cls) ? c.cls : (i > 0 ? "num" : "");
-      var v = (typeof c === "object") ? c.v : c;
+      var cls = (c && typeof c === "object" && c.cls) ? c.cls : (i > 0 ? "num" : "");
+      var v = (c && typeof c === "object") ? c.v : c;
       return '<td class="' + cls + '">' + v + "</td>";
     }).join("") + "</tr>";
   }).join("");
   el.innerHTML = h + b;
 }
 
-function ms(v) { return v == null ? "—" : Math.round(v).toLocaleString() + " ms"; }
+function ms(v) { return (v === null || v === undefined) ? "—" : Math.round(v).toLocaleString() + " ms"; }
+function blank() { return { v: "", cls: "" }; }
 
 function grade(v, okMax, warnMax) {
-  if (v == null) return { v: "—", cls: "num" };
+  if (v === null || v === undefined) return { v: "—", cls: "num" };
   var cls = v <= okMax ? "ok" : (v <= warnMax ? "warn" : "bad");
   var label = v <= okMax ? "양호" : (v <= warnMax ? "보통" : "느림");
   return { v: label, cls: cls };
+}
+
+function stats(list) {
+  var v = list.filter(function (x) { return typeof x === "number" && isFinite(x); });
+  if (!v.length) return { n: 0, min: null, avg: null, max: null, sd: null };
+  var sum = v.reduce(function (a, b) { return a + b; }, 0);
+  var avg = sum / v.length;
+  var varsum = v.reduce(function (a, b) { return a + (b - avg) * (b - avg); }, 0);
+  return {
+    n: v.length,
+    min: Math.min.apply(null, v),
+    avg: avg,
+    max: Math.max.apply(null, v),
+    sd: Math.sqrt(varsum / v.length)
+  };
+}
+
+function cacheLabel(v) {
+  if (v === "hit") return '<span class="ok">캐시 적중</span>';
+  if (v === "miss") return '<span class="warn">캐시 미적중</span>';
+  if (v === "skipped") return "미조회";
+  if (v === "unknown") return "확인 불가";
+  return "—";
+}
+
+/* ── 전체 초기화 — 진단 시작 즉시 호출 ─────────────────────────── */
+function resetAll() {
+  runCounter++;
+  R = {
+    runId: "R" + runCounter + "-" + String(Date.now()).slice(-6),
+    runNo: runCounter,
+    startedAt: new Date(),
+    finishedAt: null,
+    completed: false,
+    aborted: false,
+    abortMessage: "",
+    authed: false,
+    serverDiagAvailable: false,
+    pingSupported: false,
+    api: {},
+    home: null
+  };
+
+  ["verdictCard", "envCard", "netCard", "apiCard", "homeCard", "pageCard"].forEach(function (id) {
+    $(id).style.display = "none";
+  });
+  ["tblEnv", "tblNet", "tblApi", "tblHome", "tblHomeSum", "tblHomeParts", "tblPage"].forEach(function (id) {
+    $(id).innerHTML = "";
+  });
+  $("verdict").innerHTML = "";
+  $("deployBanner").style.display = "none";
+  $("deployBanner").textContent = "";
+  $("btnCopy").disabled = true;
+  setStatus("");
+  $("runMeta").textContent =
+    "측정 #" + R.runNo + " (Run ID " + R.runId + ") · 시작 " +
+    R.startedAt.toLocaleString("ko-KR") + " · 진행 중…";
+}
+
+function updateRunMeta() {
+  var state = R.completed ? "완료" : (R.aborted ? "중단됨 — 결과 미완성" : "진행 중…");
+  var when = R.finishedAt ? (" · 종료 " + R.finishedAt.toLocaleTimeString("ko-KR")) : "";
+  $("runMeta").textContent =
+    "측정 #" + R.runNo + " (Run ID " + R.runId + ") · 시작 " +
+    R.startedAt.toLocaleString("ko-KR") + when + " · " + state;
 }
 
 /* ── 1. PC / 브라우저 성능 ────────────────────────────────────── */
@@ -231,8 +333,8 @@ function runEnv() {
   var rows = [
     ["JS 연산 속도 (500만회)", ms(cpu), grade(cpu, 60, 150)],
     ["DOM 렌더 속도 (3000행)", ms(dom), grade(dom, 80, 200)],
-    ["CPU 코어 수", (navigator.hardwareConcurrency || "?") + " 개", { v: "", cls: "" }],
-    ["브라우저 메모리 한도", (navigator.deviceMemory ? navigator.deviceMemory + " GB 이상" : "확인 불가"), { v: "", cls: "" }]
+    ["CPU 코어 수", (navigator.hardwareConcurrency || "?") + " 개", blank()],
+    ["브라우저 메모리 한도", (navigator.deviceMemory ? navigator.deviceMemory + " GB 이상" : "확인 불가"), blank()]
   ];
 
   if (performance.memory) {
@@ -250,44 +352,230 @@ function runEnv() {
   $("envCard").style.display = "";
 }
 
-/* ── 2. Apps Script 기본 왕복 ─────────────────────────────────── */
+/* ── 2. Apps Script 기본 왕복 (perfPing) ──────────────────────── */
 async function runPing() {
   var list = [];
-  for (var i = 0; i < 6; i++) {
-    setStatus("2/5 · Apps Script 기본 왕복 측정 중… (" + (i + 1) + "/6)");
-    list.push(await jsonp("action=__perfping__"));
+  for (var i = 0; i < PING_RUNS; i++) {
+    setStatus("2/5 · Apps Script 기본 왕복 측정 중… (" + (i + 1) + "/" + PING_RUNS + ")");
+    list.push(await jsonp("action=perfPing&nonce=" + (i + 1)));
   }
-  var valid = list.filter(function (r) { return r.ok; }).map(function (r) { return r.ms; });
-  R.pingMin = valid.length ? Math.min.apply(null, valid) : null;
-  R.pingAvg = valid.length ? valid.reduce(function (a, b) { return a + b; }, 0) / valid.length : null;
-  R.pingMax = valid.length ? Math.max.apply(null, valid) : null;
-  R.pingFail = list.length - valid.length;
+
+  var okList = list.filter(function (r) { return r.ok; });
+  var st = stats(okList.map(function (r) { return r.ms; }));
+
+  R.pingMin = st.min; R.pingAvg = st.avg; R.pingMax = st.max; R.pingSd = st.sd;
   R.pingTotal = list.length;
-  /* 기준선이 흔들리면 "응답시간 − 최소기준선" 으로 계산한 시트비용은 의미가 없다.
-     큐 대기가 시트 읽기 비용으로 잘못 계상되기 때문이다. */
-  R.pingSpread = (R.pingMin && R.pingMax) ? (R.pingMax / R.pingMin) : 1;
-  R.pingUnstable = (R.pingFail > 0) || (R.pingSpread > 3);
+  R.pingFail = list.length - okList.length;
   R.pingTimeouts = list.filter(function (r) { return !r.ok && r.err === "시간초과"; }).length;
   R.pingErrors = list.filter(function (r) { return !r.ok && r.err === "연결오류"; }).length;
+  R.pingSpread = (R.pingMin && R.pingMax) ? (R.pingMax / R.pingMin) : null;
+
+  /* 기준선이 흔들리면 "응답시간 − 최소기준선" 으로 계산한 시트비용은 신뢰할 수 없다.
+     대기시간이 시트 읽기 비용으로 잘못 계상되기 때문이다. */
+  R.baselineStable = (R.pingFail === 0) && (R.pingSpread !== null && R.pingSpread <= 2.5) && st.n >= 3;
+  R.pingUnstable = !R.baselineStable;
+
+  /* 서버가 새 endpoint 를 지원하면 내부 지표를 함께 반환한다 */
+  var pongs = okList.filter(function (r) { return r.res && r.res.pong === true; });
+  R.pingSupported = pongs.length > 0;
+  var initSt = stats(pongs.map(function (r) { return Number(r.res.script_init_ms); }));
+  var execSt = stats(pongs.map(function (r) { return Number(r.res.exec_ms); }));
+  R.pingInitAvg = initSt.avg;
+  R.pingInitMax = initSt.max;
+  R.pingExecAvg = execSt.avg;
 
   var rows = list.map(function (r, i) {
     var label = (i === 0 ? "1회차 (콜드 스타트)" : (i + 1) + "회차");
-    if (r.ok) return [label, ms(r.ms), grade(r.ms, 900, 2000)];
-    return [label, { v: "<b>실패 — " + r.err + "</b>", cls: "num bad" }, { v: "실패", cls: "bad" }];
+    if (!r.ok) return [label, { v: "<b>실패 — " + r.err + "</b>", cls: "num bad" }, blank(), { v: "실패", cls: "bad" }];
+    var inner = (r.res && r.res.pong === true)
+      ? { v: ms(Number(r.res.script_init_ms) + Number(r.res.exec_ms)), cls: "num" }
+      : { v: "—", cls: "num" };
+    return [label, ms(r.ms), inner, grade(r.ms, 900, 2000)];
   });
-  rows.push([{ v: "<b>최소 / 평균 (성공분)</b>", cls: "" }, { v: "<b>" + ms(R.pingMin) + " / " + ms(R.pingAvg) + "</b>", cls: "num" }, grade(R.pingMin, 900, 2000)]);
+
+  rows.push([{ v: "<b>최소 / 평균 / 최대</b>", cls: "" },
+    { v: "<b>" + ms(R.pingMin) + " / " + ms(R.pingAvg) + " / " + ms(R.pingMax) + "</b>", cls: "num" },
+    blank(), grade(R.pingMin, 900, 2000)]);
+  rows.push([{ v: "<b>편차 (표준편차 · 최대÷최소)</b>", cls: "" },
+    { v: "<b>" + ms(R.pingSd) + "</b> · " + (R.pingSpread === null ? "—" : R.pingSpread.toFixed(1) + "배"), cls: "num" },
+    blank(),
+    R.baselineStable ? { v: "안정", cls: "ok" } : { v: "불안정", cls: "bad" }]);
   rows.push([{ v: "<b>실패율</b>", cls: "" },
     { v: "<b>" + R.pingFail + " / " + R.pingTotal + "</b> (시간초과 " + R.pingTimeouts + ", 연결오류 " + R.pingErrors + ")", cls: "num" },
+    blank(),
     R.pingFail === 0 ? { v: "양호", cls: "ok" } : { v: "문제", cls: "bad" }]);
-  rows.push([{ v: "<b>기준선 편차 (최대÷최소)</b>", cls: "" },
-    { v: "<b>" + R.pingSpread.toFixed(1) + "배</b> (" + ms(R.pingMin) + " ~ " + ms(R.pingMax) + ")", cls: "num" },
-    R.pingUnstable ? { v: "불안정", cls: "bad" } : { v: "안정", cls: "ok" }]);
 
-  renderTable($("tblNet"), ["측정", "왕복 시간", "판정"], rows);
+  if (R.pingSupported) {
+    rows.push([{ v: "서버 내부 (실행 준비 + 처리) 평균", cls: "" },
+      { v: ms(R.pingInitAvg) + " + " + ms(R.pingExecAvg), cls: "num" },
+      blank(), grade((R.pingInitAvg || 0) + (R.pingExecAvg || 0), 200, 800)]);
+  }
+
+  renderTable($("tblNet"), ["측정", "왕복 시간", "서버 내부", "판정"], rows);
   $("netCard").style.display = "";
+
+  if (!R.pingSupported && okList.length) {
+    $("deployBanner").textContent =
+      "Apps Script 새 버전이 아직 배포되지 않은 것으로 보입니다 (perfPing 응답 없음). " +
+      "왕복 시간 측정은 그대로 유효하지만, 서버 내부 처리시간·캐시 적중 정보는 표시되지 않습니다.";
+    $("deployBanner").style.display = "";
+  }
 }
 
-/* ── 3. API별 응답 시간 ───────────────────────────────────────── */
+/* ── 3. 홈 화면 실제 로딩 (getHomeBundle 1회 호출 방식) ────────── */
+async function runHomeBundle(auth) {
+  var date = todayStr();
+  var params = [
+    "action=getHomeBundle",
+    "date=" + encodeURIComponent(date),
+    "limit=20",
+    "user_id=" + encodeURIComponent(auth ? auth.user_id : ""),
+    "emp_no=" + encodeURIComponent(auth ? auth.emp_no : ""),
+    "diag=1"
+  ].join("&");
+
+  var calls = [];
+  for (var i = 0; i < HOME_RUNS; i++) {
+    setStatus("3/5 · 홈 화면(getHomeBundle) 측정 중… (" + (i + 1) + "/" + HOME_RUNS + ")");
+    var r = await jsonp(params, 25000);
+    var d = (r.ok && r.res && r.res.success && r.res.diag) ? r.res.diag : null;
+    calls.push({
+      ok: r.ok,
+      err: r.err || "",
+      ms: r.ok ? r.ms : null,
+      supported: !!(r.ok && r.res && r.res.success === true),
+      serverMs: d ? Number(d.server_ms) : null,
+      parts: d ? (d.parts_ms || {}) : null,
+      partsOk: d ? (d.parts_ok || {}) : null,
+      cache: d ? (d.cache || null) : null,
+      initMs: d ? Number(d.script_init_ms) : null
+    });
+  }
+
+  var okCalls = calls.filter(function (c) { return c.ok; });
+  var wallSt = stats(okCalls.map(function (c) { return c.ms; }));
+  var srvSt = stats(okCalls.map(function (c) { return c.serverMs; }));
+  var gaps = okCalls
+    .filter(function (c) { return c.serverMs !== null && !isNaN(c.serverMs); })
+    .map(function (c) { return Math.max(0, c.ms - c.serverMs); });
+  var gapSt = stats(gaps);
+
+  R.serverDiagAvailable = srvSt.n > 0;
+  R.home = {
+    runs: calls.length,
+    fail: calls.length - okCalls.length,
+    first: calls[0] && calls[0].ok ? calls[0].ms : null,
+    firstServer: calls[0] ? calls[0].serverMs : null,
+    repeatAvg: stats(okCalls.slice(1).map(function (c) { return c.ms; })).avg,
+    wall: wallSt,
+    server: srvSt,
+    gap: gapSt,
+    unsupported: okCalls.some(function (c) { return !c.supported; })
+  };
+
+  /* 회차별 상세 */
+  var rows = calls.map(function (c, i) {
+    var label = (i === 0 ? "1회차 (첫 호출)" : (i + 1) + "회차 (반복)");
+    if (!c.ok) {
+      return [label, { v: "<b>실패 — " + c.err + "</b>", cls: "num bad" }, blank(), blank(), blank(), { v: "실패", cls: "bad" }];
+    }
+    var gap = (c.serverMs !== null && !isNaN(c.serverMs)) ? Math.max(0, c.ms - c.serverMs) : null;
+    var cacheTxt = "—";
+    if (c.cache) {
+      var hits = 0, tot = 0;
+      ["notices", "meal", "room", "meeting"].forEach(function (k) {
+        if (c.cache[k] === "hit") { hits++; tot++; }
+        else if (c.cache[k] === "miss") { tot++; }
+      });
+      cacheTxt = tot ? (hits + " / " + tot + " 적중") : "—";
+    }
+    return [
+      label,
+      ms(c.ms),
+      { v: (c.serverMs === null || isNaN(c.serverMs)) ? "—" : ms(c.serverMs), cls: "num" },
+      { v: ms(gap), cls: "num" },
+      { v: cacheTxt, cls: "num" },
+      grade(c.ms, 2000, 4500)
+    ];
+  });
+  renderTable($("tblHome"),
+    ["측정", "왕복(브라우저)", "서버 내부", "네트워크·실행대기", "캐시", "판정"], rows);
+
+  /* 요약 */
+  var sum = [];
+  sum.push(["실제 홈 진입 기준 총 응답시간 (첫 호출)", ms(R.home.first), grade(R.home.first, 2000, 4500)]);
+  sum.push(["반복 호출 평균 (캐시 적중 포함)", ms(R.home.repeatAvg), grade(R.home.repeatAvg, 1500, 3500)]);
+  sum.push(["최소 / 평균 / 최대", ms(wallSt.min) + " / " + ms(wallSt.avg) + " / " + ms(wallSt.max),
+    grade(wallSt.avg, 2000, 4500)]);
+  sum.push(["편차 (표준편차)", ms(wallSt.sd),
+    (wallSt.sd === null) ? blank() : grade(wallSt.sd, 500, 1500)]);
+  sum.push(["성공 / 실패", (calls.length - R.home.fail) + " / " + R.home.fail + " 회",
+    R.home.fail === 0 ? { v: "양호", cls: "ok" } : { v: "문제", cls: "bad" }]);
+  if (R.serverDiagAvailable) {
+    sum.push(["서버 내부 처리 최소 / 평균 / 최대", ms(srvSt.min) + " / " + ms(srvSt.avg) + " / " + ms(srvSt.max),
+      grade(srvSt.avg, 800, 2500)]);
+    sum.push(["네트워크·실행대기 최소 / 평균 / 최대", ms(gapSt.min) + " / " + ms(gapSt.avg) + " / " + ms(gapSt.max),
+      grade(gapSt.avg, 1200, 3000)]);
+  } else {
+    sum.push(["서버 내부 처리", "측정 불가 (진단 응답 없음)", { v: "N/A", cls: "warn" }]);
+  }
+  renderTable($("tblHomeSum"), ["항목", "값", "판정"], sum);
+
+  /* 서버 내부 항목별 분해 */
+  var partRows = [];
+  var withParts = okCalls.filter(function (c) { return c.parts; });
+  if (withParts.length) {
+    var firstC = withParts[0];
+    var lastC = withParts[withParts.length - 1];
+    var labels = { notices: "공지사항 (notices)", meal: "식수 요약 (meal)", room: "회의실 (room)", meeting: "팀회의 (meeting)" };
+    R.home.partsFirst = firstC.parts;
+    R.home.partsLast = lastC.parts;
+    R.home.cacheFirst = firstC.cache;
+    R.home.cacheLast = lastC.cache;
+    R.home.worstPart = null;
+
+    Object.keys(labels).forEach(function (k) {
+      var a = firstC.parts[k];
+      var b = lastC.parts[k];
+      if (a === undefined && b === undefined) {
+        partRows.push([labels[k], "미조회", "미조회", "—", { v: "—", cls: "num" }]);
+        return;
+      }
+      if (typeof a === "number" && (R.home.worstPart === null || a > R.home.worstPart.ms)) {
+        R.home.worstPart = { key: k, label: labels[k], ms: a };
+      }
+      var cf = firstC.cache ? firstC.cache[k] : null;
+      var cl = lastC.cache ? lastC.cache[k] : null;
+      partRows.push([
+        labels[k],
+        { v: (typeof a === "number" ? ms(a) : "—"), cls: "num" },
+        { v: (typeof b === "number" ? ms(b) : "—"), cls: "num" },
+        { v: cacheLabel(cf) + " → " + cacheLabel(cl), cls: "num" },
+        grade(typeof a === "number" ? a : null, 700, 2000)
+      ]);
+    });
+    if (firstC.initMs !== null && !isNaN(firstC.initMs)) {
+      partRows.push([{ v: "<b>실행 컨테이너 준비 (첫 호출)</b>", cls: "" },
+        { v: "<b>" + ms(firstC.initMs) + "</b>", cls: "num" }, blank(), blank(),
+        grade(firstC.initMs, 300, 1000)]);
+    }
+    renderTable($("tblHomeParts"),
+      ["서버 내부 항목", "첫 호출", "마지막 호출", "캐시 (첫 → 마지막)", "판정"], partRows);
+  } else {
+    renderTable($("tblHomeParts"), ["서버 내부 항목", "결과"], [
+      ["서버 내부 처리 분해", R.home.unsupported
+        ? "Apps Script 새 버전 미배포 — 진단 응답이 없습니다."
+        : "이번 측정에서는 진단 응답을 받지 못했습니다."]
+    ]);
+  }
+
+  if (!auth) {
+    R.home.meetingSkipped = true;
+  }
+  $("homeCard").style.display = "";
+}
+
+/* ── 4. 개별 API 진단 (원인 위치 확인용) ──────────────────────── */
 async function runApis(auth) {
   var date = todayStr();
   var tests = [
@@ -311,21 +599,31 @@ async function runApis(auth) {
   }
 
   var rows = [];
-  R.api = {};
 
   for (var i = 0; i < tests.length; i++) {
     var t = tests[i];
-    setStatus("3/5 · API 응답 측정 중… (" + (i + 1) + "/" + tests.length + ") " + t.label);
+    setStatus("4/5 · 개별 API 진단 중… (" + (i + 1) + "/" + tests.length + ") " + t.label);
 
     var a = await jsonp(t.q);
     var b = await jsonp(t.q);
     var best = (a.ok && b.ok) ? Math.min(a.ms, b.ms) : (a.ok ? a.ms : (b.ok ? b.ms : null));
-    var sheetCost = (best != null && R.pingMin != null) ? Math.max(0, best - R.pingMin) : null;
 
-    R.api[t.key] = { label: t.label, first: a.ok ? a.ms : null, second: b.ok ? b.ms : null, best: best, sheetCost: sheetCost };
+    /* 기준선이 불안정하면 시트비용을 숫자로 단정하지 않는다 */
+    var sheetCost = (R.baselineStable && best !== null && R.pingMin !== null)
+      ? Math.max(0, best - R.pingMin) : null;
+
+    R.api[t.key] = {
+      label: t.label,
+      first: a.ok ? a.ms : null,
+      second: b.ok ? b.ms : null,
+      best: best,
+      sheetCost: sheetCost
+    };
 
     var detail = "";
-    if (a.ok && a.res && a.res.success === false) detail = " <span class='warn'>(" + (a.res.message || "실패") + ")</span>";
+    if (a.ok && a.res && a.res.success === false) {
+      detail = " <span class='warn'>(" + (a.res.message || "실패") + ")</span>";
+    }
 
     var cell = function (r) {
       if (r.ok) return { v: ms(r.ms), cls: "num" };
@@ -336,46 +634,15 @@ async function runApis(auth) {
       t.label + detail,
       cell(a),
       cell(b),
-      { v: "<b>" + ms(sheetCost) + "</b>", cls: "num" },
-      grade(sheetCost, 700, 1800)
+      R.baselineStable
+        ? { v: "<b>" + ms(sheetCost) + "</b>", cls: "num" }
+        : { v: "<span class='warn'>기준선 불안정 — 계산 불가</span>", cls: "num" },
+      R.baselineStable ? grade(sheetCost, 700, 1800) : { v: "—", cls: "num" }
     ]);
   }
 
-  renderTable($("tblApi"), ["API", "1회차", "2회차", "순수 시트비용", "판정"], rows);
+  renderTable($("tblApi"), ["API", "1회차", "2회차", "순수 시트비용 (참고)", "판정"], rows);
   $("apiCard").style.display = "";
-}
-
-/* ── 4. 홈 화면 시뮬레이션 ────────────────────────────────────── */
-async function runHomeSim(auth) {
-  setStatus("4/5 · 홈 화면 동시 호출 시뮬레이션…");
-  var date = todayStr();
-  var qs = [
-    "action=getNotices&limit=5",
-    "action=getMealSummary&date=" + date,
-    "action=getRoomStatus&date=" + date
-  ];
-  if (auth) {
-    qs.push("action=getMeetingSummary&user_id=" + encodeURIComponent(auth.user_id) + "&emp_no=" + encodeURIComponent(auth.emp_no));
-  }
-
-  var t0 = performance.now();
-  var results = await Promise.all(qs.map(function (q) { return jsonp(q); }));
-  var wall = performance.now() - t0;
-
-  var sum = results.reduce(function (a, r) { return a + (r.ok ? r.ms : 0); }, 0);
-  var slowest = Math.max.apply(null, results.map(function (r) { return r.ok ? r.ms : 0; }));
-  R.homeWall = wall;
-  R.homeSlowest = slowest;
-  R.homeSerialized = wall > slowest * 1.6;   /* 가장 느린 것보다 훨씬 크면 줄서기 발생 */
-
-  renderTable($("tblHome"), ["항목", "시간", "판정"], [
-    ["동시 호출 " + qs.length + "개 → 전부 완료까지", ms(wall), grade(wall, 2500, 5000)],
-    ["가장 느린 단일 API", ms(slowest), { v: "", cls: "" }],
-    ["개별 시간 단순 합계", ms(sum), { v: "", cls: "" }],
-    ["동시 처리 여부", R.homeSerialized ? "<b>줄서기 발생(직렬 처리)</b>" : "정상 병렬 처리",
-      R.homeSerialized ? { v: "문제", cls: "bad" } : { v: "양호", cls: "ok" }]
-  ]);
-  $("homeCard").style.display = "";
 }
 
 /* ── 5. 페이지 파일 로딩 ──────────────────────────────────────── */
@@ -385,7 +652,8 @@ async function runPageLoad() {
 
   var nav = performance.getEntriesByType("navigation")[0];
   if (nav) {
-    rows.push(["이 진단 페이지 서버 응답(TTFB)", ms(nav.responseStart - nav.requestStart), grade(nav.responseStart - nav.requestStart, 300, 800)]);
+    R.ttfb = nav.responseStart - nav.requestStart;
+    rows.push(["이 진단 페이지 서버 응답(TTFB)", ms(R.ttfb), grade(R.ttfb, 300, 800)]);
   }
 
   try {
@@ -414,87 +682,194 @@ async function runPageLoad() {
   $("pageCard").style.display = "";
 }
 
-/* ── 종합 판정 ────────────────────────────────────────────────── */
-function renderVerdict(auth) {
-  var out = [];
+/* ── 종합 판정 — 모든 측정이 끝난 뒤에만 호출된다 ──────────────── */
+function collectFindings() {
+  var f = [];
+  var H = R.home || {};
+  var wall = H.wall || {}, srv = H.server || {}, gap = H.gap || {};
+
+  /* A. PC / 브라우저 */
   var pcSlow = (R.cpu > 150) || (R.dom > 200);
   var pcMid = (R.cpu > 60) || (R.dom > 80);
-  var netSlow = R.pingMin != null && R.pingMin > 2000;
-  var netMid = R.pingMin != null && R.pingMin > 900;
-
-  var worst = null, worstMs = -1;
-  Object.keys(R.api || {}).forEach(function (k) {
-    var a = R.api[k];
-    if (a.sheetCost != null && a.sheetCost > worstMs) { worstMs = a.sheetCost; worst = a; }
+  f.push({
+    code: "A", title: "PC / 브라우저",
+    sev: pcSlow ? 2 : (pcMid ? 1 : 0),
+    impact: (R.cpu || 0) + (R.dom || 0),
+    text: "JS 연산 " + ms(R.cpu) + ", DOM 렌더 " + ms(R.dom) + ". " +
+      (pcSlow ? '<span class="bad">평균보다 확연히 느립니다. 확장 프로그램·백그라운드 프로그램 영향을 의심하세요.</span>'
+        : pcMid ? '<span class="warn">약간 느린 편이지만 치명적이지 않습니다.</span>'
+          : '<span class="ok">정상입니다. PC 연산 성능 문제는 아닙니다.</span>')
   });
 
-  /* 주원인 결정 — 기준선이 불안정하면 시트비용은 신뢰할 수 없으므로
-     "큐 포화" 를 먼저 판정한다 (시트 읽기로 오진하지 않도록) */
-  var cause, causeCls;
-  if (R.pingUnstable) {
-    cause = "Apps Script 실행 큐 포화 (동시 실행 한도)"; causeCls = "bad";
-  } else if (worst && worstMs > 1500) {
-    cause = "Apps Script 서버 (시트 읽기)"; causeCls = "bad";
-  } else if (netSlow) {
-    cause = "네트워크 / Apps Script 인프라"; causeCls = "bad";
-  } else if (pcSlow) {
-    cause = "내 PC / 브라우저"; causeCls = "bad";
-  } else if (R.homeSerialized) {
-    cause = "Apps Script 요청 줄서기"; causeCls = "warn";
-  } else if (netMid || pcMid) {
-    cause = pcMid && !netMid ? "내 PC / 브라우저 (경미)" : "서버 응답 (경미)"; causeCls = "warn";
-  } else {
-    cause = "뚜렷한 병목 없음"; causeCls = "ok";
-  }
-
-  out.push('<p class="head">주 원인: <span class="' + causeCls + '">' + cause + "</span></p>");
-
-  out.push("<p><b>내 PC/브라우저</b> — JS 연산 " + ms(R.cpu) + ", DOM 렌더 " + ms(R.dom) + ". " +
-    (pcSlow ? '<span class="bad">평균보다 확연히 느립니다. 브라우저 확장 프로그램·백그라운드 프로그램 영향을 의심하세요.</span>'
-      : pcMid ? '<span class="warn">약간 느린 편이지만 치명적이지 않습니다.</span>'
-        : '<span class="ok">정상입니다. PC 문제가 아닙니다.</span>') + "</p>");
-
-  out.push("<p><b>서버 기본 왕복</b> — 최소 " + ms(R.pingMin) + ", 실패 " + R.pingFail + "/" + R.pingTotal +
-    " (시간초과 " + R.pingTimeouts + ", 연결오류 " + R.pingErrors + "). " +
-    (R.pingFail > 0
-      ? '<span class="bad">시트를 전혀 읽지 않는 요청조차 실패합니다. Apps Script 실행 자체가 한계에 걸려 있습니다.</span>'
-      : netSlow ? '<span class="bad">시트를 전혀 읽지 않는데도 느립니다. 사내망/구글 인프라 지연입니다.</span>'
-        : '<span class="ok">Apps Script 자체 응답은 정상 범위입니다.</span>') + "</p>");
-
-  if (R.pingUnstable) {
-    out.push('<p><b>시트비용 수치는 이번 측정에서 무효입니다.</b> ' +
-      '시트를 전혀 읽지 않는 기준 요청이 ' + ms(R.pingMin) + " ~ " + ms(R.pingMax) + '로 ' + R.pingSpread.toFixed(1) + '배나 출렁였습니다. ' +
-      '"시트비용 = 응답시간 − 최소 기준선" 이므로, 하필 혼잡한 순간에 걸린 API는 <b>큐에서 기다린 시간이 시트 읽기 비용으로 잘못 계상</b>됩니다. ' +
-      '이때는 특정 API를 범인으로 지목할 수 없습니다.</p>');
-  } else if (worst) {
-    out.push("<p><b>가장 무거운 API</b> — " + worst.label + ", 순수 시트비용 " + ms(worstMs) + ". " +
-      (worstMs > 1500 ? '<span class="bad">이 API의 시트 데이터가 누적되어 매번 전체를 읽고 있습니다. 서버 캐시 또는 데이터 정리가 필요합니다.</span>'
-        : worstMs > 700 ? '<span class="warn">아직 견딜 만하지만 데이터가 더 쌓이면 문제가 됩니다.</span>'
-          : '<span class="ok">시트 읽기 비용은 낮습니다.</span>') + "</p>");
-  }
-
-  out.push("<p><b>홈 화면 전체</b> — " + ms(R.homeWall) + " 소요. " +
-    (R.homeSerialized ? '<span class="warn">동시 호출이 병렬 처리되지 않고 순서대로 처리되었습니다. 홈 API를 하나로 합치면 크게 개선됩니다.</span>'
-      : '<span class="ok">동시 처리가 정상 동작합니다.</span>') + "</p>");
-
+  /* B. 정적 페이지 */
   if (R.indexKB) {
-    out.push("<p><b>페이지 파일</b> — index.html " + Math.round(R.indexKB).toLocaleString() + " KB, 다운로드 " + ms(R.indexMs) +
-      ", 캐시 사용 시 " + ms(R.indexCachedMs) + ". " +
-      (R.indexKB > 400 ? '<span class="bad">단일 파일이 지나치게 큽니다. 파싱만으로도 수백 ms가 소모됩니다.</span>'
-        : R.indexKB > 250 ? '<span class="warn">파일이 큰 편입니다. 기능 분리를 검토하세요.</span>'
-          : '<span class="ok">적정 크기입니다.</span>') + "</p>");
+    var stSlow = (R.indexMs > 3000) || (R.indexKB > 400);
+    var stMid = (R.indexMs > 1200) || (R.indexKB > 250);
+    f.push({
+      code: "B", title: "정적 페이지 (index.html)",
+      sev: stSlow ? 2 : (stMid ? 1 : 0),
+      impact: R.indexMs || 0,
+      text: Math.round(R.indexKB).toLocaleString() + " KB, 다운로드 " + ms(R.indexMs) +
+        " (캐시 사용 시 " + ms(R.indexCachedMs) + "). " +
+        (stSlow ? '<span class="bad">파일 크기 또는 다운로드 시간이 실제 병목 수준입니다.</span>'
+          : stMid ? '<span class="warn">큰 편입니다. 지금 당장의 병목은 아니지만 기능 분리를 검토하세요.</span>'
+            : '<span class="ok">정상 범위입니다.</span>')
+    });
   }
 
-  /* 캐시 삭제 효과 */
-  var cacheHelps = (R.indexCachedMs != null && R.indexMs != null && R.indexCachedMs < R.indexMs * 0.7);
-  out.push('<p style="border-top:1px solid var(--line);padding-top:10px;"><b>캐시를 삭제하면 빨라질까?</b> ' +
-    (cacheHelps
-      ? '<span class="warn">아니요 — 오히려 느려집니다.</span> 캐시가 실제로 로딩을 단축시키고 있으므로, 삭제하면 매번 전체를 다시 받게 됩니다.'
-      : '<span class="warn">아니요.</span> 이 페이지의 느림은 캐시가 아니라 서버 응답 시간에서 발생합니다.') +
-    ' 캐시 삭제는 <b>코드를 수정했는데 반영이 안 될 때만</b> 의미가 있습니다.</p>');
+  /* C. Apps Script 요청 경로 */
+  var pathBad = (R.pingFail > 0) || (R.pingSpread !== null && R.pingSpread > 3) || (R.pingMin !== null && R.pingMin > 2500);
+  var pathMid = !pathBad && ((R.pingMin !== null && R.pingMin > 1200) || (R.pingSpread !== null && R.pingSpread > 2));
+  var pathTxt = "시트를 전혀 읽지 않는 진단 요청 기준 최소 " + ms(R.pingMin) + " / 평균 " + ms(R.pingAvg) +
+    ", 편차 " + (R.pingSpread === null ? "—" : R.pingSpread.toFixed(1) + "배") +
+    ", 실패 " + R.pingFail + "/" + R.pingTotal + ". ";
+  if (pathBad) {
+    pathTxt += '<span class="bad">Apps Script 요청 경로가 불안정합니다.</span> ' +
+      "시트·캐시를 건드리지 않는 요청조차 느리거나 실패했습니다. " +
+      "Apps Script 실행 준비 지연, Google 인프라 상태, 네트워크 경로, 사내망 프록시 등의 영향을 포함할 수 있으며 " +
+      "<b>이번 진단만으로는 그 중 하나로 확정할 수 없습니다.</b>";
+  } else if (pathMid) {
+    pathTxt += '<span class="warn">평소보다 느리지만 실패 없이 일정합니다.</span> 경로 지연이 약간 있는 상태입니다.';
+  } else {
+    pathTxt += '<span class="ok">요청 경로는 안정적입니다.</span>';
+  }
+  if (R.serverDiagAvailable && gap.avg !== null && gap.avg !== undefined) {
+    pathTxt += " 홈 호출 기준 네트워크·실행대기 평균은 " + ms(gap.avg) + " 입니다.";
+  }
+  f.push({
+    code: "C", title: "Apps Script 요청 경로",
+    sev: pathBad ? 2 : (pathMid ? 1 : 0),
+    impact: (R.serverDiagAvailable && gap.avg) ? gap.avg : (R.pingAvg || 0),
+    text: pathTxt
+  });
+
+  /* D. Apps Script 내부 처리 */
+  if (R.serverDiagAvailable) {
+    var srvBad = srv.max > 3000 || srv.avg > 2500;
+    var srvMid = !srvBad && (srv.avg > 1200);
+    f.push({
+      code: "D", title: "Apps Script 내부 처리 (getHomeBundle)",
+      sev: srvBad ? 2 : (srvMid ? 1 : 0),
+      impact: srv.avg || 0,
+      text: "서버 내부 처리 최소 " + ms(srv.min) + " / 평균 " + ms(srv.avg) + " / 최대 " + ms(srv.max) + ". " +
+        (srvBad ? '<span class="bad">서버가 실제로 오래 계산하고 있습니다. 시트 데이터 양·시트 구조를 추가 분석해야 합니다.</span>'
+          : srvMid ? '<span class="warn">서버 처리도 가볍지는 않습니다.</span>'
+            : '<span class="ok">서버 내부 처리는 빠릅니다. 지연은 서버 로직 밖에서 발생했습니다.</span>')
+    });
+  } else {
+    f.push({
+      code: "D", title: "Apps Script 내부 처리 (getHomeBundle)",
+      sev: 0, impact: 0,
+      text: '<span class="warn">측정하지 못했습니다.</span> Apps Script 새 버전을 배포하면 서버 내부 처리시간을 분리해 볼 수 있습니다.'
+    });
+  }
+
+  /* E. 특정 API / Spreadsheet */
+  var worstApi = null;
+  Object.keys(R.api || {}).forEach(function (k) {
+    var a = R.api[k];
+    if (a.sheetCost !== null && a.sheetCost !== undefined && (!worstApi || a.sheetCost > worstApi.sheetCost)) worstApi = a;
+  });
+  var wp = H.worstPart || null;
+  if (wp) {
+    var eBad = wp.ms > 2500, eMid = !eBad && wp.ms > 1000;
+    var eTxt = "서버 내부에서 가장 오래 걸린 항목은 <b>" + wp.label + "</b> (" + ms(wp.ms) + ", 첫 호출 기준)입니다. ";
+    if (worstApi && R.baselineStable) {
+      eTxt += "개별 진단 기준 가장 무거운 API 는 " + worstApi.label + " (순수 시트비용 " + ms(worstApi.sheetCost) + ") 입니다. ";
+    } else if (!R.baselineStable) {
+      eTxt += '개별 API 의 순수 시트비용은 <span class="warn">기준선이 불안정해 이번 측정에서는 계산하지 않았습니다.</span> ';
+    }
+    eTxt += eBad ? '<span class="bad">이 데이터 처리만 유독 오래 걸립니다. 해당 시트의 데이터 정리·조회 범위 축소가 필요합니다.</span>'
+      : eMid ? '<span class="warn">아직 견딜 만하지만 데이터가 더 쌓이면 병목이 됩니다.</span>'
+        : '<span class="ok">특정 데이터만 유독 무거운 상황은 아닙니다.</span>';
+    f.push({ code: "E", title: "특정 API / Spreadsheet", sev: eBad ? 2 : (eMid ? 1 : 0), impact: wp.ms, text: eTxt });
+  } else if (worstApi && R.baselineStable) {
+    var wBad = worstApi.sheetCost > 1800, wMid = !wBad && worstApi.sheetCost > 700;
+    f.push({
+      code: "E", title: "특정 API / Spreadsheet",
+      sev: wBad ? 2 : (wMid ? 1 : 0),
+      impact: worstApi.sheetCost,
+      text: "개별 진단 기준 가장 무거운 API 는 " + worstApi.label + " (순수 시트비용 " + ms(worstApi.sheetCost) + ") 입니다. " +
+        (wBad ? '<span class="bad">이 데이터의 조회 비용이 큽니다.</span>'
+          : wMid ? '<span class="warn">지켜볼 수준입니다.</span>'
+            : '<span class="ok">시트 조회 비용은 낮습니다.</span>')
+    });
+  } else {
+    f.push({
+      code: "E", title: "특정 API / Spreadsheet", sev: 0, impact: 0,
+      text: '<span class="warn">이번 측정에서는 특정 API 를 지목할 근거가 부족합니다.</span> ' +
+        (R.baselineStable ? "" : "기준선이 불안정해 순수 시트비용을 계산하지 않았습니다.")
+    });
+  }
+
+  /* 홈 호출 실패 자체 */
+  if (H.fail > 0) {
+    f.push({
+      code: "C", title: "홈 호출 실패",
+      sev: 2, impact: (R.pingAvg || 0) + 1,
+      text: "getHomeBundle 호출이 " + H.runs + "회 중 " + H.fail + "회 실패했습니다. " +
+        '<span class="bad">응답을 받지 못한 요청이 있습니다.</span> 요청 경로 또는 실행 지연과 함께 볼 필요가 있습니다.'
+    });
+  }
+
+  return f;
+}
+
+function renderVerdict(auth) {
+  var f = collectFindings();
+  var H = R.home || {};
+  var out = [];
+
+  var majors = f.filter(function (x) { return x.sev === 2; });
+  var mids = f.filter(function (x) { return x.sev === 1; });
+  var pool = majors.length ? majors : mids;
+  pool = pool.slice().sort(function (a, b) { return (b.impact || 0) - (a.impact || 0); });
+
+  var headline, headCls;
+  if (!pool.length) {
+    headline = "F. 이번 측정에서는 명확한 병목이 발견되지 않았습니다";
+    headCls = "ok";
+  } else {
+    var primary = pool[0];
+    headline = primary.code + ". " + primary.title + (majors.length ? "" : " (경미)");
+    headCls = majors.length ? "bad" : "warn";
+    if (pool.length > 1) {
+      headline += " — 그 외 " + pool.slice(1).map(function (x) { return x.code; }).join(", ") + " 구간도 함께 관측됨";
+    }
+  }
+
+  out.push('<p class="head">가장 유력한 구간: <span class="' + headCls + '">' + headline + "</span></p>");
+  out.push('<p class="note" style="margin-top:-4px;">' +
+    "측정 #" + R.runNo + " · Run ID " + R.runId + " · " + R.startedAt.toLocaleString("ko-KR") +
+    " · 전체 테스트 완료: <b>" + (R.completed ? "예" : "아니오") + "</b>" +
+    (R.serverDiagAvailable ? " · 서버 진단 응답 있음" : " · 서버 진단 응답 없음") + "</p>");
+
+  out.push('<p style="border-top:1px solid var(--line);padding-top:10px;"><b>홈 화면 실제 방식(getHomeBundle 1회)</b> — 첫 호출 ' +
+    ms(H.first) + ", 반복 평균 " + ms(H.repeatAvg) +
+    (R.serverDiagAvailable
+      ? ", 이 중 서버 내부 처리 평균 " + ms(H.server ? H.server.avg : null) +
+        " / 네트워크·실행대기 평균 " + ms(H.gap ? H.gap.avg : null) + ". "
+      : ". ") +
+    (R.serverDiagAvailable && H.gap && H.server && H.gap.avg > H.server.avg * 2 && H.gap.avg > 1500
+      ? '<span class="bad">서버가 실제로 계산한 시간보다 그 밖에서 소모된 시간이 훨씬 큽니다.</span> 시트 처리보다 요청 진입·실행 시작 구간의 지연 가능성이 높습니다.'
+      : R.serverDiagAvailable && H.server && H.server.avg > 2500
+        ? '<span class="bad">서버 내부 처리 자체가 큽니다.</span> 서버 로직·시트 데이터를 추가 분석해야 합니다.'
+        : "") + "</p>");
+
+  f.forEach(function (x) {
+    out.push("<p><b>" + x.code + ". " + x.title + "</b> — " + x.text + "</p>");
+  });
+
+  out.push('<p class="note" style="border-top:1px solid var(--line);padding-top:10px;">' +
+    "※ 이 진단은 구간별 소요시간만 관측합니다. 구간 안에서 " +
+    "Google 측 실행 준비 지연 / 인프라 상태 / 네트워크 경로 중 무엇이 원인인지까지는 구분할 수 없으므로, " +
+    "느린 시점과 정상 시점의 결과를 각각 저장해 비교하는 것이 가장 확실합니다.</p>");
 
   if (!auth) {
-    out.push('<p class="note">※ 이름/사번을 입력하지 않아 로그인 필요 API(팀회의·내 식수)는 측정에서 빠졌습니다.</p>');
+    out.push('<p class="note">※ 이름/사번을 입력하지 않아 로그인 필요 항목(팀회의 요약·내 식수)은 측정에서 빠졌습니다.</p>');
+  }
+  if (H.unsupported) {
+    out.push('<p class="note">※ getHomeBundle 응답이 정상이 아니었습니다. Apps Script 배포 버전을 확인하세요.</p>');
   }
 
   $("verdict").innerHTML = out.join("");
@@ -504,25 +879,66 @@ function renderVerdict(auth) {
 /* ── 결과 텍스트 복사 ─────────────────────────────────────────── */
 function buildReport() {
   var L = [];
-  L.push("[HQAA 포털 속도 진단] " + new Date().toLocaleString("ko-KR"));
+  var H = R.home || {};
+  L.push("[HQAA 포털 속도 진단] 측정 #" + R.runNo + " / Run ID " + R.runId);
+  L.push("시작: " + R.startedAt.toLocaleString("ko-KR") +
+    (R.finishedAt ? " / 종료: " + R.finishedAt.toLocaleString("ko-KR") : ""));
+  L.push("전체 테스트 완료: " + (R.completed ? "예" : "아니오") +
+    " / 로그인 항목 포함: " + (R.authed ? "예" : "아니오") +
+    " / 서버 진단 응답: " + (R.serverDiagAvailable ? "있음" : "없음"));
   L.push("UA: " + navigator.userAgent);
   L.push("");
-  L.push("PC: JS " + ms(R.cpu) + " / DOM " + ms(R.dom) + " / 코어 " + (navigator.hardwareConcurrency || "?"));
-  L.push("서버 기본왕복: 최소 " + ms(R.pingMin) + " / 평균 " + ms(R.pingAvg));
-  L.push("서버 기본왕복 실패: " + R.pingFail + "/" + R.pingTotal +
-    " (시간초과 " + R.pingTimeouts + ", 연결오류 " + R.pingErrors + ")");
+  L.push("[PC] JS " + ms(R.cpu) + " / DOM " + ms(R.dom) + " / 코어 " + (navigator.hardwareConcurrency || "?"));
   L.push("");
-  L.push("API별 (1회차 / 2회차 / 순수시트비용)");
+  L.push("[기준선 perfPing] 최소 " + ms(R.pingMin) + " / 평균 " + ms(R.pingAvg) + " / 최대 " + ms(R.pingMax) +
+    " / 표준편차 " + ms(R.pingSd));
+  L.push("  편차 " + (R.pingSpread === null ? "—" : R.pingSpread.toFixed(1) + "배") +
+    " / 실패 " + R.pingFail + "/" + R.pingTotal +
+    " (시간초과 " + R.pingTimeouts + ", 연결오류 " + R.pingErrors + ")" +
+    " / 기준선 " + (R.baselineStable ? "안정" : "불안정"));
+  if (R.pingSupported) {
+    L.push("  서버 내부: 실행준비 평균 " + ms(R.pingInitAvg) + " / 처리 평균 " + ms(R.pingExecAvg));
+  } else {
+    L.push("  (perfPing 미지원 — Apps Script 새 버전 미배포 가능성)");
+  }
+  L.push("");
+  L.push("[홈 getHomeBundle 1회 호출 방식] " + H.runs + "회 측정, 실패 " + H.fail + "회");
+  L.push("  첫 호출 " + ms(H.first) + " / 반복 평균 " + ms(H.repeatAvg));
+  if (H.wall) {
+    L.push("  왕복 최소/평균/최대/편차: " + ms(H.wall.min) + " / " + ms(H.wall.avg) + " / " + ms(H.wall.max) + " / " + ms(H.wall.sd));
+  }
+  if (R.serverDiagAvailable) {
+    L.push("  서버 내부 최소/평균/최대: " + ms(H.server.min) + " / " + ms(H.server.avg) + " / " + ms(H.server.max));
+    L.push("  네트워크·실행대기 최소/평균/최대: " + ms(H.gap.min) + " / " + ms(H.gap.avg) + " / " + ms(H.gap.max));
+    if (H.partsFirst) {
+      L.push("  서버 항목별(첫 호출): " + Object.keys(H.partsFirst).map(function (k) {
+        return k + " " + ms(H.partsFirst[k]);
+      }).join(", "));
+    }
+    if (H.cacheFirst) {
+      L.push("  캐시(첫 호출): " + Object.keys(H.cacheFirst).map(function (k) {
+        return k + "=" + H.cacheFirst[k];
+      }).join(", "));
+    }
+    if (H.cacheLast) {
+      L.push("  캐시(마지막): " + Object.keys(H.cacheLast).map(function (k) {
+        return k + "=" + H.cacheLast[k];
+      }).join(", "));
+    }
+  }
+  L.push("");
+  L.push("[개별 API 진단 — 실제 홈 호출 방식 아님] 1회차 / 2회차 / 순수시트비용");
   Object.keys(R.api || {}).forEach(function (k) {
     var a = R.api[k];
     L.push("  - " + a.label + ": " +
-      (a.first != null ? ms(a.first) : "실패") + " / " +
-      (a.second != null ? ms(a.second) : "실패") + " / " + ms(a.sheetCost));
+      (a.first !== null ? ms(a.first) : "실패") + " / " +
+      (a.second !== null ? ms(a.second) : "실패") + " / " +
+      (a.sheetCost === null ? "계산 불가(기준선 불안정)" : ms(a.sheetCost)));
   });
-  L.push("");
-  L.push("홈 동시호출 완료: " + ms(R.homeWall) + " (최장 단일 " + ms(R.homeSlowest) + ", 줄서기=" + (R.homeSerialized ? "예" : "아니오") + ")");
   if (R.indexKB) {
-    L.push("index.html: " + Math.round(R.indexKB) + " KB / 다운 " + ms(R.indexMs) + " / 캐시 " + ms(R.indexCachedMs));
+    L.push("");
+    L.push("[정적 파일] index.html " + Math.round(R.indexKB) + " KB / 다운 " + ms(R.indexMs) +
+      " / 캐시 " + ms(R.indexCachedMs) + (R.ttfb !== undefined ? " / TTFB " + ms(R.ttfb) : ""));
   }
   return L.join("\n");
 }
@@ -560,8 +976,9 @@ async function resolveAuth() {
 $("btnRun").addEventListener("click", async function () {
   var btn = $("btnRun");
   btn.disabled = true;
-  $("btnCopy").disabled = true;
-  R = {};
+
+  /* 이전 측정 흔적을 남기지 않는다 — 결과 객체·표·판정·오류·복사버튼 전부 초기화 */
+  resetAll();
 
   try {
     setStatus("1/5 · PC 성능 측정 중…");
@@ -569,23 +986,42 @@ $("btnRun").addEventListener("click", async function () {
     runEnv();
 
     var auth = await resolveAuth();
+    R.authed = !!auth;
+
     await runPing();
+    await runHomeBundle(auth);
     await runApis(auth);
-    await runHomeSim(auth);
     await runPageLoad();
 
+    /* 모든 측정이 끝난 뒤에만 최종 판정을 만든다 */
+    R.completed = true;
+    R.finishedAt = new Date();
     renderVerdict(auth);
-    setStatus("진단 완료.");
+    updateRunMeta();
+    setStatus("진단 완료. 결과 복사 버튼으로 전체 결과를 저장할 수 있습니다.");
     $("btnCopy").disabled = false;
     $("verdictCard").scrollIntoView({ behavior: "smooth", block: "start" });
   } catch (err) {
-    setStatus("진단 중 오류: " + (err && err.message ? err.message : err));
+    /* 중단된 측정 결과가 완성된 판정처럼 보이지 않게 한다 */
+    R.aborted = true;
+    R.completed = false;
+    R.finishedAt = new Date();
+    R.abortMessage = (err && err.message) ? err.message : String(err);
+    $("verdict").innerHTML =
+      '<p class="head"><span class="bad">진단이 완료되지 않았습니다</span></p>' +
+      "<p>측정 도중 오류가 발생해 최종 판정을 만들지 않았습니다. 이전 측정 결과도 표시하지 않습니다.</p>" +
+      "<p class='note'>오류: " + R.abortMessage + "</p>";
+    $("verdictCard").style.display = "";
+    $("btnCopy").disabled = true;
+    updateRunMeta();
+    setStatus("진단 중 오류: " + R.abortMessage);
   } finally {
     btn.disabled = false;
   }
 });
 
 $("btnCopy").addEventListener("click", function () {
+  if (!R || !R.completed) return;
   var txt = buildReport();
   navigator.clipboard.writeText(txt).then(
     function () { setStatus("결과가 클립보드에 복사되었습니다."); },
