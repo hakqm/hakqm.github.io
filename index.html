@@ -3886,12 +3886,22 @@
         lastActivity: Date.now()
       }));
       updateLoginUI();
-      if (currentScreenKey === "home") refreshCurrentScreen();
-      /* 식수 상태는 서버 기준으로 백그라운드 동기화 (로그인 완료 UI를 지연시키지 않음) */
-      checkAndShowMealModal();
-      /* 팀회의 전달사항 배지/안내 — 저장된 값을 먼저 그리고 서버 최신값을 즉시 조회 */
+
+      /* 팀회의 전달사항 배지/안내 — 저장된 값을 먼저 그린다(요청 없음) */
       applyStoredMeetingSummary();
-      loadMeetingSummary(true);
+
+      /* 2026-08-14: 로그인 직후 login → getHomeBundle → getMyMealStatus →
+         getMeetingSummary 로 4번 나가던 요청을 정리했다. 홈 화면이면 홈 번들
+         한 번에 식수 상태·팀회의 요약이 모두 들어오므로 개별 호출을 하지 않는다. */
+      if (currentScreenKey === "home") {
+        mealModalPending = true;        /* 식수 팝업 여부는 번들 결과로 판정 */
+        mealStatusSyncing = true;       /* 홈 카드에 '확인 중' 표시 (기존과 동일) */
+        refreshCurrentScreen();         /* → afterScreenRender("home") → loadHomeBundle */
+      } else {
+        /* 홈이 아닌 화면에서 로그인한 경우에만 개별 조회 (각 1회) */
+        checkAndShowMealModal();
+        loadMeetingSummary(true);
+      }
     }
 
     /* 저장된 세션에 필수 필드가 없을 때만 서버에서 사용자 정보 보완 (불필요한 재로그인 방지) */
@@ -4776,8 +4786,78 @@
           (단, 08:30 자동 처리 사용자는 08:40 전이면 세션당 한 번 변경 안내 팝업)
        3) 응답 기록 없으면 신청 가능 시간(08:40 이전)에만 팝업
        4) 서버 오류 시 미응답으로 단정하지 않고 팝업 표시 안 함(기존 로컬 캐시는 보조로만 사용) */
-    async function syncMyMealStatus(showModalIfNeeded) {
+    /* 내 식수 상태 요청 중복 방지 (2026-08-14)
+       - 같은 시점에 여러 곳에서 부르면 요청을 1건으로 합친다
+       - 같은 사용자·같은 날짜를 방금 확인했으면 다시 조회하지 않는다
+       - 홈 번들(my_meal)로 받은 값도 "방금 확인함" 으로 기록해 중복을 없앤다 */
+    const MY_MEAL_MIN_INTERVAL_MS = 60 * 1000;
+    let myMealStatusRunning = false;
+    let myMealStatusFetchedKey = "";
+    let myMealStatusFetchedAt = 0;
+    /* 홈 번들 결과로 식수 팝업 여부를 판정해야 하는 상태 (init / 로그인 직후) */
+    let mealModalPending = false;
+
+    function myMealStatusKey(uid) {
+      return `${uid}|${getTodayStr()}`;
+    }
+
+    /* 신청 팝업을 띄울 후보인지 — 로컬에 이미 응답 기록이 있으면 띄우지 않는다
+       (기존 checkAndShowMealModal 판정과 동일한 기준) */
+    function mealModalWanted() {
+      const data = getMealLocalData();
+      return !(data && data.responded);
+    }
+
+    /* 서버 응답(getMyMealStatus 또는 홈 번들의 my_meal)을 화면·로컬 캐시에 반영.
+       showModalIfNeeded=true 이면 미응답자에게 신청 팝업을 연다. */
+    function applyMyMealStatusResult(result, showModalIfNeeded, uid) {
+      /* 응답 대기 중 로그아웃/사용자 전환이 일어났으면 반영하지 않음 */
+      if (!currentUserData || (currentUserData.user_id || "") !== uid) return false;
+      if (!result || !result.success) return false;
+
+      myMealStatusFetchedKey = myMealStatusKey(uid);
+      myMealStatusFetchedAt = Date.now();
+
+      if (result.responded) {
+        /* 서버에 이미 기록 있음 → 팝업 없이 로컬 캐시를 서버 상태로 갱신 */
+        saveMealLocalData({
+          responded: true,
+          applying: !!result.lunch_applying,
+          guestCount: result.lunch_guest || 0,
+          dinner: !!result.dinner_applying,
+          dinnerGuest: result.dinner_guest || 0,
+          isAuto: !!result.is_auto,
+          submittedAt: result.submitted_at || ""
+        });
+        /* 08:30 자동 처리(v3 = 중식·석식 신청) 사용자 — 08:40 전이면 변경 안내 팝업을
+           사용자별·날짜별·브라우저 세션별 한 번만 자동으로 연다 */
+        if (result.is_auto && !isMealLocked() && isMealTargetUser()) {
+          try {
+            const popKey = `hak_meal_auto_popup_${getTodayStr()}_${uid}`;
+            if (!sessionStorage.getItem(popKey)) {
+              sessionStorage.setItem(popKey, "1");
+              setTimeout(openMealModal, 800);
+            }
+          } catch (e) { /* sessionStorage 사용 불가 시 팝업 생략 */ }
+        }
+      } else if (showModalIfNeeded && !isMealLocked() && isMealTargetUser()) {
+        /* 서버에도 기록 없음 → 신청 가능 시간(08:40 이전)에만 팝업 (대상자만) */
+        setTimeout(openMealModal, 800);
+      }
+      return true;
+    }
+
+    async function syncMyMealStatus(showModalIfNeeded, force) {
       if (!currentUserData || !currentUserData.user_id) return;
+      const uid = currentUserData.user_id;
+      if (myMealStatusRunning) return;                      /* 진행 중이면 합류(중복 요청 금지) */
+      if (!force && myMealStatusFetchedKey === myMealStatusKey(uid) &&
+          Date.now() - myMealStatusFetchedAt < MY_MEAL_MIN_INTERVAL_MS) {
+        updateHomeMealStatus();                             /* 방금 확인함 → 재조회 생략 */
+        return;
+      }
+
+      myMealStatusRunning = true;
       mealStatusSyncing = true;
       mealStatusError = false;
       updateHomeMealStatus();
@@ -4785,7 +4865,7 @@
         const params = [
           "action=getMyMealStatus",
           `date=${encodeURIComponent(getTodayStr())}`,
-          `user_id=${encodeURIComponent(currentUserData.user_id || "")}`,
+          `user_id=${encodeURIComponent(uid)}`,
           `emp_no=${encodeURIComponent(currentUserData.emp_no || "")}`,
           `user_name=${encodeURIComponent(currentUserData.name || "")}`
         ].join("&");
@@ -4793,38 +4873,14 @@
         if (!result || !result.success) {
           throw new Error((result && result.message) || "식수 상태 조회 실패");
         }
-        if (result.responded) {
-          /* 서버에 이미 기록 있음 → 팝업 없이 로컬 캐시를 서버 상태로 갱신 */
-          saveMealLocalData({
-            responded: true,
-            applying: !!result.lunch_applying,
-            guestCount: result.lunch_guest || 0,
-            dinner: !!result.dinner_applying,
-            dinnerGuest: result.dinner_guest || 0,
-            isAuto: !!result.is_auto,
-            submittedAt: result.submitted_at || ""
-          });
-          /* 08:30 자동 처리(v3 = 중식·석식 신청) 사용자 — 08:40 전이면 변경 안내 팝업을
-             사용자별·날짜별·브라우저 세션별 한 번만 자동으로 연다 */
-          if (result.is_auto && !isMealLocked() && isMealTargetUser()) {
-            try {
-              const popKey = `hak_meal_auto_popup_${getTodayStr()}_${currentUserData.user_id}`;
-              if (!sessionStorage.getItem(popKey)) {
-                sessionStorage.setItem(popKey, "1");
-                setTimeout(openMealModal, 800);
-              }
-            } catch (e) { /* sessionStorage 사용 불가 시 팝업 생략 */ }
-          }
-        } else if (showModalIfNeeded && !isMealLocked() && isMealTargetUser()) {
-          /* 서버에도 기록 없음 → 신청 가능 시간(08:40 이전)에만 팝업 (대상자만) */
-          setTimeout(openMealModal, 800);
-        }
+        applyMyMealStatusResult(result, showModalIfNeeded, uid);
       } catch (e) {
         console.error("식수 상태 동기화 오류:", e);
         mealStatusError = true;
         /* 서버 오류: 무조건 미응답으로 단정해 팝업을 띄우지 않음.
            로컬 캐시에 응답 기록이 있으면 그대로 보조 표시됨 */
       } finally {
+        myMealStatusRunning = false;
         mealStatusSyncing = false;
         updateHomeMealStatus();
       }
@@ -6320,57 +6376,121 @@
     }
 
     /* =========================================================
-       홈 화면 번들 로딩 (2026-08-12)
+       홈 화면 번들 로딩 (2026-08-12 / 2026-08-14 개선)
        기존에는 홈 진입 시 4개 API 를 동시에 쐈고, 그때 무작위 실패와 큰
        응답 편차가 관측됐다. 원인이 실행 대기인지 Google 인프라·네트워크
        지연인지는 확정하지 못했으나, 어느 쪽이든 요청 수를 줄이는 편이
        안전하므로 → getHomeBundle 한 번으로 묶었다.
 
-       Apps Script 가 아직 재배포되지 않았다면 getHomeBundle 이 없으므로
-       기존 개별 호출로 자동 폴백한다(구버전과 호환).
-       ========================================================= */
-    let homeBundleRunning = false;
+       [2026-08-14] 실패 시 개별 4개 API 로 되돌아가던 폴백(loadHomeIndividually)을
+       제거했다. Apps Script 는 이미 getHomeBundle 을 지원하므로 이 폴백은
+       구버전 호환용으로만 남아 있었는데, 정작 장애(응답 지연)일 때 요청을
+       4배로 늘려 상황을 악화시키는 경로였다.
+         실패 → 잠깐 뒤 getHomeBundle 1회만 재시도
+              → 그래도 실패하면 화면의 기존/저장된 값을 유지하고 작게 안내
+              → 개별 API 동시 재호출은 하지 않는다 (무한 재시도도 없음)
 
-    function loadHomeIndividually() {
-      setTimeout(loadNotices, 0);
-      setTimeout(loadMealSummary, 100);
-      setTimeout(loadRoomStatus, 200);
-      setTimeout(loadMeetingSummary, 0);
+       또한 응답에 my_meal(내 식수 상태)이 포함되므로, 홈 진입 때마다 따로
+       나가던 getMyMealStatus 요청을 여기서 흡수한다. 구버전 Apps Script 로
+       배포된 경우(my_meal 없음)에만 개인 상태 1건을 별도로 조회한다.
+       ========================================================= */
+    const HOME_BUNDLE_RETRY_DELAY_MS = 1200;
+    let homeBundleRunning = false;
+    let homeBundleQueued = false;   /* 실행 중 다시 요청되면 끝난 뒤 1회만 재실행 */
+
+    /* 홈 데이터 로드 실패 안내 — 새 UI 를 만들지 않고 기존 알림 상태줄만 사용한다.
+       다음 성공 로드에서 loadNotices 가 정상 문구로 덮어쓴다. */
+    function showHomeLoadNotice(message) {
+      const statusEl = document.getElementById("noticeStatus");
+      if (statusEl) statusEl.textContent = message;
+    }
+
+    function applyHomeBundleResult(result, today, uid) {
+      if (result.notices) loadNotices(result.notices);
+      if (result.meal)    loadMealSummary(result.meal);
+      if (result.room)    loadRoomStatus(today, result.room);
+      if (result.meeting && uid) applyMeetingSummaryResult(result.meeting, uid);
+
+      /* 내 식수 상태 — 번들에 포함돼 있으면 별도 요청 없이 그대로 사용 */
+      if (uid && result.my_meal && result.my_meal.success) {
+        const wantModal = mealModalPending && mealModalWanted();
+        mealModalPending = false;
+        mealStatusError = false;
+        mealStatusSyncing = false;
+        applyMyMealStatusResult(result.my_meal, wantModal, uid);
+        updateHomeMealStatus();
+      } else if (uid && mealModalPending) {
+        /* 구버전 Apps Script(my_meal 없음)이거나 개인 상태만 실패한 경우
+           → 개인 상태 1건만 조회한다 (4개 fan-out 아님) */
+        const wantModal = mealModalWanted();
+        mealModalPending = false;
+        syncMyMealStatus(wantModal);
+      } else if (mealStatusSyncing && !myMealStatusRunning) {
+        /* '확인 중' 표시가 남지 않도록 정리 */
+        mealStatusSyncing = false;
+        updateHomeMealStatus();
+      }
     }
 
     async function loadHomeBundle() {
-      if (homeBundleRunning) return;
+      if (homeBundleRunning) { homeBundleQueued = true; return; }
       homeBundleRunning = true;
 
       const today = getTodayStr();
       const uid = currentUserData ? (currentUserData.user_id || "") : "";
       const empNo = currentUserData ? (currentUserData.emp_no || "") : "";
+      const params = [
+        "action=getHomeBundle",
+        `date=${encodeURIComponent(today)}`,
+        "limit=20",
+        `user_id=${encodeURIComponent(uid)}`,
+        `emp_no=${encodeURIComponent(empNo)}`
+      ].join("&");
 
       try {
-        const params = [
-          "action=getHomeBundle",
-          `date=${encodeURIComponent(today)}`,
-          "limit=20",
-          `user_id=${encodeURIComponent(uid)}`,
-          `emp_no=${encodeURIComponent(empNo)}`
-        ].join("&");
+        let result = null;
+        let lastError = null;
 
-        const perfStart = performance.now();
-        const result = await jsonpRequest(`${WEB_APP_URL}?${params}`, "homeBundleCallback", { timeoutMs: 20000 });
-        console.log(`[HQAA perf] getHomeBundle ${Math.round(performance.now() - perfStart)}ms`);
+        /* 최대 2회(최초 + 재시도 1회) — 그 이상 반복하지 않는다 */
+        for (let attempt = 0; attempt < 2; attempt++) {
+          if (attempt > 0) {
+            await new Promise((resolve) => setTimeout(resolve, HOME_BUNDLE_RETRY_DELAY_MS));
+          }
+          try {
+            const perfStart = performance.now();
+            const res = await jsonpRequest(`${WEB_APP_URL}?${params}`, "homeBundleCallback", { timeoutMs: 20000 });
+            console.log(`[HQAA perf] getHomeBundle ${Math.round(performance.now() - perfStart)}ms${attempt ? " (재시도)" : ""}`);
+            if (res && res.success) { result = res; lastError = null; break; }
+            lastError = new Error((res && res.message) || "홈 데이터 응답 오류");
+          } catch (error) {
+            lastError = error;
+          }
+        }
 
-        /* 구버전 Apps Script 는 알 수 없는 action 이라 success:false 를 반환한다 */
-        if (!result || !result.success) throw new Error("getHomeBundle 미지원");
-
-        if (result.notices) loadNotices(result.notices);
-        if (result.meal)    loadMealSummary(result.meal);
-        if (result.room)    loadRoomStatus(today, result.room);
-        if (result.meeting && uid) applyMeetingSummaryResult(result.meeting, uid);
-      } catch (error) {
-        console.warn("홈 번들 실패 — 개별 조회로 대체합니다:", error);
-        loadHomeIndividually();
+        if (result) {
+          applyHomeBundleResult(result, today, uid);
+        } else {
+          console.warn("홈 데이터 조회 실패(재시도 포함):", lastError);
+          /* 개별 API 4개를 동시에 다시 부르지 않는다 — 기존 화면/저장값을 그대로 둔다 */
+          showHomeLoadNotice("홈 현황을 불러오지 못했습니다. 잠시 후 새로고침해주세요.");
+          if (mealStatusSyncing && !myMealStatusRunning) {
+            mealStatusSyncing = false;
+            updateHomeMealStatus();
+          }
+          if (uid && mealModalPending) {
+            /* 식수 신청 팝업 판단은 건너뛸 수 없으므로 개인 상태 1건만 조회한다
+               (공지/식수요약/회의실/팀회의를 동시에 다시 부르지는 않는다) */
+            const wantModal = mealModalWanted();
+            mealModalPending = false;
+            syncMyMealStatus(wantModal);
+          }
+        }
       } finally {
         homeBundleRunning = false;
+        if (homeBundleQueued) {
+          homeBundleQueued = false;
+          setTimeout(loadHomeBundle, 300);
+        }
       }
     }
 
@@ -9823,7 +9943,14 @@
       startDatetimeClock();
       startMealDateWatcher();
       startMeetingSummaryWatcher();
-      checkAndShowMealModal();
+      /* 2026-08-14: 여기서 getMyMealStatus 를 바로 쏘지 않는다.
+         아래 openScreen("home") → loadHomeBundle 응답의 my_meal 로 판정하며,
+         번들이 실패했거나 구버전 Apps Script 일 때만 개인 상태 1건을 조회한다.
+         (식수 팝업·개인 상태 표시 동작 자체는 그대로 유지) */
+      if (currentUserData) {
+        mealModalPending = true;
+        mealStatusSyncing = true;   /* 홈 카드 '확인 중' 표시 (기존 동작 유지) */
+      }
 
       document.querySelectorAll("details").forEach((detailsEl) => {
         detailsEl.dataset.originalOpen = detailsEl.open ? "true" : "false";
