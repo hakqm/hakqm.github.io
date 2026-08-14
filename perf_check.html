@@ -121,6 +121,11 @@
     <div class="note" style="margin-top:0;margin-bottom:10px;">
       현재 포털 홈은 <code>getHomeBundle</code> <b>1회 호출</b>로 공지·식수·회의실·팀회의를 한 번에 받습니다.
       이 항목은 그 방식 그대로 반복 측정합니다.
+      <br>
+      <span style="opacity:.85;">2026-08-14 변경 — 로그인 상태면 <b>내 식수 상태(my_meal)</b>도 이 번들에 포함되어
+      <code>getMyMealStatus</code> 요청이 따로 나가지 않습니다. 캐시 TTL 은 공지 600초 / 식수·회의실·팀회의 300초이며,
+      소프트 만료분은 한 실행만 재생성하고 나머지는 이전 값을 즉시 받습니다(캐시 상태 <b>갱신 대상</b>).
+      번들 실패 시 개별 4개 API 재호출 대신 <b>getHomeBundle 1회 재시도</b>만 합니다.</span>
     </div>
     <div class="tblwrap"><table id="tblHome"></table></div>
 
@@ -253,6 +258,9 @@ function stats(list) {
 function cacheLabel(v) {
   if (v === "hit") return '<span class="ok">캐시 적중</span>';
   if (v === "miss") return '<span class="warn">캐시 미적중</span>';
+  /* stale = 값은 있으나 소프트 만료 — 한 실행만 재생성하고 나머지는 이전 값을
+     즉시 받는다(2026-08-14 stale-while-revalidate). 적중으로 세지 않는다. */
+  if (v === "stale") return '<span class="warn">캐시 갱신 대상</span>';
   if (v === "skipped") return "미조회";
   if (v === "unknown") return "확인 불가";
   return "—";
@@ -485,7 +493,7 @@ async function runHomeBundle(auth) {
       var hits = 0, tot = 0;
       ["notices", "meal", "room", "meeting"].forEach(function (k) {
         if (c.cache[k] === "hit") { hits++; tot++; }
-        else if (c.cache[k] === "miss") { tot++; }
+        else if (c.cache[k] === "miss" || c.cache[k] === "stale") { tot++; }
       });
       cacheTxt = tot ? (hits + " / " + tot + " 적중") : "—";
     }
@@ -527,7 +535,12 @@ async function runHomeBundle(auth) {
   if (withParts.length) {
     var firstC = withParts[0];
     var lastC = withParts[withParts.length - 1];
-    var labels = { notices: "공지사항 (notices)", meal: "식수 요약 (meal)", room: "회의실 (room)", meeting: "팀회의 (meeting)" };
+    var labels = {
+      notices: "공지사항 (notices)", meal: "식수 요약 (meal)",
+      room: "회의실 (room)", meeting: "팀회의 (meeting)",
+      /* 2026-08-14: 홈 진입 때마다 따로 나가던 getMyMealStatus 를 번들이 흡수함 */
+      my_meal: "내 식수 상태 (my_meal)"
+    };
     R.home.partsFirst = firstC.parts;
     R.home.partsLast = lastC.parts;
     R.home.cacheFirst = firstC.cache;
